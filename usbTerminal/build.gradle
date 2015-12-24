@@ -1,0 +1,30 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        applicationId "com.ismet.usbterminal"
+        minSdkVersion 15
+        targetSdkVersion 23
+    }
+
+    buildTypes {
+        develop {
+            minifyEnabled true
+            shrinkResources true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile project(':androidLib')
+    provided files('libs/juniversalchardet-1.0.3.jar')
+    compile files('libs/usbserial.jar')
+}
