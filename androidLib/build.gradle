@@ -18,5 +18,5 @@ android {
 }
 
 dependencies {
-    provided files('libs/juniversalchardet-1.0.3.jar')
+    compile files('libs/juniversalchardet-1.0.3.jar')
 }

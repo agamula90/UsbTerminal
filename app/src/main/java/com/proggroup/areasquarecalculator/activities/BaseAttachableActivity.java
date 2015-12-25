@@ -53,13 +53,15 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
     private void setupDrawer(int fragmentId, DrawerLayout drawerLayout) {
         Toolbar toolbar = (Toolbar) findViewById(getToolbarId());
 
+        toolbar.setTitle(R.string.app_name);
+
         setSupportActionBar(toolbar);
 
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
         ab.setHomeButtonEnabled(true);
         ab.setDisplayShowHomeEnabled(true);
-        ab.setDisplayShowTitleEnabled(false);
+        ab.setDisplayShowTitleEnabled(true);
         ab.setDisplayUseLogoEnabled(false);
         ab.setDisplayShowCustomEnabled(true);
 

@@ -60,6 +60,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -83,6 +84,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
@@ -1545,6 +1547,22 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 		int delay_v = prefs.getInt("delay", 2);
 		int duration_v = prefs.getInt("duration", 3);
 		getXYChart(duration_v, delay_v);
+
+
+        ActionBar actionBar = getSupportActionBar();
+        //actionBar.setDisplayShowHomeEnabled(true);
+        //actionBar.setHomeButtonEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(true);
+
+
+        TextView titleView = (TextView)actionBar.getCustomView().findViewById(R.id.title);
+        titleView.setTextColor(Color.WHITE);
+        ((RelativeLayout.LayoutParams)titleView.getLayoutParams()).addRule(RelativeLayout
+                .CENTER_HORIZONTAL, 0);
+        actionBar.setTitle(getString(R.string.app_name));
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setDisplayUseLogoEnabled(true);
+        actionBar.setLogo(R.drawable.ic_launcher);
 
 		// getTimeChart();
 	}

@@ -9,8 +9,8 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/ab_background"
-        android:minHeight="?attr/actionBarSize"/>
+        android:minHeight="?attr/actionBarSize"
+        android:background="@android:color/black"/>
 
         <FrameLayout
             android:layout_width="match_parent"
