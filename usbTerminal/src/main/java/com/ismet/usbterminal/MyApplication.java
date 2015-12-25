@@ -21,7 +21,9 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
-public class MyApplication extends Application {
+import com.proggroup.areasquarecalculator.InterpolationCalculator;
+
+public class MyApplication extends InterpolationCalculator {
 	private static MyApplication instance;
 	public static String MyLock = "Lock";
 

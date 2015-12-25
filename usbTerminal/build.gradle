@@ -23,8 +23,15 @@ android {
     }
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 dependencies {
     compile project(':androidLib')
     provided files('libs/juniversalchardet-1.0.3.jar')
     compile files('libs/usbserial.jar')
+    compile 'org.ejml:all:0.28'
+    compile 'com.github.PhilJay:MPAndroidChart:v2.1.5'
+    compile project(':app')
 }

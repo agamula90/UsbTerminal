@@ -1,0 +1,52 @@
+<resources>
+    <string name="location">Location</string>
+    <string name="cant_read_folder">folder can\'t be read!</string>
+    <string name="nnew">New</string>
+    <string name="select">Select</string>
+    <string name="file_name">File name:</string>
+    <string name="cancel">Cancel</string>
+    <string name="create">Save</string>
+    <string name="no_data">No Data</string>
+    <color name="gray">#ffff0000</color>
+    <string name="err">Error</string>
+
+    <string name="app_name">SquareCalculations</string>
+    <string name="drawer_cont_desc_open">Open drawer</string>
+    <string name="drawer_cont_desc_close">Close drawer</string>
+
+    <string name="test_calculate_square">Test square calculation</string>
+    <string name="test_measure_material">Test simple measure material</string>
+
+    <string name="select_file">Select file</string>
+
+    <string name="select_folder_for_auto">Select the folder</string>
+    <string name="select_file_for_calculations">Select csv file</string>
+    <string name="select_option_to_continue">Select option to continue</string>
+
+    <string name="calculate_square">Calculate Square</string>
+    <string name="select_csv_data_file">Please select csv data file.</string>
+    <string name="result">Result</string>
+    <string name="enter_avg_square">Enter avg square value:</string>
+    <string name="enter_your_note">Enter your note:</string>
+    <string name="calculate_ppm_simple">Calculate ppm</string>
+    <string name="calculate_loaded_ppm_simple">Calculate Loaded</string>
+    <string name="calculate_loaded_ppm_auto">Calculate Auto</string>
+    <string name="apply_name">Apply name</string>
+    <string name="known_ppm">Known ppms:</string>
+    <string name="first_test">1-st test</string>
+    <string name="second_test">2-nd test</string>
+    <string name="third_test">3-rd test</string>
+    <string name="fourth_test">4-th test</string>
+    <string name="avg_data_recalculate">Avg calculate</string>
+    <string name="avg_data_result">Avg values</string>
+    <string name="delete">Delete</string>
+    <string name="avg_item_calculate">Calc</string>
+    <string name="csv">Csv</string>
+    <string name="input_ppm_first">Input ppm first</string>
+    <string name="solve_equation">Solve equation</string>
+    <string name="equation_value" formatted="false">y = %s*x</string>
+    <string name="input_avg_value">Input avg value</string>
+    <string name="wrong_data">Wrong data!!</string>
+    <string name="load_avgs_from_file">Load curve</string>
+    <string name="save_avgs_from_file">Save curve</string>
+</resources>

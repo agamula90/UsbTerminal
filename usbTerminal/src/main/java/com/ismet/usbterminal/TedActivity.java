@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -57,6 +58,9 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -85,6 +89,8 @@ import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.threads.FileWriterThread;
+import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
+import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
@@ -95,7 +101,7 @@ import fr.xgouchet.texteditor.common.TextFileUtils;
 import fr.xgouchet.texteditor.ui.view.AdvancedEditText;
 import fr.xgouchet.texteditor.undo.TextChangeWatcher;
 
-public class TedActivity extends Activity implements Constants, TextWatcher {
+public class TedActivity extends BaseAttachableActivity implements Constants, TextWatcher{
 	public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
 	public static final String ACTION_USB_DETACHED = "android.hardware.usb.action.USB_DEVICE_DETACHED";
 
@@ -115,7 +121,38 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 	// private Button sendButton1;
 	// EditText input1;
 
-	public static Handler mHandler;
+	public static MyHandler mHandler;
+
+    @Override
+    public int getFragmentContainerId() {
+        return R.id.fragment_container;
+    }
+
+    @Override
+    public DrawerLayout getDrawerLayout() {
+        return null;
+    }
+
+    @Override
+    public int getToolbarId() {
+        return R.id.toolbar;
+    }
+
+    @Override
+    public int getLeftDrawerFragmentId() {
+        return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED;
+    }
+
+    public static class MyHandler extends Handler {
+        private final WeakReference<TedActivity> myActivity;
+        public MyHandler(WeakReference<TedActivity> tedActivity) {
+            this.myActivity = tedActivity;
+        }
+
+        public WeakReference<TedActivity> getActivity() {
+            return myActivity;
+        }
+    }
 
 	//CountDownTimer ctimer;
 	// String filename = "";
@@ -147,8 +184,6 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 		if (BuildConfig.DEBUG)
 			Log.d(TAG, "onCreate");
 
-		setContentView(R.layout.layout_editor);
-
 		executor = Executors.newSingleThreadExecutor();
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(TedActivity.this);
@@ -156,11 +191,14 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 		Settings.updateFromPreferences(getSharedPreferences(PREFERENCES_NAME,
 				MODE_PRIVATE));
 
-		mHandler = new Handler() {
+		mHandler = new MyHandler(new WeakReference<>(this)) {
 			@Override
 			public void handleMessage(Message msg) {
 				// TODO Auto-generated method stub
 				super.handleMessage(msg);
+
+                WeakReference<TedActivity> callActivity = getActivity();
+
 				switch (msg.what) {
 				case 0:
 				{
@@ -188,19 +226,19 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 									arrT1[4]);
 							int co2 = Integer.parseInt(strH, 16);
 
-							if (renderer != null) {
-								int yMax = (int) renderer.getYAxisMax();
+							if (callActivity.get().renderer != null) {
+								int yMax = (int) callActivity.get().renderer.getYAxisMax();
 								if (co2 >= yMax) {
 									// int vmax = (int) (co2 + (co2*15)/100f);
 									// int vmax_extra = (int) Math.ceil(1.5 *
 									// (co2/20)) ;
 									// int vmax = co2 + vmax_extra;
-									if (currentSeries.getItemCount() == 0) {
+									if (callActivity.get().currentSeries.getItemCount() == 0) {
 										int vmax = 3 * co2;
-										renderer.setYAxisMax(vmax);
+                                        callActivity.get().renderer.setYAxisMax(vmax);
 									} else {
 										int vmax = (int) (co2 + (co2 * 15) / 100f);
-										renderer.setYAxisMax(vmax);
+                                        callActivity.get().renderer.setYAxisMax(vmax);
 									}
 
 								}
@@ -249,26 +287,26 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 								// Toast.LENGTH_SHORT).show();
 								
 								// auto
-								int delay_v = prefs.getInt("delay", 2);
-								int duration_v = prefs.getInt("duration", 3);
+								int delay_v = callActivity.get().prefs.getInt("delay", 2);
+								int duration_v = callActivity.get().prefs.getInt("duration", 3);
 								int rCount1 = (int) ((duration_v * 60) / delay_v);
 								int rCount2 = (int) (duration_v * 60);
-								boolean isauto = prefs.getBoolean("isauto", false);
+								boolean isauto = callActivity.get().prefs.getBoolean("isauto", false);
 								if(isauto){
-									if(readingCount == rCount1){
-										count_measure++;
-										chart_idx = 2;				
-										currentSeries = currentdataset
+									if(callActivity.get().readingCount == rCount1){
+                                        callActivity.get().count_measure++;
+                                        callActivity.get().chart_idx = 2;
+                                        callActivity.get().currentSeries = callActivity.get().currentdataset
 												.getSeriesAt(1);
-									}else if(readingCount == rCount2){
-										count_measure++;
-										chart_idx = 3;				
-										currentSeries = currentdataset
+									}else if(callActivity.get().readingCount == rCount2){
+                                        callActivity.get().count_measure++;
+                                        callActivity.get().chart_idx = 3;
+                                        callActivity.get().currentSeries = callActivity.get().currentdataset
 												.getSeriesAt(2);
 									}
 								}
 								//
-								if (count_measure != old_count_measure) {
+								if (callActivity.get().count_measure != callActivity.get().old_count_measure) {
 									Date currentTime = new Date();
 									// SimpleDateFormat formatter_date = new
 									// SimpleDateFormat(
@@ -279,29 +317,29 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 									// SimpleDateFormat(
 									// "HH_mm_ss");
 
-									chart_date = formatter_date
+                                    callActivity.get().chart_date = formatter_date
 											.format(currentTime);
 									
-									if(count_measure==1){
-										sub_dir_date = formatter_date
+									if(callActivity.get().count_measure==1){
+                                        callActivity.get().sub_dir_date = formatter_date
 												.format(currentTime);
 									}
 									// chart_time =
 									// formatter_time.format(currentTime);
 									// chart_idx++;
-									old_count_measure = count_measure;
-									mapChartDate.put(chart_idx, chart_date);
+                                    callActivity.get().old_count_measure = callActivity.get().count_measure;
+                                    callActivity.get().mapChartDate.put(callActivity.get().chart_idx, callActivity.get().chart_date);
 								}
 
-								if (isTimerRunning) {
-									currentSeries.add(readingCount, co2);
-									mChartView.repaint();
+								if (callActivity.get().isTimerRunning) {
+                                    callActivity.get().currentSeries.add(callActivity.get().readingCount, co2);
+                                    callActivity.get().mChartView.repaint();
 //									executor.execute(new FileWriterThread(""
 //											+ co2, "" + chart_idx, ""
 //											+ count_measure, chart_date,
 //											chart_time));
-									int kppm = prefs.getInt("kppm", -1);
-									int volume = prefs.getInt("volume", -1);
+									int kppm = callActivity.get().prefs.getInt("kppm", -1);
+									int volume = callActivity.get().prefs.getInt("volume", -1);
 									
 									String strppm = "";
 									String strvolume = "";
@@ -318,35 +356,36 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 										strvolume = "_"+volume;
 									}
 									
-									String str_uc = prefs.getString("uc", "");
+									String str_uc = callActivity.get().prefs.getString("uc", "");
 									if(strppm.equals("_")){										
 										String filename1 = "";
 										String dirname1 = "AEToC_MES_Files";
 										String subDirname1 = "";
 										
-										filename1 = "MES_"+chart_date+strvolume+"_R"+chart_idx+".csv";
+										filename1 = "MES_"+callActivity.get().chart_date+strvolume+"_R"+callActivity.get().chart_idx+".csv";
 										//dirname1 = "AEToC_MES_Files";	
-										subDirname1 = "MES_"+sub_dir_date+"_"+str_uc;//+"_"+strppm;
-										
-										executor.execute(new FileWriterThread(""
+										subDirname1 = "MES_"+callActivity.get().sub_dir_date+"_"+str_uc;//+"_"+strppm;
+
+                                        callActivity.get().executor.execute(new FileWriterThread(""
 										+ co2, filename1,dirname1,subDirname1));
 									}else{
 										String filename2 = "";
 										String dirname2 = "AEToC_CAL_Files";
 										String subDirname2 = "";
 										
-										filename2 = "CAL_"+chart_date+strvolume+strppm+"_R"+chart_idx+".csv";
+										filename2 = "CAL_"+callActivity.get().chart_date+strvolume+strppm+"_R"+callActivity.get().chart_idx+".csv";
 										//dirname2 = "AEToC_MES_Files";	
-										subDirname2 = "CAL_"+sub_dir_date+"_"+str_uc;//strppm;//;
-										
-										executor.execute(new FileWriterThread(""
+										subDirname2 = "CAL_"+callActivity.get().sub_dir_date+"_"+str_uc;//strppm;//;
+
+                                        callActivity.get().executor.execute(new FileWriterThread(""
 												+ co2, filename2,dirname2,subDirname2));
 									}
 									
 								}
 								
 								if(co2 == 10000){
-									Toast.makeText(TedActivity.this, "Dilute sample", Toast.LENGTH_LONG).show();
+									Toast.makeText(callActivity.get(), "Dilute sample", Toast
+                                            .LENGTH_LONG).show();
 								}
 							}
 
@@ -382,9 +421,9 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 
 					//
 
-					txtOutput.setText("Rx: " + data + "\n"
-							+ txtOutput.getText());
-					mScrollView.smoothScrollTo(0, 0);
+                    callActivity.get().txtOutput.setText("Rx: " + data + "\n"
+							+ callActivity.get().txtOutput.getText());
+                    callActivity.get().mScrollView.smoothScrollTo(0, 0);
 
 					// txtOutput1.setText("Rx: " + strH + "\n"+
 					// txtOutput1.getText());
@@ -1510,7 +1549,17 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 		// getTimeChart();
 	}
 
-	public class SendCommandTask extends AsyncTask<Long, Integer, String>{
+    @Override
+    public int getLayoutId() {
+        return R.layout.layout_editor;
+    }
+
+    @Override
+    public Fragment getFirstFragment() {
+        return new EmptyFragment();
+    }
+
+    public class SendCommandTask extends AsyncTask<Long, Integer, String>{
 		ArrayList<String> simpleCommands = new ArrayList<>();
 		ArrayList<String> loopCommands = new ArrayList<>();
 		public SendCommandTask(ArrayList<String> simpleCommands,ArrayList<String> loopCommands){
@@ -2201,7 +2250,7 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 				mScrollView.smoothScrollTo(0, 0);
 			} else {
 				Toast.makeText(TedActivity.this,
-						"serial port not found", 1000).show();
+						"serial port not found", Toast.LENGTH_LONG).show();
 			}
 
 		}
@@ -2255,7 +2304,7 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 						mScrollView.smoothScrollTo(0, 0);
 					} else {
 						Toast.makeText(TedActivity.this,
-								"serial port not found", 1000).show();
+								"serial port not found", Toast.LENGTH_LONG).show();
 					}
 
 					// txtOutput.append("Tx: " + command + "\n");
@@ -2292,7 +2341,7 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 													// Send data
 				UsbService.write(data.getBytes());
 			} else {
-				Toast.makeText(TedActivity.this, "serial port not found", 1000)
+				Toast.makeText(TedActivity.this, "serial port not found", Toast.LENGTH_LONG)
 						.show();
 			}
 
@@ -2515,13 +2564,6 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 	// return Color.HSVToColor(new float[] { hue, 0.8f, 0.9f });
 	// }
 	//
-
-	@Override
-	public void onBackPressed() {
-		// TODO Auto-generated method stub
-		super.onBackPressed();
-		finish();
-	}
 
 	@Override
 	protected void onDestroy() {
@@ -2878,8 +2920,12 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 			if (Settings.UNDO && Settings.BACK_BTN_AS_UNDO) {
 				if (!undo())
 					warnOrQuit();
-			} else
-				quit();
+			} else if(shouldQuit()) {
+                quit();
+            } else {
+                mWarnedShouldQuit = false;
+                return super.onKeyUp(keyCode, event);
+            }
 			return true;
 			// case KeyEvent.KEYCODE_SEARCH:
 			// search();
@@ -2889,6 +2935,11 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 		mWarnedShouldQuit = false;
 		return super.onKeyUp(keyCode, event);
 	}
+
+    private boolean shouldQuit() {
+        int entriesCount = getSupportFragmentManager().getBackStackEntryCount();
+        return entriesCount == 0;
+    }
 
 	/**
 	 * @see OnClickListener#onClick(View)
@@ -3679,6 +3730,8 @@ public class TedActivity extends Activity implements Constants, TextWatcher {
 	protected void quit() {
 		mAfterSave = new Runnable() {
 			public void run() {
+
+
 				finish();
 			}
 		};

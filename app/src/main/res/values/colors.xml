@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="color_text">#ffffff</color>
+    <color name="ab_background">#ffffed</color>
+    <color name="drawer_color">#dce5de</color>
+    <color name="app_background">#000000</color>
+    <color name="header_color">#bababa</color>
+    <color name="edit_disabled">#cacaca</color>
+    <color name="grid_color">#7a7a7a</color>
+    <color name="grid_item_bkg_color">#dddddd</color>
+    <color name="button_color">#988c8c</color>
+    <color name="button_color_pressed">#766c6c</color>
+    <color name="square_background">#FF2D7160</color>
+</resources>

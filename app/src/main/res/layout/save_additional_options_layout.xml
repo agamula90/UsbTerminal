@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/app_background"
+              android:orientation="vertical"
+              android:padding="5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            style="@style/TextViewDefaultStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enter_your_note"/>
+
+        <EditText
+            android:id="@+id/edit_file_name"
+            style="@style/EditTextDefaultStyle"
+            android:layout_width="match_parent"
+            android:layout_margin="2dp"
+            android:background="@drawable/grid_edit_drawable"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:singleLine="true"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/save_curve"
+        style="@style/ButtonDefaultStyle"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/apply_name"/>
+</LinearLayout>

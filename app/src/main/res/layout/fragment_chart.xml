@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/app_background">
+
+    <com.proggroup.areasquarecalculator.views.SquareLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:padding="@dimen/text_margin_default">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/grid_item_bkg_color"
+            android:gravity="center">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/chart"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingEnd="30dp"
+                android:paddingRight="30dp"/>
+        </LinearLayout>
+    </com.proggroup.areasquarecalculator.views.SquareLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/text_margin_default"
+        android:layout_marginLeft="15dp"
+        android:layout_weight="1"
+        android:background="@color/edit_disabled"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/grid_view_curve_height"
+            android:id="@+id/above_layout"
+            android:background="@color/grid_item_bkg_color"
+            android:orientation="horizontal" />
+
+        <GridView
+            android:id="@+id/display_values"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:numColumns="3"/>
+    </LinearLayout>
+
+</LinearLayout>

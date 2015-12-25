@@ -1,325 +1,366 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:orientation="horizontal"
-    android:weightSum="3" >
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@android:color/black"
+              android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:weightSum="10" >
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/ab_background"
+        android:minHeight="?attr/actionBarSize"/>
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:weightSum="3" >
-
-            <Button
-                android:id="@+id/buttonOn1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="On" 
-                android:layout_gravity="center_vertical"/>
-
-            <Button
-                android:id="@+id/buttonOn2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="On" 
-                android:layout_gravity="center_vertical"/>
-            
-            <!-- <Button
-                android:id="@+id/buttonOff"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="Off" 
-                android:layout_gravity="center_vertical"/> -->
-
-            <Button
-                android:id="@+id/buttonPpm"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="PPM" 
-                android:layout_gravity="center_vertical"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:weightSum="3" >
-
-            <Button
-                android:id="@+id/buttonClear"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="Clear" 
-                />
-
-            <Button
-                android:id="@+id/buttonSend"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="Send" 
-                />
-
-            <!--
-           <Button android:layout_marginLeft="2dp"
-                android:id="@+id/buttonCal"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Cal"
-                android:background="@drawable/btn_red"/>
-            -->    
-
-            <Button
-                android:id="@+id/buttonMeasure"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_red"
-                android:text="Measure" 
-                />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="9"
-            android:orientation="vertical"
-            android:weightSum="5" >
-
-            <fr.xgouchet.texteditor.ui.view.AdvancedEditText
-                android:id="@+id/editor"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1.4"
-                android:gravity="top|left"
-                android:imeOptions="actionSend"
-                android:inputType="textMultiLine"
-                android:scrollbarAlwaysDrawHorizontalTrack="false"
-                android:scrollbarAlwaysDrawVerticalTrack="true"
-                android:scrollbarSize="5dp"
-                android:scrollbars="vertical"
-                android:textCursorDrawable="@null"
-                android:textSize="16sp"
-                android:typeface="monospace" >
-            </fr.xgouchet.texteditor.ui.view.AdvancedEditText>
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2.6"
-                android:orientation="vertical" >
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <!-- Line Monitor -->
-
-                <TextView
-                    android:id="@+id/linemonitor"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="30dp"
-                    android:background="@android:color/black"
-                    android:text="Line Monitor"
-                    android:textColor="#CB4025"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:weightSum="3">
 
-                <ScrollView
-                    android:id="@+id/mScrollView"
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:weightSum="10">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:orientation="horizontal"
+                            android:weightSum="3">
+
+                            <Button
+                                android:id="@+id/buttonOn1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="On"/>
+
+                            <Button
+                                android:id="@+id/buttonOn2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="On"/>
+
+                            <!-- <Button
+                                android:id="@+id/buttonOff"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Off"
+                                android:layout_gravity="center_vertical"/> -->
+
+                            <Button
+                                android:id="@+id/buttonPpm"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="PPM"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:orientation="horizontal"
+                            android:weightSum="3">
+
+                            <Button
+                                android:id="@+id/buttonClear"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Clear"
+                                />
+
+                            <Button
+                                android:id="@+id/buttonSend"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Send"
+                                />
+
+                            <!--
+                           <Button android:layout_marginLeft="2dp"
+                                android:id="@+id/buttonCal"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Cal"
+                                android:background="@drawable/btn_red"/>
+                            -->
+
+                            <Button
+                                android:id="@+id/buttonMeasure"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Measure"
+                                />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="9"
+                            android:orientation="vertical"
+                            android:weightSum="5">
+
+                            <fr.xgouchet.texteditor.ui.view.AdvancedEditText
+                                android:id="@+id/editor"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1.4"
+                                android:gravity="top|left"
+                                android:imeOptions="actionSend"
+                                android:inputType="textMultiLine"
+                                android:scrollbarAlwaysDrawHorizontalTrack="false"
+                                android:scrollbarAlwaysDrawVerticalTrack="true"
+                                android:scrollbarSize="5dp"
+                                android:scrollbars="vertical"
+                                android:textCursorDrawable="@null"
+                                android:textSize="16sp"
+                                android:typeface="monospace">
+                            </fr.xgouchet.texteditor.ui.view.AdvancedEditText>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="2.6"
+                                android:orientation="vertical">
+
+                                <!-- Line Monitor -->
+
+                                <TextView
+                                    android:id="@+id/linemonitor"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="30dp"
+                                    android:background="@android:color/black"
+                                    android:text="Line Monitor"
+                                    android:textColor="#CB4025"
+                                    android:textSize="14sp"
+                                    android:visibility="gone"/>
+
+                                <ScrollView
+                                    android:id="@+id/mScrollView"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@android:color/black"
+                                    android:scrollbars="vertical">
+
+                                    <TextView
+                                        android:id="@+id/output"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:background="@android:color/black"
+                                        android:paddingTop="0dp"
+                                        android:text=""
+                                        android:textColor="#ffffff"
+                                        android:textIsSelectable="true"
+                                        android:textSize="16sp"/>
+                                </ScrollView>
+                            </LinearLayout>
+
+                            <!--
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical" >
+                            </LinearLayout>
+                            -->
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:orientation="vertical"
+                        android:weightSum="3">
+
+                        <LinearLayout
+                            android:id="@+id/chart"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="2.5"
+                            android:orientation="vertical"
+                            android:paddingLeft="4dp"
+                            android:paddingRight="6dp"
+                            android:paddingTop="8dp"/>
+
+                        <LinearLayout
+                            android:id="@+id/chart1"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="0.5"
+                            android:orientation="horizontal"
+                            android:paddingLeft="4dp"
+                            android:paddingRight="8dp"
+                            android:weightSum="3">
+
+                            <!--             <RelativeLayout
+                                            android:layout_width="0dp"
+                                            android:layout_height="match_parent"
+                                            android:layout_weight="1" >
+
+                                            <CheckBox
+                                                android:id="@+id/chk1"
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_centerInParent="true"
+                                                android:checked="true" />
+                                        </RelativeLayout>
+
+                                        <RelativeLayout
+                                            android:layout_width="0dp"
+                                            android:layout_height="match_parent"
+                                            android:layout_weight="1" >
+
+                                            <CheckBox
+                                                android:id="@+id/chk2"
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_centerInParent="true"
+                                                android:checked="true" />
+                                        </RelativeLayout>
+
+                                        <RelativeLayout
+                                            android:layout_width="0dp"
+                                            android:layout_height="match_parent"
+                                            android:layout_weight="1" >
+
+                                            <CheckBox
+                                                android:id="@+id/chk3"
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_centerInParent="true"
+                                                android:checked="true" />
+                                        </RelativeLayout> -->
+                        </LinearLayout>
+
+                        <!--
+                        <LinearLayout
+                            android:id="@+id/inputl"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="2"
+                            android:orientation="vertical"
+                            android:weightSum="6" >
+
+                            <Button
+                                android:id="@+id/btnHex"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:text="send"
+                                android:textColor="@android:color/white"/>
+
+                            <EditText
+                                android:id="@+id/input1"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@android:color/white"
+                                android:paddingLeft="10dp"/>
+
+                            <ScrollView
+                                android:id="@+id/mScrollView1"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="4"
+                                android:background="@android:color/black"
+                                android:scrollbars="vertical" >
+
+                                <TextView
+                                    android:id="@+id/output1"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@android:color/black"
+                                    android:paddingTop="0dp"
+                                    android:text=""
+                                    android:textColor="#ffffff"
+                                    android:textIsSelectable="true"
+                                    android:textSize="16sp" />
+                            </ScrollView>
+                            </LinearLayout>
+                        -->
+
+
+                        <!--
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal" >
+
+                            <ImageButton
+                                android:id="@+id/zoom_in"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:src="@drawable/ic_action_zoom_in" />
+
+                            <ImageButton
+                                android:id="@+id/zoom_reset"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:src="@drawable/ic_action_zoom_reset" />
+
+                            <ImageButton
+                                android:id="@+id/zoom_out"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:src="@drawable/ic_action_zoom_out" />
+                        </LinearLayout>
+                        -->
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/black"
-                    android:scrollbars="vertical" >
+                    android:layout_height="wrap_content">
 
-                    <TextView
-                        android:id="@+id/output"
+                    <fragment
+                        android:id="@+id/bottom_fragment"
+                        android:name="com.proggroup.areasquarecalculator.fragments.BottomFragment"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@android:color/black"
-                        android:paddingTop="0dp"
-                        android:text=""
-                        android:textColor="#ffffff"
-                        android:textIsSelectable="true"
-                        android:textSize="16sp" />
-                </ScrollView>
+                        android:layout_gravity="end"/>
+                </LinearLayout>
             </LinearLayout>
 
-            <!--
-            <LinearLayout
+            <FrameLayout
+                android:id="@+id/fragment_container"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="vertical" >
-            </LinearLayout>
-            -->
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="2"
-        android:orientation="vertical"
-        android:weightSum="3" >
-
-        <LinearLayout
-            android:id="@+id/chart"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2.5"
-            android:orientation="vertical"
-            android:paddingLeft="4dp"
-            android:paddingRight="6dp"
-            android:paddingTop="8dp" />
-
-        <LinearLayout
-            android:id="@+id/chart1"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.5"
-            android:orientation="horizontal"
-            android:paddingLeft="4dp"
-            android:paddingRight="8dp"
-            android:weightSum="3" >
-
-<!--             <RelativeLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1" >
-
-                <CheckBox
-                    android:id="@+id/chk1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:checked="true" />
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1" >
-
-                <CheckBox
-                    android:id="@+id/chk2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:checked="true" />
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1" >
-
-                <CheckBox
-                    android:id="@+id/chk3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:checked="true" />
-            </RelativeLayout> -->
-        </LinearLayout>
-
-        <!--
-        <LinearLayout
-            android:id="@+id/inputl"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2"
-            android:orientation="vertical"
-            android:weightSum="6" >
-
-            <Button
-                android:id="@+id/btnHex"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="send" 
-                android:textColor="@android:color/white"/>
-
-            <EditText
-                android:id="@+id/input1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" 
-                android:background="@android:color/white"
-                android:paddingLeft="10dp"/>
-
-            <ScrollView
-                android:id="@+id/mScrollView1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="4"
-                android:background="@android:color/black"
-                android:scrollbars="vertical" >
-
-                <TextView
-                    android:id="@+id/output1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/black"
-                    android:paddingTop="0dp"
-                    android:text=""
-                    android:textColor="#ffffff"
-                    android:textIsSelectable="true"
-                    android:textSize="16sp" />
-            </ScrollView>
-            </LinearLayout>
-        -->
-
-
-        <!--
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal" >
-
-            <ImageButton
-                android:id="@+id/zoom_in"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_in" />
-
-            <ImageButton
-                android:id="@+id/zoom_reset"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_reset" />
-
-            <ImageButton
-                android:id="@+id/zoom_out"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_out" />
-        </LinearLayout>
-        -->
-    </LinearLayout>
-
+                android:layout_height="match_parent"/>
+        </FrameLayout>
 </LinearLayout>

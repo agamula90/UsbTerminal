@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="headers">
+        <item>@string/known_ppm</item>
+        <item>@string/first_test</item>
+        <item>@string/second_test</item>
+        <item>@string/third_test</item>
+        <item>@string/fourth_test</item>
+        <item>@string/avg_data_result</item>
+        <item>@string/delete</item>
+    </string-array>
+
+    <string-array name="head1">
+        <item>№</item>
+        <item>ppm</item>
+        <item>Square</item>
+    </string-array>
+</resources>
