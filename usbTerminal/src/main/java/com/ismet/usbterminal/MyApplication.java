@@ -52,7 +52,7 @@ public class MyApplication extends InterpolationCalculator {
 		instance = this;
 		Log.v("MyApplication", "onCreate triggered");
 
-		/*Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 			public void uncaughtException(Thread thread, Throwable ex) {
 
 				SimpleDateFormat formatter = new SimpleDateFormat(
@@ -71,7 +71,7 @@ public class MyApplication extends InterpolationCalculator {
 							.print("=========================================================\r"
 									+ formatter.format(currentTime)
 									+ "\r"
-									/* + ex.getStackTrace().toString()+ "\r"+ * /
+									/* + ex.getStackTrace().toString()+ "\r"+ */
 									+ "=========================================================\r");
 					ex.printStackTrace(new PrintStream(fos));
 					fos.close();
@@ -110,7 +110,7 @@ public class MyApplication extends InterpolationCalculator {
 					e1.printStackTrace();
 				}
 			}
-		});*/
+		});
 	}
 
 	public static MyApplication getInstance() {
