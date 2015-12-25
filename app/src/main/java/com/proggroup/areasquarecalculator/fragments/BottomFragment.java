@@ -72,6 +72,7 @@ public class BottomFragment extends Fragment {
     private String mUrlWhenAutoLoading;
 
     private LoadGraphDataTask.OnGraphDataLoadedCallback onGraphDataLoadedCallback;
+    private View.OnClickListener mRealCalculationsCalculateAutoListener;
 
     @Nullable
     @Override
@@ -204,6 +205,18 @@ public class BottomFragment extends Fragment {
         calculatePpmAuto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                mDoPostLoadingCalculations = true;
+                File calFolder = CalculatePpmSimpleFragment.findCalFolder(Constants.BASE_DIRECTORY);
+
+                new CreateCalibrationCurveForAutoTask(new LoadGraphDataTask(getActivity(), null,
+                        onGraphDataLoadedCallback), getActivity(), true).execute(calFolder);
+            }
+        });
+
+        mRealCalculationsCalculateAutoListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 if (mAutoAvgPoint == null) {
                     Toast.makeText(getActivity(), "Average point not filled", Toast.LENGTH_LONG)
                             .show();
@@ -235,7 +248,7 @@ public class BottomFragment extends Fragment {
                     resultPpmLoaded.setText(FloatFormatter.format(value));
                 }
             }
-        });
+        };
 
         mClearRow2.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -270,22 +283,12 @@ public class BottomFragment extends Fragment {
 
         boolean wasSaved = sBundle.getBoolean(IS_SAVED, false);
 
-        if (calFolder != null) {
-            if (!wasSaved) {
-                mDoPostLoadingCalculations = true;
-                new CreateCalibrationCurveForAutoTask(new LoadGraphDataTask(getActivity(), null,
-                        onGraphDataLoadedCallback), getActivity(), true).execute(calFolder);
-            }
-        } else {
-            Toast.makeText(getActivity(), "Please make CAL directory to find ppm", Toast
-                    .LENGTH_SHORT).show();
-        }
-
         if (wasSaved) {
             savedInstanceState = sBundle;
             avgValueLoaded.setText(savedInstanceState.getString(THIRD_TEXT_TAG));
             resultPpmLoaded.setText(savedInstanceState.getString(FOURTH_TEXT_TAG));
         }
+        fillAvgPointsLayout();
     }
 
     @Override
@@ -418,8 +421,8 @@ public class BottomFragment extends Fragment {
                                 if (newestCalFile2 == null) {
                                     mAutoAvgPoint = new AvgPoint(Arrays
                                             .asList(new Float[]{square1}));
-                                    calculatePpmAuto.performClick();
-                                    mClearRow2.performClick();
+                                    mRealCalculationsCalculateAutoListener.onClick(null);
+                                    //mClearRow2.performClick();
                                     return;
                                 }
                                 float square2 = CalculateUtils.calculateSquare(newestCalFile2);
@@ -432,8 +435,8 @@ public class BottomFragment extends Fragment {
                                     if (newestCalFile3 == null) {
                                         mAutoAvgPoint = new AvgPoint(Arrays
                                                 .asList(new Float[]{square1, square2}));
-                                        calculatePpmAuto.performClick();
-                                        mClearRow2.performClick();
+                                        mRealCalculationsCalculateAutoListener.onClick(null);
+                                        //mClearRow2.performClick();
                                         return;
                                     }
                                     float square3 = CalculateUtils.calculateSquare(newestCalFile3);
@@ -446,8 +449,8 @@ public class BottomFragment extends Fragment {
                                         mAutoAvgPoint = new AvgPoint(Arrays
                                                 .asList(new Float[]
                                                         {square1, square2, square3}));
-                                        calculatePpmAuto.performClick();
-                                        mClearRow2.performClick();
+                                        mRealCalculationsCalculateAutoListener.onClick(null);
+                                        //mClearRow2.performClick();
                                     }
                                 }
                             }
