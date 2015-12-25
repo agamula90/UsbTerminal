@@ -29,8 +29,4 @@
         <item name="android:src">@android:drawable/ic_menu_more</item>
     </style>
 
-    <style name ="MyPopupMenu" parent="android:Theme.Holo.Light">
-        <item name="android:popupBackground">@android:color/holo_green_light</item>
-    </style>
-
 </resources>

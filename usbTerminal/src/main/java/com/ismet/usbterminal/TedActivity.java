@@ -1550,19 +1550,13 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 
 
         ActionBar actionBar = getSupportActionBar();
-        //actionBar.setDisplayShowHomeEnabled(true);
-        //actionBar.setHomeButtonEnabled(true);
-        actionBar.setDisplayShowTitleEnabled(true);
-
+        actionBar.setDisplayUseLogoEnabled(true);
+        actionBar.setLogo(R.drawable.ic_launcher);
 
         TextView titleView = (TextView)actionBar.getCustomView().findViewById(R.id.title);
         titleView.setTextColor(Color.WHITE);
         ((RelativeLayout.LayoutParams)titleView.getLayoutParams()).addRule(RelativeLayout
                 .CENTER_HORIZONTAL, 0);
-        actionBar.setTitle(getString(R.string.app_name));
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setDisplayUseLogoEnabled(true);
-        actionBar.setLogo(R.drawable.ic_launcher);
 
 		// getTimeChart();
 	}
