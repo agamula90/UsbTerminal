@@ -2807,8 +2807,6 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 		// showMenuItemAsAction(menu.findItem(MENU_ID_SEARCH),
 		// R.drawable.ic_menu_search);
 
-        wrapMenuItem(addMenuItem(menu, MENU_ID_CANCEL, R.string.menu_cancel, 0), false);
-
 		if (isUsbConnected) {
 			showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT),
                     R.drawable.usb_connected, MenuItem.SHOW_AS_ACTION_IF_ROOM
@@ -2838,62 +2836,59 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 	public boolean onOptionsItemSelected(MenuItem item) {
 		mWarnedShouldQuit = false;
 		switch (item.getItemId()) {
-		case MENU_ID_CONNECT_DISCONNECT:
-			Log.d("isUsbConnected", "" + isUsbConnected);
-			if (isUsbConnected) {
-				// unregisterReceiver(mUsbReceiver);
-				// unbindService(usbConnection);
-				// if(UsbService.mHandlerStop != null){
-				// UsbService.mHandlerStop.sendEmptyMessage(0);
-				// }
-			} else {
-				// setFilters(); // Start listening notifications from
-				// UsbService
-				// startService(UsbService.class, usbConnection, null); // Start
-				// UsbService(if it was not started before) and Bind it
-				// startService(new Intent(TedActivity.this, UsbService.class));
-			}
-			break;
-		case MENU_ID_NEW:
-			newContent();
-			return true;
-		case MENU_ID_SAVE:
-			saveContent();
-			break;
-		case MENU_ID_SAVE_AS:
-			saveContentAs();
-			break;
-		case MENU_ID_OPEN:
-			openFile();
-			break;
-		case MENU_ID_OPEN_CHART:
-			openFile();
-			//openChart();
-			break;
-		case MENU_ID_OPEN_RECENT:
-			openRecentFile();
-			break;
-		// case MENU_ID_SEARCH:
-		// search();
-		// break;
-		case MENU_ID_SETTINGS:
-			settingsActivity();
-			return true;
+			case MENU_ID_CONNECT_DISCONNECT:
+				Log.d("isUsbConnected", "" + isUsbConnected);
+				if (isUsbConnected) {
+					// unregisterReceiver(mUsbReceiver);
+					// unbindService(usbConnection);
+					// if(UsbService.mHandlerStop != null){
+					// UsbService.mHandlerStop.sendEmptyMessage(0);
+					// }
+				} else {
+					// setFilters(); // Start listening notifications from
+					// UsbService
+					// startService(UsbService.class, usbConnection, null); // Start
+					// UsbService(if it was not started before) and Bind it
+					// startService(new Intent(TedActivity.this, UsbService.class));
+				}
+				break;
+			case MENU_ID_NEW:
+				newContent();
+				return true;
+			case MENU_ID_SAVE:
+				saveContent();
+				break;
+			case MENU_ID_SAVE_AS:
+				saveContentAs();
+				break;
+			case MENU_ID_OPEN:
+				openFile();
+				break;
+			case MENU_ID_OPEN_CHART:
+				openFile();
+				//openChart();
+				break;
+			case MENU_ID_OPEN_RECENT:
+				openRecentFile();
+				break;
+			// case MENU_ID_SEARCH:
+			// search();
+			// break;
+			case MENU_ID_SETTINGS:
+				settingsActivity();
+				return true;
 			// case MENU_ID_ABOUT:
 			// aboutActivity();
 			// return true;
-		case MENU_ID_QUIT:
-			quit();
-			return true;
-		case MENU_ID_UNDO:
-			if (!undo()) {
-				Crouton.showText(this, R.string.toast_warn_no_undo, Style.INFO);
-			}
-			return true;
-
-        case MENU_ID_CANCEL:
-                return true;
-        }
+			case MENU_ID_QUIT:
+				quit();
+				return true;
+			case MENU_ID_UNDO:
+				if (!undo()) {
+					Crouton.showText(this, R.string.toast_warn_no_undo, Style.INFO);
+				}
+				return true;
+		}
 		return super.onOptionsItemSelected(item);
 	}
 

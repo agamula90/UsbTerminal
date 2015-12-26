@@ -43,8 +43,6 @@ public interface Constants {
 	public static final int MENU_ID_UNDO = 8;
 	/** redo last change ( = {@value} ) */
 	public static final int MENU_ID_REDO = 9;
-    /** Cancel menu ( = {@value} ) */
-    public static final int MENU_ID_CANCEL = 11;
 	/** Quit the app ( = {@value} ) */
 	public static final int MENU_ID_QUIT = 666;
 	public static final int MENU_ID_VERSION = 667;

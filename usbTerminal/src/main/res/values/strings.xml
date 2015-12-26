@@ -63,7 +63,6 @@
     <string name="menu_search">Search</string>
     <string name="menu_undo">Undo</string>
     <string name="menu_quit">Quit</string>
-    <string name="menu_cancel">Cancel</string>
 
     <!-- Misc UI strings -->
     <string name="ui_save_text">"Do you want to save your document? \nAny unsaved changes will be lost. "</string>
