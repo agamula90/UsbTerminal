@@ -19,13 +19,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:weightSum="3">
+                android:weightSum="3">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -344,19 +338,19 @@
                         -->
                     </LinearLayout>
 
-                </LinearLayout>
+            </LinearLayout>
 
-                <LinearLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom">
+
+                <fragment
+                    android:id="@+id/bottom_fragment"
+                    android:name="com.proggroup.areasquarecalculator.fragments.BottomFragment"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <fragment
-                        android:id="@+id/bottom_fragment"
-                        android:name="com.proggroup.areasquarecalculator.fragments.BottomFragment"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"/>
-                </LinearLayout>
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"/>
             </LinearLayout>
 
             <FrameLayout

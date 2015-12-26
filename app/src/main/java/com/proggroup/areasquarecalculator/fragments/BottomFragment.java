@@ -9,10 +9,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -271,8 +275,6 @@ public class BottomFragment extends Fragment {
             graph1.setVisibility(View.VISIBLE);
         }
 
-        File calFolder = CalculatePpmSimpleFragment.findCalFolder(Constants.BASE_DIRECTORY);
-
         ppmPoints = new ArrayList<>();
         avgSquarePoints = new ArrayList<>();
 
@@ -299,17 +301,20 @@ public class BottomFragment extends Fragment {
      * Fill layout with actual data.
      */
     private void fillAvgPointsLayout() {
-        avgPointsLayout.removeAllViews();
 
-        for (int i = 0; i < ppmPoints.size(); i++) {
-            TextView tv = new TextView(getActivity());
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
-                    .edit_text_size_default));
-            tv.setText(ppmPoints.get(i).intValue() + " " + FloatFormatter.format
-                    (avgSquarePoints.get(i)) + "    ");
-            tv.setTextColor(Color.WHITE);
+        if(!ppmPoints.isEmpty()) {
+            avgPointsLayout.removeAllViews();
 
-            avgPointsLayout.addView(tv);
+            for (int i = 0; i < ppmPoints.size(); i++) {
+                TextView tv = new TextView(getActivity());
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                        .edit_text_size_default));
+                tv.setText(ppmPoints.get(i).intValue() + " " + FloatFormatter.format
+                        (avgSquarePoints.get(i)) + "    ");
+                tv.setTextColor(Color.WHITE);
+
+                avgPointsLayout.addView(tv);
+            }
         }
         calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
     }

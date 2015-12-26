@@ -1,42 +1,6 @@
 package com.ismet.usbterminal;
 
-import static fr.xgouchet.androidlib.data.FileUtils.deleteItem;
-import static fr.xgouchet.androidlib.data.FileUtils.getCanonizePath;
-import static fr.xgouchet.androidlib.data.FileUtils.renameItem;
-import static fr.xgouchet.androidlib.ui.Toaster.showToast;
-import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.addMenuItem;
-import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.showMenuItemAsAction;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import junit.framework.Test;
-
-import org.achartengine.ChartFactory;
-import org.achartengine.GraphicalView;
-import org.achartengine.chart.AbstractChart;
-import org.achartengine.chart.CubicLineChart;
-import org.achartengine.chart.PointStyle;
-import org.achartengine.model.TimeSeries;
-import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.model.XYSeries;
-import org.achartengine.renderer.XYMultipleSeriesRenderer;
-import org.achartengine.renderer.XYSeriesRenderer;
-
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.ActivityNotFoundException;
@@ -53,7 +17,6 @@ import android.graphics.Color;
 import android.graphics.Paint.Align;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -61,7 +24,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -92,7 +54,32 @@ import android.widget.Toast;
 
 import com.ismet.usbterminal.threads.FileWriterThread;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
-import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
+
+import org.achartengine.ChartFactory;
+import org.achartengine.GraphicalView;
+import org.achartengine.chart.AbstractChart;
+import org.achartengine.chart.CubicLineChart;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.model.TimeSeries;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYSeries;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
@@ -102,6 +89,13 @@ import fr.xgouchet.texteditor.common.Settings;
 import fr.xgouchet.texteditor.common.TextFileUtils;
 import fr.xgouchet.texteditor.ui.view.AdvancedEditText;
 import fr.xgouchet.texteditor.undo.TextChangeWatcher;
+
+import static fr.xgouchet.androidlib.data.FileUtils.deleteItem;
+import static fr.xgouchet.androidlib.data.FileUtils.getCanonizePath;
+import static fr.xgouchet.androidlib.data.FileUtils.renameItem;
+import static fr.xgouchet.androidlib.ui.Toaster.showToast;
+import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.addMenuItem;
+import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.showMenuItemAsAction;
 
 public class TedActivity extends BaseAttachableActivity implements Constants, TextWatcher{
 	public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
@@ -2750,8 +2744,8 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 
-		return true;
-	}
+        return true;
+    }
 
 	/**
 	 * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
@@ -2760,30 +2754,32 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		super.onPrepareOptionsMenu(menu);
 
+
 		Log.d("onPrepareOptionsMenu", "onPrepareOptionsMenu");
 		menu.clear();
+        menu.close();
 
 		// boolean isUsbConnected = checkUsbConnection();
 		if (isUsbConnected) {
-			addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
-					R.string.menu_disconnect, R.drawable.usb_connected);
-		} else {
-			addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
-					R.string.menu_connect, R.drawable.usb_disconnected);
+            wrapMenuItem(addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
+                    R.string.menu_disconnect, R.drawable.usb_connected_background), true);
+        } else {
+            wrapMenuItem(addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
+                    R.string.menu_connect, R.drawable.usb_disconnected_background), true);
 
 		}
 
-		addMenuItem(menu, MENU_ID_NEW, R.string.menu_new,
-				R.drawable.ic_menu_file_new);
-		addMenuItem(menu, MENU_ID_OPEN, R.string.menu_open,
-				R.drawable.ic_menu_file_open);
+        wrapMenuItem(addMenuItem(menu, MENU_ID_NEW, R.string.menu_new,
+                R.drawable.ic_menu_file_new), false);
+        wrapMenuItem(addMenuItem(menu, MENU_ID_OPEN, R.string.menu_open,
+                R.drawable.ic_menu_file_open), false);
 
-		addMenuItem(menu, MENU_ID_OPEN_CHART, R.string.menu_open_chart,
-				R.drawable.ic_menu_file_open);
+        wrapMenuItem(addMenuItem(menu, MENU_ID_OPEN_CHART, R.string.menu_open_chart,
+                R.drawable.ic_menu_file_open), false);
 
 		if (!mReadOnly)
-			addMenuItem(menu, MENU_ID_SAVE, R.string.menu_save,
-					R.drawable.ic_menu_save);
+            wrapMenuItem(addMenuItem(menu, MENU_ID_SAVE, R.string.menu_save,
+                    R.drawable.ic_menu_save), false);
 
 		// if ((!mReadOnly) && Settings.UNDO)
 		// addMenuItem(menu, MENU_ID_UNDO, R.string.menu_undo,
@@ -2793,15 +2789,15 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 		// R.drawable.ic_menu_search);
 
 		if (RecentFiles.getRecentFiles().size() > 0)
-			addMenuItem(menu, MENU_ID_OPEN_RECENT, R.string.menu_open_recent,
-					R.drawable.ic_menu_recent);
+            wrapMenuItem(addMenuItem(menu, MENU_ID_OPEN_RECENT, R.string.menu_open_recent,
+                    R.drawable.ic_menu_recent), false);
 
-		addMenuItem(menu, MENU_ID_SAVE_AS, R.string.menu_save_as, 0);
+        wrapMenuItem(addMenuItem(menu, MENU_ID_SAVE_AS, R.string.menu_save_as, 0), false);
 
-		addMenuItem(menu, MENU_ID_SETTINGS, R.string.menu_settings, 0);
+        wrapMenuItem(addMenuItem(menu, MENU_ID_SETTINGS, R.string.menu_settings, 0), false);
 
 		if (Settings.BACK_BTN_AS_UNDO && Settings.UNDO)
-			addMenuItem(menu, MENU_ID_QUIT, R.string.menu_quit, 0);
+            wrapMenuItem(addMenuItem(menu, MENU_ID_QUIT, R.string.menu_quit, 0), false);
 
 		// if ((!mReadOnly) && Settings.UNDO) {
 		// showMenuItemAsAction(menu.findItem(MENU_ID_UNDO),
@@ -2811,20 +2807,30 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 		// showMenuItemAsAction(menu.findItem(MENU_ID_SEARCH),
 		// R.drawable.ic_menu_search);
 
+        wrapMenuItem(addMenuItem(menu, MENU_ID_CANCEL, R.string.menu_cancel, 0), false);
+
 		if (isUsbConnected) {
 			showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT),
-					R.drawable.usb_connected, MenuItem.SHOW_AS_ACTION_IF_ROOM
-							| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+                    R.drawable.usb_connected_background, MenuItem.SHOW_AS_ACTION_IF_ROOM
+                            | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		} else {
 			showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT),
-					R.drawable.usb_disconnected,
-					MenuItem.SHOW_AS_ACTION_IF_ROOM
+                    R.drawable.usb_disconnected_background,
+                    MenuItem.SHOW_AS_ACTION_IF_ROOM
 							| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		}
 
 		return true;
 	}
+
+    private void wrapMenuItem(MenuItem menuItem, boolean isShow) {
+        if (isShow) {
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        } else {
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+        }
+    }
 
 	/**
 	 * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
@@ -2884,7 +2890,10 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 				Crouton.showText(this, R.string.toast_warn_no_undo, Style.INFO);
 			}
 			return true;
-		}
+
+        case MENU_ID_CANCEL:
+                return true;
+        }
 		return super.onOptionsItemSelected(item);
 	}
 
