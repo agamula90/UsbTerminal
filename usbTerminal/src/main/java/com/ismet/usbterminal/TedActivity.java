@@ -2688,6 +2688,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 	 */
 	@TargetApi(11)
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 		Bundle extras;
 		if (BuildConfig.DEBUG)
 			Log.d(TAG, "onActivityResult");

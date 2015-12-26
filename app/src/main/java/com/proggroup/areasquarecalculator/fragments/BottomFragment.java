@@ -63,9 +63,6 @@ public class BottomFragment extends Fragment {
     private List<Float> ppmPoints;
     private List<Float> avgSquarePoints;
 
-    private List<Float> ppmAutoPoints;
-    private List<Float> avgSquaresAutoPoints;
-
     private AvgPoint mAutoAvgPoint;
 
     private boolean mDoPostLoadingCalculations;
@@ -223,8 +220,6 @@ public class BottomFragment extends Fragment {
                     return;
                 } else {
                     avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
-                    ppmAutoPoints = new ArrayList<>(ppmPoints);
-                    avgSquaresAutoPoints = new ArrayList<Float>(avgSquarePoints);
                 }
 
                 float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
@@ -232,8 +227,8 @@ public class BottomFragment extends Fragment {
                 try {
                     List<Float> ppmPoints = new ArrayList<>();
                     List<Float> avgSquarePoints = new ArrayList<>();
-                    ppmPoints.addAll(ppmAutoPoints);
-                    avgSquarePoints.addAll(avgSquaresAutoPoints);
+                    ppmPoints.addAll(BottomFragment.this.ppmPoints);
+                    avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
                     value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints,
                             avgSquarePoints);
                 } catch (Exception e) {
