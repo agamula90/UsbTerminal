@@ -2762,10 +2762,10 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 		// boolean isUsbConnected = checkUsbConnection();
 		if (isUsbConnected) {
             wrapMenuItem(addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
-                    R.string.menu_disconnect, R.drawable.usb_connected_background), true);
+                    R.string.menu_disconnect, R.drawable.usb_connected), true);
         } else {
             wrapMenuItem(addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT,
-                    R.string.menu_connect, R.drawable.usb_disconnected_background), true);
+                    R.string.menu_connect, R.drawable.usb_disconnected), true);
 
 		}
 
@@ -2811,12 +2811,12 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 
 		if (isUsbConnected) {
 			showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT),
-                    R.drawable.usb_connected_background, MenuItem.SHOW_AS_ACTION_IF_ROOM
+                    R.drawable.usb_connected, MenuItem.SHOW_AS_ACTION_IF_ROOM
                             | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		} else {
 			showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT),
-                    R.drawable.usb_disconnected_background,
+                    R.drawable.usb_disconnected,
                     MenuItem.SHOW_AS_ACTION_IF_ROOM
 							| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		}
