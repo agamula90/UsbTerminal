@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
- *  
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
- *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,91 +24,91 @@ import java.util.TreeMap;
  * This class requires sorted x values
  */
 public class IndexXYMap<K, V> extends TreeMap<K, V> {
-  private final List<K> indexList = new ArrayList<K>();
+    private final List<K> indexList = new ArrayList<K>();
 
-  private double maxXDifference = 0;
+    private double maxXDifference = 0;
 
-  public IndexXYMap() {
-    super();
-  }
-
-  public V put(K key, V value) {
-    indexList.add(key);
-    updateMaxXDifference();
-    return super.put(key, value);
-  }
-
-  public V put(int index, K key, V value) {
-    indexList.add(index, key);
-    updateMaxXDifference();
-    return super.put(key, value);
-  }
-
-  private void updateMaxXDifference() {
-    if (indexList.size() < 2) {
-      maxXDifference = 0;
-      return;
+    public IndexXYMap() {
+        super();
     }
 
-    if (Math.abs((Double) indexList.get(indexList.size() - 1)
-        - (Double) indexList.get(indexList.size() - 2)) > maxXDifference)
-      maxXDifference = Math.abs((Double) indexList.get(indexList.size() - 1)
-          - (Double) indexList.get(indexList.size() - 2));
-  }
+    public V put(K key, V value) {
+        indexList.add(key);
+        updateMaxXDifference();
+        return super.put(key, value);
+    }
 
-  public double getMaxXDifference() {
-    return maxXDifference;
-  }
+    public V put(int index, K key, V value) {
+        indexList.add(index, key);
+        updateMaxXDifference();
+        return super.put(key, value);
+    }
 
-  public void clear() {
-    updateMaxXDifference();
-    super.clear();
-    indexList.clear();
-  }
+    private void updateMaxXDifference() {
+        if (indexList.size() < 2) {
+            maxXDifference = 0;
+            return;
+        }
 
-  /**
-   * Returns X-value according to the given index
-   * 
-   * @param index
-   * @return the X value
-   */
-  public K getXByIndex(int index) {
-    return indexList.get(index);
-  }
+        if (Math.abs((Double) indexList.get(indexList.size() - 1)
+                - (Double) indexList.get(indexList.size() - 2)) > maxXDifference)
+            maxXDifference = Math.abs((Double) indexList.get(indexList.size() - 1)
+                    - (Double) indexList.get(indexList.size() - 2));
+    }
 
-  /**
-   * Returns Y-value according to the given index
-   * 
-   * @param index
-   * @return the Y value
-   */
-  public V getYByIndex(int index) {
-    K key = indexList.get(index);
-    return this.get(key);
-  }
+    public double getMaxXDifference() {
+        return maxXDifference;
+    }
 
-  /**
-   * Returns XY-entry according to the given index
-   * 
-   * @param index
-   * @return the X and Y values
-   */
-  public XYEntry<K, V> getByIndex(int index) {
-    K key = indexList.get(index);
-    return new XYEntry<K, V>(key, this.get(key));
-  }
+    public void clear() {
+        updateMaxXDifference();
+        super.clear();
+        indexList.clear();
+    }
 
-  /**
-   * Removes entry from map by index
-   * 
-   * @param index
-   */
-  public XYEntry<K, V> removeByIndex(int index) {
-    K key = indexList.remove(index);
-    return new XYEntry<K, V>(key, this.remove(key));
-  }
+    /**
+     * Returns X-value according to the given index
+     *
+     * @param index
+     * @return the X value
+     */
+    public K getXByIndex(int index) {
+        return indexList.get(index);
+    }
 
-  public int getIndexForKey(K key) {
-    return Collections.binarySearch(indexList, key, null);
-  }
+    /**
+     * Returns Y-value according to the given index
+     *
+     * @param index
+     * @return the Y value
+     */
+    public V getYByIndex(int index) {
+        K key = indexList.get(index);
+        return this.get(key);
+    }
+
+    /**
+     * Returns XY-entry according to the given index
+     *
+     * @param index
+     * @return the X and Y values
+     */
+    public XYEntry<K, V> getByIndex(int index) {
+        K key = indexList.get(index);
+        return new XYEntry<K, V>(key, this.get(key));
+    }
+
+    /**
+     * Removes entry from map by index
+     *
+     * @param index
+     */
+    public XYEntry<K, V> removeByIndex(int index) {
+        K key = indexList.remove(index);
+        return new XYEntry<K, V>(key, this.remove(key));
+    }
+
+    public int getIndexForKey(K key) {
+        return Collections.binarySearch(indexList, key, null);
+    }
 }
