@@ -177,7 +177,7 @@ public abstract class AbstractBrowsingActivity extends Activity implements
             file = mList.get(i);
 
             // remove
-            if (!(isFileVisible(file) && isFileTypeAllowed(file))) {
+            if (!(isFileVisible(file) && isFileTypeAllowed(file) && isStartNameAllowed(file))) {
                 mList.remove(i);
             }
         }
@@ -235,6 +235,10 @@ public abstract class AbstractBrowsingActivity extends Activity implements
         }
 
         return allow;
+    }
+
+    private boolean isStartNameAllowed(File file) {
+        return !file.getName().startsWith(".");
     }
 
     /**

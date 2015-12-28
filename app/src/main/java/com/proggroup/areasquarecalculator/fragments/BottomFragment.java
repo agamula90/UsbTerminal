@@ -1,6 +1,7 @@
 package com.proggroup.areasquarecalculator.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -176,6 +178,8 @@ public class BottomFragment extends Fragment {
                 intent.putExtra(FileDialog.MES_SELECTION_NAMES, new String[]{"CAL_FILES",
                         "MES_Files"});
                 intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
+
+                IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
 
                 startActivityForResult(intent, MES_SELECT_FOLDER);
             }

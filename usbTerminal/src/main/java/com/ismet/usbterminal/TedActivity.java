@@ -178,8 +178,8 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
      * @see android.app.Activity#onCreate(android.os.Bundle)
      */
     protected void onCreate(Bundle savedInstanceState) {
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        //        WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         if (BuildConfig.DEBUG)
             Log.d(TAG, "onCreate");

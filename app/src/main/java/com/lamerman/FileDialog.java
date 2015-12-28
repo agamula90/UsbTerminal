@@ -2,6 +2,7 @@ package com.lamerman;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
@@ -269,6 +270,8 @@ public class FileDialog extends ListActivity {
 
         }
 
+        files = removePointFiles(files);
+
         TreeMap<String, String> dirsMap = new TreeMap<String, String>();
         TreeMap<String, String> dirsPathMap = new TreeMap<String, String>();
         TreeMap<String, String> filesMap = new TreeMap<String, String>();
@@ -321,6 +324,16 @@ public class FileDialog extends ListActivity {
         fileList.notifyDataSetChanged();
 
         setListAdapter(fileList);
+    }
+
+    private File[] removePointFiles(File files[]) {
+        List<File> fileList = new ArrayList<File>(Arrays.asList(files));
+        for (int i = fileList.size() - 1; i >= 0; i--) {
+            if(fileList.get(i).getName().startsWith(".")) {
+                fileList.remove(i);
+            }
+        }
+        return fileList.toArray(new File[fileList.size()]);
     }
 
     private void addItem(String fileName, int imageId) {
