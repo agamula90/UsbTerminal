@@ -9,4 +9,6 @@ public interface LibraryContentAttachable {
     DrawerLayout getDrawerLayout();
     int getToolbarId();
     int getLeftDrawerFragmentId();
+    int getFolderDrawable();
+    int getFileDrawable();
 }

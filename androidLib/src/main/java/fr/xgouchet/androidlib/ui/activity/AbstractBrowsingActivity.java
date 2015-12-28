@@ -10,6 +10,7 @@ import java.util.List;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
@@ -52,6 +53,7 @@ public abstract class AbstractBrowsingActivity extends Activity implements
 
         // Setup the widget
         mFilesList = (ListView) findViewById(android.R.id.list);
+        mFilesList.setDivider(new ColorDrawable());
         mFilesList.setOnItemClickListener(this);
 
         // set adpater

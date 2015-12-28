@@ -2737,6 +2737,16 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
         }
     }
 
+    @Override
+    public int getFolderDrawable() {
+        return R.drawable.folder;
+    }
+
+    @Override
+    public int getFileDrawable() {
+        return R.drawable.file;
+    }
+
     /**
      * @see android.app.Activity#onConfigurationChanged(android.content.res.Configuration)
      */

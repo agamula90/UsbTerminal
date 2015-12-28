@@ -17,6 +17,7 @@ import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
+import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -47,6 +48,9 @@ public class CalculateSquareAreaFragment extends Fragment {
                 intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
 
                 intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
+
+                IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
+
                 startActivityForResult(intent, SELECT_FILE_REQUEST_CODE);
             }
         });

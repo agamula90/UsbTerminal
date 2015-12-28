@@ -44,6 +44,7 @@ import com.proggroup.areasquarecalculator.db.SquarePointHelper;
 import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
+import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -453,6 +454,9 @@ public class CalculatePpmSimpleFragment extends Fragment implements
                 intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
 
                 intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
+
+                IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
+
                 startActivityForResult(intent, LOAD_PPM_AVG_VALUES_REQUEST_CODE);
             }
         });

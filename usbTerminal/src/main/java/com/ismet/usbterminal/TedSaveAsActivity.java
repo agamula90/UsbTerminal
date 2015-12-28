@@ -7,11 +7,14 @@ import java.io.File;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 
 import fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity;
 import fr.xgouchet.texteditor.common.Constants;
@@ -70,6 +73,8 @@ public class TedSaveAsActivity extends AbstractBrowsingActivity implements
      * @see fr.xgouchet.androidlib.ui.activity.BrowserActivity#onFolderClick(java.io.File)
      */
     protected boolean onFolderClick(File folder) {
+        RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder.getParentFile(),
+                false);
         return true;
     }
 
@@ -124,4 +129,21 @@ public class TedSaveAsActivity extends AbstractBrowsingActivity implements
     /** */
     protected Drawable mLocked;
 
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            // navigate to parent folder
+            File parent = mCurrentFolder.getParentFile();
+
+            if(RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder,
+                    true)) {
+                return true;
+            } else if ((parent != null) && (parent.exists())) {
+                fillFolderView(parent);
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
+    }
 }

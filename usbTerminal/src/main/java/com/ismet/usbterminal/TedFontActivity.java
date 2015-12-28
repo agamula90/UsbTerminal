@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 
+import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
+
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
 import fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity;
@@ -52,6 +54,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements
      * @see fr.xgouchet.androidlib.ui.activity.BrowsingActivity#onFolderClick(java.io.File)
      */
     protected boolean onFolderClick(File folder) {
+        RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder, false);
         return true;
     }
 
@@ -69,7 +72,11 @@ public class TedFontActivity extends AbstractBrowsingActivity implements
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
             // navigate to parent folder
             File parent = mCurrentFolder.getParentFile();
-            if ((parent != null) && (parent.exists())) {
+
+            if(RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder,
+                    true)) {
+                return true;
+            } else if ((parent != null) && (parent.exists())) {
                 fillFolderView(parent);
                 return true;
             }

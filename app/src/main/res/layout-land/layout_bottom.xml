@@ -22,7 +22,7 @@
 
             android:layout_width="wrap_content"
             android:text="Graph"
-            android:visibility="gone"/>
+            android:visibility="visible"/>
 
         <Button
             style="@style/ButtonDefaultStyle"
@@ -61,7 +61,8 @@
                     android:digits="0123456789."
                     android:imeOptions="actionDone"
                     android:inputType="number"
-                    android:singleLine="true"/>
+                    android:singleLine="true"
+                    android:gravity="center"/>
             </LinearLayout>
 
             <LinearLayout

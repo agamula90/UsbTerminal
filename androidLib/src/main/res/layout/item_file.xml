@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:orientation="horizontal"
-    android:padding="@dimen/list_item_pading" >
+    android:padding="@dimen/list_item_pading"
+    android:background="@android:color/black">
 
     <TextView
         android:id="@id/textFileName"
@@ -15,7 +16,8 @@
         android:gravity="center_vertical"
         android:text=""
         android:textStyle="bold"
-        android:typeface="sans" >
+        android:typeface="sans"
+        android:textColor="@android:color/white">
     </TextView>
 
 </LinearLayout>

@@ -20,6 +20,7 @@
         android:layout_alignTop="@+id/fdrowimage"
         android:layout_toRightOf="@+id/fdrowimage"
         android:gravity="center_vertical"
-        android:textSize="23dp" />
+        android:textSize="23dp"
+        android:textColor="@android:color/white"/>
 
 </RelativeLayout>

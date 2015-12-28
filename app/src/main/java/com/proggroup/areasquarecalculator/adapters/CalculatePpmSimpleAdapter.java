@@ -36,6 +36,7 @@ import com.proggroup.areasquarecalculator.db.PointHelper;
 import com.proggroup.areasquarecalculator.db.SquarePointHelper;
 import com.proggroup.areasquarecalculator.fragments.CalculatePpmSimpleFragment;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
+import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 import com.proggroup.squarecalculations.DocParser;
 
@@ -363,6 +364,9 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
                         intent.putExtra(FileDialog.ROOT_PATH, mesFolder
                                 .getAbsolutePath());
                         intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
+
+                        IntentFolderWrapUtils.wrapFolderForDrawables(fragment.getActivity(),
+                                 intent);
 
                         intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
                         fragment.startActivityForResult(intent, tag);

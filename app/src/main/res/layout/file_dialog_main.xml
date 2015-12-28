@@ -4,7 +4,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@android:color/black">
 
     <LinearLayout
         android:id="@+id/fdLinearLayoutList"
@@ -58,12 +59,14 @@
                 android:id="@+id/textViewFilename"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/file_name"/>
+                android:text="@string/file_name"
+                android:textColor="@android:color/white"/>
 
             <EditText
                 android:id="@+id/fdEditTextFile"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
                 android:text=""></EditText>
 
             <LinearLayout
@@ -98,18 +101,21 @@
         <TextView
             android:id="@+id/path"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"/>
 
         <ListView
             android:id="@android:id/list"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"/>
+            android:layout_height="fill_parent"
+            />
 
         <TextView
             android:id="@android:id/empty"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:text="@string/no_data"/>
+            android:text="@string/no_data"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
 
 

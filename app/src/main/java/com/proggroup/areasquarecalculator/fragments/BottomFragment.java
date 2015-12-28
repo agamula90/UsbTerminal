@@ -31,6 +31,7 @@ import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
+import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -108,15 +109,24 @@ public class BottomFragment extends Fragment {
                         .getAbsolutePath());
                 intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
 
+                IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
+
                 intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
                 startActivityForResult(intent, LOAD_PPM_AVG_VALUES_REQUEST_CODE);
             }
         });
 
         graph1.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 Activity activity = getActivity();
+
+                if (ppmPoints.isEmpty()) {
+                    Toast.makeText(getActivity(), "Please load CAL_Curve", Toast
+                            .LENGTH_LONG).show();
+                    return;
+                }
 
                 List<Float> ppmPoints = new ArrayList<>();
                 List<Float> avgSquarePoints = new ArrayList<>();
@@ -265,18 +275,16 @@ public class BottomFragment extends Fragment {
         tv.setText("");
         tv.setTextColor(Color.WHITE);
         avgPointsLayout.addView(tv);
-        graph1.setVisibility(View.GONE);
 
         InterpolationCalculator interpolationCalculator = InterpolationCalculator.getInstance();
         if (interpolationCalculator.getPpmPoints() != null) {
             ppmPoints = interpolationCalculator.getPpmPoints();
             avgSquarePoints = interpolationCalculator.getAvgSquarePoints();
             fillAvgPointsLayout();
-            graph1.setVisibility(View.VISIBLE);
+        } else {
+            ppmPoints = new ArrayList<>();
+            avgSquarePoints = new ArrayList<>();
         }
-
-        ppmPoints = new ArrayList<>();
-        avgSquarePoints = new ArrayList<>();
 
         boolean wasSaved = sBundle.getBoolean(IS_SAVED, false);
 
@@ -302,7 +310,7 @@ public class BottomFragment extends Fragment {
      */
     private void fillAvgPointsLayout() {
 
-        if(!ppmPoints.isEmpty()) {
+        if (!ppmPoints.isEmpty()) {
             avgPointsLayout.removeAllViews();
 
             for (int i = 0; i < ppmPoints.size(); i++) {
@@ -335,7 +343,6 @@ public class BottomFragment extends Fragment {
                         InterpolationCalculator.getInstance();
                 interpolationCalculator.setAvgSquarePoints(avgSquarePoints);
                 interpolationCalculator.setPpmPoints(ppmPoints);
-                graph1.setVisibility(View.VISIBLE);
 
                 if (mDoPostLoadingCalculations) {
                     mUrlWhenAutoLoading = mUrl;
@@ -525,7 +532,7 @@ public class BottomFragment extends Fragment {
                 case MES_SELECT_FOLDER:
                     mDoPostLoadingCalculations = true;
                     LoadGraphDataTask task = new LoadGraphDataTask(getActivity(),
-                             mUrlWhenAutoLoading, onGraphDataLoadedCallback);
+                            mUrlWhenAutoLoading, onGraphDataLoadedCallback);
                     task.setMesFolder(data.getStringExtra(FileDialog.RESULT_PATH));
                     task.execute();
                     break;

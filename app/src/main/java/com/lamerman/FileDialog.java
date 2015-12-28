@@ -83,6 +83,10 @@ public class FileDialog extends ListActivity {
      */
     public static final String CAN_SELECT_DIR = "CAN_SELECT_DIR";
 
+    public static final String FOLDER_DRAWABLE_RESOURCE = "folder_res";
+
+    public static final String FILE_DRAWABLE_RESOURCE = "file_res";
+
     private List<String> path = null;
     private TextView myPath;
     private EditText mFileName;
@@ -110,6 +114,9 @@ public class FileDialog extends ListActivity {
 
     private Intent mInputIntent;
 
+    private int mFolderDrawable;
+    private int mFileDrawable;
+
     /**
      * Called when the activity is first created. Configura todos os parametros
      * de entrada e das VIEWS..
@@ -119,6 +126,10 @@ public class FileDialog extends ListActivity {
         super.onCreate(savedInstanceState);
 
         mInputIntent = getIntent();
+
+        mFolderDrawable = mInputIntent.getIntExtra(FOLDER_DRAWABLE_RESOURCE, 0);
+
+        mFileDrawable = mInputIntent.getIntExtra(FILE_DRAWABLE_RESOURCE, 0);
 
         setResult(RESULT_CANCELED, mInputIntent);
 
@@ -248,11 +259,11 @@ public class FileDialog extends ListActivity {
         if (!currentPath.equals(ROOT)) {
 
             item.add(ROOT);
-            addItem(ROOT, R.drawable.folder);
+            addItem(ROOT, mFolderDrawable);
             path.add(ROOT);
 
             item.add("../");
-            addItem("../", R.drawable.folder);
+            addItem("../", mFolderDrawable);
             path.add(f.getParent());
             parentPath = f.getParent();
 
@@ -300,11 +311,11 @@ public class FileDialog extends ListActivity {
                 ITEM_KEY, ITEM_IMAGE}, new int[]{R.id.fdrowtext, R.id.fdrowimage});
 
         for (String dir : dirsMap.tailMap("").values()) {
-            addItem(dir, R.drawable.folder);
+            addItem(dir, mFolderDrawable);
         }
 
         for (String file : filesMap.tailMap("").values()) {
-            addItem(file, R.drawable.file);
+            addItem(file, mFileDrawable);
         }
 
         fileList.notifyDataSetChanged();
