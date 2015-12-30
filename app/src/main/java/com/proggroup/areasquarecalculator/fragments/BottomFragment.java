@@ -73,7 +73,6 @@ public class BottomFragment extends Fragment {
     private AvgPoint mAutoAvgPoint;
 
     private boolean mDoPostLoadingCalculations;
-    private String mUrlWhenAutoLoading;
 
     private LoadGraphDataTask.OnGraphDataLoadedCallback onGraphDataLoadedCallback;
     private View.OnClickListener mRealCalculationsCalculateAutoListener;
@@ -335,7 +334,24 @@ public class BottomFragment extends Fragment {
         onGraphDataLoadedCallback = new LoadGraphDataTask.OnGraphDataLoadedCallback() {
             @Override
             public void onGraphDataLoaded(List<Float> ppmValues, List<Float> avgSquareValues,
-                                          boolean isAutoLoading, String mMesFolder, String mUrl) {
+                                          String mMesFolder, String mUrl) {
+
+                if(mMesFolder != null) {
+                    File mMesFolderFile = new File(mMesFolder);
+                    final boolean isCorrectFilesSelected;
+                    if (mMesFolderFile.isDirectory()) {
+                        isCorrectFilesSelected = handleDirectoryMesSelected
+                                (searchCsvFilesInside(mMesFolderFile));
+                    } else {
+                        isCorrectFilesSelected = handleCsvFileMesSelected(mMesFolderFile);
+                    }
+                    if (!isCorrectFilesSelected) {
+                        Toast.makeText(getActivity(), "Wrong files for calculating", Toast
+                                .LENGTH_LONG).show();
+                    }
+                    return;
+                }
+
                 ppmPoints = ppmValues;
                 avgSquarePoints = avgSquareValues;
                 fillAvgPointsLayout();
@@ -349,32 +365,10 @@ public class BottomFragment extends Fragment {
                 interpolationCalculator.setPpmPoints(ppmPoints);
 
                 if (mDoPostLoadingCalculations) {
-                    mUrlWhenAutoLoading = mUrl;
-                    File mesFile = null;
-
-                    if (mMesFolder == null) {
-                        mesFile = CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
+                    File mesFile =  CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
                                 .getParentFile());
-                    }
-                    if (mMesFolder != null || (mesFile != null && CalculatePpmSimpleFragment
-                            .findMesFile(mesFile) != null)) {
-                        if (mMesFolder != null) {
-                            File mMesFolderFile = new File(mMesFolder);
-
-                            final boolean isCorrectFilesSelected;
-                            if (mMesFolderFile.isDirectory()) {
-                                isCorrectFilesSelected = handleDirectoryMesSelected
-                                        (searchCsvFilesInside(mMesFolderFile));
-                            } else {
-                                isCorrectFilesSelected = handleCsvFileMesSelected(mMesFolderFile);
-                            }
-                            if (!isCorrectFilesSelected) {
-                                Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-                                        .LENGTH_LONG).show();
-                            }
-                            return;
-                        }
-
+                    if (mesFile != null && CalculatePpmSimpleFragment.findMesFile(mesFile) !=
+                             null) {
                         mesFile = CalculatePpmSimpleFragment.findMesFile(mesFile);
                         File mesFiles[] = mesFile.listFiles();
                         if (mesFiles == null && mesFile.getParentFile() != null) {
@@ -530,15 +524,14 @@ public class BottomFragment extends Fragment {
         if (resultCode == Activity.RESULT_OK) {
             switch (requestCode) {
                 case LOAD_PPM_AVG_VALUES_REQUEST_CODE:
+                    mDoPostLoadingCalculations = false;
                     new LoadGraphDataTask(getActivity(), data.getStringExtra(FileDialog
                             .RESULT_PATH), onGraphDataLoadedCallback).execute();
                     break;
                 case MES_SELECT_FOLDER:
                     mDoPostLoadingCalculations = true;
-                    LoadGraphDataTask task = new LoadGraphDataTask(getActivity(),
-                            mUrlWhenAutoLoading, onGraphDataLoadedCallback);
-                    task.setMesFolder(data.getStringExtra(FileDialog.RESULT_PATH));
-                    task.execute();
+                    onGraphDataLoadedCallback.onGraphDataLoaded(null, null, data
+                            .getStringExtra(FileDialog.RESULT_PATH), null);
                     break;
             }
         }

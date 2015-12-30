@@ -70,7 +70,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
 
         if(onGraphDataLoadedCallbackWeak != null && onGraphDataLoadedCallbackWeak.get() != null) {
             onGraphDataLoadedCallbackWeak.get().onGraphDataLoaded(res.first, res.second,
-                    mesFolder != null, mesFolder, getUrl());
+                     mesFolder, getUrl());
         }
     }
 
@@ -90,7 +90,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
     }
 
     public interface OnGraphDataLoadedCallback {
-        void onGraphDataLoaded(List<Float> ppmValues, List<Float> avgSquareValues, boolean
-                isAutoLoading, String mesFolder, String url);
+        void onGraphDataLoaded(List<Float> ppmValues, List<Float> avgSquareValues, String
+                 mesFolder, String url);
     }
 }
