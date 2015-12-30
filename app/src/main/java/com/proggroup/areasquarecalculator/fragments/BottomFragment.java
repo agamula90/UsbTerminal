@@ -330,6 +330,8 @@ public class BottomFragment extends Fragment {
         calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
     }
 
+    //load curve if press on folder -> then create calibration curve, as on auto load button.
+
     private void initGraphDataLoadedCallback() {
         onGraphDataLoadedCallback = new LoadGraphDataTask.OnGraphDataLoadedCallback() {
             @Override
