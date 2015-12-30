@@ -44,6 +44,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.RelativeLayout;
@@ -140,6 +141,11 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
     @Override
     public int getLeftDrawerFragmentId() {
         return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED;
+    }
+
+    @Override
+    public FrameLayout getFrameLayout() {
+        return (FrameLayout) findViewById(R.id.frame_container);
     }
 
     public static class MyHandler extends Handler {

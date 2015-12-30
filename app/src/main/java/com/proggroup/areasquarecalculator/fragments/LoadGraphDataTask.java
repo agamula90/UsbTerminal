@@ -3,9 +3,12 @@ package com.proggroup.areasquarecalculator.fragments;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Pair;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.proggroup.areasquarecalculator.UrlChangeable;
+import com.proggroup.areasquarecalculator.api.UrlChangeable;
+import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 
 import java.lang.ref.WeakReference;
@@ -20,9 +23,13 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
     private String dataPath;
     private final WeakReference<Activity> activityWeak;
     private final WeakReference<OnGraphDataLoadedCallback> onGraphDataLoadedCallbackWeak;
+    private final FrameLayout mFrameLayout;
+    private ProgressBar mProgressBar;
 
-    public LoadGraphDataTask(Activity activity, String dataPath, OnGraphDataLoadedCallback
+    public LoadGraphDataTask(Activity activity, FrameLayout frameLayout, String dataPath,
+                             OnGraphDataLoadedCallback
              onGraphDataLoadedCallback) {
+        this.mFrameLayout = frameLayout;
         this.dataPath = dataPath;
         this.activityWeak = new WeakReference<>(activity);
         if(onGraphDataLoadedCallback != null) {
@@ -30,6 +37,16 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
         } else {
             this.onGraphDataLoadedCallbackWeak = null;
         }
+    }
+
+    @Override
+    public FrameLayout getFrameLayout() {
+        return mFrameLayout;
+    }
+
+    @Override
+    public void setProgressBar(ProgressBar progressBar) {
+        this.mProgressBar = progressBar;
     }
 
     /**
@@ -60,6 +77,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
     @Override
     protected void onPostExecute(Pair<List<Float>, List<Float>> res) {
         super.onPostExecute(res);
+        CreateCalibrationCurveForAutoTask.detachProgress(mProgressBar);
         if (res == null) {
             if(activityWeak.get() != null) {
                 Toast.makeText(activityWeak.get(), "You select wrong file", Toast

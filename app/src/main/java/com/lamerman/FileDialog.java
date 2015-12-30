@@ -1,12 +1,5 @@
 package com.lamerman;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
@@ -21,12 +14,23 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.proggroup.areasquarecalculator.R;
+import com.proggroup.areasquarecalculator.api.UrlChangeable;
+import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 
 /**
  * Activity para escolha de arquivos/diretorios.
@@ -88,6 +92,8 @@ public class FileDialog extends ListActivity {
 
     public static final String FILE_DRAWABLE_RESOURCE = "file_res";
 
+    public static final String FOLDER_SELECT_PROMPT = "folder_confirm";
+
     private List<String> path = null;
     private TextView myPath;
     private EditText mFileName;
@@ -118,6 +124,8 @@ public class FileDialog extends ListActivity {
     private int mFolderDrawable;
     private int mFileDrawable;
 
+    private boolean mIsPromptWhenSelectDirectory;
+
     /**
      * Called when the activity is first created. Configura todos os parametros
      * de entrada e das VIEWS..
@@ -131,6 +139,8 @@ public class FileDialog extends ListActivity {
         mFolderDrawable = mInputIntent.getIntExtra(FOLDER_DRAWABLE_RESOURCE, 0);
 
         mFileDrawable = mInputIntent.getIntExtra(FILE_DRAWABLE_RESOURCE, 0);
+
+        mIsPromptWhenSelectDirectory = mInputIntent.getBooleanExtra(FOLDER_SELECT_PROMPT, false);
 
         setResult(RESULT_CANCELED, mInputIntent);
 
@@ -147,9 +157,87 @@ public class FileDialog extends ListActivity {
             @Override
             public void onClick(View v) {
                 if (selectedFile != null) {
-                    mInputIntent.putExtra(RESULT_PATH, selectedFile.getPath());
-                    setResult(RESULT_OK, mInputIntent);
-                    finish();
+                    if (mIsPromptWhenSelectDirectory && selectedFile.isDirectory()) {
+                        android.support.v7.app.AlertDialog dialog = new android.support.v7.app
+                                .AlertDialog.Builder(FileDialog.this).setNeutralButton
+                                (getResources()
+                                        .getString
+                                                (R.string.no), new DialogInterface
+                                        .OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                }).setPositiveButton(getResources().getString(R.string
+                                .yes), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(final DialogInterface dialog, int which) {
+                                CreateCalibrationCurveForAutoTask task = new
+                                        CreateCalibrationCurveForAutoTask(new UrlChangeable() {
+                                    @Override
+                                    public void setUrl(String url) {
+
+                                    }
+
+                                    @Override
+                                    public String getUrl() {
+                                        return null;
+                                    }
+
+                                    @Override
+                                    public void execute() {
+
+                                    }
+
+                                    @Override
+                                    public FrameLayout getFrameLayout() {
+                                        return (FrameLayout) findViewById(R.id.main_container);
+                                    }
+
+                                    @Override
+                                    public void setProgressBar(ProgressBar progressBar) {
+
+                                    }
+                                }, FileDialog.this, true);
+                                task.setIgnoreExistingCurves(true);
+                                task.setCalibrationCurveCreatedListener(new CreateCalibrationCurveForAutoTask.CalibrationCurveCreatedListener() {
+                                    @Override
+                                    public void onCalibrationCurveCreated(File file) {
+                                        handleFileSelected(file);
+                                    }
+                                });
+                                dialog.dismiss();
+                                task.execute(selectedFile);
+                            }
+                        }).setMessage(getResources().getString(R.string.do_you_want_to_create_curve))
+                                .create();
+                        dialog.show();
+                        View decorView = dialog.getWindow().getDecorView();
+                        ((TextView) decorView.findViewById(android.R.id.message)).setGravity(Gravity
+                                .CENTER);
+
+                        Button button3 = ((Button) decorView.findViewById(android.R.id.button3));
+                        button3.setTextColor(Color.BLACK);
+                        if (Build.VERSION.SDK_INT >= 16) {
+                            button3.setBackground(getResources().getDrawable(R.drawable
+                                    .button_drawable));
+                        } else {
+                            button3.setBackgroundDrawable(getResources().getDrawable(R.drawable
+                                    .button_drawable));
+                        }
+                        Button button1 = ((Button) decorView.findViewById(android.R.id.button1));
+                        button1.setTextColor(Color.BLACK);
+                        if (Build.VERSION.SDK_INT >= 16) {
+                            button1.setBackground(getResources().getDrawable(R.drawable
+                                    .button_drawable));
+                        } else {
+                            button1.setBackgroundDrawable(getResources().getDrawable(R.drawable
+                                    .button_drawable));
+                        }
+                    } else {
+                        handleFileSelected(selectedFile);
+                    }
                 }
             }
         });
@@ -219,6 +307,12 @@ public class FileDialog extends ListActivity {
             selectButton.setEnabled(true);
         }
         getDir(startPath);
+    }
+
+    private void handleFileSelected(File file) {
+        mInputIntent.putExtra(RESULT_PATH, file.getAbsolutePath());
+        setResult(RESULT_OK, mInputIntent);
+        finish();
     }
 
     private void getDir(String dirPath) {
@@ -381,10 +475,8 @@ public class FileDialog extends ListActivity {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    mInputIntent.putExtra(RESULT_PATH, file.getAbsolutePath());
-                    setResult(RESULT_OK, mInputIntent);
                     dialog.dismiss();
-                    finish();
+                    handleFileSelected(file);
                 }
             }).setPositiveButton(getResources().getString(R.string
                     .select_file_for_calculations), new DialogInterface.OnClickListener() {

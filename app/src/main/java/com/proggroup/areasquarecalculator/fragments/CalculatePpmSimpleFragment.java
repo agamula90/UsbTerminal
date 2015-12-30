@@ -20,8 +20,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -710,6 +712,16 @@ public class CalculatePpmSimpleFragment extends Fragment implements
         public void setUrl(String mUrl) {
             super.setUrl(mUrl);
             this.mUrl = mUrl;
+        }
+
+        @Override
+        public FrameLayout getFrameLayout() {
+            return null;
+        }
+
+        @Override
+        public void setProgressBar(ProgressBar progressBar) {
+
         }
 
         public void setmMesFolder(String mMesFolder) {

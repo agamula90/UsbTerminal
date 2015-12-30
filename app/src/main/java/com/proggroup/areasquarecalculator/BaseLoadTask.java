@@ -2,7 +2,9 @@ package com.proggroup.areasquarecalculator;
 
 import android.os.AsyncTask;
 
-public abstract class BaseLoadTask extends AsyncTask<Void, Void, Boolean> implements UrlChangeable{
+import com.proggroup.areasquarecalculator.api.UrlChangeable;
+
+public abstract class BaseLoadTask extends AsyncTask<Void, Void, Boolean> implements UrlChangeable {
     private String mUrl;
 
     public BaseLoadTask(String mUrl) {

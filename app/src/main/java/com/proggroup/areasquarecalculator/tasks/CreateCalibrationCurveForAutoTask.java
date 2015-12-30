@@ -4,16 +4,14 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.proggroup.areasquarecalculator.BaseLoadTask;
-import com.proggroup.areasquarecalculator.UrlChangeable;
+import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
-import com.proggroup.areasquarecalculator.utils.AutoCalculations;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
@@ -30,6 +28,8 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
     private final Context context;
     private ProgressBar progressBar;
     private final boolean is0Connect;
+    private boolean mIsIgnoreExistingCurves;
+    private CalibrationCurveCreatedListener mCalibrationCurveCreatedListener;
 
     public CreateCalibrationCurveForAutoTask(UrlChangeable task, Context context, boolean
             is0Connect) {
@@ -38,13 +38,20 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
         this.is0Connect = is0Connect;
     }
 
+    public void setIgnoreExistingCurves(boolean mIsIgnoreExistingCurves) {
+        this.mIsIgnoreExistingCurves = mIsIgnoreExistingCurves;
+    }
+
+    public void setCalibrationCurveCreatedListener(CalibrationCurveCreatedListener
+                                                           mCalibrationCurveCreatedListener) {
+        this.mCalibrationCurveCreatedListener = mCalibrationCurveCreatedListener;
+    }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        if (task != null && task instanceof AutoCalculations.LoadPpmAvgValuesTask) {
-            AutoCalculations.LoadPpmAvgValuesTask autoTask =
-                    ((AutoCalculations.LoadPpmAvgValuesTask) task);
-            FrameLayout frameLayout = autoTask.getFrameLayout();
+        if (task != null && task.getFrameLayout() != null) {
+            FrameLayout frameLayout = task.getFrameLayout();
             progressBar = new ProgressBar(frameLayout.getContext(), null,
                     android.R.attr.progressBarStyleHorizontal);
             progressBar.setIndeterminate(false);
@@ -54,6 +61,8 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
                     .LayoutParams.WRAP_CONTENT);
             params.gravity = Gravity.CENTER;
             frameLayout.addView(progressBar, params);
+        } else {
+            progressBar = null;
         }
     }
 
@@ -78,8 +87,13 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
         List<File> ppmFiles = new ArrayList<>(filesInside.length);
         for (File file : filesInside) {
             if (file.isDirectory()) {
-                if (file.getName().contains(Constants.CALIBRATION_CURVE_NAME)) {
-                    folderWithCurve = file;
+                if (!mIsIgnoreExistingCurves) {
+                    if (file.getName().contains(Constants.CALIBRATION_CURVE_NAME)) {
+                        folderWithCurve = file;
+                        break;
+                    }
+                } else {
+                    continue;
                 }
             } else {
                 int index = detectPpmFromName(file);
@@ -104,15 +118,15 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
                         } else if (f.lastModified() > newestFile.lastModified()) {
                             newestFile = f;
                         }
+                        }
                     }
-                }
 
-                if(newestFile != null) {
+                if (newestFile != null) {
                     publishProgress(100);
                     return newestFile;
+                } else {
+                    deleteAllInside(folderWithCurve);
                 }
-            } else {
-                deleteAllInside(folderWithCurve);
             }
         } else {
             folderWithCurve = new File(folderWithCalibrationFiles, Constants
@@ -245,14 +259,31 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
     protected void onPostExecute(File file) {
         super.onPostExecute(file);
         if(file != null) {
-            if (progressBar != null) {
-                ((AutoCalculations.LoadPpmAvgValuesTask) task).setProgressBar(progressBar);
-            }
 
-            task.setUrl(file.getAbsolutePath());
-            task.execute();
+            if (mCalibrationCurveCreatedListener != null) {
+                detachProgress(progressBar);
+                mCalibrationCurveCreatedListener.onCalibrationCurveCreated(file);
+            } else {
+                if (progressBar != null) {
+                    task.setProgressBar(progressBar);
+                }
+
+                task.setUrl(file.getAbsolutePath());
+                task.execute();
+            }
         } else {
             Toast.makeText(context, "There is no curve values", Toast.LENGTH_LONG).show();
         }
+    }
+
+    public static void detachProgress(ProgressBar progressBar) {
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+            ((ViewGroup) progressBar.getParent()).removeView(progressBar);
+        }
+    }
+
+    public interface CalibrationCurveCreatedListener {
+        void onCalibrationCurveCreated(File calibrationCurveFile);
     }
 }

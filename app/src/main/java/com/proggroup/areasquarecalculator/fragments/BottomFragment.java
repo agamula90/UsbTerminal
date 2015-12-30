@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -113,6 +114,9 @@ public class BottomFragment extends Fragment {
                 IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
 
                 intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
+                intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
+                intent.putExtra(FileDialog.FOLDER_SELECT_PROMPT, true);
+
                 startActivityForResult(intent, LOAD_PPM_AVG_VALUES_REQUEST_CODE);
             }
         });
@@ -223,7 +227,14 @@ public class BottomFragment extends Fragment {
                 mDoPostLoadingCalculations = true;
                 File calFolder = CalculatePpmSimpleFragment.findCalFolder(Constants.BASE_DIRECTORY);
 
-                new CreateCalibrationCurveForAutoTask(new LoadGraphDataTask(getActivity(), null,
+                Activity activity = getActivity();
+                FrameLayout frameLayout = null;
+
+                if(activity instanceof LibraryContentAttachable) {
+                    frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
+                }
+
+                new CreateCalibrationCurveForAutoTask(new LoadGraphDataTask(activity, frameLayout, null,
                         onGraphDataLoadedCallback), getActivity(), true).execute(calFolder);
             }
         });
@@ -527,7 +538,12 @@ public class BottomFragment extends Fragment {
             switch (requestCode) {
                 case LOAD_PPM_AVG_VALUES_REQUEST_CODE:
                     mDoPostLoadingCalculations = false;
-                    new LoadGraphDataTask(getActivity(), data.getStringExtra(FileDialog
+                    Activity activity = getActivity();
+                    FrameLayout frameLayout = null;
+                    if(activity instanceof LibraryContentAttachable) {
+                        frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
+                    }
+                    new LoadGraphDataTask(getActivity(), frameLayout, data.getStringExtra(FileDialog
                             .RESULT_PATH), onGraphDataLoadedCallback).execute();
                     break;
                 case MES_SELECT_FOLDER:

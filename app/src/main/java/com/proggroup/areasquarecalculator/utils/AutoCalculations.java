@@ -38,7 +38,7 @@ public class AutoCalculations {
         if (calFolder != null) {
             Context context = frameLayout.getContext();
             new CreateCalibrationCurveForAutoTask(new LoadPpmAvgValuesTask(null, frameLayout,
-                    context, editText, null), context, is0Connect).execute(calFolder);
+                    context, editText), context, is0Connect).execute(calFolder);
         } else {
             Toast.makeText(frameLayout.getContext(), "Please make CAL directory to find ppm", Toast
                     .LENGTH_SHORT).show();
@@ -55,20 +55,20 @@ public class AutoCalculations {
         private final FrameLayout frameLayout;
 
         public LoadPpmAvgValuesTask(String mUrl, FrameLayout frameLayout, Context context,
-                                    EditText editText, ProgressBar
-                progressBar) {
+                                    EditText editText) {
             super(mUrl);
             this.mUrl = mUrl;
             this.frameLayout = frameLayout;
             this.context = context;
             this.editText = editText;
-            this.progressBar = progressBar;
         }
 
+        @Override
         public FrameLayout getFrameLayout() {
             return frameLayout;
         }
 
+        @Override
         public void setProgressBar(ProgressBar progressBar) {
             this.progressBar = progressBar;
         }
@@ -102,8 +102,7 @@ public class AutoCalculations {
                 return;
             }
 
-            progressBar.setVisibility(View.GONE);
-            ((ViewGroup)progressBar.getParent()).removeView(progressBar);
+            CreateCalibrationCurveForAutoTask.detachProgress(progressBar);
 
             File mesFile = CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
                     .getParentFile());
