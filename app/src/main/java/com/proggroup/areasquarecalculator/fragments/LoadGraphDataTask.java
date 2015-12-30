@@ -3,6 +3,7 @@ package com.proggroup.areasquarecalculator.fragments;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Pair;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -24,7 +25,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
     private final WeakReference<Activity> activityWeak;
     private final WeakReference<OnGraphDataLoadedCallback> onGraphDataLoadedCallbackWeak;
     private final FrameLayout mFrameLayout;
-    private ProgressBar mProgressBar;
+    private View mProgressBar;
 
     public LoadGraphDataTask(Activity activity, FrameLayout frameLayout, String dataPath,
                              OnGraphDataLoadedCallback
@@ -45,7 +46,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
     }
 
     @Override
-    public void setProgressBar(ProgressBar progressBar) {
+    public void setProgressBar(View progressBar) {
         this.mProgressBar = progressBar;
     }
 

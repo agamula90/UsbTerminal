@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -14,9 +16,11 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -99,6 +103,21 @@ public class BottomFragment extends Fragment {
         resultPpmLoaded = (TextView) view.findViewById(R.id.result_ppm_loaded);
         mClearRow2 = view.findViewById(R.id.clear_row);
         avgPointsLayout = (LinearLayout) view.findViewById(R.id.avg_points);
+
+        avgValueLoaded.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if(v.isFocused()) {
+                    v.clearFocus();
+                    v.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            v.requestFocus();
+                        }
+                    }, 200);
+                }
+            }
+        });
 
         loadPpmCurve.setOnClickListener(new View.OnClickListener() {
             @Override

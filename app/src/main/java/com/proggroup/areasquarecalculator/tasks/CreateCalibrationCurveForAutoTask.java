@@ -1,15 +1,19 @@
 package com.proggroup.areasquarecalculator.tasks;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
@@ -26,7 +30,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
     private SparseArray<List<File>> mCurveFiles;
     private final UrlChangeable task;
     private final Context context;
-    private ProgressBar progressBar;
+    private View progressLayout;
     private final boolean is0Connect;
     private boolean mIsIgnoreExistingCurves;
     private CalibrationCurveCreatedListener mCalibrationCurveCreatedListener;
@@ -52,24 +56,54 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
         super.onPreExecute();
         if (task != null && task.getFrameLayout() != null) {
             FrameLayout frameLayout = task.getFrameLayout();
-            progressBar = new ProgressBar(frameLayout.getContext(), null,
+
+            LinearLayout wrapLayout = new LinearLayout(frameLayout.getContext());
+            wrapLayout.setOrientation(LinearLayout.VERTICAL);
+            wrapLayout.setBackgroundColor(Color.WHITE);
+
+            TextView textView = new TextView(frameLayout.getContext());
+            textView.setText(frameLayout.getContext().getResources().getString(R.string
+                    .curve_is_creating));
+            textView.setSingleLine();
+
+            LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(ViewGroup
+                    .LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            textParams.gravity = Gravity.CENTER;
+            textParams.leftMargin = textParams.rightMargin = textParams.topMargin = textParams.bottomMargin =
+                    (int) frameLayout.getResources().getDimension(R.dimen.progress_margin);
+
+            wrapLayout.addView(textView, textParams);
+
+            ProgressBar progressBar = new ProgressBar(frameLayout.getContext(), null,
                     android.R.attr.progressBarStyleHorizontal);
             progressBar.setIndeterminate(false);
             progressBar.setMax(100);
             progressBar.setProgress(0);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(300, ViewGroup
+            progressBar.setId(android.R.id.progress);
+
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup
+                     .LayoutParams.MATCH_PARENT, ViewGroup
+                    .LayoutParams.WRAP_CONTENT);
+            layoutParams.gravity = Gravity.CENTER;
+            layoutParams.leftMargin = layoutParams.rightMargin = layoutParams.topMargin = layoutParams.bottomMargin =
+                    (int) frameLayout.getResources().getDimension(R.dimen.progress_margin);
+            wrapLayout.addView(progressBar, layoutParams);
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup
                     .LayoutParams.WRAP_CONTENT);
             params.gravity = Gravity.CENTER;
-            frameLayout.addView(progressBar, params);
+            frameLayout.addView(wrapLayout, params);
+
+            this.progressLayout = wrapLayout;
         } else {
-            progressBar = null;
+            progressLayout = null;
         }
     }
 
     @Override
     protected void onProgressUpdate(Integer... values) {
-        if (progressBar != null) {
-            progressBar.setProgress(values[0]);
+        if (progressLayout != null) {
+            ((ProgressBar) progressLayout.findViewById(android.R.id.progress)).setProgress(values[0]);
         }
     }
 
@@ -164,7 +198,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 
                 countOperationsProcessed++;
 
-                if (progressBar != null) {
+                if (progressLayout != null) {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
@@ -261,11 +295,11 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
         if(file != null) {
 
             if (mCalibrationCurveCreatedListener != null) {
-                detachProgress(progressBar);
+                detachProgress(progressLayout);
                 mCalibrationCurveCreatedListener.onCalibrationCurveCreated(file);
             } else {
-                if (progressBar != null) {
-                    task.setProgressBar(progressBar);
+                if (progressLayout != null) {
+                    task.setProgressBar(progressLayout);
                 }
 
                 task.setUrl(file.getAbsolutePath());
@@ -276,7 +310,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
         }
     }
 
-    public static void detachProgress(ProgressBar progressBar) {
+    public static void detachProgress(View progressBar) {
         if (progressBar != null) {
             progressBar.setVisibility(View.GONE);
             ((ViewGroup) progressBar.getParent()).removeView(progressBar);

@@ -51,7 +51,7 @@ public class AutoCalculations {
         private List<Float> avgSquarePoints = new ArrayList<>();
         private final Context context;
         private final EditText editText;
-        private ProgressBar progressBar;
+        private View progressBar;
         private final FrameLayout frameLayout;
 
         public LoadPpmAvgValuesTask(String mUrl, FrameLayout frameLayout, Context context,
@@ -69,7 +69,7 @@ public class AutoCalculations {
         }
 
         @Override
-        public void setProgressBar(ProgressBar progressBar) {
+        public void setProgressBar(View progressBar) {
             this.progressBar = progressBar;
         }
 

@@ -196,7 +196,7 @@ public class FileDialog extends ListActivity {
                                     }
 
                                     @Override
-                                    public void setProgressBar(ProgressBar progressBar) {
+                                    public void setProgressBar(View progressBar) {
 
                                     }
                                 }, FileDialog.this, true);

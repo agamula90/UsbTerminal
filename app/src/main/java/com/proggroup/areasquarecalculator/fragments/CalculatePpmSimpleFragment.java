@@ -720,7 +720,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements
         }
 
         @Override
-        public void setProgressBar(ProgressBar progressBar) {
+        public void setProgressBar(View progressBar) {
 
         }
 

@@ -1,7 +1,7 @@
 package com.proggroup.areasquarecalculator.api;
 
+import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ProgressBar;
 
 public interface UrlChangeable {
 
@@ -13,5 +13,5 @@ public interface UrlChangeable {
 
     FrameLayout getFrameLayout();
 
-    void setProgressBar(ProgressBar progressBar);
+    void setProgressBar(View progressBar);
 }

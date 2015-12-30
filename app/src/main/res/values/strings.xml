@@ -54,4 +54,5 @@
     <string name="wrong_data">Wrong data!!</string>
     <string name="load_avgs_from_file">Load curve</string>
     <string name="save_avgs_from_file">Save curve</string>
+    <string name="curve_is_creating">Creating Calibrating Curve, please wait... </string>
 </resources>
