@@ -14,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.TextView;
 
+import com.proggroup.areasquarecalculator.InterpolationCalculator;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.fragments.CalculatePpmSimpleFragment;
@@ -44,6 +45,13 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
             fragment = manager.findFragmentById(mainContainerId);
         }
         manager.beginTransaction().replace(mainContainerId, fragment).commit();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        InterpolationCalculator.getInstance().setPpmPoints(null);
+        InterpolationCalculator.getInstance().setAvgSquarePoints(null);
     }
 
     public abstract int getLayoutId();
