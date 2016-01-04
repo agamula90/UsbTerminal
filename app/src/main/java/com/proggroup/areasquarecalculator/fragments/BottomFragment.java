@@ -86,7 +86,18 @@ public class BottomFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable
     Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.layout_bottom, container, false);
+        View contentView = inflater.inflate(R.layout.layout_bottom, container, false);
+        /*TextView tv = new TextView(getActivity());
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                .edit_text_size_default));
+        tv.setText("a");
+        tv.setTextColor(Color.WHITE);
+
+*/
+        avgPointsLayout = (LinearLayout) contentView.findViewById(R.id.avg_points);
+  //      avgPointsLayout.removeAllViews();
+   //     avgPointsLayout.addView(tv);
+        return contentView;
     }
 
     @Override
@@ -102,22 +113,6 @@ public class BottomFragment extends Fragment {
         calculatePpmAuto = view.findViewById(R.id.calculate_ppm_auto);
         resultPpmLoaded = (TextView) view.findViewById(R.id.result_ppm_loaded);
         mClearRow2 = view.findViewById(R.id.clear_row);
-        avgPointsLayout = (LinearLayout) view.findViewById(R.id.avg_points);
-
-        avgValueLoaded.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                if(v.isFocused()) {
-                    v.clearFocus();
-                    v.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            v.requestFocus();
-                        }
-                    }, 200);
-                }
-            }
-        });
 
         loadPpmCurve.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -302,13 +297,6 @@ public class BottomFragment extends Fragment {
 
         initGraphDataLoadedCallback();
 
-        TextView tv = new TextView(getActivity());
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
-                .edit_text_size_default));
-        tv.setText("");
-        tv.setTextColor(Color.WHITE);
-        avgPointsLayout.addView(tv);
-
         InterpolationCalculator interpolationCalculator = InterpolationCalculator.getInstance();
         if (interpolationCalculator.getPpmPoints() != null) {
             ppmPoints = interpolationCalculator.getPpmPoints();
@@ -343,7 +331,7 @@ public class BottomFragment extends Fragment {
      */
     private void fillAvgPointsLayout() {
 
-        if (!ppmPoints.isEmpty()) {
+       /* if (!ppmPoints.isEmpty()) {
             avgPointsLayout.removeAllViews();
 
             for (int i = 0; i < ppmPoints.size(); i++) {
@@ -356,7 +344,7 @@ public class BottomFragment extends Fragment {
 
                 avgPointsLayout.addView(tv);
             }
-        }
+        }*/
         calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
     }
 

@@ -27,6 +27,7 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
     private DrawerLayout mDrawerLayout;
     private View mFragmentContainerView;
     private ActionBarDrawerToggle mDrawerToggle;
+    private Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,12 +59,16 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 
     public abstract Fragment getFirstFragment();
 
+    protected Toolbar getToolbar() {
+        return mToolbar;
+    }
+
     private void setupDrawer(int fragmentId, DrawerLayout drawerLayout) {
-        Toolbar toolbar = (Toolbar) findViewById(getToolbarId());
+        mToolbar = (Toolbar) findViewById(getToolbarId());
 
-        toolbar.setTitle(R.string.app_name);
+        mToolbar.setTitle(R.string.app_name);
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(mToolbar);
 
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
@@ -91,7 +96,7 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                toolbar,
+                mToolbar,
                 R.string.drawer_cont_desc_open,
                 R.string.drawer_cont_desc_close) {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB)

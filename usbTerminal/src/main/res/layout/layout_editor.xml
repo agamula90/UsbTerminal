@@ -17,229 +17,217 @@
         android:layout_height="match_parent"
         android:id="@+id/frame_container">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:weightSum="1">
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:weightSum="3">
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:weightSum="1">
 
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:weightSum="11">
+                    android:weightSum="3">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:weightSum="3">
-
-                        <Button
-                            android:id="@+id/buttonOn1"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="On"/>
-
-                        <Button
-                            android:id="@+id/buttonOn2"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginLeft="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="On"/>
-
-                        <!-- <Button
-                            android:id="@+id/buttonOff"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="Off"
-                            android:layout_gravity="center_vertical"/> -->
-
-                        <Button
-                            android:id="@+id/buttonPpm"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginLeft="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="PPM"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:weightSum="3">
-
-                        <Button
-                            android:id="@+id/buttonClear"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="Clear"
-                            />
-
-                        <Button
-                            android:id="@+id/buttonSend"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="Send"
-                            />
-
-                        <!--
-                       <Button android:layout_marginLeft="2dp"
-                            android:id="@+id/buttonCal"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Cal"
-                            android:background="@drawable/btn_red"/>
-                        -->
-
-                        <Button
-                            android:id="@+id/buttonMeasure"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_red"
-                            android:text="Measure"
-                            />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="9"
                         android:orientation="vertical"
-                        android:weightSum="4">
-
-                        <fr.xgouchet.texteditor.ui.view.AdvancedEditText
-                            android:id="@+id/editor"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1.4"
-                            android:gravity="top|left"
-                            android:imeOptions="actionSend"
-                            android:inputType="textMultiLine"
-                            android:scrollbarAlwaysDrawHorizontalTrack="false"
-                            android:scrollbarAlwaysDrawVerticalTrack="true"
-                            android:scrollbarSize="5dp"
-                            android:scrollbars="vertical"
-                            android:textCursorDrawable="@null"
-                            android:textSize="16sp"
-                            android:typeface="monospace">
-                        </fr.xgouchet.texteditor.ui.view.AdvancedEditText>
+                        android:weightSum="11"
+                        android:visibility="gone">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
-                            android:layout_weight="2.6"
-                            android:orientation="vertical">
+                            android:layout_weight="1"
+                            android:orientation="horizontal"
+                            android:weightSum="3">
 
-                            <!-- Line Monitor -->
+                            <Button
+                                android:id="@+id/buttonOn1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="On"/>
 
-                            <TextView
-                                android:id="@+id/linemonitor"
+                            <Button
+                                android:id="@+id/buttonOn2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="On"/>
+
+                            <!-- <Button
+                                android:id="@+id/buttonOff"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Off"
+                                android:layout_gravity="center_vertical"/> -->
+
+                            <Button
+                                android:id="@+id/buttonPpm"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="PPM"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:orientation="horizontal"
+                            android:weightSum="3">
+
+                            <Button
+                                android:id="@+id/buttonClear"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Clear"
+                                />
+
+                            <Button
+                                android:id="@+id/buttonSend"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Send"
+                                />
+
+                            <!--
+                           <Button android:layout_marginLeft="2dp"
+                                android:id="@+id/buttonCal"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Cal"
+                                android:background="@drawable/btn_red"/>
+                            -->
+
+                            <Button
+                                android:id="@+id/buttonMeasure"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_red"
+                                android:text="Measure"
+                                />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="9"
+                            android:orientation="vertical"
+                            android:weightSum="4">
+
+                            <fr.xgouchet.texteditor.ui.view.AdvancedEditText
+                                android:id="@+id/editor"
                                 android:layout_width="match_parent"
-                                android:layout_height="30dp"
-                                android:background="@android:color/black"
-                                android:text="Line Monitor"
-                                android:textColor="#CB4025"
-                                android:textSize="14sp"
-                                android:visibility="gone"/>
+                                android:layout_height="0dp"
+                                android:layout_weight="1.4"
+                                android:gravity="top|left"
+                                android:imeOptions="actionSend"
+                                android:inputType="textMultiLine"
+                                android:scrollbarAlwaysDrawHorizontalTrack="false"
+                                android:scrollbarAlwaysDrawVerticalTrack="true"
+                                android:scrollbarSize="5dp"
+                                android:scrollbars="vertical"
+                                android:textCursorDrawable="@null"
+                                android:textSize="16sp"
+                                android:typeface="monospace">
+                            </fr.xgouchet.texteditor.ui.view.AdvancedEditText>
 
-                            <ScrollView
-                                android:id="@+id/mScrollView"
+                            <LinearLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:background="@android:color/black"
-                                android:scrollbars="vertical">
+                                android:layout_height="0dp"
+                                android:layout_weight="2.6"
+                                android:orientation="vertical">
+
+                                <!-- Line Monitor -->
 
                                 <TextView
-                                    android:id="@+id/output"
+                                    android:id="@+id/linemonitor"
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
+                                    android:layout_height="30dp"
                                     android:background="@android:color/black"
-                                    android:paddingTop="0dp"
-                                    android:text=""
-                                    android:textColor="#ffffff"
-                                    android:textIsSelectable="true"
-                                    android:textSize="16sp"/>
-                            </ScrollView>
-                        </LinearLayout>
+                                    android:text="Line Monitor"
+                                    android:textColor="#CB4025"
+                                    android:textSize="14sp"
+                                    android:visibility="gone"/>
 
-                        <!--
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical" >
+                                <ScrollView
+                                    android:id="@+id/mScrollView"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@android:color/black"
+                                    android:scrollbars="vertical">
+
+                                    <TextView
+                                        android:id="@+id/output"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:background="@android:color/black"
+                                        android:paddingTop="0dp"
+                                        android:text=""
+                                        android:textColor="#ffffff"
+                                        android:textIsSelectable="true"
+                                        android:textSize="16sp"/>
+                                </ScrollView>
+                            </LinearLayout>
+
+                            <!--
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical" >
+                            </LinearLayout>
+                            -->
                         </LinearLayout>
-                        -->
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/chart"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:orientation="vertical"
+                        android:paddingLeft="4dp"
+                        android:paddingRight="6dp"/>
+
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/chart"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="6dp"
-                    android:paddingTop="8dp"
-                    android:layout_weight="2"/>
+                <fragment
+                    android:id="@+id/bottom_fragment"
+                    android:name="com.proggroup.areasquarecalculator.fragments.BottomFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
             </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/black"
-                android:paddingTop="0dp"
-                android:text=""
-                android:textColor="#ffffff"
-                android:textSize="16sp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/black"
-                android:paddingTop="0dp"
-                android:text=""
-                android:textColor="#ffffff"
-                android:textSize="16sp"/>
-
-            <fragment
-                android:id="@+id/bottom_fragment"
-                android:name="com.proggroup.areasquarecalculator.fragments.BottomFragment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-        </LinearLayout>
+        </ScrollView>
         <!--
         <LinearLayout
             android:id="@+id/inputl"

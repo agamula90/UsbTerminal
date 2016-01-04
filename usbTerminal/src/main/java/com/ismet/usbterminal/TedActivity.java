@@ -55,6 +55,7 @@ import android.widget.Toast;
 
 import com.ismet.usbterminal.threads.FileWriterThread;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
+import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -1973,6 +1974,15 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
                 currentdataset, renderer, types, "Weather parameters");
         //
         final LinearLayout view = (LinearLayout) findViewById(R.id.chart);
+
+        int minHeight = view.getMinimumHeight();
+
+        if(minHeight == 0) {
+            AutoExpandKeyboardUtils.expand(this, view, findViewById(R.id.bottom_fragment),
+                     getToolbar());
+            view.getLayoutParams().height = view.getMinimumHeight();
+        }
+
         AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
         mChartView = new GraphicalView(this, mChart);
 

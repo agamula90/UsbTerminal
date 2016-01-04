@@ -2,11 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="300dp"
+    android:background="@android:color/holo_blue_bright">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/text_margin_default"
         android:orientation="horizontal">
 
         <Button
@@ -107,13 +107,22 @@
 
     <HorizontalScrollView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin_default">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:id="@+id/avg_points"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"/>
+            android:orientation="horizontal">
+            <TextView
+                style="@style/TextViewDefaultStyle"
+                android:layout_width="wrap_content"
+                android:textColor="@android:color/white"
+                android:text="11"
+                android:textSize="20sp"
+                android:layout_height="wrap_content"
+                android:layout_margin="0dp"
+                android:background="@android:color/holo_green_light"/>
+            </LinearLayout>
     </HorizontalScrollView>
 </LinearLayout>

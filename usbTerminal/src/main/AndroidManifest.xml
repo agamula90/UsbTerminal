@@ -50,7 +50,7 @@
             android:name=".TedActivity"
             android:screenOrientation="landscape"
             android:theme="@style/AppThemeCompat"
-            android:windowSoftInputMode="stateHidden|adjustPan" >
+            android:windowSoftInputMode="stateHidden|adjustResize" >
 
             <!-- Launcher Intent -->
             <intent-filter>
