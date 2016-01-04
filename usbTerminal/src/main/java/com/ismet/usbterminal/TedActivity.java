@@ -443,8 +443,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
 
                         //
 
-                        callActivity.get().txtOutput.setText("Rx: " + data + "\n"
-                                + callActivity.get().txtOutput.getText());
+                        appendText(callActivity.get().txtOutput, "Rx: " + data);
                         callActivity.get().mScrollView.smoothScrollTo(0, 0);
 
                         // txtOutput1.setText("Rx: " + strH + "\n"+
@@ -543,8 +542,8 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
                     buttonOn1.setTag("on");
                 }
 
-                txtOutput.setText("Tx: " + command + "\n"
-                        + txtOutput.getText());
+                appendText(txtOutput, "Tx: " + command);
+
                 mScrollView.smoothScrollTo(0, 0);
 
                 UsbService.write(command.getBytes());
@@ -694,8 +693,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
                     buttonOn2.setTag("on");
                 }
 
-                txtOutput.setText("Tx: " + command + "\n"
-                        + txtOutput.getText());
+                appendText(txtOutput, "Tx: " + command);
                 mScrollView.smoothScrollTo(0, 0);
 
                 UsbService.write(command.getBytes());
@@ -1586,6 +1584,15 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
         // getTimeChart();
     }
 
+    private void appendText(TextView txtOutput, String text) {
+        if(!TextUtils.isEmpty(txtOutput.getText())) {
+            txtOutput.setText(text + "\n"
+                    + txtOutput.getText());
+        } else {
+            txtOutput.setText(text);
+        }
+    }
+
     @Override
     public int getLayoutId() {
         return R.layout.layout_editor;
@@ -1975,12 +1982,16 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
         //
         final LinearLayout view = (LinearLayout) findViewById(R.id.chart);
 
-        int minHeight = view.getMinimumHeight();
+        LinearLayout topContainer = (LinearLayout) findViewById(R.id.top_container);
+
+        int minHeight = topContainer.getMinimumHeight();
 
         if(minHeight == 0) {
-            AutoExpandKeyboardUtils.expand(this, view, findViewById(R.id.bottom_fragment),
-                     getToolbar());
-            view.getLayoutParams().height = view.getMinimumHeight();
+            View textBelow = findViewById(R.id.scroll_below_text);
+
+            AutoExpandKeyboardUtils.expand(this, topContainer, findViewById(R.id.bottom_fragment),
+                     getToolbar(), textBelow);
+            view.getLayoutParams().height = topContainer.getMinimumHeight() - 10;
         }
 
         AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
@@ -2291,8 +2302,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
                     }
                 }
 
-                txtOutput.setText("Tx: " + command + "\n"
-                        + txtOutput.getText());
+                appendText(txtOutput, "Tx: " + command);
                 mScrollView.smoothScrollTo(0, 0);
             } else {
                 Toast.makeText(TedActivity.this,
@@ -2345,8 +2355,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
                             }
                         }
 
-                        txtOutput.setText("Tx: " + command + "\n"
-                                + txtOutput.getText());
+                        appendText(txtOutput, "Tx: " + command);
                         mScrollView.smoothScrollTo(0, 0);
                     } else {
                         Toast.makeText(TedActivity.this,
