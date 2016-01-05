@@ -44,6 +44,8 @@ import com.proggroup.squarecalculations.CalculateUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class BottomFragment extends Fragment {
@@ -76,6 +78,9 @@ public class BottomFragment extends Fragment {
     private List<Float> avgSquarePoints;
 
     private AvgPoint mAutoAvgPoint;
+
+    private File mCurveFile;
+    private File mAvgFiles[];
 
     private boolean mDoPostLoadingCalculations;
 
@@ -243,12 +248,15 @@ public class BottomFragment extends Fragment {
                 Activity activity = getActivity();
                 FrameLayout frameLayout = null;
 
-                if(activity instanceof LibraryContentAttachable) {
+                if (activity instanceof LibraryContentAttachable) {
                     frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
                 }
 
-                new CreateCalibrationCurveForAutoTask(new LoadGraphDataTask(activity, frameLayout, null,
-                        onGraphDataLoadedCallback), getActivity(), true).execute(calFolder);
+                CreateCalibrationCurveForAutoTask task = new CreateCalibrationCurveForAutoTask(new
+                        LoadGraphDataTask(activity, frameLayout, null,
+                        onGraphDataLoadedCallback), getActivity(), true);
+                task.setIgnoreExistingCurves(true);
+                task.execute(calFolder);
             }
         });
 
@@ -291,6 +299,12 @@ public class BottomFragment extends Fragment {
             public void onClick(View v) {
                 resultPpmLoaded.setText("");
                 avgValueLoaded.setText("");
+                mAvgFiles = null;
+                mAutoAvgPoint = null;
+                mCurveFile = null;
+                ppmPoints.clear();
+                avgSquarePoints.clear();
+                fillAvgPointsLayout();
             }
         });
 
@@ -329,12 +343,70 @@ public class BottomFragment extends Fragment {
      * Fill layout with actual data.
      */
     private void fillAvgPointsLayout() {
+        avgPointsLayout.removeAllViews();
+
+        TextView tv;
+
+        if (mCurveFile != null) {
+            tv = new TextView(getActivity());
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                    .edit_text_size_default));
+            tv.setText("Curve file: \"" + mCurveFile.getName() + "\"" + "   ");
+            tv.setTextColor(Color.WHITE);
+            avgPointsLayout.addView(tv);
+        }
+
+        if(mAvgFiles != null) {
+            tv = new TextView(getActivity());
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                    .edit_text_size_default));
+            tv.setText("Auto files: ");
+            tv.setTextColor(Color.WHITE);
+            avgPointsLayout.addView(tv);
+
+            if (mAvgFiles.length == 1 || mAvgFiles.length < 3) {
+                for (int i = 0; i < mAvgFiles.length - 1; i++) {
+                    File file = mAvgFiles[i];
+                    tv = new TextView(getActivity());
+                    tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                            .edit_text_size_default));
+                    tv.setText("\"" + file.getName() + "\",  ");
+                    tv.setTextColor(Color.WHITE);
+
+                    avgPointsLayout.addView(tv);
+                }
+
+                File file = mAvgFiles[mAvgFiles.length - 1];
+                tv = new TextView(getActivity());
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                        .edit_text_size_default));
+                tv.setText("\"" + file.getName() + "\"  ");
+                tv.setTextColor(Color.WHITE);
+
+                avgPointsLayout.addView(tv);
+            } else {
+                File parentFile = mAvgFiles[0].getParentFile();
+                tv = new TextView(getActivity());
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                        .edit_text_size_default));
+                tv.setText("Folder: \"" + parentFile.getName() + "\"" + "   ");
+                tv.setTextColor(Color.WHITE);
+                avgPointsLayout.addView(tv);
+            }
+        }
+
+        if(mAvgFiles != null || mCurveFile != null) {
+            tv = new TextView(getActivity());
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                    .edit_text_size_default));
+            tv.setText("||  ");
+            tv.setTextColor(Color.WHITE);
+            avgPointsLayout.addView(tv);
+        }
 
         if (!ppmPoints.isEmpty()) {
-            avgPointsLayout.removeAllViews();
-
             for (int i = 0; i < ppmPoints.size(); i++) {
-                TextView tv = new TextView(getActivity());
+                tv = new TextView(getActivity());
                 tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
                         .edit_text_size_default));
                 tv.setText(ppmPoints.get(i).intValue() + " " + FloatFormatter.format
@@ -355,7 +427,11 @@ public class BottomFragment extends Fragment {
             public void onGraphDataLoaded(List<Float> ppmValues, List<Float> avgSquareValues,
                                           String mMesFolder, String mUrl) {
 
-                if(mMesFolder != null) {
+                if (mUrl != null) {
+                    mCurveFile = new File(mUrl);
+                }
+
+                if (mMesFolder != null) {
                     File mMesFolderFile = new File(mMesFolder);
                     final boolean isCorrectFilesSelected;
                     if (mMesFolderFile.isDirectory()) {
@@ -368,12 +444,14 @@ public class BottomFragment extends Fragment {
                         Toast.makeText(getActivity(), "Wrong files for calculating", Toast
                                 .LENGTH_LONG).show();
                     }
+
+                    fillAvgPointsLayout();
+
                     return;
                 }
 
                 ppmPoints = ppmValues;
                 avgSquarePoints = avgSquareValues;
-                fillAvgPointsLayout();
                 List<Float> ppmPoints = new ArrayList<>(BottomFragment
                         .this.ppmPoints);
                 List<Float> avgSquarePoints = new ArrayList<>(BottomFragment
@@ -384,10 +462,10 @@ public class BottomFragment extends Fragment {
                 interpolationCalculator.setPpmPoints(ppmPoints);
 
                 if (mDoPostLoadingCalculations) {
-                    File mesFile =  CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
-                                .getParentFile());
+                    File mesFile = CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
+                            .getParentFile());
                     if (mesFile != null && CalculatePpmSimpleFragment.findMesFile(mesFile) !=
-                             null) {
+                            null) {
                         mesFile = CalculatePpmSimpleFragment.findMesFile(mesFile);
                         File mesFiles[] = mesFile.listFiles();
                         if (mesFiles == null && mesFile.getParentFile() != null) {
@@ -443,8 +521,10 @@ public class BottomFragment extends Fragment {
                                 return;
                             } else {
                                 if (newestCalFile2 == null) {
+                                    mAvgFiles = new File[]{newestCalFile1};
                                     mAutoAvgPoint = new AvgPoint(Arrays
                                             .asList(new Float[]{square1}));
+                                    fillAvgPointsLayout();
                                     mRealCalculationsCalculateAutoListener.onClick(null);
                                     //mClearRow2.performClick();
                                     return;
@@ -457,8 +537,10 @@ public class BottomFragment extends Fragment {
                                     return;
                                 } else {
                                     if (newestCalFile3 == null) {
+                                        mAvgFiles = new File[]{newestCalFile1, newestCalFile2};
                                         mAutoAvgPoint = new AvgPoint(Arrays
                                                 .asList(new Float[]{square1, square2}));
+                                        fillAvgPointsLayout();
                                         mRealCalculationsCalculateAutoListener.onClick(null);
                                         //mClearRow2.performClick();
                                         return;
@@ -470,9 +552,12 @@ public class BottomFragment extends Fragment {
                                                         .LENGTH_LONG).show();
                                         return;
                                     } else {
+                                        mAvgFiles = new File[]{newestCalFile1, newestCalFile2,
+                                                newestCalFile3};
                                         mAutoAvgPoint = new AvgPoint(Arrays
                                                 .asList(new Float[]
                                                         {square1, square2, square3}));
+                                        fillAvgPointsLayout();
                                         mRealCalculationsCalculateAutoListener.onClick(null);
                                         //mClearRow2.performClick();
                                     }
@@ -484,6 +569,8 @@ public class BottomFragment extends Fragment {
                                 .LENGTH_LONG).show();
                     }
                     mDoPostLoadingCalculations = false;
+                } else {
+                    fillAvgPointsLayout();
                 }
             }
         };
@@ -491,18 +578,25 @@ public class BottomFragment extends Fragment {
 
     private boolean handleDirectoryMesSelected(List<File> files) {
         List<Float> correctSquares = new ArrayList<>(files.size());
+        List<File> correctFiles = new ArrayList<>();
         for (File file : files) {
             float square1 = CalculateUtils.calculateSquare(file);
             if (square1 > 0) {
                 correctSquares.add(square1);
+                correctFiles.add(file);
             }
         }
         if (correctSquares.isEmpty()) {
+            mAvgFiles = new File[]{};
             return false;
         }
 
         mAutoAvgPoint = new AvgPoint(correctSquares);
         avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
+
+        mAvgFiles = new File[correctFiles.size()];
+        correctFiles.toArray(mAvgFiles);
+
         return true;
     }
 
@@ -514,6 +608,8 @@ public class BottomFragment extends Fragment {
             }});
             avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
         }
+        mAvgFiles = new File[]{csvFile};
+
         return square1 > 0;
     }
 
@@ -546,7 +642,7 @@ public class BottomFragment extends Fragment {
                     mDoPostLoadingCalculations = false;
                     Activity activity = getActivity();
                     FrameLayout frameLayout = null;
-                    if(activity instanceof LibraryContentAttachable) {
+                    if (activity instanceof LibraryContentAttachable) {
                         frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
                     }
                     new LoadGraphDataTask(getActivity(), frameLayout, data.getStringExtra(FileDialog

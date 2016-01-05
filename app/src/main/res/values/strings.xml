@@ -31,11 +31,11 @@
     <string name="calculate_square">Calculate Square</string>
     <string name="select_csv_data_file">Please select csv data file.</string>
     <string name="result">Result</string>
-    <string name="enter_avg_square">Enter avg square value:</string>
+    <string name="enter_avg_square">Enter SAV:</string>
     <string name="enter_your_note">Enter your note:</string>
     <string name="calculate_ppm_simple">Calculate ppm</string>
-    <string name="calculate_loaded_ppm_simple">Calculate Loaded</string>
-    <string name="calculate_loaded_ppm_auto">Calculate Auto</string>
+    <string name="calculate_loaded_ppm_simple">CALC MANUAL</string>
+    <string name="calculate_loaded_ppm_auto">CALC AUTO</string>
     <string name="apply_name">Apply name</string>
     <string name="known_ppm">Known ppms:</string>
     <string name="first_test">1-st test</string>
