@@ -1,5 +1,6 @@
 package com.proggroup.areasquarecalculator.fragments;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -255,7 +257,7 @@ public class BottomFragment extends Fragment {
                 CreateCalibrationCurveForAutoTask task = new CreateCalibrationCurveForAutoTask(new
                         LoadGraphDataTask(activity, frameLayout, null,
                         onGraphDataLoadedCallback), getActivity(), true);
-                task.setIgnoreExistingCurves(true);
+                //task.setIgnoreExistingCurves(true);
                 task.execute(calFolder);
             }
         });
@@ -299,7 +301,7 @@ public class BottomFragment extends Fragment {
             public void onClick(View v) {
                 resultPpmLoaded.setText("");
                 avgValueLoaded.setText("");
-                mAvgFiles = null;
+                mAvgFiles = null;Animator
                 mAutoAvgPoint = null;
                 mCurveFile = null;
                 ppmPoints.clear();

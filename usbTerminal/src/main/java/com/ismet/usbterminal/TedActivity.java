@@ -153,6 +153,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
         private final WeakReference<TedActivity> myActivity;
 
         public MyHandler(WeakReference<TedActivity> tedActivity) {
+            super();
             this.myActivity = tedActivity;
         }
 
@@ -160,6 +161,8 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
             return myActivity;
         }
     }
+
+    WeakReference<TedActivity> weakReference = new WeakReference<TedActivity>(this);
 
     //CountDownTimer ctimer;
     // String filename = "";
@@ -198,7 +201,7 @@ public class TedActivity extends BaseAttachableActivity implements Constants, Te
         Settings.updateFromPreferences(getSharedPreferences(PREFERENCES_NAME,
                 MODE_PRIVATE));
 
-        mHandler = new MyHandler(new WeakReference<>(this)) {
+        mHandler = new MyHandler(weakReference) {
             @Override
             public void handleMessage(Message msg) {
                 // TODO Auto-generated method stub
