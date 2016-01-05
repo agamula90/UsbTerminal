@@ -52,7 +52,7 @@
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_weight="13"
+                android:layout_weight="10"
                 android:layout_height="@dimen/button_height_default"
                 android:layout_gravity="center_vertical"
                 android:background="@drawable/edit_background"
@@ -95,7 +95,7 @@
                 android:id="@+id/result_ppm_loaded"
                 style="@style/TextViewDefaultStyle"
                 android:layout_width="0dp"
-                android:layout_weight="4"
+                android:layout_weight="9"
                 android:textColor="@android:color/black"
                 android:background="@drawable/edit_background"
                 android:gravity="center"
