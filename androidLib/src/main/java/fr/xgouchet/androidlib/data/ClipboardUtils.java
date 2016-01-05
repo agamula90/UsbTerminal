@@ -1,8 +1,5 @@
 package fr.xgouchet.androidlib.data;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import android.annotation.TargetApi;
 import android.content.ClipData;
 import android.content.ClipDescription;
@@ -11,120 +8,124 @@ import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public final class ClipboardUtils {
 
-    /**
-     * A basic interface for Clipboard
-     */
-    public interface ClipboardProxy {
-        /**
-         * @return if any text content can be fetched from the clipboard
-         */
-        public boolean hasTextContent();
+	public static ClipboardProxy getClipboardProxy(final Context context) {
+		if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+			return new ClipboardProxyV11(context);
+		} else {
+			return new ClipboardProxyV1(context);
+		}
+	}
 
-        /**
-         * @return the text fetched from the clipboard
-         */
-        public String[] getText();
+	/**
+	 * A basic interface for Clipboard
+	 */
+	public interface ClipboardProxy {
 
-        /**
-         * @param text  the text to put in clipboard
-         * @param label an optional label
-         */
-        public void setText(String text, String label);
+		/**
+		 * @return if any text content can be fetched from the clipboard
+		 */
+		boolean hasTextContent();
 
-    }
+		/**
+		 * @return the text fetched from the clipboard
+		 */
+		String[] getText();
 
-    /**
-     * A proxy for the new Clipboard manager
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static final class ClipboardProxyV11 implements ClipboardProxy {
+		/**
+		 * @param text  the text to put in clipboard
+		 * @param label an optional label
+		 */
+		void setText(String text, String label);
 
-        public ClipboardProxyV11(final Context context) {
-            mManager = (android.content.ClipboardManager) context
-                    .getSystemService(Context.CLIPBOARD_SERVICE);
-        }
+	}
 
-        @Override
-        public boolean hasTextContent() {
-            boolean res;
+	/**
+	 * A proxy for the new Clipboard manager
+	 */
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	public static final class ClipboardProxyV11 implements ClipboardProxy {
 
-            if (mManager.hasPrimaryClip()) {
-                ClipDescription desc = mManager.getPrimaryClipDescription();
-                res = desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN);
-            } else {
-                res = false;
-            }
+		private final android.content.ClipboardManager mManager;
 
-            return res;
-        }
+		public ClipboardProxyV11(final Context context) {
+			mManager = (android.content.ClipboardManager) context.getSystemService(Context
+					.CLIPBOARD_SERVICE);
+		}
 
-        @Override
-        public String[] getText() {
-            ClipData.Item item;
-            List<String> content = new LinkedList<String>();
-            ClipData data = mManager.getPrimaryClip();
-            CharSequence strData;
+		@Override
+		public boolean hasTextContent() {
+			boolean res;
 
-            if (data != null) {
-                int count = data.getItemCount();
-                for (int i = 0; i < count; ++i) {
-                    item = data.getItemAt(i);
+			if (mManager.hasPrimaryClip()) {
+				ClipDescription desc = mManager.getPrimaryClipDescription();
+				res = desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN);
+			} else {
+				res = false;
+			}
 
-                    strData = item.getText();
-                    if (strData != null) {
-                        content.add(strData.toString());
-                        continue;
-                    }
-                }
-            }
+			return res;
+		}
 
-            return content.toArray(new String[content.size()]);
-        }
+		@Override
+		public String[] getText() {
+			ClipData.Item item;
+			List<String> content = new LinkedList<String>();
+			ClipData data = mManager.getPrimaryClip();
+			CharSequence strData;
 
-        @Override
-        public void setText(final String text, final String label) {
-            mManager.setPrimaryClip(ClipData.newPlainText(label, text));
-        }
+			if (data != null) {
+				int count = data.getItemCount();
+				for (int i = 0; i < count; ++i) {
+					item = data.getItemAt(i);
 
-        private final android.content.ClipboardManager mManager;
-    }
+					strData = item.getText();
+					if (strData != null) {
+						content.add(strData.toString());
+						continue;
+					}
+				}
+			}
 
-    /**
-     * A proxy for the old Clipboard manager
-     */
-    @SuppressWarnings("deprecation")
-    public static final class ClipboardProxyV1 implements ClipboardProxy {
+			return content.toArray(new String[content.size()]);
+		}
 
-        public ClipboardProxyV1(final Context context) {
-            mManager = (android.text.ClipboardManager) context
-                    .getSystemService(Context.CLIPBOARD_SERVICE);
-        }
+		@Override
+		public void setText(final String text, final String label) {
+			mManager.setPrimaryClip(ClipData.newPlainText(label, text));
+		}
+	}
 
-        @Override
-        public boolean hasTextContent() {
-            return mManager.hasText();
-        }
+	/**
+	 * A proxy for the old Clipboard manager
+	 */
+	@SuppressWarnings("deprecation")
+	public static final class ClipboardProxyV1 implements ClipboardProxy {
 
-        @Override
-        public String[] getText() {
-            return new String[]{mManager.getText().toString()};
-        }
+		private final android.text.ClipboardManager mManager;
 
-        @Override
-        public void setText(final String text, final String label) {
-            mManager.setText(text);
-        }
+		public ClipboardProxyV1(final Context context) {
+			mManager = (android.text.ClipboardManager) context.getSystemService(Context
+					.CLIPBOARD_SERVICE);
+		}
 
-        private final android.text.ClipboardManager mManager;
-    }
+		@Override
+		public boolean hasTextContent() {
+			return mManager.hasText();
+		}
 
-    public static ClipboardProxy getClipboardProxy(final Context context) {
-        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-            return new ClipboardProxyV11(context);
-        } else {
-            return new ClipboardProxyV1(context);
-        }
-    }
+		@Override
+		public String[] getText() {
+			return new String[]{mManager.getText().toString()};
+		}
+
+		@Override
+		public void setText(final String text, final String label) {
+			mManager.setText(text);
+		}
+	}
 }

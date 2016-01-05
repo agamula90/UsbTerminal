@@ -20,9 +20,9 @@ package org.achartengine.tools;
  */
 public interface PanListener {
 
-    /**
-     * Called when a pan change is triggered.
-     */
-    void panApplied();
+	/**
+	 * Called when a pan change is triggered.
+	 */
+	void panApplied();
 
 }

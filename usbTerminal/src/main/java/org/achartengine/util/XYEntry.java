@@ -20,26 +20,27 @@ import java.util.Map.Entry;
 /**
  * A map entry value encapsulating an XY point.
  */
-public class XYEntry<K, V> implements Entry<K, V> {
-    private final K key;
+public class XYEntry <K, V> implements Entry<K, V> {
 
-    private V value;
+	private final K key;
 
-    public XYEntry(K key, V value) {
-        this.key = key;
-        this.value = value;
-    }
+	private V value;
 
-    public K getKey() {
-        return key;
-    }
+	public XYEntry(K key, V value) {
+		this.key = key;
+		this.value = value;
+	}
 
-    public V getValue() {
-        return value;
-    }
+	public K getKey() {
+		return key;
+	}
 
-    public V setValue(V object) {
-        this.value = object;
-        return this.value;
-    }
+	public V getValue() {
+		return value;
+	}
+
+	public V setValue(V object) {
+		this.value = object;
+		return this.value;
+	}
 }

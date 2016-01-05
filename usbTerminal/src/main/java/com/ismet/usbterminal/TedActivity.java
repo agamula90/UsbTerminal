@@ -86,7 +86,7 @@ import java.util.concurrent.Executors;
 
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
-import fr.xgouchet.texteditor.common.Constants;
+import static fr.xgouchet.texteditor.common.Constants.*;
 import fr.xgouchet.texteditor.common.RecentFiles;
 import fr.xgouchet.texteditor.common.Settings;
 import fr.xgouchet.texteditor.common.TextFileUtils;
@@ -100,7 +100,7 @@ import static fr.xgouchet.androidlib.ui.Toaster.showToast;
 import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.addMenuItem;
 import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.showMenuItemAsAction;
 
-public class TedActivity extends BaseAttachableActivity implements Constants, TextWatcher {
+public class TedActivity extends BaseAttachableActivity implements TextWatcher {
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action" +
             ".USB_DEVICE_ATTACHED";
     public static final String ACTION_USB_DETACHED = "android.hardware.usb.action" +

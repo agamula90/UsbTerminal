@@ -17,10 +17,10 @@ import android.widget.EditText;
 import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 
 import fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity;
-import fr.xgouchet.texteditor.common.Constants;
+import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class TedSaveAsActivity extends AbstractBrowsingActivity implements
-        Constants, OnClickListener {
+        OnClickListener {
 
     /**
      * @see android.app.Activity#onCreate(android.os.Bundle)

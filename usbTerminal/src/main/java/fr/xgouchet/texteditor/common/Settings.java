@@ -6,8 +6,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Typeface;
+import static fr.xgouchet.texteditor.common.Constants.*;
 
-public class Settings implements Constants {
+public class Settings {
+
+	private Settings() {
+	}
 
     /**
      * Number of recent files to remember

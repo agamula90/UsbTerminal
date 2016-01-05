@@ -21,60 +21,61 @@ import java.io.Serializable;
  * Holds An PieChart Segment
  */
 public class PieSegment implements Serializable {
-    private float mStartAngle;
 
-    private float mEndAngle;
+	private float mStartAngle;
 
-    private int mDataIndex;
+	private float mEndAngle;
 
-    private float mValue;
+	private int mDataIndex;
 
-    public PieSegment(int dataIndex, float value, float startAngle, float angle) {
-        mStartAngle = startAngle;
-        mEndAngle = angle + startAngle;
-        mDataIndex = dataIndex;
-        mValue = value;
-    }
+	private float mValue;
 
-    /**
-     * Checks if angle falls in segment.
-     *
-     * @param angle
-     * @return true if in segment, false otherwise.
-     */
-    public boolean isInSegment(double angle) {
-        if (angle >= mStartAngle && angle <= mEndAngle) {
-            return true;
-        }
-        double cAngle = angle % 360;
-        double startAngle = mStartAngle;
-        double stopAngle = mEndAngle;
-        while (stopAngle > 360) {
-            startAngle -= 360;
-            stopAngle -= 360;
-        }
-        return cAngle >= startAngle && cAngle <= stopAngle;
-    }
+	public PieSegment(int dataIndex, float value, float startAngle, float angle) {
+		mStartAngle = startAngle;
+		mEndAngle = angle + startAngle;
+		mDataIndex = dataIndex;
+		mValue = value;
+	}
 
-    protected float getStartAngle() {
-        return mStartAngle;
-    }
+	/**
+	 * Checks if angle falls in segment.
+	 *
+	 * @param angle
+	 * @return true if in segment, false otherwise.
+	 */
+	public boolean isInSegment(double angle) {
+		if (angle >= mStartAngle && angle <= mEndAngle) {
+			return true;
+		}
+		double cAngle = angle % 360;
+		double startAngle = mStartAngle;
+		double stopAngle = mEndAngle;
+		while (stopAngle > 360) {
+			startAngle -= 360;
+			stopAngle -= 360;
+		}
+		return cAngle >= startAngle && cAngle <= stopAngle;
+	}
 
-    protected float getEndAngle() {
-        return mEndAngle;
-    }
+	protected float getStartAngle() {
+		return mStartAngle;
+	}
 
-    protected int getDataIndex() {
-        return mDataIndex;
-    }
+	protected float getEndAngle() {
+		return mEndAngle;
+	}
 
-    protected float getValue() {
-        return mValue;
-    }
+	protected int getDataIndex() {
+		return mDataIndex;
+	}
 
-    public String toString() {
-        return "mDataIndex=" + mDataIndex + ",mValue=" + mValue + ",mStartAngle=" + mStartAngle
-                + ",mEndAngle=" + mEndAngle;
-    }
+	protected float getValue() {
+		return mValue;
+	}
+
+	public String toString() {
+		return "mDataIndex=" + mDataIndex + ",mValue=" + mValue + ",mStartAngle=" + mStartAngle +
+				",mEndAngle=" + mEndAngle;
+	}
 
 }

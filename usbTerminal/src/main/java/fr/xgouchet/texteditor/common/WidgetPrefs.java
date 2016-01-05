@@ -6,109 +6,107 @@ import android.content.SharedPreferences.Editor;
 
 public class WidgetPrefs {
 
-    public final static String WIDGET_PREFERENCES = "fr.xgouchet.texteditor.widget";
+	public final static String WIDGET_PREFERENCES = "fr.xgouchet.texteditor.widget";
 
-    public final static String WIDGET_TARGET_PATH = "target_path_";
+	public final static String WIDGET_TARGET_PATH = "target_path_";
 
-    public final static String WIDGET_READ_ONLY = "read_only_";
+	public final static String WIDGET_READ_ONLY = "read_only_";
 
-    public final static String WIDGET_PRESENT_KEY = "widget_present_";
+	public final static String WIDGET_PRESENT_KEY = "widget_present_";
 
-    public String mTargetPath;
-    public boolean mReadOnly;
+	public String mTargetPath;
 
-    public WidgetPrefs() {
-        mTargetPath = "";
-    }
+	public boolean mReadOnly;
 
-    /**
-     * Loads the widget prefs from the shared preferences
-     *
-     * @param context  the current context
-     * @param widgetId this widget id
-     * @return if the widget is still present
-     */
-    public boolean load(Context context, int widgetId) {
-        String key;
-        SharedPreferences prefs;
+	public WidgetPrefs() {
+		mTargetPath = "";
+	}
 
-        prefs = context.getSharedPreferences(WIDGET_PREFERENCES,
-                Context.MODE_PRIVATE);
+	/**
+	 * Delete the data associated with a widget ID
+	 *
+	 * @param context  the current context
+	 * @param widgetId the id to delete
+	 */
+	public static void delete(Context context, int widgetId) {
+		String key;
+		SharedPreferences prefs;
+		Editor edit;
 
-        if (prefs != null) {
-            key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
-            mTargetPath = prefs.getString(key, "");
+		prefs = context.getSharedPreferences(WIDGET_PREFERENCES, Context.MODE_PRIVATE);
+		if (prefs != null) {
+			edit = prefs.edit();
 
-            key = WIDGET_READ_ONLY + String.valueOf(widgetId);
-            mReadOnly = prefs.getBoolean(key, false);
+			if (edit != null) {
+				key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
+				edit.remove(key);
 
-            key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
-            return prefs.getBoolean(key, false);
-        }
+				key = WIDGET_READ_ONLY + String.valueOf(widgetId);
+				edit.remove(key);
 
-        return false;
-    }
+				key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
+				edit.remove(key);
 
-    /**
-     * Store this widget prefs in the shared preferences
-     *
-     * @param context  the current context
-     * @param widgetId this widget id
-     */
-    public void store(Context context, int widgetId) {
-        String key;
-        SharedPreferences prefs;
-        Editor edit;
+				edit.commit();
+			}
+		}
+	}
 
-        prefs = context.getSharedPreferences(WIDGET_PREFERENCES,
-                Context.MODE_PRIVATE);
+	/**
+	 * Loads the widget prefs from the shared preferences
+	 *
+	 * @param context  the current context
+	 * @param widgetId this widget id
+	 * @return if the widget is still present
+	 */
+	public boolean load(Context context, int widgetId) {
+		String key;
+		SharedPreferences prefs;
 
-        if (prefs != null) {
-            edit = prefs.edit();
+		prefs = context.getSharedPreferences(WIDGET_PREFERENCES, Context.MODE_PRIVATE);
 
-            if (edit != null) {
-                key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
-                edit.putString(key, mTargetPath);
+		if (prefs != null) {
+			key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
+			mTargetPath = prefs.getString(key, "");
 
-                key = WIDGET_READ_ONLY + String.valueOf(widgetId);
-                edit.putBoolean(key, mReadOnly);
+			key = WIDGET_READ_ONLY + String.valueOf(widgetId);
+			mReadOnly = prefs.getBoolean(key, false);
 
-                key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
-                edit.putBoolean(key, true);
+			key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
+			return prefs.getBoolean(key, false);
+		}
 
-                edit.commit();
-            }
-        }
-    }
+		return false;
+	}
 
-    /**
-     * Delete the data associated with a widget ID
-     *
-     * @param context  the current context
-     * @param widgetId the id to delete
-     */
-    public static void delete(Context context, int widgetId) {
-        String key;
-        SharedPreferences prefs;
-        Editor edit;
+	/**
+	 * Store this widget prefs in the shared preferences
+	 *
+	 * @param context  the current context
+	 * @param widgetId this widget id
+	 */
+	public void store(Context context, int widgetId) {
+		String key;
+		SharedPreferences prefs;
+		Editor edit;
 
-        prefs = context.getSharedPreferences(WIDGET_PREFERENCES,
-                Context.MODE_PRIVATE);
-        if (prefs != null) {
-            edit = prefs.edit();
+		prefs = context.getSharedPreferences(WIDGET_PREFERENCES, Context.MODE_PRIVATE);
 
-            if (edit != null) {
-                key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
-                edit.remove(key);
+		if (prefs != null) {
+			edit = prefs.edit();
 
-                key = WIDGET_READ_ONLY + String.valueOf(widgetId);
-                edit.remove(key);
+			if (edit != null) {
+				key = WIDGET_TARGET_PATH + String.valueOf(widgetId);
+				edit.putString(key, mTargetPath);
 
-                key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
-                edit.remove(key);
+				key = WIDGET_READ_ONLY + String.valueOf(widgetId);
+				edit.putBoolean(key, mReadOnly);
 
-                edit.commit();
-            }
-        }
-    }
+				key = WIDGET_PRESENT_KEY + String.valueOf(widgetId);
+				edit.putBoolean(key, true);
+
+				edit.commit();
+			}
+		}
+	}
 }

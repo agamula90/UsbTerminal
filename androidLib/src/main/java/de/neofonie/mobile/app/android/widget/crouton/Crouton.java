@@ -40,389 +40,380 @@ import android.widget.TextView;
 
 /**
  * Displays information in a non-invasive context related manner. Like
- * {@link Toast}, but better.
+ * {@link android.widget.Toast}, but better.
  * <p/>
  * Call {@link Manager#clearCroutonsForActivity(Activity)} within your
- * Activitie's onDestroy method to avoid {@link Context} leaks.
+ * Activitie's onDestroy method to avoid {@link android.content.Context} leaks.
  */
 public final class Crouton {
-    private static final int IMAGE_ID = 0x100;
-    private static final int TEXT_ID = 0x101;
-    private final CharSequence text;
-    private final Style style;
-    private final View customView;
 
-    private Activity activity;
-    private FrameLayout croutonView;
+	private static final int IMAGE_ID = 0x100;
 
-    /**
-     * Creates the {@link Crouton}.
-     *
-     * @param activity The {@link Activity} that the {@link Crouton} should be
-     *                 attached to.
-     * @param text     The text you want to display.
-     * @param style    The style that this {@link Crouton} should be created with.
-     */
-    private Crouton(final Activity activity, final CharSequence text,
-                    final Style style) {
-        if ((activity == null) || (text == null) || (style == null)) {
-            throw new IllegalArgumentException(
-                    "Null parameters are not accepted");
-        }
+	private static final int TEXT_ID = 0x101;
 
-        this.activity = activity;
-        this.text = text;
-        this.style = style;
-        this.customView = null;
-    }
+	private final CharSequence text;
 
-    /**
-     * Creates the {@link Crouton}.
-     *
-     * @param activity   The {@link Activity} that the {@link Crouton} should be
-     *                   attached to.
-     * @param customView The custom {@link View} to display
-     */
-    private Crouton(final Activity activity, final View customView) {
-        if ((activity == null) || (customView == null)) {
-            throw new IllegalArgumentException(
-                    "Null parameters are not accepted");
-        }
+	private final Style style;
 
-        this.activity = activity;
-        this.customView = customView;
-        this.style = new Style.Builder().build();
-        this.text = null;
-    }
+	private final View customView;
 
-    /**
-     * Creates a {@link Crouton} with provided text and style for a given
-     * activity.
-     *
-     * @param activity The {@link Activity} that the {@link Crouton} should be
-     *                 attached to.
-     * @param text     The text you want to display.
-     * @param style    The style that this {@link Crouton} should be created with.
-     * @return The created {@link Crouton}.
-     */
-    public static Crouton makeText(final Activity activity,
-                                   final CharSequence text, final Style style) {
-        return new Crouton(activity, text, style);
-    }
+	private Activity activity;
 
-    /**
-     * Creates a {@link Crouton} with provided text-resource and style for a
-     * given activity.
-     *
-     * @param activity       The {@link Activity} that the {@link Crouton} should be
-     *                       attached to.
-     * @param textResourceId The resource id of the text you want to display.
-     * @param style          The style that this {@link Crouton} should be created with.
-     * @return The created {@link Crouton}.
-     */
-    public static Crouton makeText(final Activity activity,
-                                   final int textResourceId, final Style style) {
-        return makeText(activity, activity.getString(textResourceId), style);
-    }
+	private FrameLayout croutonView;
 
-    /**
-     * Creates a {@link Crouton} with provided text-resource and style for a
-     * given activity.
-     *
-     * @param activity   The {@link Activity} that the {@link Crouton} should be
-     *                   attached to.
-     * @param customView The custom {@link View} to display
-     * @return The created {@link Crouton}.
-     */
-    public static Crouton make(final Activity activity, final View customView) {
-        return new Crouton(activity, customView);
-    }
+	private Animation inAnimation;
 
-    /**
-     * Creates a {@link Crouton} with provided text and style for a given
-     * activity and displays it directly.
-     *
-     * @param activity The {@link android.app.Activity} that the {@link Crouton}
-     *                 should be attached to.
-     * @param text     The text you want to display.
-     * @param style    The style that this {@link Crouton} should be created with.
-     */
-    public static void showText(final Activity activity,
-                                final CharSequence text, final Style style) {
-        makeText(activity, text, style).show();
-    }
+	private Animation outAnimation;
 
-    /**
-     * Creates a {@link Crouton} with provided text and style for a given
-     * activity and displays it directly.
-     *
-     * @param activity   The {@link android.app.Activity} that the {@link Crouton}
-     *                   should be attached to.
-     * @param customView The custom {@link View} to display
-     */
-    public static void show(final Activity activity, final View customView) {
-        make(activity, customView).show();
-    }
+	/**
+	 * Creates the {@link Crouton}.
+	 *
+	 * @param activity The {@link Activity} that the {@link Crouton} should be
+	 *                 attached to.
+	 * @param text     The text you want to display.
+	 * @param style    The style that this {@link Crouton} should be created with.
+	 */
+	private Crouton(final Activity activity, final CharSequence text, final Style style) {
+		if ((activity == null) || (text == null) || (style == null)) {
+			throw new IllegalArgumentException("Null parameters are not accepted");
+		}
 
-    /**
-     * Creates a {@link Crouton} with provided text-resource and style for a
-     * given activity and displays it directly.
-     *
-     * @param activity       The {@link Activity} that the {@link Crouton} should be
-     *                       attached to.
-     * @param textResourceId The resource id of the text you want to display.
-     * @param style          The style that this {@link Crouton} should be created with.
-     */
-    public static void showText(final Activity activity,
-                                final int textResourceId, final Style style) {
-        showText(activity, activity.getString(textResourceId), style);
-    }
+		this.activity = activity;
+		this.text = text;
+		this.style = style;
+		this.customView = null;
+	}
 
-    /**
-     * Cancels all queued {@link Crouton}s. If there is a {@link Crouton}
-     * displayed currently, it will be the last one displayed.
-     */
-    public static void cancelAllCroutons() {
-        Manager.getInstance().clearCroutonQueue();
-    }
+	/**
+	 * Creates the {@link Crouton}.
+	 *
+	 * @param activity   The {@link Activity} that the {@link Crouton} should be
+	 *                   attached to.
+	 * @param customView The custom {@link View} to display
+	 */
+	private Crouton(final Activity activity, final View customView) {
+		if ((activity == null) || (customView == null)) {
+			throw new IllegalArgumentException("Null parameters are not accepted");
+		}
 
-    /**
-     * Clears (and removes from {@link Activity}'s content view, if necessary)
-     * all croutons for the provided activity
-     *
-     * @param activity - The {@link} Activity to clear the croutons for
-     */
-    public static void clearCroutonsForActivity(final Activity activity) {
-        Manager.getInstance().clearCroutonsForActivity(activity);
-    }
+		this.activity = activity;
+		this.customView = customView;
+		this.style = new Style.Builder().build();
+		this.text = null;
+	}
 
-    /**
-     * Cancels a {@link Crouton} immediately.
-     */
-    public void cancel() {
-        Manager manager = Manager.getInstance();
-        manager.removeCroutonImmediately(this);
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text and style for a given
+	 * activity.
+	 *
+	 * @param activity The {@link Activity} that the {@link Crouton} should be
+	 *                 attached to.
+	 * @param text     The text you want to display.
+	 * @param style    The style that this {@link Crouton} should be created with.
+	 * @return The created {@link Crouton}.
+	 */
+	public static Crouton makeText(final Activity activity, final CharSequence text, final Style
+			style) {
+		return new Crouton(activity, text, style);
+	}
 
-    /**
-     * Displays the {@link Crouton}. If there's another {@link Crouton} visible
-     * at the time, this {@link Crouton} will be displayed afterwards.
-     */
-    public void show() {
-        Manager.getInstance().add(this);
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text-resource and style for a
+	 * given activity.
+	 *
+	 * @param activity       The {@link Activity} that the {@link Crouton} should be
+	 *                       attached to.
+	 * @param textResourceId The resource id of the text you want to display.
+	 * @param style          The style that this {@link Crouton} should be created with.
+	 * @return The created {@link Crouton}.
+	 */
+	public static Crouton makeText(final Activity activity, final int textResourceId, final Style
+			style) {
+		return makeText(activity, activity.getString(textResourceId), style);
+	}
 
-    /**
-     * @return <code>true</code> if the {@link Crouton} is being displayed, else
-     * <code>false</code>.
-     */
-    boolean isShowing() {
-        return (activity != null) && (croutonView != null)
-                && (croutonView.getParent() != null);
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text-resource and style for a
+	 * given activity.
+	 *
+	 * @param activity   The {@link Activity} that the {@link Crouton} should be
+	 *                   attached to.
+	 * @param customView The custom {@link View} to display
+	 * @return The created {@link Crouton}.
+	 */
+	public static Crouton make(final Activity activity, final View customView) {
+		return new Crouton(activity, customView);
+	}
 
-    /**
-     * Removes the activity reference this {@link Crouton} is holding
-     */
-    void detachActivity() {
-        activity = null;
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text and style for a given
+	 * activity and displays it directly.
+	 *
+	 * @param activity The {@link android.app.Activity} that the {@link Crouton}
+	 *                 should be attached to.
+	 * @param text     The text you want to display.
+	 * @param style    The style that this {@link Crouton} should be created with.
+	 */
+	public static void showText(final Activity activity, final CharSequence text, final Style
+			style) {
+		makeText(activity, text, style).show();
+	}
 
-    /**
-     * @return the style
-     */
-    Style getStyle() {
-        return style;
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text and style for a given
+	 * activity and displays it directly.
+	 *
+	 * @param activity   The {@link android.app.Activity} that the {@link Crouton}
+	 *                   should be attached to.
+	 * @param customView The custom {@link View} to display
+	 */
+	public static void show(final Activity activity, final View customView) {
+		make(activity, customView).show();
+	}
 
-    /**
-     * @return the activity
-     */
-    Activity getActivity() {
-        return activity;
-    }
+	/**
+	 * Creates a {@link Crouton} with provided text-resource and style for a
+	 * given activity and displays it directly.
+	 *
+	 * @param activity       The {@link Activity} that the {@link Crouton} should be
+	 *                       attached to.
+	 * @param textResourceId The resource id of the text you want to display.
+	 * @param style          The style that this {@link Crouton} should be created with.
+	 */
+	public static void showText(final Activity activity, final int textResourceId, final Style
+			style) {
+		showText(activity, activity.getString(textResourceId), style);
+	}
 
-    /**
-     * @return the text
-     */
-    CharSequence getText() {
-        return text;
-    }
+	/**
+	 * Cancels all queued {@link Crouton}s. If there is a {@link Crouton}
+	 * displayed currently, it will be the last one displayed.
+	 */
+	public static void cancelAllCroutons() {
+		Manager.getInstance().clearCroutonQueue();
+	}
 
-    /**
-     * @return the view
-     */
-    public View getView() {
-        // return the custom view if one exists
-        if (this.customView != null) {
-            return this.customView;
-        }
+	/**
+	 * Clears (and removes from {@link Activity}'s content view, if necessary)
+	 * all croutons for the provided activity
+	 *
+	 * @param activity - The {@link} Activity to clear the croutons for
+	 */
+	public static void clearCroutonsForActivity(final Activity activity) {
+		Manager.getInstance().clearCroutonsForActivity(activity);
+	}
 
-        // if already setup return the view
-        if (this.croutonView == null) {
-            initializeCroutonView();
-        }
+	/**
+	 * Cancels a {@link Crouton} immediately.
+	 */
+	public void cancel() {
+		Manager manager = Manager.getInstance();
+		manager.removeCroutonImmediately(this);
+	}
 
-        return croutonView;
-    }
+	/**
+	 * Displays the {@link Crouton}. If there's another {@link Crouton} visible
+	 * at the time, this {@link Crouton} will be displayed afterwards.
+	 */
+	public void show() {
+		Manager.getInstance().add(this);
+	}
 
-    @SuppressWarnings("deprecation")
-    private void initializeCroutonView() {
-        Resources resources = this.activity.getResources();
+	/**
+	 * @return <code>true</code> if the {@link Crouton} is being displayed, else
+	 * <code>false</code>.
+	 */
+	boolean isShowing() {
+		return (activity != null) && (croutonView != null) && (croutonView.getParent() != null);
+	}
 
-        // create outer frame
-        this.croutonView = new FrameLayout(this.activity);
+	/**
+	 * Removes the activity reference this {@link Crouton} is holding
+	 */
+	void detachActivity() {
+		activity = null;
+	}
 
-        int height = this.style.heightInPixels;
+	/**
+	 * @return the style
+	 */
+	Style getStyle() {
+		return style;
+	}
 
-        // if a height dimension has been set, this will overwrite any height in
-        // pixels
-        if (this.style.heightDimensionResId > 0) {
-            height = resources
-                    .getDimensionPixelSize(this.style.heightDimensionResId);
-        }
-        this.croutonView.setLayoutParams(new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, height));
+	/**
+	 * @return the activity
+	 */
+	Activity getActivity() {
+		return activity;
+	}
 
-        // set background
-        if (this.style.backgroundColorValue != -1) {
-            this.croutonView
-                    .setBackgroundColor(this.style.backgroundColorValue);
-        } else {
-            this.croutonView.setBackgroundColor(resources
-                    .getColor(this.style.backgroundColorResourceId));
-        }
+	/**
+	 * @return the text
+	 */
+	CharSequence getText() {
+		return text;
+	}
 
-        // set the background drawable if set. This will override the background
-        // color.
-        if (this.style.backgroundDrawableResourceId != 0) {
-            Bitmap background = BitmapFactory.decodeResource(resources,
-                    this.style.backgroundDrawableResourceId);
-            BitmapDrawable drawable = new BitmapDrawable(resources, background);
-            if (this.style.isTileEnabled) {
-                drawable.setTileModeXY(Shader.TileMode.REPEAT,
-                        Shader.TileMode.REPEAT);
-            }
-            this.croutonView.setBackgroundDrawable(drawable);
-        }
+	/**
+	 * @return the view
+	 */
+	public View getView() {
+		// return the custom view if one exists
+		if (this.customView != null) {
+			return this.customView;
+		}
 
-        // create content view
-        RelativeLayout contentView = new RelativeLayout(this.activity);
-        contentView.setLayoutParams(new RelativeLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+		// if already setup return the view
+		if (this.croutonView == null) {
+			initializeCroutonView();
+		}
 
-        // set padding
-        int padding = this.style.paddingInPixels;
+		return croutonView;
+	}
 
-        // if a padding dimension has been set, this will overwrite any padding
-        // in pixels
-        if (this.style.paddingDimensionResId > 0) {
-            padding = resources
-                    .getDimensionPixelSize(this.style.paddingDimensionResId);
-        }
-        contentView.setPadding(padding, padding, padding, padding);
+	@SuppressWarnings("deprecation")
+	private void initializeCroutonView() {
+		Resources resources = this.activity.getResources();
 
-        // only setup image if one is requested
-        ImageView image = null;
-        if ((this.style.imageDrawable != null) || (this.style.imageResId != 0)) {
-            image = new ImageView(this.activity);
-            image.setId(IMAGE_ID);
-            image.setAdjustViewBounds(true);
-            image.setScaleType(this.style.imageScaleType);
+		// create outer frame
+		this.croutonView = new FrameLayout(this.activity);
 
-            // set the image drawable if not null
-            if (this.style.imageDrawable != null) {
-                image.setImageDrawable(this.style.imageDrawable);
-            }
+		int height = this.style.heightInPixels;
 
-            // set the image resource if not 0. This will overwrite the drawable
-            // if both are set
-            if (this.style.imageResId != 0) {
-                image.setImageResource(this.style.imageResId);
-            }
+		// if a height dimension has been set, this will overwrite any height in
+		// pixels
+		if (this.style.heightDimensionResId > 0) {
+			height = resources.getDimensionPixelSize(this.style.heightDimensionResId);
+		}
+		this.croutonView.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
+				height));
 
-            RelativeLayout.LayoutParams imageParams = new RelativeLayout.LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            imageParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT,
-                    RelativeLayout.TRUE);
-            imageParams.addRule(RelativeLayout.CENTER_VERTICAL,
-                    RelativeLayout.TRUE);
-            contentView.addView(image, imageParams);
-        }
+		// set background
+		if (this.style.backgroundColorValue != -1) {
+			this.croutonView.setBackgroundColor(this.style.backgroundColorValue);
+		} else {
+			this.croutonView.setBackgroundColor(resources.getColor(this.style
+					.backgroundColorResourceId));
+		}
 
-        TextView text = new TextView(this.activity);
-        text.setId(TEXT_ID);
-        text.setText(this.text);
-        text.setTypeface(Typeface.DEFAULT_BOLD);
-        text.setGravity(this.style.gravity);
+		// set the background drawable if set. This will override the background
+		// color.
+		if (this.style.backgroundDrawableResourceId != 0) {
+			Bitmap background = BitmapFactory.decodeResource(resources, this.style
+					.backgroundDrawableResourceId);
+			BitmapDrawable drawable = new BitmapDrawable(resources, background);
+			if (this.style.isTileEnabled) {
+				drawable.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+			}
+			this.croutonView.setBackgroundDrawable(drawable);
+		}
 
-        // set the text color if set
-        if (this.style.textColorResourceId != 0) {
-            text.setTextColor(resources
-                    .getColor(this.style.textColorResourceId));
-        }
+		// create content view
+		RelativeLayout contentView = new RelativeLayout(this.activity);
+		contentView.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,
+				LayoutParams.WRAP_CONTENT));
 
-        // Set the text size. If the user has set a text size and text
-        // appearance, the text size in the text appearance
-        // will override this.
-        if (this.style.textSize != 0) {
-            text.setTextSize(TypedValue.COMPLEX_UNIT_SP, this.style.textSize);
-        }
+		// set padding
+		int padding = this.style.paddingInPixels;
 
-        // Setup the shadow if requested
-        if (this.style.textShadowColorResId != 0) {
-            int textShadowColor = resources
-                    .getColor(this.style.textShadowColorResId);
-            float textShadowRadius = this.style.textShadowRadius;
-            float textShadowDx = this.style.textShadowDx;
-            float textShadowDy = this.style.textShadowDy;
-            text.setShadowLayer(textShadowRadius, textShadowDx, textShadowDy,
-                    textShadowColor);
-        }
+		// if a padding dimension has been set, this will overwrite any padding
+		// in pixels
+		if (this.style.paddingDimensionResId > 0) {
+			padding = resources.getDimensionPixelSize(this.style.paddingDimensionResId);
+		}
+		contentView.setPadding(padding, padding, padding, padding);
 
-        // Set the text appearance
-        if (this.style.textAppearanceResId != 0) {
-            text.setTextAppearance(this.activity,
-                    this.style.textAppearanceResId);
-        }
+		// only setup image if one is requested
+		ImageView image = null;
+		if ((this.style.imageDrawable != null) || (this.style.imageResId != 0)) {
+			image = new ImageView(this.activity);
+			image.setId(IMAGE_ID);
+			image.setAdjustViewBounds(true);
+			image.setScaleType(this.style.imageScaleType);
 
-        RelativeLayout.LayoutParams textParams = new RelativeLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        if (image != null) {
-            textParams.addRule(RelativeLayout.RIGHT_OF, image.getId());
-        }
-        contentView.addView(text, textParams);
-        this.croutonView.addView(contentView);
-    }
+			// set the image drawable if not null
+			if (this.style.imageDrawable != null) {
+				image.setImageDrawable(this.style.imageDrawable);
+			}
 
-    private Animation inAnimation;
-    private Animation outAnimation;
+			// set the image resource if not 0. This will overwrite the drawable
+			// if both are set
+			if (this.style.imageResId != 0) {
+				image.setImageResource(this.style.imageResId);
+			}
 
-    public Animation getInAnimation() {
-        if ((this.inAnimation == null) && (this.activity != null)) {
-            if (getStyle().inAnimationResId > 0) {
-                this.inAnimation = AnimationUtils.loadAnimation(getActivity(),
-                        getStyle().inAnimationResId);
-            } else {
-                this.inAnimation = AnimationsBuilder
-                        .buildSlideInDownAnimation();
-            }
-        }
+			RelativeLayout.LayoutParams imageParams = new RelativeLayout.LayoutParams(LayoutParams
+					.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			imageParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+			imageParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+			contentView.addView(image, imageParams);
+		}
 
-        return inAnimation;
-    }
+		TextView text = new TextView(this.activity);
+		text.setId(TEXT_ID);
+		text.setText(this.text);
+		text.setTypeface(Typeface.DEFAULT_BOLD);
+		text.setGravity(this.style.gravity);
 
-    public Animation getOutAnimation() {
-        if ((this.outAnimation == null) && (this.activity != null)) {
-            if (getStyle().outAnimationResId > 0) {
-                this.outAnimation = AnimationUtils.loadAnimation(getActivity(),
-                        getStyle().outAnimationResId);
-            } else {
-                this.outAnimation = AnimationsBuilder
-                        .buildSlideOutUpAnimation();
-            }
-        }
+		// set the text color if set
+		if (this.style.textColorResourceId != 0) {
+			text.setTextColor(resources.getColor(this.style.textColorResourceId));
+		}
 
-        return outAnimation;
-    }
+		// Set the text size. If the user has set a text size and text
+		// appearance, the text size in the text appearance
+		// will override this.
+		if (this.style.textSize != 0) {
+			text.setTextSize(TypedValue.COMPLEX_UNIT_SP, this.style.textSize);
+		}
+
+		// Setup the shadow if requested
+		if (this.style.textShadowColorResId != 0) {
+			int textShadowColor = resources.getColor(this.style.textShadowColorResId);
+			float textShadowRadius = this.style.textShadowRadius;
+			float textShadowDx = this.style.textShadowDx;
+			float textShadowDy = this.style.textShadowDy;
+			text.setShadowLayer(textShadowRadius, textShadowDx, textShadowDy, textShadowColor);
+		}
+
+		// Set the text appearance
+		if (this.style.textAppearanceResId != 0) {
+			text.setTextAppearance(this.activity, this.style.textAppearanceResId);
+		}
+
+		RelativeLayout.LayoutParams textParams = new RelativeLayout.LayoutParams(LayoutParams
+				.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+		if (image != null) {
+			textParams.addRule(RelativeLayout.RIGHT_OF, image.getId());
+		}
+		contentView.addView(text, textParams);
+		this.croutonView.addView(contentView);
+	}
+
+	public Animation getInAnimation() {
+		if ((this.inAnimation == null) && (this.activity != null)) {
+			if (getStyle().inAnimationResId > 0) {
+				this.inAnimation = AnimationUtils.loadAnimation(getActivity(), getStyle()
+						.inAnimationResId);
+			} else {
+				this.inAnimation = AnimationsBuilder.buildSlideInDownAnimation();
+			}
+		}
+
+		return inAnimation;
+	}
+
+	public Animation getOutAnimation() {
+		if ((this.outAnimation == null) && (this.activity != null)) {
+			if (getStyle().outAnimationResId > 0) {
+				this.outAnimation = AnimationUtils.loadAnimation(getActivity(), getStyle()
+						.outAnimationResId);
+			} else {
+				this.outAnimation = AnimationsBuilder.buildSlideOutUpAnimation();
+			}
+		}
+
+		return outAnimation;
+	}
 }

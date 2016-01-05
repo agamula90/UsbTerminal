@@ -19,13 +19,13 @@ import android.view.WindowManager;
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
 import fr.xgouchet.androidlib.data.FileUtils;
-import fr.xgouchet.texteditor.common.Constants;
+import static fr.xgouchet.texteditor.common.Constants.*;
 import fr.xgouchet.texteditor.common.Settings;
 import fr.xgouchet.texteditor.ui.view.AdvancedEditText;
 
 @SuppressWarnings("deprecation")
 public class TedSettingsActivity extends PreferenceActivity implements
-        Constants, OnSharedPreferenceChangeListener {
+        OnSharedPreferenceChangeListener {
 
     /**
      * @see android.preference.PreferenceActivity#onCreate(android.os.Bundle)

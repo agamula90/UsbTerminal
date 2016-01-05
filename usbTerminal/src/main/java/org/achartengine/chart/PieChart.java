@@ -15,15 +15,6 @@
  */
 package org.achartengine.chart;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.achartengine.model.CategorySeries;
-import org.achartengine.model.Point;
-import org.achartengine.model.SeriesSelection;
-import org.achartengine.renderer.DefaultRenderer;
-import org.achartengine.renderer.SimpleSeriesRenderer;
-
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -31,138 +22,143 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader.TileMode;
 
+import org.achartengine.model.CategorySeries;
+import org.achartengine.model.Point;
+import org.achartengine.model.SeriesSelection;
+import org.achartengine.renderer.DefaultRenderer;
+import org.achartengine.renderer.SimpleSeriesRenderer;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The pie chart rendering class.
  */
 public class PieChart extends RoundChart {
-    /** Handles returning values when tapping on PieChart. */
-    private PieMapper mPieMapper;
 
-    /**
-     * Builds a new pie chart instance.
-     *
-     * @param dataset the series dataset
-     * @param renderer the series renderer
-     */
-    public PieChart(CategorySeries dataset, DefaultRenderer renderer) {
-        super(dataset, renderer);
-        mPieMapper = new PieMapper();
-    }
+	/**
+	 * Handles returning values when tapping on PieChart.
+	 */
+	private PieMapper mPieMapper;
 
-    /**
-     * The graphical representation of the pie chart.
-     *
-     * @param canvas the canvas to paint to
-     * @param x the top left x value of the view to draw to
-     * @param y the top left y value of the view to draw to
-     * @param width the width of the view to draw to
-     * @param height the height of the view to draw to
-     * @param paint the paint
-     */
-    @Override
-    public void draw(Canvas canvas, int x, int y, int width, int height, Paint paint) {
-        paint.setAntiAlias(mRenderer.isAntialiasing());
-        paint.setStyle(Style.FILL);
-        paint.setTextSize(mRenderer.getLabelsTextSize());
-        int legendSize = getLegendSize(mRenderer, height / 5, 0);
-        int left = x;
-        int top = y;
-        int right = x + width;
-        int sLength = mDataset.getItemCount();
-        double total = 0;
-        String[] titles = new String[sLength];
-        for (int i = 0; i < sLength; i++) {
-            total += mDataset.getValue(i);
-            titles[i] = mDataset.getCategory(i);
-        }
-        if (mRenderer.isFitLegend()) {
-            legendSize = drawLegend(canvas, mRenderer, titles, left, right, y, width, height,
-                    legendSize,
-                    paint, true);
-        }
-        int bottom = y + height - legendSize;
-        drawBackground(mRenderer, canvas, x, y, width, height, paint, false, DefaultRenderer
-                .NO_COLOR);
+	/**
+	 * Builds a new pie chart instance.
+	 *
+	 * @param dataset  the series dataset
+	 * @param renderer the series renderer
+	 */
+	public PieChart(CategorySeries dataset, DefaultRenderer renderer) {
+		super(dataset, renderer);
+		mPieMapper = new PieMapper();
+	}
 
-        float currentAngle = mRenderer.getStartAngle();
-        int mRadius = Math.min(Math.abs(right - left), Math.abs(bottom - top));
-        int radius = (int) (mRadius * 0.35 * mRenderer.getScale());
+	/**
+	 * The graphical representation of the pie chart.
+	 *
+	 * @param canvas the canvas to paint to
+	 * @param x      the top left x value of the view to draw to
+	 * @param y      the top left y value of the view to draw to
+	 * @param width  the width of the view to draw to
+	 * @param height the height of the view to draw to
+	 * @param paint  the paint
+	 */
+	@Override
+	public void draw(Canvas canvas, int x, int y, int width, int height, Paint paint) {
+		paint.setAntiAlias(mRenderer.isAntialiasing());
+		paint.setStyle(Style.FILL);
+		paint.setTextSize(mRenderer.getLabelsTextSize());
+		int legendSize = getLegendSize(mRenderer, height / 5, 0);
+		int left = x;
+		int top = y;
+		int right = x + width;
+		int sLength = mDataset.getItemCount();
+		double total = 0;
+		String[] titles = new String[sLength];
+		for (int i = 0; i < sLength; i++) {
+			total += mDataset.getValue(i);
+			titles[i] = mDataset.getCategory(i);
+		}
+		if (mRenderer.isFitLegend()) {
+			legendSize = drawLegend(canvas, mRenderer, titles, left, right, y, width, height,
+					legendSize, paint, true);
+		}
+		int bottom = y + height - legendSize;
+		drawBackground(mRenderer, canvas, x, y, width, height, paint, false, DefaultRenderer
+				.NO_COLOR);
 
-        if (mCenterX == NO_VALUE) {
-            mCenterX = (left + right) / 2;
-        }
-        if (mCenterY == NO_VALUE) {
-            mCenterY = (bottom + top) / 2;
-        }
+		float currentAngle = mRenderer.getStartAngle();
+		int mRadius = Math.min(Math.abs(right - left), Math.abs(bottom - top));
+		int radius = (int) (mRadius * 0.35 * mRenderer.getScale());
 
-        // Hook in clip detection after center has been calculated
-        mPieMapper.setDimensions(radius, mCenterX, mCenterY);
-        boolean loadPieCfg = !mPieMapper.areAllSegmentPresent(sLength);
-        if (loadPieCfg) {
-            mPieMapper.clearPieSegments();
-        }
+		if (mCenterX == NO_VALUE) {
+			mCenterX = (left + right) / 2;
+		}
+		if (mCenterY == NO_VALUE) {
+			mCenterY = (bottom + top) / 2;
+		}
 
-        float shortRadius = radius * 0.9f;
-        float longRadius = radius * 1.1f;
-        RectF oval = new RectF(mCenterX - radius, mCenterY - radius, mCenterX + radius, mCenterY
-                + radius);
-        List<RectF> prevLabelsBounds = new ArrayList<RectF>();
+		// Hook in clip detection after center has been calculated
+		mPieMapper.setDimensions(radius, mCenterX, mCenterY);
+		boolean loadPieCfg = !mPieMapper.areAllSegmentPresent(sLength);
+		if (loadPieCfg) {
+			mPieMapper.clearPieSegments();
+		}
 
-        for (int i = 0; i < sLength; i++) {
-            SimpleSeriesRenderer seriesRenderer = mRenderer.getSeriesRendererAt(i);
-            if (seriesRenderer.isGradientEnabled()) {
-                RadialGradient grad = new RadialGradient(mCenterX, mCenterY, longRadius,
-                        seriesRenderer.getGradientStartColor(), seriesRenderer
-                        .getGradientStopColor(),
-                        TileMode.MIRROR);
-                paint.setShader(grad);
-            } else {
-                paint.setColor(seriesRenderer.getColor());
-            }
+		float shortRadius = radius * 0.9f;
+		float longRadius = radius * 1.1f;
+		RectF oval = new RectF(mCenterX - radius, mCenterY - radius, mCenterX + radius, mCenterY +
+				radius);
+		List<RectF> prevLabelsBounds = new ArrayList<RectF>();
 
-            float value = (float) mDataset.getValue(i);
-            float angle = (float) (value / total * 360);
-            if (seriesRenderer.isHighlighted()) {
-                double rAngle = Math.toRadians(90 - (currentAngle + angle / 2));
-                float translateX = (float) (radius * 0.1 * Math.sin(rAngle));
-                float translateY = (float) (radius * 0.1 * Math.cos(rAngle));
-                oval.offset(translateX, translateY);
-                canvas.drawArc(oval, currentAngle, angle, true, paint);
-                oval.offset(-translateX, -translateY);
-            } else {
-                canvas.drawArc(oval, currentAngle, angle, true, paint);
-            }
-            paint.setColor(seriesRenderer.getColor());
-            paint.setShader(null);
-            drawLabel(canvas, mDataset.getCategory(i), mRenderer, prevLabelsBounds, mCenterX,
-                    mCenterY,
-                    shortRadius, longRadius, currentAngle, angle, left, right, mRenderer
-                            .getLabelsColor(),
-                    paint, true, false);
-            if (mRenderer.isDisplayValues()) {
-                drawLabel(
-                        canvas,
-                        getLabel(mRenderer.getSeriesRendererAt(i).getChartValuesFormat(),
-                                mDataset.getValue(i)),
-                        mRenderer, prevLabelsBounds, mCenterX, mCenterY, shortRadius / 2,
-                        longRadius / 2,
-                        currentAngle, angle, left, right, mRenderer.getLabelsColor(), paint,
-                        false, true);
-            }
+		for (int i = 0; i < sLength; i++) {
+			SimpleSeriesRenderer seriesRenderer = mRenderer.getSeriesRendererAt(i);
+			if (seriesRenderer.isGradientEnabled()) {
+				RadialGradient grad = new RadialGradient(mCenterX, mCenterY, longRadius,
+						seriesRenderer.getGradientStartColor(), seriesRenderer
+						.getGradientStopColor(), TileMode.MIRROR);
+				paint.setShader(grad);
+			} else {
+				paint.setColor(seriesRenderer.getColor());
+			}
 
-            // Save details for getSeries functionality
-            if (loadPieCfg) {
-                mPieMapper.addPieSegment(i, value, currentAngle, angle);
-            }
-            currentAngle += angle;
-        }
-        prevLabelsBounds.clear();
-        drawLegend(canvas, mRenderer, titles, left, right, y, width, height, legendSize, paint, false);
-        drawTitle(canvas, x, y, width, paint);
-    }
+			float value = (float) mDataset.getValue(i);
+			float angle = (float) (value / total * 360);
+			if (seriesRenderer.isHighlighted()) {
+				double rAngle = Math.toRadians(90 - (currentAngle + angle / 2));
+				float translateX = (float) (radius * 0.1 * Math.sin(rAngle));
+				float translateY = (float) (radius * 0.1 * Math.cos(rAngle));
+				oval.offset(translateX, translateY);
+				canvas.drawArc(oval, currentAngle, angle, true, paint);
+				oval.offset(-translateX, -translateY);
+			} else {
+				canvas.drawArc(oval, currentAngle, angle, true, paint);
+			}
+			paint.setColor(seriesRenderer.getColor());
+			paint.setShader(null);
+			drawLabel(canvas, mDataset.getCategory(i), mRenderer, prevLabelsBounds, mCenterX,
+					mCenterY, shortRadius, longRadius, currentAngle, angle, left, right, mRenderer
+							.getLabelsColor(), paint, true, false);
+			if (mRenderer.isDisplayValues()) {
+				drawLabel(canvas, getLabel(mRenderer.getSeriesRendererAt(i).getChartValuesFormat()
+						, mDataset.getValue(i)), mRenderer, prevLabelsBounds, mCenterX, mCenterY,
+						shortRadius / 2, longRadius / 2, currentAngle, angle, left, right,
+						mRenderer.getLabelsColor(), paint, false, true);
+			}
 
-    public SeriesSelection getSeriesAndPointForScreenCoordinate(Point screenPoint) {
-        return mPieMapper.getSeriesAndPointForScreenCoordinate(screenPoint);
-    }
+			// Save details for getSeries functionality
+			if (loadPieCfg) {
+				mPieMapper.addPieSegment(i, value, currentAngle, angle);
+			}
+			currentAngle += angle;
+		}
+		prevLabelsBounds.clear();
+		drawLegend(canvas, mRenderer, titles, left, right, y, width, height, legendSize, paint,
+				false);
+		drawTitle(canvas, x, y, width, paint);
+	}
+
+	public SeriesSelection getSeriesAndPointForScreenCoordinate(Point screenPoint) {
+		return mPieMapper.getSeriesAndPointForScreenCoordinate(screenPoint);
+	}
 
 }

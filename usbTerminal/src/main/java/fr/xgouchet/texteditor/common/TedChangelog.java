@@ -7,7 +7,7 @@ import fr.xgouchet.androidlib.common.AbstractChangeLog;
 public class TedChangelog extends AbstractChangeLog {
 
     /**
-     * @see fr.xgouchet.androidlib.common.ChangeLog#getTitleResourceForVersion(int)
+     * @see fr.xgouchet.androidlib.common.AbstractChangeLog#getTitleResourceForVersion(int)
      */
     public int getTitleResourceForVersion(int version) {
         int res = 0;
@@ -20,7 +20,7 @@ public class TedChangelog extends AbstractChangeLog {
     }
 
     /**
-     * @see fr.xgouchet.androidlib.common.ChangeLog#getChangeLogResourceForVersion(int)
+     * @see fr.xgouchet.androidlib.common.AbstractChangeLog#getChangeLogResourceForVersion(int)
      */
     public int getChangeLogResourceForVersion(int version) {
         int res = 0;

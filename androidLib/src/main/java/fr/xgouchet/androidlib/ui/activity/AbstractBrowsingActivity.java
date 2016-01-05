@@ -1,13 +1,5 @@
 package fr.xgouchet.androidlib.ui.activity;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.drawable.ColorDrawable;
@@ -20,6 +12,14 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
 import fr.xgouchet.androidlib.R;
@@ -30,243 +30,244 @@ import fr.xgouchet.androidlib.ui.adapter.FileListAdapter;
 /**
  *
  */
-public abstract class AbstractBrowsingActivity extends Activity implements
-        OnItemClickListener {
+public abstract class AbstractBrowsingActivity extends Activity implements OnItemClickListener {
 
-    /**
-     * @see android.app.Activity#onCreate(android.os.Bundle)
-     */
-    protected void onCreate(final Bundle savedState) {
-        super.onCreate(savedState);
+	/**
+	 * The list of files to display
+	 */
+	protected List<File> mList;
 
-        mExtWhiteList = new ArrayList<String>();
-        mExtBlackList = new ArrayList<String>();
-        mComparator = new ComparatorFilesAlpha();
-        mListAdapter = new FileListAdapter(this, new LinkedList<File>(), null);
-    }
+	/**
+	 * the dialog's list view
+	 */
+	protected ListView mFilesList;
 
-    /**
-     * @see android.app.Activity#onResume()
-     */
-    protected void onResume() {
-        super.onResume();
+	/**
+	 * The list adapter
+	 */
+	protected FileListAdapter mListAdapter;
 
-        // Setup the widget
-        mFilesList = (ListView) findViewById(android.R.id.list);
-        mFilesList.setDivider(new ColorDrawable());
-        mFilesList.setOnItemClickListener(this);
+	/**
+	 * the current folder
+	 */
+	protected File mCurrentFolder;
 
-        // set adpater
-        mFilesList.setAdapter(mListAdapter);
+	/**
+	 * the current file sort
+	 */
+	protected Comparator<File> mComparator;
 
-        // initial folder
-        File folder;
-        if (mCurrentFolder != null) {
-            folder = mCurrentFolder;
-        } else if ((FileUtils.STORAGE.exists())
-                && (FileUtils.STORAGE.canRead())) {
-            folder = FileUtils.STORAGE;
-        } else {
-            folder = new File("/");
-        }
+	protected boolean mShowFoldersOnly = false;
 
-        fillFolderView(folder);
-    }
+	protected boolean mShowHiddenFiles = true;
 
-    /**
-     * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
-     * android.view.View, int, long)
-     */
-    public void onItemClick(final AdapterView<?> parent, final View view,
-                            final int position, final long itemId) {
-        File file, canon;
+	protected boolean mHideLockedFiles = false;
 
-        file = mList.get(position);
-        canon = new File(FileUtils.getCanonizePath(file));
+	protected List<String> mExtWhiteList;
 
-        // safe check : file exists
-        if (file.exists()) {
-            if (file.isDirectory()) {
-                if (onFolderClick(file)) {
-                    fillFolderView(canon);
-                }
-            } else {
-                onFileClick(canon);
-            }
-        }
-    }
+	protected List<String> mExtBlackList;
 
-    /**
-     * @param folder the folder being clicked
-     * @return if the folder should be opened in the browsing list view
-     */
-    protected abstract boolean onFolderClick(File folder);
+	/**
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
+	protected void onCreate(final Bundle savedState) {
+		super.onCreate(savedState);
 
-    /**
-     * @param file the file being clicked (it is not a folder)
-     */
-    protected abstract void onFileClick(File file);
+		mExtWhiteList = new ArrayList<String>();
+		mExtBlackList = new ArrayList<String>();
+		mComparator = new ComparatorFilesAlpha();
+		mListAdapter = new FileListAdapter(this, new LinkedList<File>(), null);
+	}
 
-    /**
-     * Folder view has been filled
-     */
-    protected abstract void onFolderViewFilled();
+	/**
+	 * @see android.app.Activity#onResume()
+	 */
+	protected void onResume() {
+		super.onResume();
 
-    /**
-     * Fills the files list with the specified folder
-     *
-     * @param file the file of the folder to display
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    protected void fillFolderView(final File folder) {
-        final File file = new File(FileUtils.getCanonizePath(folder));
+		// Setup the widget
+		mFilesList = (ListView) findViewById(android.R.id.list);
+		mFilesList.setDivider(new ColorDrawable());
+		mFilesList.setOnItemClickListener(this);
 
-        if (!file.exists()) {
-            Crouton.makeText(this, R.string.toast_folder_doesnt_exist,
-                    Style.ALERT).show();
-        } else if (!file.isDirectory()) {
-            Crouton.makeText(this, R.string.toast_folder_not_folder,
-                    Style.ALERT).show();
-        } else if (!file.canRead()) {
-            Crouton.makeText(this, R.string.toast_folder_cant_read, Style.ALERT)
-                    .show();
-        } else {
+		// set adpater
+		mFilesList.setAdapter(mListAdapter);
 
-            listFiles(file);
+		// initial folder
+		File folder;
+		if (mCurrentFolder != null) {
+			folder = mCurrentFolder;
+		} else if ((FileUtils.STORAGE.exists()) && (FileUtils.STORAGE.canRead())) {
+			folder = FileUtils.STORAGE;
+		} else {
+			folder = new File("/");
+		}
 
-            // create string list adapter
-            // mListAdapter = new FileListAdapter(this, mList, file);
-            mListAdapter.clear();
-            mListAdapter.setCurrentFolder(file);
-            if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-                mListAdapter.addAll(mList);
-            } else {
-                for (File f : mList) {
-                    mListAdapter.add(f);
-                }
-            }
-            mFilesList.scrollTo(0, 0);
+		fillFolderView(folder);
+	}
 
-            // update path
-            mCurrentFolder = file;
-            setTitle(file.getName());
+	/**
+	 * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
+	 * android.view.View, int, long)
+	 */
+	public void onItemClick(final AdapterView<?> parent, final View view, final int position,
+			final long itemId) {
+		File file, canon;
 
-            onFolderViewFilled();
-        }
-    }
+		file = mList.get(position);
+		canon = new File(FileUtils.getCanonizePath(file));
 
-    /**
-     * List the files in the given folder and store them in the list of files to
-     * display
-     *
-     * @param folder the folder to analyze
-     */
-    protected void listFiles(final File folder) {
-        File file;
+		// safe check : file exists
+		if (file.exists()) {
+			if (file.isDirectory()) {
+				if (onFolderClick(file)) {
+					fillFolderView(canon);
+				}
+			} else {
+				onFileClick(canon);
+			}
+		}
+	}
 
-        // get files list as array list
-        if ((folder == null) || (!folder.isDirectory())) {
-            mList = new ArrayList<File>();
-            return;
-        }
+	/**
+	 * @param folder the folder being clicked
+	 * @return if the folder should be opened in the browsing list view
+	 */
+	protected abstract boolean onFolderClick(File folder);
 
-        mList = new ArrayList<File>(Arrays.asList(folder.listFiles()));
+	/**
+	 * @param file the file being clicked (it is not a folder)
+	 */
+	protected abstract void onFileClick(File file);
 
-        // filter files
-        for (int i = (mList.size() - 1); i >= 0; i--) {
-            file = mList.get(i);
+	/**
+	 * Folder view has been filled
+	 */
+	protected abstract void onFolderViewFilled();
 
-            // remove
-            if (!(isFileVisible(file) && isFileTypeAllowed(file) && isStartNameAllowed(file))) {
-                mList.remove(i);
-            }
-        }
+	/**
+	 * Fills the files list with the specified folder
+	 *
+	 * @param folder the file of the folder to display
+	 */
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	protected void fillFolderView(final File folder) {
+		final File file = new File(FileUtils.getCanonizePath(folder));
 
-        // Sort list
-        if (mComparator != null) {
-            Collections.sort(mList, mComparator);
-        }
+		if (!file.exists()) {
+			Crouton.makeText(this, R.string.toast_folder_doesnt_exist, Style.ALERT).show();
+		} else if (!file.isDirectory()) {
+			Crouton.makeText(this, R.string.toast_folder_not_folder, Style.ALERT).show();
+		} else if (!file.canRead()) {
+			Crouton.makeText(this, R.string.toast_folder_cant_read, Style.ALERT).show();
+		} else {
 
-        // Add parent folder
-        if (!folder.getPath().equals("/")) {
-            mList.add(0, folder.getParentFile());
-        }
-    }
+			listFiles(file);
 
-    protected boolean isFileVisible(final File file) {
+			// create string list adapter
+			// mListAdapter = new FileListAdapter(this, mList, file);
+			mListAdapter.clear();
+			mListAdapter.setCurrentFolder(file);
+			if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+				mListAdapter.addAll(mList);
+			} else {
+				for (File f : mList) {
+					mListAdapter.add(f);
+				}
+			}
+			mFilesList.scrollTo(0, 0);
 
-        boolean visible = true;
+			// update path
+			mCurrentFolder = file;
+			setTitle(file.getName());
 
-        // filter hidden files
-        if ((!mShowHiddenFiles) && (file.getName().startsWith("."))) {
-            visible = false;
-        }
+			onFolderViewFilled();
+		}
+	}
 
-        // filter non folders
-        if (mShowFoldersOnly && (!file.isDirectory())) {
-            visible = false;
-        }
+	/**
+	 * List the files in the given folder and store them in the list of files to
+	 * display
+	 *
+	 * @param folder the folder to analyze
+	 */
+	protected void listFiles(final File folder) {
+		File file;
 
-        return visible;
-    }
+		// get files list as array list
+		if ((folder == null) || (!folder.isDirectory())) {
+			mList = new ArrayList<File>();
+			return;
+		}
 
-    /**
-     * Filters files based on their extensions and white list / black list
-     *
-     * @param file the file to test
-     * @return if the file can be shown (either appear in white list or doesn't
-     * appear on blacklist)
-     */
-    protected boolean isFileTypeAllowed(final File file) {
-        boolean allow = true;
-        String ext;
+		mList = new ArrayList<File>(Arrays.asList(folder.listFiles()));
 
-        if (file.isFile()) {
-            ext = FileUtils.getFileExtension(file);
-            if ((mExtWhiteList != null) && (!mExtWhiteList.isEmpty())
-                    && (!mExtWhiteList.contains(ext))) {
-                allow = false;
-            }
+		// filter files
+		for (int i = (mList.size() - 1); i >= 0; i--) {
+			file = mList.get(i);
 
-            if ((mExtBlackList != null) && (!mExtBlackList.isEmpty())
-                    && (mExtBlackList.contains(ext))) {
-                allow = false;
-            }
-        }
+			// remove
+			if (!(isFileVisible(file) && isFileTypeAllowed(file) && isStartNameAllowed(file))) {
+				mList.remove(i);
+			}
+		}
 
-        return allow;
-    }
+		// Sort list
+		if (mComparator != null) {
+			Collections.sort(mList, mComparator);
+		}
 
-    private boolean isStartNameAllowed(File file) {
-        return !file.getName().startsWith(".");
-    }
+		// Add parent folder
+		if (!folder.getPath().equals("/")) {
+			mList.add(0, folder.getParentFile());
+		}
+	}
 
-    /**
-     * The list of files to display
-     */
-    protected List<File> mList;
-    /**
-     * the dialog's list view
-     */
-    protected ListView mFilesList;
-    /**
-     * The list adapter
-     */
-    protected FileListAdapter mListAdapter;
+	protected boolean isFileVisible(final File file) {
 
-    /**
-     * the current folder
-     */
-    protected File mCurrentFolder;
+		boolean visible = true;
 
-    /**
-     * the current file sort
-     */
-    protected Comparator<File> mComparator;
+		// filter hidden files
+		if ((!mShowHiddenFiles) && (file.getName().startsWith("."))) {
+			visible = false;
+		}
 
-    protected boolean mShowFoldersOnly = false;
-    protected boolean mShowHiddenFiles = true;
-    protected boolean mHideLockedFiles = false;
-    protected List<String> mExtWhiteList;
-    protected List<String> mExtBlackList;
+		// filter non folders
+		if (mShowFoldersOnly && (!file.isDirectory())) {
+			visible = false;
+		}
+
+		return visible;
+	}
+
+	/**
+	 * Filters files based on their extensions and white list / black list
+	 *
+	 * @param file the file to test
+	 * @return if the file can be shown (either appear in white list or doesn't
+	 * appear on blacklist)
+	 */
+	protected boolean isFileTypeAllowed(final File file) {
+		boolean allow = true;
+		String ext;
+
+		if (file.isFile()) {
+			ext = FileUtils.getFileExtension(file);
+			if ((mExtWhiteList != null) && (!mExtWhiteList.isEmpty()) && (!mExtWhiteList.contains
+					(ext))) {
+				allow = false;
+			}
+
+			if ((mExtBlackList != null) && (!mExtBlackList.isEmpty()) && (mExtBlackList.contains
+					(ext))) {
+				allow = false;
+			}
+		}
+
+		return allow;
+	}
+
+	private boolean isStartNameAllowed(File file) {
+		return !file.getName().startsWith(".");
+	}
 }

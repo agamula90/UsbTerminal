@@ -16,34 +16,35 @@
 package org.achartengine.model;
 
 public class SeriesSelection {
-    private int mSeriesIndex;
 
-    private int mPointIndex;
+	private int mSeriesIndex;
 
-    private double mXValue;
+	private int mPointIndex;
 
-    private double mValue;
+	private double mXValue;
 
-    public SeriesSelection(int seriesIndex, int pointIndex, double xValue, double value) {
-        mSeriesIndex = seriesIndex;
-        mPointIndex = pointIndex;
-        mXValue = xValue;
-        mValue = value;
-    }
+	private double mValue;
 
-    public int getSeriesIndex() {
-        return mSeriesIndex;
-    }
+	public SeriesSelection(int seriesIndex, int pointIndex, double xValue, double value) {
+		mSeriesIndex = seriesIndex;
+		mPointIndex = pointIndex;
+		mXValue = xValue;
+		mValue = value;
+	}
 
-    public int getPointIndex() {
-        return mPointIndex;
-    }
+	public int getSeriesIndex() {
+		return mSeriesIndex;
+	}
 
-    public double getXValue() {
-        return mXValue;
-    }
+	public int getPointIndex() {
+		return mPointIndex;
+	}
 
-    public double getValue() {
-        return mValue;
-    }
+	public double getXValue() {
+		return mXValue;
+	}
+
+	public double getValue() {
+		return mValue;
+	}
 }

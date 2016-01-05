@@ -162,7 +162,7 @@ final class Manager extends Handler {
     }
 
     /**
-     * Adds a {@link Crouton} to the {@link ViewParent} of it's {@link Activity}
+     * Adds a {@link Crouton} to the {@link android.view.ViewParent} of it's {@link Activity}
      * .
      *
      * @param crouton The {@link Crouton} that should be added.

@@ -16,13 +16,17 @@ import android.content.Context;
 import android.util.Log;
 
 import com.ismet.usbterminal.BuildConfig;
+import static fr.xgouchet.texteditor.common.Constants.*;
 
 /**
  * Misc file utilities
  * <p/>
  * TODO code review
  */
-public class TextFileUtils implements Constants {
+public class TextFileUtils {
+
+	private TextFileUtils() {
+	}
 
     /**
      * @param path the absolute path to the file to save
@@ -165,7 +169,7 @@ public class TextFileUtils implements Constants {
      *
      * @param fileName the absolute path of the file to open
      * @return charset name
-     * @see https://code.google.com/p/juniversalchardet/
+     * @see <a href = "https://code.google.com/p/juniversalchardet/" />JUniversalChardet</a>
      */
     public static String detectCharSet(String fileName) throws IOException {
         byte[] buf = new byte[4096];

@@ -20,11 +20,11 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import fr.xgouchet.androidlib.ui.Toaster;
-import fr.xgouchet.texteditor.common.Constants;
+import static fr.xgouchet.texteditor.common.Constants.*;
 import fr.xgouchet.texteditor.common.RecentFiles;
 import fr.xgouchet.texteditor.ui.adapter.PathListAdapter;
 
-public class TedOpenRecentActivity extends Activity implements Constants, OnClickListener,
+public class TedOpenRecentActivity extends Activity implements OnClickListener,
         OnItemClickListener {
 
     /**

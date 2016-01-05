@@ -16,10 +16,10 @@ import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 import de.neofonie.mobile.app.android.widget.crouton.Crouton;
 import de.neofonie.mobile.app.android.widget.crouton.Style;
 import fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity;
-import fr.xgouchet.texteditor.common.Constants;
+import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class TedOpenActivity extends AbstractBrowsingActivity implements
-        OnClickListener, Constants {
+        OnClickListener {
 
     /**
      * @see android.app.Activity#onCreate(android.os.Bundle)

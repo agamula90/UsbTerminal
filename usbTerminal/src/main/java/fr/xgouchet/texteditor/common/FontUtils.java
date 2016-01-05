@@ -6,6 +6,9 @@ import android.content.Context;
 
 public class FontUtils {
 
+	private FontUtils() {
+	}
+
     /**
      * @param ctx the current application context
      * @return the app folder for fonts

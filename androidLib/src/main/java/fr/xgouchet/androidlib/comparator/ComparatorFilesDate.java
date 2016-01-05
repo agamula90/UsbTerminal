@@ -10,35 +10,36 @@ import java.util.Locale;
  * @author x.gouchet
  */
 public class ComparatorFilesDate implements Comparator<File> {
-    /**
-     * @see Comparator#compare(Object, Object)
-     */
-    public int compare(final File file1, final File file2) {
-        int result;
-        Locale locale;
 
-        // sort folders first
-        if ((file1.isDirectory()) && (!file2.isDirectory())) {
-            result = -1;
-        } else if ((!file1.isDirectory()) && (file2.isDirectory())) {
-            result = 1;
-        } else {
+	/**
+	 * @see Comparator#compare(Object, Object)
+	 */
+	public int compare(final File file1, final File file2) {
+		int result;
+		Locale locale;
 
-            // both are files, or both are folders...
-            // get modif date
-            final long modif1 = file1.lastModified();
-            final long modif2 = file2.lastModified();
+		// sort folders first
+		if ((file1.isDirectory()) && (!file2.isDirectory())) {
+			result = -1;
+		} else if ((!file1.isDirectory()) && (file2.isDirectory())) {
+			result = 1;
+		} else {
 
-            // same extension, we sort alphabetically
-            if (modif1 == modif2) {
-                locale = Locale.getDefault();
-                result = file1.getName().toLowerCase(locale)
-                        .compareTo(file2.getName().toLowerCase(locale));
-            } else {
-                result = (int) (modif1 - modif2);
-            }
-        }
+			// both are files, or both are folders...
+			// get modif date
+			final long modif1 = file1.lastModified();
+			final long modif2 = file2.lastModified();
 
-        return result;
-    }
+			// same extension, we sort alphabetically
+			if (modif1 == modif2) {
+				locale = Locale.getDefault();
+				result = file1.getName().toLowerCase(locale).compareTo(file2.getName().toLowerCase
+						(locale));
+			} else {
+				result = (int) (modif1 - modif2);
+			}
+		}
+
+		return result;
+	}
 }
