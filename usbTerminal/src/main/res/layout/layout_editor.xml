@@ -178,7 +178,8 @@
                                 <ScrollView
                                     android:id="@+id/mScrollView"
                                     android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"
                                     android:background="@android:color/black"
                                     android:scrollbars="vertical">
 
@@ -193,6 +194,15 @@
                                         android:textIsSelectable="true"
                                         android:textSize="16sp"/>
                                 </ScrollView>
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@android:color/black"
+                                    android:paddingTop="0dp"
+                                    android:text=""
+                                    android:textColor="#ffffff"
+                                    android:textSize="16sp"/>
                             </LinearLayout>
 
                             <!--

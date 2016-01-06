@@ -71,7 +71,7 @@ public class TedSaveAsActivity extends AbstractBrowsingActivity implements OnCli
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowserActivity#onFileClick(java.io.File)
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFileClick(java.io.File)
 	 */
 	protected void onFileClick(File file) {
 		if (file.canWrite())
@@ -79,7 +79,7 @@ public class TedSaveAsActivity extends AbstractBrowsingActivity implements OnCli
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowserActivity#onFolderClick(java.io.File)
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderClick(java.io.File)
 	 */
 	protected boolean onFolderClick(File folder) {
 		RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder
@@ -88,7 +88,7 @@ public class TedSaveAsActivity extends AbstractBrowsingActivity implements OnCli
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowsingActivity#onFolderViewFilled()
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderViewFilled()
 	 */
 	protected void onFolderViewFilled() {
 

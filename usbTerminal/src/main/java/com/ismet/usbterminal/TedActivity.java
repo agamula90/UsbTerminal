@@ -375,275 +375,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 
 		Settings.updateFromPreferences(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
 
-		mHandler = new MyHandler(weakReference) {
-
-			@Override
-			public void handleMessage(Message msg) {
-				// TODO Auto-generated method stub
-				super.handleMessage(msg);
-
-				WeakReference<TedActivity> callActivity = getActivity();
-
-				switch (msg.what) {
-					case 0: {
-						// String data = (String) msg.obj;
-						// data = data.replace("\r", "");
-						// data = data.replace("\n", "");
-
-						// byte [] arrT1 = data.getBytes();
-						byte[] arrT1 = (byte[]) msg.obj;
-						// String strH="";
-						String data = "";
-						if (arrT1.length == 7) {
-							if ((String.format("%02X", arrT1[0]).equals("FE")) && (String.format
-									("%02X", arrT1[1]).equals("44"))) {
-								// SENSOR Response
-								String strHex = "";
-								for (byte b : arrT1) {
-									strHex = strHex + String.format("%02X-", b);
-								}
-								int end = strHex.length() - 1;
-								data = strHex.substring(0, end);
-
-								String strH = String.format("%02X%02X", arrT1[3], arrT1[4]);
-								int co2 = Integer.parseInt(strH, 16);
-
-								if (callActivity.get().renderer != null) {
-									int yMax = (int) callActivity.get().renderer.getYAxisMax();
-									if (co2 >= yMax) {
-										// int vmax = (int) (co2 + (co2*15)/100f);
-										// int vmax_extra = (int) Math.ceil(1.5 *
-										// (co2/20)) ;
-										// int vmax = co2 + vmax_extra;
-										if (callActivity.get().currentSeries.getItemCount() == 0) {
-											int vmax = 3 * co2;
-											callActivity.get().renderer.setYAxisMax(vmax);
-										} else {
-											int vmax = (int) (co2 + (co2 * 15) / 100f);
-											callActivity.get().renderer.setYAxisMax(vmax);
-										}
-
-									}
-
-									// int yMin = (int) renderer.getYAxisMin();
-									// if(yMin == 0){
-									// int vmin = co2 - (co2 * (15/100));
-									// renderer.setYAxisMin(vmin);
-									// }else if(co2<yMin){
-									// int vmin = co2 - (co2 * (15/100));
-									// renderer.setYAxisMin(vmin);
-									// }
-
-									// int delay_v = prefs.getInt("delay", 2);
-									// int duration_v = prefs.getInt("duration", 3);
-									// int limit = (duration_v * 60)/delay_v;
-									// if(readingCount != 1){
-									// if((readingCount%limit) == 1){
-									// //addNewSeries();
-									// if(idx_count<=1){
-									// // Toast.makeText(TedActivity.this,
-									// // "Series Changed",
-									// // Toast.LENGTH_LONG).show();
-									// currentSeries =
-									// currentdataset.getSeriesAt(idx_count+1);
-									// // if(c == 0){
-									// //
-									// renderer.getSeriesRendererAt(0).setColor(Color.rgb(0,
-									// 171, 234));
-									// // }else if(c == 1){
-									// //
-									// renderer.getSeriesRendererAt(0).setColor(Color.RED);
-									// // }
-									//
-									// //addNewSeries();
-									// idx_count++;
-									// }
-									// }
-									// }
-
-									// XYSeries currentSeries =
-									// currentdataset.getSeriesAt(0);
-
-									// file writing
-									// Toast.makeText(TedActivity.this, filename,
-									// Toast.LENGTH_SHORT).show();
-
-									// auto
-									int delay_v = callActivity.get().prefs.getInt("delay", 2);
-									int duration_v = callActivity.get().prefs.getInt("duration",
-											3);
-									int rCount1 = (int) ((duration_v * 60) / delay_v);
-									int rCount2 = (int) (duration_v * 60);
-									boolean isauto = callActivity.get().prefs.getBoolean("isauto",
-											false);
-									if (isauto) {
-										if (callActivity.get().readingCount == rCount1) {
-											callActivity.get().count_measure++;
-											callActivity.get().chart_idx = 2;
-											callActivity.get().currentSeries = callActivity.get()
-													.currentdataset.getSeriesAt(1);
-										} else if (callActivity.get().readingCount == rCount2) {
-											callActivity.get().count_measure++;
-											callActivity.get().chart_idx = 3;
-											callActivity.get().currentSeries = callActivity.get()
-													.currentdataset.getSeriesAt(2);
-										}
-									}
-									//
-									if (callActivity.get().count_measure != callActivity.get()
-											.old_count_measure) {
-										Date currentTime = new Date();
-										// SimpleDateFormat formatter_date = new
-										// SimpleDateFormat(
-										// "yyyy_MM_dd_HH_mm_ss");
-										SimpleDateFormat formatter_date = new SimpleDateFormat
-												("yyyyMMdd_HHmmss");
-										// SimpleDateFormat formatter_time = new
-										// SimpleDateFormat(
-										// "HH_mm_ss");
-
-										callActivity.get().chart_date = formatter_date.format
-												(currentTime);
-
-										if (callActivity.get().count_measure == 1) {
-											callActivity.get().sub_dir_date = formatter_date
-													.format(currentTime);
-										}
-										// chart_time =
-										// formatter_time.format(currentTime);
-										// chart_idx++;
-										callActivity.get().old_count_measure = callActivity.get()
-												.count_measure;
-										callActivity.get().mapChartDate.put(callActivity.get()
-												.chart_idx, callActivity.get().chart_date);
-									}
-
-									if (callActivity.get().isTimerRunning) {
-										callActivity.get().currentSeries.add(callActivity.get()
-												.readingCount, co2);
-										callActivity.get().mChartView.repaint();
-										//									executor.execute(new
-										// FileWriterThread(""
-										//											+ co2, "" +
-										// chart_idx, ""
-										//											+
-										// count_measure, chart_date,
-										//											chart_time));
-										int kppm = callActivity.get().prefs.getInt("kppm", -1);
-										int volume = callActivity.get().prefs.getInt("volume", -1);
-
-										String strppm = "";
-										String strvolume = "";
-
-										if (kppm == -1) {
-											strppm = "_";
-										} else {
-											strppm = "_" + kppm;
-										}
-
-										if (volume == -1) {
-											strvolume = "_";
-										} else {
-											strvolume = "_" + volume;
-										}
-
-										String str_uc = callActivity.get().prefs.getString("uc",
-												"");
-										if (strppm.equals("_")) {
-											String filename1 = "";
-											String dirname1 = "AEToC_MES_Files";
-											String subDirname1 = "";
-
-											filename1 = "MES_" + callActivity.get().chart_date +
-													strvolume + "_R" + callActivity.get()
-													.chart_idx + ".csv";
-											//dirname1 = "AEToC_MES_Files";
-											subDirname1 = "MES_" + callActivity.get().sub_dir_date
-													+ "_" + str_uc;//+"_"+strppm;
-
-											callActivity.get().executor.execute(new
-													FileWriterThread("" + co2, filename1,
-													dirname1, subDirname1));
-										} else {
-											String filename2 = "";
-											String dirname2 = "AEToC_CAL_Files";
-											String subDirname2 = "";
-
-											filename2 = "CAL_" + callActivity.get().chart_date +
-													strvolume + strppm + "_R" + callActivity.get()
-													.chart_idx + ".csv";
-											//dirname2 = "AEToC_MES_Files";
-											subDirname2 = "CAL_" + callActivity.get().sub_dir_date
-													+ "_" + str_uc;//strppm;//;
-
-											callActivity.get().executor.execute(new
-													FileWriterThread("" + co2, filename2,
-													dirname2, subDirname2));
-										}
-
-									}
-
-									if (co2 == 10000) {
-										Toast.makeText(callActivity.get(), "Dilute sample", Toast
-												.LENGTH_LONG).show();
-									}
-								}
-
-								data += "\nCO2: " + co2 + " ppm";
-
-							} else {
-								//							String strHex = "";
-								//							for (byte b : arrT1) {
-								//								strHex = strHex + String.format
-								// ("%02X-", b);
-								//							}
-								//							int end = strHex.length() - 1;
-								//							if (end != -1) {
-								//								data = strHex.substring(0, end);
-								//							}
-
-								// ASCII DATA
-								data = new String(arrT1);
-							}
-						} else {
-							//						String strHex = "";
-							//						for (byte b : arrT1) {
-							//							strHex = strHex + String.format("%02X-",
-							// b);
-							//						}
-							//						int end = strHex.length() - 1;
-							//						if (end != -1) {
-							//							data = strHex.substring(0, end);
-							//						}
-
-							// ASCII DATA
-							data = new String(arrT1);
-
-						}
-
-						//
-
-						appendText(callActivity.get().txtOutput, "Rx: " + data);
-						callActivity.get().mScrollView.smoothScrollTo(0, 0);
-
-						// txtOutput1.setText("Rx: " + strH + "\n"+
-						// txtOutput1.getText());
-						// mScrollView1.smoothScrollTo(0, 0);
-
-						// txtOutput.append("Rx: " + data + "\n");
-						// mScrollView.smoothScrollTo(0, txtOutput.getBottom());
-					}
-					break;
-					case 1: {
-						String command = (String) msg.obj;
-						sendCommand(command);
-					}
-					break;
-					default:
-						break;
-				}
-			}
-		};
+		mHandler = new MyHandler(weakReference);
 
 		//
 		mReadIntent = true;
@@ -1701,7 +1433,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		// getTimeChart();
 	}
 	
-	private void appendText(TextView txtOutput, String text) {
+	private static void appendText(TextView txtOutput, String text) {
 		if (!TextUtils.isEmpty(txtOutput.getText())) {
 			txtOutput.setText(text + "\n" + txtOutput.getText());
 		} else {
@@ -2071,7 +1803,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 
 			AutoExpandKeyboardUtils.expand(this, topContainer, findViewById(R.id.bottom_fragment),
 					getToolbar(), textBelow);
-			view.getLayoutParams().height = topContainer.getMinimumHeight() - 10;
+			view.getLayoutParams().height = topContainer.getMinimumHeight();
 		}
 
 		AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
@@ -4022,8 +3754,268 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 			this.myActivity = tedActivity;
 		}
 
-		public WeakReference<TedActivity> getActivity() {
-			return myActivity;
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+
+			switch (msg.what) {
+				case 0: {
+					// String data = (String) msg.obj;
+					// data = data.replace("\r", "");
+					// data = data.replace("\n", "");
+
+					// byte [] arrT1 = data.getBytes();
+					byte[] arrT1 = (byte[]) msg.obj;
+					// String strH="";
+					String data = "";
+					if (arrT1.length == 7) {
+						if ((String.format("%02X", arrT1[0]).equals("FE")) && (String.format
+								("%02X", arrT1[1]).equals("44"))) {
+							// SENSOR Response
+							String strHex = "";
+							for (byte b : arrT1) {
+								strHex = strHex + String.format("%02X-", b);
+							}
+							int end = strHex.length() - 1;
+							data = strHex.substring(0, end);
+
+							String strH = String.format("%02X%02X", arrT1[3], arrT1[4]);
+							int co2 = Integer.parseInt(strH, 16);
+
+							if (myActivity.get().renderer != null) {
+								int yMax = (int) myActivity.get().renderer.getYAxisMax();
+								if (co2 >= yMax) {
+									// int vmax = (int) (co2 + (co2*15)/100f);
+									// int vmax_extra = (int) Math.ceil(1.5 *
+									// (co2/20)) ;
+									// int vmax = co2 + vmax_extra;
+									if (myActivity.get().currentSeries.getItemCount() == 0) {
+										int vmax = 3 * co2;
+										myActivity.get().renderer.setYAxisMax(vmax);
+									} else {
+										int vmax = (int) (co2 + (co2 * 15) / 100f);
+										myActivity.get().renderer.setYAxisMax(vmax);
+									}
+
+								}
+
+								// int yMin = (int) renderer.getYAxisMin();
+								// if(yMin == 0){
+								// int vmin = co2 - (co2 * (15/100));
+								// renderer.setYAxisMin(vmin);
+								// }else if(co2<yMin){
+								// int vmin = co2 - (co2 * (15/100));
+								// renderer.setYAxisMin(vmin);
+								// }
+
+								// int delay_v = prefs.getInt("delay", 2);
+								// int duration_v = prefs.getInt("duration", 3);
+								// int limit = (duration_v * 60)/delay_v;
+								// if(readingCount != 1){
+								// if((readingCount%limit) == 1){
+								// //addNewSeries();
+								// if(idx_count<=1){
+								// // Toast.makeText(TedActivity.this,
+								// // "Series Changed",
+								// // Toast.LENGTH_LONG).show();
+								// currentSeries =
+								// currentdataset.getSeriesAt(idx_count+1);
+								// // if(c == 0){
+								// //
+								// renderer.getSeriesRendererAt(0).setColor(Color.rgb(0,
+								// 171, 234));
+								// // }else if(c == 1){
+								// //
+								// renderer.getSeriesRendererAt(0).setColor(Color.RED);
+								// // }
+								//
+								// //addNewSeries();
+								// idx_count++;
+								// }
+								// }
+								// }
+
+								// XYSeries currentSeries =
+								// currentdataset.getSeriesAt(0);
+
+								// file writing
+								// Toast.makeText(TedActivity.this, filename,
+								// Toast.LENGTH_SHORT).show();
+
+								// auto
+								int delay_v = myActivity.get().prefs.getInt("delay", 2);
+								int duration_v = myActivity.get().prefs.getInt("duration",
+										3);
+								int rCount1 = (int) ((duration_v * 60) / delay_v);
+								int rCount2 = (int) (duration_v * 60);
+								boolean isauto = myActivity.get().prefs.getBoolean("isauto",
+										false);
+								if (isauto) {
+									if (myActivity.get().readingCount == rCount1) {
+										myActivity.get().count_measure++;
+										myActivity.get().chart_idx = 2;
+										myActivity.get().currentSeries = myActivity.get()
+												.currentdataset.getSeriesAt(1);
+									} else if (myActivity.get().readingCount == rCount2) {
+										myActivity.get().count_measure++;
+										myActivity.get().chart_idx = 3;
+										myActivity.get().currentSeries = myActivity.get()
+												.currentdataset.getSeriesAt(2);
+									}
+								}
+								//
+								if (myActivity.get().count_measure != myActivity.get()
+										.old_count_measure) {
+									Date currentTime = new Date();
+									// SimpleDateFormat formatter_date = new
+									// SimpleDateFormat(
+									// "yyyy_MM_dd_HH_mm_ss");
+									SimpleDateFormat formatter_date = new SimpleDateFormat
+											("yyyyMMdd_HHmmss");
+									// SimpleDateFormat formatter_time = new
+									// SimpleDateFormat(
+									// "HH_mm_ss");
+
+									myActivity.get().chart_date = formatter_date.format
+											(currentTime);
+
+									if (myActivity.get().count_measure == 1) {
+										myActivity.get().sub_dir_date = formatter_date
+												.format(currentTime);
+									}
+									// chart_time =
+									// formatter_time.format(currentTime);
+									// chart_idx++;
+									myActivity.get().old_count_measure = myActivity.get()
+											.count_measure;
+									myActivity.get().mapChartDate.put(myActivity.get()
+											.chart_idx, myActivity.get().chart_date);
+								}
+
+								if (myActivity.get().isTimerRunning) {
+									myActivity.get().currentSeries.add(myActivity.get()
+											.readingCount, co2);
+									myActivity.get().mChartView.repaint();
+									//									executor.execute(new
+									// FileWriterThread(""
+									//											+ co2, "" +
+									// chart_idx, ""
+									//											+
+									// count_measure, chart_date,
+									//											chart_time));
+									int kppm = myActivity.get().prefs.getInt("kppm", -1);
+									int volume = myActivity.get().prefs.getInt("volume", -1);
+
+									String strppm = "";
+									String strvolume = "";
+
+									if (kppm == -1) {
+										strppm = "_";
+									} else {
+										strppm = "_" + kppm;
+									}
+
+									if (volume == -1) {
+										strvolume = "_";
+									} else {
+										strvolume = "_" + volume;
+									}
+
+									String str_uc = myActivity.get().prefs.getString("uc",
+											"");
+									if (strppm.equals("_")) {
+										String filename1 = "";
+										String dirname1 = "AEToC_MES_Files";
+										String subDirname1 = "";
+
+										filename1 = "MES_" + myActivity.get().chart_date +
+												strvolume + "_R" + myActivity.get()
+												.chart_idx + ".csv";
+										//dirname1 = "AEToC_MES_Files";
+										subDirname1 = "MES_" + myActivity.get().sub_dir_date
+												+ "_" + str_uc;//+"_"+strppm;
+
+										myActivity.get().executor.execute(new
+												FileWriterThread("" + co2, filename1,
+												dirname1, subDirname1));
+									} else {
+										String filename2 = "";
+										String dirname2 = "AEToC_CAL_Files";
+										String subDirname2 = "";
+
+										filename2 = "CAL_" + myActivity.get().chart_date +
+												strvolume + strppm + "_R" + myActivity.get()
+												.chart_idx + ".csv";
+										//dirname2 = "AEToC_MES_Files";
+										subDirname2 = "CAL_" + myActivity.get().sub_dir_date
+												+ "_" + str_uc;//strppm;//;
+
+										myActivity.get().executor.execute(new
+												FileWriterThread("" + co2, filename2,
+												dirname2, subDirname2));
+									}
+
+								}
+
+								if (co2 == 10000) {
+									Toast.makeText(myActivity.get(), "Dilute sample", Toast
+											.LENGTH_LONG).show();
+								}
+							}
+
+							data += "\nCO2: " + co2 + " ppm";
+
+						} else {
+							//							String strHex = "";
+							//							for (byte b : arrT1) {
+							//								strHex = strHex + String.format
+							// ("%02X-", b);
+							//							}
+							//							int end = strHex.length() - 1;
+							//							if (end != -1) {
+							//								data = strHex.substring(0, end);
+							//							}
+
+							// ASCII DATA
+							data = new String(arrT1);
+						}
+					} else {
+						//						String strHex = "";
+						//						for (byte b : arrT1) {
+						//							strHex = strHex + String.format("%02X-",
+						// b);
+						//						}
+						//						int end = strHex.length() - 1;
+						//						if (end != -1) {
+						//							data = strHex.substring(0, end);
+						//						}
+
+						// ASCII DATA
+						data = new String(arrT1);
+
+					}
+
+					//
+
+					appendText(myActivity.get().txtOutput, "Rx: " + data);
+					myActivity.get().mScrollView.smoothScrollTo(0, 0);
+
+					// txtOutput1.setText("Rx: " + strH + "\n"+
+					// txtOutput1.getText());
+					// mScrollView1.smoothScrollTo(0, 0);
+
+					// txtOutput.append("Rx: " + data + "\n");
+					// mScrollView.smoothScrollTo(0, txtOutput.getBottom());
+				}
+				break;
+				case 1: {
+					String command = (String) msg.obj;
+					myActivity.get().sendCommand(command);
+				}
+				break;
+				default:
+					break;
+			}
 		}
 	}
 	

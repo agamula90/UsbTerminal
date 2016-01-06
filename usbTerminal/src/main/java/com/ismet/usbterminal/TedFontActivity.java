@@ -42,7 +42,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowserActivity#onFileClick(java.io.File)
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFileClick(java.io.File)
 	 */
 	protected void onFileClick(File file) {
 		if (setOpenResult(file))
@@ -50,7 +50,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowsingActivity#onFolderClick(java.io.File)
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderClick(java.io.File)
 	 */
 	protected boolean onFolderClick(File folder) {
 		RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder, false);
@@ -58,7 +58,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.BrowsingActivity#onFolderViewFilled()
+	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderViewFilled()
 	 */
 	protected void onFolderViewFilled() {
 

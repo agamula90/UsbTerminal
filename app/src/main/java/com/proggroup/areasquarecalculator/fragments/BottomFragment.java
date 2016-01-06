@@ -331,8 +331,9 @@ public class BottomFragment extends Fragment {
 			savedInstanceState = sBundle;
 			avgValueLoaded.setText(savedInstanceState.getString(THIRD_TEXT_TAG));
 			resultPpmLoaded.setText(savedInstanceState.getString(FOURTH_TEXT_TAG));
+			fillAvgPointsLayout();
 		}
-		fillAvgPointsLayout();
+		calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
 	}
 
 	@Override
