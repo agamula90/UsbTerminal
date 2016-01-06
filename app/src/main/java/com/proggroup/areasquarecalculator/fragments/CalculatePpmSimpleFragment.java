@@ -173,6 +173,27 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 		return findNameFolder(file, "MES");
 	}
 
+	public static File findNewestFolder(File searchInFolder, String stringInFolderName) {
+		File filesInside[] = searchInFolder.listFiles();
+
+		File newestFile = null;
+
+		for (int i = 0; i < filesInside.length; i++) {
+			if(newestFile == null) {
+				if(filesInside[i].isDirectory() && filesInside[i].getName().contains
+						(stringInFolderName)) {
+					newestFile = filesInside[i];
+				}
+			} else if(filesInside[i].isDirectory() && filesInside[i].getName().contains
+					(stringInFolderName) && filesInside[i].lastModified() > newestFile
+					.lastModified()) {
+				newestFile = filesInside[i];
+			}
+		}
+
+		return newestFile;
+	}
+
 	/**
 	 * Search ppm value from square and saved data of ppmPoints and avgSquarePoints.
 	 *
@@ -1039,7 +1060,8 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 				if (mMesFolder == null) {
 					mesFile = findMesFile(Constants.BASE_DIRECTORY.getParentFile());
 				}
-				if (mMesFolder != null || (mesFile != null && findMesFile(mesFile) != null)) {
+				if (mMesFolder != null || (mesFile != null && findNewestFolder(mesFile, "MES") !=
+						null)) {
 					if (mMesFolder != null) {
 						File mMesFolderFile = new File(mMesFolder);
 
@@ -1057,7 +1079,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						return;
 					}
 
-					mesFile = findMesFile(mesFile);
+					mesFile = findNewestFolder(mesFile, "MES");
 					File mesFiles[] = mesFile.listFiles();
 					if (mesFiles == null && mesFile.getParentFile() != null) {
 						mesFiles = mesFile.getParentFile().listFiles();

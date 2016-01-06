@@ -52,17 +52,17 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_vertical"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
+                                style="@style/ButtonDefaultStyle"
                                 android:text="On"/>
 
                             <Button
                                 android:id="@+id/buttonOn2"
+                                style="@style/ButtonDefaultStyle"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
                                 android:text="On"/>
 
                             <!-- <Button
@@ -77,12 +77,12 @@
 
                             <Button
                                 android:id="@+id/buttonPpm"
+                                style="@style/ButtonDefaultStyle"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
                                 android:text="PPM"/>
                         </LinearLayout>
 
@@ -98,7 +98,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
+                                style="@style/ButtonDefaultStyle"
                                 android:text="Clear"
                                 />
 
@@ -108,7 +108,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
+                                style="@style/ButtonDefaultStyle"
                                 android:text="Send"
                                 />
 
@@ -128,7 +128,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:background="@drawable/btn_red"
+                                style="@style/ButtonDefaultStyle"
                                 android:text="Measure"
                                 />
                         </LinearLayout>
@@ -153,7 +153,7 @@
                                 android:scrollbarSize="5dp"
                                 android:scrollbars="vertical"
                                 android:textCursorDrawable="@null"
-                                android:textSize="16sp"
+                                android:textSize="@dimen/edit_text_size_default"
                                 android:typeface="monospace">
                             </fr.xgouchet.texteditor.ui.view.AdvancedEditText>
 
@@ -192,7 +192,7 @@
                                         android:text=""
                                         android:textColor="#ffffff"
                                         android:textIsSelectable="true"
-                                        android:textSize="16sp"/>
+                                        android:textSize="@dimen/edit_text_size_default"/>
                                 </ScrollView>
 
                                 <TextView
@@ -202,7 +202,7 @@
                                     android:paddingTop="0dp"
                                     android:text=""
                                     android:textColor="#ffffff"
-                                    android:textSize="16sp"/>
+                                    android:textSize="@dimen/edit_text_size_default"/>
                             </LinearLayout>
 
                             <!--
@@ -234,7 +234,7 @@
                     android:paddingTop="0dp"
                     android:text=""
                     android:textColor="#ffffff"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/edit_text_size_default"
                     android:id="@+id/scroll_below_text"/>
 
                 <fragment

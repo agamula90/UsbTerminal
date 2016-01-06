@@ -97,15 +97,8 @@ public class BottomFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable
 	Bundle savedInstanceState) {
 		View contentView = inflater.inflate(R.layout.layout_bottom, container, false);
-		TextView tv = new TextView(getActivity());
-		tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
-				.edit_text_size_default));
-		tv.setText("");
-		tv.setTextColor(Color.WHITE);
 
 		avgPointsLayout = (LinearLayout) contentView.findViewById(R.id.avg_points);
-		avgPointsLayout.removeAllViews();
-		avgPointsLayout.addView(tv);
 		return contentView;
 	}
 
@@ -328,7 +321,7 @@ public class BottomFragment extends Fragment {
 			avgSquarePoints = new ArrayList<>();
 		}
 
-		calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
+		fillAvgPointsLayout();
 	}
 
 	@Override
@@ -371,7 +364,7 @@ public class BottomFragment extends Fragment {
 			tv = new TextView(getActivity());
 			tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
 					.edit_text_size_default));
-			tv.setText("Auto files: ");
+			tv.setText("Avg files: ");
 			tv.setTextColor(Color.WHITE);
 			avgPointsLayout.addView(tv);
 
@@ -427,6 +420,17 @@ public class BottomFragment extends Fragment {
 				avgPointsLayout.addView(tv);
 			}
 		}
+
+		if(avgPointsLayout.getChildCount() == 0) {
+			tv = new TextView(getActivity());
+			tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+					.edit_text_size_default));
+			tv.setText("");
+			tv.setTextColor(Color.WHITE);
+			avgPointsLayout.addView(tv);
+
+		}
+
 		calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
 	}
 
@@ -646,6 +650,7 @@ public class BottomFragment extends Fragment {
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode == Activity.RESULT_OK) {
+			resultPpmLoaded.setText("");
 			switch (requestCode) {
 				case LOAD_PPM_AVG_VALUES_REQUEST_CODE:
 					mDoPostLoadingCalculations = false;
