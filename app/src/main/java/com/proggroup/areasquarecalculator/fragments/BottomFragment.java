@@ -375,7 +375,7 @@ public class BottomFragment extends Fragment {
 			tv.setTextColor(Color.WHITE);
 			avgPointsLayout.addView(tv);
 
-			if (mAvgFiles.length == 1 || mAvgFiles.length < 3) {
+			if (mAvgFiles.length == 1 || mAvgFiles.length <= 3) {
 				for (int i = 0; i < mAvgFiles.length - 1; i++) {
 					File file = mAvgFiles[i];
 					tv = new TextView(getActivity());
