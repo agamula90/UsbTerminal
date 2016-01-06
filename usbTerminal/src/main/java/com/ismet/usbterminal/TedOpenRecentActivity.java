@@ -1,8 +1,5 @@
 package com.ismet.usbterminal;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,154 +16,159 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import java.io.File;
+import java.util.ArrayList;
+
 import fr.xgouchet.androidlib.ui.Toaster;
-import static fr.xgouchet.texteditor.common.Constants.*;
 import fr.xgouchet.texteditor.common.RecentFiles;
 import fr.xgouchet.texteditor.ui.adapter.PathListAdapter;
 
+import static fr.xgouchet.texteditor.common.Constants.PREFERENCES_NAME;
+
 public class TedOpenRecentActivity extends Activity implements OnClickListener,
-        OnItemClickListener {
+		OnItemClickListener {
 
-    /**
-     * @see android.app.Activity#onCreate(android.os.Bundle)
-     */
-    protected void onCreate(Bundle savedInstanceState) {
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
-                .LayoutParams.FLAG_FULLSCREEN);
-        super.onCreate(savedInstanceState);
+	protected String mContextPath;
 
-        // Setup content view
-        setContentView(R.layout.layout_open);
+	/**
+	 * the dialog's list view
+	 */
+	protected ListView mFilesList;
 
-        // buttons
-        findViewById(R.id.buttonCancel).setOnClickListener(this);
+	/**
+	 * The list adapter
+	 */
+	protected ListAdapter mListAdapter;
 
-        // widgets
-        mFilesList = (ListView) findViewById(android.R.id.list);
-        mFilesList.setOnItemClickListener(this);
-        mFilesList.setOnCreateContextMenuListener(this);
-    }
+	/**
+	 * the list of recent files
+	 */
+	protected ArrayList<String> mList;
 
-    /**
-     * @see android.app.Activity#onResume()
-     */
-    protected void onResume() {
-        super.onResume();
+	/**
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
+	protected void onCreate(Bundle savedInstanceState) {
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
+				.LayoutParams.FLAG_FULLSCREEN);
+		super.onCreate(savedInstanceState);
 
-        fillRecentFilesView();
-    }
+		// Setup content view
+		setContentView(R.layout.layout_open);
 
-    /**
-     * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu,
-     * android.view.View, android.view.ContextMenu.ContextMenuInfo)
-     */
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-        mContextPath = (String) mFilesList.getAdapter().getItem(info.position);
+		// buttons
+		findViewById(R.id.buttonCancel).setOnClickListener(this);
 
-        menu.setHeaderTitle(mContextPath);
-        menu.add(Menu.NONE, 0, Menu.NONE, R.string.ui_delete);
-    }
+		// widgets
+		mFilesList = (ListView) findViewById(android.R.id.list);
+		mFilesList.setOnItemClickListener(this);
+		mFilesList.setOnCreateContextMenuListener(this);
+	}
 
-    /**
-     * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
-     */
-    public boolean onContextItemSelected(MenuItem item) {
+	/**
+	 * @see android.app.Activity#onResume()
+	 */
+	protected void onResume() {
+		super.onResume();
 
-        RecentFiles.removePath(mContextPath);
-        RecentFiles.saveRecentList(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
+		fillRecentFilesView();
+	}
 
-        fillRecentFilesView();
-        Toaster.showToast(this, R.string.toast_recent_files_deleted, false);
+	/**
+	 * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu,
+	 * android.view.View, android.view.ContextMenu.ContextMenuInfo)
+	 */
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+		mContextPath = (String) mFilesList.getAdapter().getItem(info.position);
 
-        return true;
-    }
+		menu.setHeaderTitle(mContextPath);
+		menu.add(Menu.NONE, 0, Menu.NONE, R.string.ui_delete);
+	}
 
-    /**
-     * @see android.view.View.OnClickListener#onClick(android.view.View)
-     */
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.buttonCancel:
-                setResult(RESULT_CANCELED);
-                finish();
-                break;
-        }
-    }
+	/**
+	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 */
+	public boolean onContextItemSelected(MenuItem item) {
 
-    /**
-     * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
-     * android.view.View, int, long)
-     */
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String path;
+		RecentFiles.removePath(mContextPath);
+		RecentFiles.saveRecentList(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
 
-        path = mList.get(position);
+		fillRecentFilesView();
+		Toaster.showToast(this, R.string.toast_recent_files_deleted, false);
 
-        if (setOpenResult(new File(path))) {
-            finish();
-        } else {
-            RecentFiles.removePath(path);
-            RecentFiles.saveRecentList(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
-            ((PathListAdapter) mListAdapter).notifyDataSetChanged();
-            Toaster.showToast(this, R.string.toast_recent_files_invalid, true);
-        }
+		return true;
+	}
 
-    }
+	/**
+	 * @see android.view.View.OnClickListener#onClick(android.view.View)
+	 */
+	public void onClick(View v) {
+		switch (v.getId()) {
+			case R.id.buttonCancel:
+				setResult(RESULT_CANCELED);
+				finish();
+				break;
+		}
+	}
 
-    /**
-     * Fills the files list with the recent files
-     */
-    protected void fillRecentFilesView() {
-        mList = RecentFiles.getRecentFiles();
+	/**
+	 * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
+	 * android.view.View, int, long)
+	 */
+	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+		String path;
 
-        if (mList.size() == 0) {
-            setResult(RESULT_CANCELED);
-            finish();
-            return;
-        }
+		path = mList.get(position);
 
-        // create string list adapter
-        mListAdapter = new PathListAdapter(this, mList);
+		if (setOpenResult(new File(path))) {
+			finish();
+		} else {
+			RecentFiles.removePath(path);
+			RecentFiles.saveRecentList(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
+			((PathListAdapter) mListAdapter).notifyDataSetChanged();
+			Toaster.showToast(this, R.string.toast_recent_files_invalid, true);
+		}
 
-        // set adpater
-        mFilesList.setAdapter(mListAdapter);
-    }
+	}
 
-    /**
-     * Set the result of this activity to open a file
-     *
-     * @param file the file to return
-     * @return if the result was set correctly
-     */
-    protected boolean setOpenResult(File file) {
-        Intent result;
+	/**
+	 * Fills the files list with the recent files
+	 */
+	protected void fillRecentFilesView() {
+		mList = RecentFiles.getRecentFiles();
 
-        if ((file == null) || (!file.isFile()) || (!file.canRead())) {
-            return false;
-        }
+		if (mList.size() == 0) {
+			setResult(RESULT_CANCELED);
+			finish();
+			return;
+		}
 
-        result = new Intent();
-        result.putExtra("path", file.getAbsolutePath());
+		// create string list adapter
+		mListAdapter = new PathListAdapter(this, mList);
 
-        setResult(RESULT_OK, result);
-        return true;
-    }
+		// set adpater
+		mFilesList.setAdapter(mListAdapter);
+	}
 
-    protected String mContextPath;
+	/**
+	 * Set the result of this activity to open a file
+	 *
+	 * @param file the file to return
+	 * @return if the result was set correctly
+	 */
+	protected boolean setOpenResult(File file) {
+		Intent result;
 
-    /**
-     * the dialog's list view
-     */
-    protected ListView mFilesList;
-    /**
-     * The list adapter
-     */
-    protected ListAdapter mListAdapter;
+		if ((file == null) || (!file.isFile()) || (!file.canRead())) {
+			return false;
+		}
 
-    /**
-     * the list of recent files
-     */
-    protected ArrayList<String> mList;
+		result = new Intent();
+		result.putExtra("path", file.getAbsolutePath());
+
+		setResult(RESULT_OK, result);
+		return true;
+	}
 }

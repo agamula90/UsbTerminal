@@ -6,29 +6,30 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SQLiteHelper extends SQLiteOpenHelper {
 
-    private static final String DB_NAME = "data_interpolation.db";
-    private static final int DB_VERSION = 1;
+	private static final String DB_NAME = "data_interpolation.db";
 
-    public SQLiteHelper(Context context) {
-        super(context, DB_NAME, null, DB_VERSION);
-    }
+	private static final int DB_VERSION = 1;
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(PointHelper.CREATE_REQUEST);
-        db.execSQL(SquarePointHelper.CREATE_REQUEST);
-        db.execSQL(AvgPointHelper.CREATE_REQUEST);
-        db.execSQL(ProjectHelper.CREATE_REQUEST);
+	public SQLiteHelper(Context context) {
+		super(context, DB_NAME, null, DB_VERSION);
+	}
 
-        new ProjectHelper(null).startInit(db);
-    }
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL(PointHelper.CREATE_REQUEST);
+		db.execSQL(SquarePointHelper.CREATE_REQUEST);
+		db.execSQL(AvgPointHelper.CREATE_REQUEST);
+		db.execSQL(ProjectHelper.CREATE_REQUEST);
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(PointHelper.DROP_REQUEST);
-        db.execSQL(SquarePointHelper.DROP_REQUEST);
-        db.execSQL(AvgPointHelper.DROP_REQUEST);
-        db.execSQL(ProjectHelper.DROP_REQUEST);
-        onCreate(db);
-    }
+		new ProjectHelper(null).startInit(db);
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		db.execSQL(PointHelper.DROP_REQUEST);
+		db.execSQL(SquarePointHelper.DROP_REQUEST);
+		db.execSQL(AvgPointHelper.DROP_REQUEST);
+		db.execSQL(ProjectHelper.DROP_REQUEST);
+		onCreate(db);
+	}
 }

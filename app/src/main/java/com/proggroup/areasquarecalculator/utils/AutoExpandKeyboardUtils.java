@@ -2,51 +2,48 @@ package com.proggroup.areasquarecalculator.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.hardware.display.DisplayManager;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.view.ViewGroup;
 
 public class AutoExpandKeyboardUtils {
 
-    private static final String PREFS_NAME = "expand_keyboard_prefs";
-    private static final String EXPAND_PREF_KEY = "exp_height";
+	private static final String PREFS_NAME = "expand_keyboard_prefs";
 
-    private static SharedPreferences sSharedPreferences;
+	private static final String EXPAND_PREF_KEY = "exp_height";
 
-    private AutoExpandKeyboardUtils() {
-    }
+	private static SharedPreferences sSharedPreferences;
 
-    private static int findStatusBarHeight(Context context) {
-        int resId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+	private AutoExpandKeyboardUtils() {
+	}
 
-        int result = 0;
-        if (resId > 0) {
-            result = context.getResources().getDimensionPixelSize(resId);
-        }
-        return result;
-    }
+	private static int findStatusBarHeight(Context context) {
+		int resId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
 
-    public static void expand(Context context, View viewForMinHeight, View... staticViews) {
-        sSharedPreferences = context.getSharedPreferences(PREFS_NAME, Context
-                .MODE_PRIVATE);
-        int expHeight = sSharedPreferences.getInt(EXPAND_PREF_KEY, 0);
+		int result = 0;
+		if (resId > 0) {
+			result = context.getResources().getDimensionPixelSize(resId);
+		}
+		return result;
+	}
 
-        if (expHeight == 0) {
-            int measureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-            int height = 0;
-            for (View staticView : staticViews) {
-                staticView.measure(measureSpec, measureSpec);
-                height += staticView.getMeasuredHeight();
-            }
-            height += findStatusBarHeight(context);
-            DisplayMetrics metrics = viewForMinHeight.getResources().getDisplayMetrics();
+	public static void expand(Context context, View viewForMinHeight, View... staticViews) {
+		sSharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		int expHeight = sSharedPreferences.getInt(EXPAND_PREF_KEY, 0);
 
-            expHeight = metrics.heightPixels - (int) (/*metrics.density **/
-                    height);
-            sSharedPreferences.edit().putInt(EXPAND_PREF_KEY, expHeight).commit();
-        }
-        viewForMinHeight.setMinimumHeight(expHeight);
-    }
+		if (expHeight == 0) {
+			int measureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+			int height = 0;
+			for (View staticView : staticViews) {
+				staticView.measure(measureSpec, measureSpec);
+				height += staticView.getMeasuredHeight();
+			}
+			height += findStatusBarHeight(context);
+			DisplayMetrics metrics = viewForMinHeight.getResources().getDisplayMetrics();
+
+			expHeight = metrics.heightPixels - (int) (/*metrics.density **/
+					height);
+			sSharedPreferences.edit().putInt(EXPAND_PREF_KEY, expHeight).commit();
+		}
+		viewForMinHeight.setMinimumHeight(expHeight);
+	}
 }

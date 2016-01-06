@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
-import android.view.inputmethod.InputMethodManager;
 
 import com.proggroup.areasquarecalculator.data.Project;
 
@@ -12,82 +11,88 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AvgPointHelper {
-    public static final String TABLE_NAME = "avg_points";
-    public static final String ID = "_avg_id";
-    public static final String PPM_VALUE = "_ppm";
 
-    public static final String CREATE_REQUEST = "create table " + TABLE_NAME +
-            " ( " + BaseColumns._ID + " integer primary key autoincrement, " +
-            PPM_VALUE + " real not null, " +
-            Project.ID + " integer not null);";
-    public static final String DROP_REQUEST = "drop table if exists" + TABLE_NAME;
+	public static final String TABLE_NAME = "avg_points";
 
-    private SQLiteDatabase writeDb;
-    private Project project;
+	public static final String ID = "_avg_id";
 
-    public AvgPointHelper(SQLiteDatabase writeDb, Project project) {
-        this.writeDb = writeDb;
-        this.project = project;
-    }
+	public static final String PPM_VALUE = "_ppm";
 
-    public long addAvgPoint() {
-        ContentValues cv = new ContentValues(2);
-        cv.put(Project.ID, project.getId());
-        cv.put(PPM_VALUE, 0);
-        return writeDb.insert(TABLE_NAME, null, cv);
-    }
+	public static final String CREATE_REQUEST = "create table " + TABLE_NAME +
+			" ( " + BaseColumns._ID + " integer primary key autoincrement, " +
+			PPM_VALUE + " real not null, " +
+			Project.ID + " integer not null);";
 
-    public void updatePpm(long avgPointId, float ppm) {
-        ContentValues cv = new ContentValues(1);
-        cv.put(PPM_VALUE, ppm);
-        writeDb.update(TABLE_NAME, cv, BaseColumns._ID + " = ?", new String[]{avgPointId + ""});
-    }
+	public static final String DROP_REQUEST = "drop table if exists" + TABLE_NAME;
 
-    public float getPpmValue(long pointId) {
-        Cursor cursor = writeDb.query(TABLE_NAME, new String[]{PPM_VALUE},
-                BaseColumns._ID + " = ?", new String[]{"" + pointId}, null, null, null);
+	private SQLiteDatabase writeDb;
 
-        if (cursor.moveToFirst()) {
-            float ppm = cursor.getFloat(0);
-            cursor.close();
+	private Project project;
 
-            return ppm;
-        } else {
-            cursor.close();
-            return -1;
-        }
-    }
+	public AvgPointHelper(SQLiteDatabase writeDb, Project project) {
+		this.writeDb = writeDb;
+		this.project = project;
+	}
 
-    public List<Long> getAvgPoints() {
-        Cursor cursor = writeDb.query(TABLE_NAME, new String[]{BaseColumns._ID},
-                Project.ID + " = ?", new String[]{"" + project.getId()}, null, null, null);
+	public long addAvgPoint() {
+		ContentValues cv = new ContentValues(2);
+		cv.put(Project.ID, project.getId());
+		cv.put(PPM_VALUE, 0);
+		return writeDb.insert(TABLE_NAME, null, cv);
+	}
 
-        if (cursor.moveToFirst()) {
-            List<Long> res = new ArrayList<>(cursor.getCount());
+	public void updatePpm(long avgPointId, float ppm) {
+		ContentValues cv = new ContentValues(1);
+		cv.put(PPM_VALUE, ppm);
+		writeDb.update(TABLE_NAME, cv, BaseColumns._ID + " = ?", new String[]{avgPointId + ""});
+	}
 
-            do {
-                res.add(cursor.getLong(0));
+	public float getPpmValue(long pointId) {
+		Cursor cursor = writeDb.query(TABLE_NAME, new String[]{PPM_VALUE}, BaseColumns._ID + " = " +
+				"?", new String[]{"" + pointId}, null, null, null);
 
-            } while (cursor.moveToNext());
-            cursor.close();
+		if (cursor.moveToFirst()) {
+			float ppm = cursor.getFloat(0);
+			cursor.close();
 
-            return res;
-        } else {
-            cursor.close();
-            return new ArrayList<>(0);
-        }
-    }
+			return ppm;
+		} else {
+			cursor.close();
+			return -1;
+		}
+	}
 
-    public void deleteAvgPoint(long avgPointId, SquarePointHelper squarePointHelper, PointHelper
-            pointHelper) {
-        List<Long> squarePointIds = squarePointHelper.getSquarePointIds(avgPointId);
-        for (Long squarePointId : squarePointIds) {
-            squarePointHelper.deleteSquarePointId(squarePointId, project.isSimpleMeasure(), pointHelper);
-        }
-        writeDb.delete(TABLE_NAME, BaseColumns._ID + " = ?", new String[] {"" + avgPointId});
-    }
+	public List<Long> getAvgPoints() {
+		Cursor cursor = writeDb.query(TABLE_NAME, new String[]{BaseColumns._ID}, Project.ID + " = " +
+				"?", new String[]{"" + project.getId()}, null, null, null);
 
-    public void clear() {
-        writeDb.delete(TABLE_NAME, null, null);
-    }
+		if (cursor.moveToFirst()) {
+			List<Long> res = new ArrayList<>(cursor.getCount());
+
+			do {
+				res.add(cursor.getLong(0));
+
+			} while (cursor.moveToNext());
+			cursor.close();
+
+			return res;
+		} else {
+			cursor.close();
+			return new ArrayList<>(0);
+		}
+	}
+
+	public void deleteAvgPoint(long avgPointId, SquarePointHelper squarePointHelper, PointHelper
+			pointHelper) {
+		List<Long> squarePointIds = squarePointHelper.getSquarePointIds(avgPointId);
+		for (Long squarePointId : squarePointIds) {
+			squarePointHelper.deleteSquarePointId(squarePointId, project.isSimpleMeasure(),
+					pointHelper);
+		}
+		writeDb.delete(TABLE_NAME, BaseColumns._ID + " = ?", new String[]{"" + avgPointId});
+	}
+
+	public void clear() {
+		writeDb.delete(TABLE_NAME, null, null);
+	}
 }

@@ -5,13 +5,13 @@ import android.widget.FrameLayout;
 
 public interface UrlChangeable {
 
-    void setUrl(String url);
+	String getUrl();
 
-    String getUrl();
+	void setUrl(String url);
 
-    void execute();
+	void execute();
 
-    FrameLayout getFrameLayout();
+	FrameLayout getFrameLayout();
 
-    void setProgressBar(View progressBar);
+	void setProgressBar(View progressBar);
 }
