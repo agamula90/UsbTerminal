@@ -52,8 +52,6 @@ public class BottomFragment extends Fragment {
 
 	private static final String FOURTH_TEXT_TAG = "fourth_text";
 
-	private static Bundle sBundle = new Bundle();
-
 	private View loadPpmCurve;
 
 	private View graph1;
@@ -87,6 +85,12 @@ public class BottomFragment extends Fragment {
 	private LoadGraphDataTask.OnGraphDataLoadedCallback onGraphDataLoadedCallback;
 
 	private View.OnClickListener mRealCalculationsCalculateAutoListener;
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		//setRetainInstance(true);
+	}
 
 	@Nullable
 	@Override
@@ -304,7 +308,6 @@ public class BottomFragment extends Fragment {
 				resultPpmLoaded.setText("");
 				avgValueLoaded.setText("");
 				mAvgFiles = null;
-				Animator mAutoAvgPoint = null;
 				mCurveFile = null;
 				ppmPoints.clear();
 				avgSquarePoints.clear();
@@ -325,14 +328,6 @@ public class BottomFragment extends Fragment {
 			avgSquarePoints = new ArrayList<>();
 		}
 
-		boolean wasSaved = sBundle.getBoolean(IS_SAVED, false);
-
-		if (wasSaved) {
-			savedInstanceState = sBundle;
-			avgValueLoaded.setText(savedInstanceState.getString(THIRD_TEXT_TAG));
-			resultPpmLoaded.setText(savedInstanceState.getString(FOURTH_TEXT_TAG));
-			fillAvgPointsLayout();
-		}
 		calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
 	}
 
@@ -343,6 +338,16 @@ public class BottomFragment extends Fragment {
 		outState.putBoolean(IS_SAVED, true);
 		outState.putString(THIRD_TEXT_TAG, avgValueLoaded.getText().toString());
 		outState.putString(FOURTH_TEXT_TAG, resultPpmLoaded.getText().toString());
+	}
+
+	@Override
+	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		if(savedInstanceState != null) {
+			avgValueLoaded.setText(savedInstanceState.getString(THIRD_TEXT_TAG));
+			resultPpmLoaded.setText(savedInstanceState.getString(FOURTH_TEXT_TAG));
+			fillAvgPointsLayout();
+		}
 	}
 
 	/**
