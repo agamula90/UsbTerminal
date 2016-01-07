@@ -11,7 +11,7 @@
     <HorizontalScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin_default">
+        android:layout_margin="@dimen/layout_margin_default">
 
         <LinearLayout
             android:id="@+id/avg_points"
@@ -23,11 +23,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/text_margin_default"
-        android:layout_marginLeft="@dimen/text_margin_default"
-        android:layout_marginStart="@dimen/text_margin_default"
-        android:layout_marginRight="@dimen/text_margin_default"
-        android:layout_marginEnd="@dimen/text_margin_default"
+        android:layout_margin="@dimen/layout_margin_default"
+        android:layout_marginBottom="0dp"
         android:orientation="horizontal">
 
         <Button
@@ -55,7 +52,7 @@
             <Space
                 android:layout_width="0dp"
                 android:layout_height="10dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"/>
 
             <TextView
                 style="@style/TextViewDefaultStyle"
@@ -117,10 +114,10 @@
                 android:layout_height="@dimen/button_height_default"
                 android:layout_gravity="center_vertical"
                 android:background="@drawable/edit_background"
-                android:gravity="center"
-                android:textColor="@android:color/black"
                 android:ems="6"
-                android:maxEms="6"/>
+                android:gravity="center"
+                android:maxEms="6"
+                android:textColor="@android:color/black"/>
 
             <Button
                 android:id="@+id/report"

@@ -36,7 +36,8 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingLeft="@dimen/layout_margin_default">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -211,7 +212,7 @@
                         android:layout_weight="2"
                         android:orientation="vertical"
                         android:paddingLeft="4dp"
-                        android:paddingRight="6dp"/>
+                        android:paddingRight="@dimen/layout_margin_default"/>
 
                 </LinearLayout>
 
@@ -234,80 +235,6 @@
             </LinearLayout>
 
         </ScrollView>
-        <!--
-        <LinearLayout
-            android:id="@+id/inputl"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2"
-            android:orientation="vertical"
-            android:weightSum="6" >
-
-            <Button
-                android:id="@+id/btnHex"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="send"
-                android:textColor="@android:color/white"/>
-
-            <EditText
-                android:id="@+id/input1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="@android:color/white"
-                android:paddingLeft="10dp"/>
-
-            <ScrollView
-                android:id="@+id/mScrollView1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="4"
-                android:background="@android:color/black"
-                android:scrollbars="vertical" >
-
-                <TextView
-                    android:id="@+id/output1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/black"
-                    android:paddingTop="0dp"
-                    android:text=""
-                    android:textColor="#ffffff"
-                    android:textIsSelectable="true"
-                    android:textSize="16sp" />
-            </ScrollView>
-            </LinearLayout>
-        -->
-
-
-        <!--
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal" >
-
-            <ImageButton
-                android:id="@+id/zoom_in"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_in" />
-
-            <ImageButton
-                android:id="@+id/zoom_reset"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_reset" />
-
-            <ImageButton
-                android:id="@+id/zoom_out"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_action_zoom_out" />
-        </LinearLayout>
-        -->
 
         <FrameLayout
             android:id="@+id/fragment_container"

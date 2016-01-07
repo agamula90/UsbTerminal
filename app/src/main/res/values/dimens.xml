@@ -5,6 +5,7 @@
     <dimen name="edit_height_default">60dp</dimen>
     <dimen name="button_height_default">40dp</dimen>
     <dimen name="drawer_width">240dp</dimen>
+    <dimen name="layout_margin_default">6dp</dimen>
 
     <dimen name="select_category_height">70dp</dimen>
 
@@ -13,7 +14,7 @@
     <dimen name="button_text_size_small">11sp</dimen>
     <dimen name="button_height_small">40dp</dimen>
     <dimen name="button_height_extra_small">25dp</dimen>
-    <dimen name="long_button_width">240dp</dimen>
+    <dimen name="long_button_width">210dp</dimen>
     <dimen name="edit_width">120dp</dimen>
     <dimen name="result_width">90dp</dimen>
     <dimen name="grid_view_curve_height">60dp</dimen>

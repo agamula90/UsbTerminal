@@ -1,10 +1,9 @@
-package com.ismet.usbterminal;
+package com.ismet.usbterminal.updated;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -19,47 +18,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class MyApplication extends InterpolationCalculatorApp {
+public class EToCApplication extends InterpolationCalculatorApp {
 
-	public static String MyLock = "Lock";
+	private static EToCApplication instance;
 
-	private static MyApplication instance;
-
-	private static boolean activityVisible;
-
-	public static boolean isActivityVisible() {
-		return activityVisible;
-	}
-
-	public static void activityResumed() {
-		activityVisible = true;
-	}
-
-	public static void activityPaused() {
-		activityVisible = false;
-	}
-
-	public static MyApplication getInstance() {
+	public static EToCApplication getInstance() {
 		return instance;
-	}
-
-	public static boolean deleteDir(File dir) {
-		if (dir != null && dir.isDirectory()) {
-			String[] children = dir.list();
-			for (int i = 0; i < children.length; i++) {
-				boolean success = deleteDir(new File(dir, children[i]));
-				if (!success) {
-					return false;
-				}
-			}
-		}
-
-		return dir.delete();
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -125,30 +89,5 @@ public class MyApplication extends InterpolationCalculatorApp {
 				}
 			}
 		});
-	}
-
-	public void clearApplicationData() {
-		File cache = getCacheDir();
-		File appDir = new File(cache.getParent());
-		if (appDir.exists()) {
-			String[] children = appDir.list();
-			for (String s : children) {
-				if (!s.equals("lib")) {
-					deleteDir(new File(appDir, s));
-					Log.i("TAG", "**************** File /data/data/APP_PACKAGE/" + s + " DELETED " +
-							"*******************");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void onLowMemory() {
-		super.onLowMemory();
-	}
-
-	@Override
-	public void onTerminate() {
-		super.onTerminate();
 	}
 }

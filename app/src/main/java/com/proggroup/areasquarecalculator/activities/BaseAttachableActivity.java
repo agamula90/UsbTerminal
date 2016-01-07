@@ -61,7 +61,7 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 
 	public abstract Fragment getFirstFragment();
 
-	protected Toolbar getToolbar() {
+	public Toolbar getToolbar() {
 		return mToolbar;
 	}
 

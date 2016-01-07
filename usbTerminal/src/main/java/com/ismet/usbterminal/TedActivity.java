@@ -727,7 +727,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 			@Override
 			public void onClick(View v) {
 				//				if (isTimerRunning) {
-				//					Toast.makeText(TedActivity.this,
+				//					Toast.makeText(EToCMainActivity.this,
 				//							"Timer is running. Please wait", Toast.LENGTH_SHORT)
 				//							.show();
 				//				} else {
@@ -764,7 +764,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		// public void onClick(View v) {
 		// String command = input1.getText().toString();
 		// if(command.equals("")){
-		// Toast.makeText(TedActivity.this,
+		// Toast.makeText(EToCMainActivity.this,
 		// "Please enter command", 1000).show();
 		// return;
 		// }
@@ -790,7 +790,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		// //
 		// // UsbService.write(strH.getBytes());
 		// } else {
-		// Toast.makeText(TedActivity.this,
+		// Toast.makeText(EToCMainActivity.this,
 		// "serial port not found", 1000).show();
 		// }
 		//
@@ -1254,7 +1254,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 									// new Message();
 									////											msg.what = 0;
 									////											msg.obj = arr;
-									////											TedActivity
+									////											EToCMainActivity
 									// .mHandler.sendMessage(msg);
 									//										}
 									//
@@ -1274,13 +1274,13 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 									// new Message();
 									////											msg.what = 0;
 									////											msg.obj = arr;
-									////											TedActivity
+									////											EToCMainActivity
 									// .mHandler.sendMessage(msg);
 									//
 									//											isTimerRunning =
 									// false;
 									//											Toast.makeText
-									// (TedActivity.this,
+									// (EToCMainActivity.this,
 									//													"Timer
 									// Finish",
 									//													Toast
@@ -1288,7 +1288,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 									//										}
 									//									};
 									//
-									//									Toast.makeText(TedActivity
+									//									Toast.makeText(EToCMainActivity
 									// .this,
 									//											"Timer Started",
 									// Toast.LENGTH_LONG)
@@ -1327,10 +1327,10 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		//			public void onClick(View v) {
 		//				// TODO Auto-generated method stub
 		//				AlertDialog.Builder alertbuilder = new AlertDialog.Builder(
-		//						TedActivity.this);
+		//						EToCMainActivity.this);
 		//				alertbuilder.setTitle("Start Calibration");
 		//
-		//				LayoutInflater inflater = TedActivity.this.getLayoutInflater();
+		//				LayoutInflater inflater = EToCMainActivity.this.getLayoutInflater();
 		//				View dialogView = inflater.inflate(
 		//						R.layout.layout_dialog_cal, null);
 		//				alertbuilder.setView(dialogView);
@@ -1363,7 +1363,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		//
 		//
 		//								if (strKnownPpm.equals("")) {
-		//									Toast.makeText(TedActivity.this,
+		//									Toast.makeText(EToCMainActivity.this,
 		//											"Please enter all values",
 		//											Toast.LENGTH_LONG).show();
 		//									return;
@@ -1372,7 +1372,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		//								int kppm = Integer.parseInt(strKnownPpm);
 		//
 		//								if (kppm == 0) {
-		//									Toast.makeText(TedActivity.this,
+		//									Toast.makeText(EToCMainActivity.this,
 		//											"zero is not allowed",
 		//											Toast.LENGTH_LONG).show();
 		//									return;
@@ -1381,7 +1381,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		//									edit.putInt("ppm", kppm);
 		//									edit.commit();
 		//
-		//									Toast.makeText(TedActivity.this,
+		//									Toast.makeText(EToCMainActivity.this,
 		//											"PPM values stored in preference", Toast
 		// .LENGTH_LONG)
 		//											.show();
@@ -1443,7 +1443,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	
 	@Override
 	public int getLayoutId() {
-		return R.layout.layout_editor;
+		return R.layout.layout_editor_updated;
 	}
 	
 	@Override
@@ -1809,7 +1809,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
 		mChartView = new GraphicalView(this, mChart);
 
-		// mChartView = ChartFactory.getCubeLineChartView(TedActivity.this,
+		// mChartView = ChartFactory.getCubeLineChartView(EToCMainActivity.this,
 		// currentdataset, renderer, 0.5f);
 
 		// mChartView.addZoomListener(mZoomListener, true, false);
@@ -1846,7 +1846,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		//
 		// //currentSeries.remove(readingCount);
 		//
-		// //Toast.makeText(TedActivity.this, "TImer",
+		// //Toast.makeText(EToCMainActivity.this, "TImer",
 		// Toast.LENGTH_SHORT).show();
 		// }
 		// });
@@ -1889,7 +1889,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		// if((readingCount%limit) == 0){
 		// //addNewSeries();
 		// if(c<=1){
-		// // Toast.makeText(TedActivity.this,
+		// // Toast.makeText(EToCMainActivity.this,
 		// // "Series Changed",
 		// // Toast.LENGTH_LONG).show();
 		// currentSeries = currentdataset.getSeriesAt(c+1);
@@ -1967,7 +1967,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		// public void onFinish() {
 		// // TODO Auto-generated method stub
 		//
-		// Toast.makeText(TedActivity.this,
+		// Toast.makeText(EToCMainActivity.this,
 		// "Timer Finish",
 		// Toast.LENGTH_LONG).show();
 		// }
@@ -2184,7 +2184,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				}
 			}
 
-			// String data = mEditor.getText().toString();
+			// String data = mAdvancedEditText.getText().toString();
 			// //data = data.replace("CR", "\u0000");
 			// if(usbService != null) // if UsbService was correctly
 			// binded, Send data
@@ -2604,7 +2604,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 					// UsbService
 					// startService(UsbService.class, usbConnection, null); // Start
 					// UsbService(if it was not started before) and Bind it
-					// startService(new Intent(TedActivity.this, UsbService.class));
+					// startService(new Intent(EToCMainActivity.this, UsbService.class));
 				}
 				break;
 			case MENU_ID_NEW:
@@ -3043,8 +3043,8 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	// int selection, next;
 	//
 	// search = mSearchInput.getText().toString();
-	// text = mEditor.getText().toString();
-	// selection = mEditor.getSelectionEnd();
+	// text = mAdvancedEditText.getText().toString();
+	// selection = mAdvancedEditText.getSelectionEnd();
 	//
 	// if (search.length() == 0) {
 	// Crouton.showText(this, R.string.toast_search_no_input, Style.INFO);
@@ -3059,16 +3059,16 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	// next = text.indexOf(search, selection);
 	//
 	// if (next > -1) {
-	// mEditor.setSelection(next, next + search.length());
-	// if (!mEditor.isFocused())
-	// mEditor.requestFocus();
+	// mAdvancedEditText.setSelection(next, next + search.length());
+	// if (!mAdvancedEditText.isFocused())
+	// mAdvancedEditText.requestFocus();
 	// } else {
 	// if (Settings.SEARCHWRAP) {
 	// next = text.indexOf(search);
 	// if (next > -1) {
-	// mEditor.setSelection(next, next + search.length());
-	// if (!mEditor.isFocused())
-	// mEditor.requestFocus();
+	// mAdvancedEditText.setSelection(next, next + search.length());
+	// if (!mAdvancedEditText.isFocused())
+	// mAdvancedEditText.requestFocus();
 	// } else {
 	// Crouton.showText(this, R.string.toast_search_not_found,
 	// Style.INFO);
@@ -3087,8 +3087,8 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	// int selection, next;
 	//
 	// search = mSearchInput.getText().toString();
-	// text = mEditor.getText().toString();
-	// selection = mEditor.getSelectionStart() - 1;
+	// text = mAdvancedEditText.getText().toString();
+	// selection = mAdvancedEditText.getSelectionStart() - 1;
 	//
 	// if (search.length() == 0) {
 	// Crouton.showText(this, R.string.toast_search_no_input, Style.INFO);
@@ -3103,16 +3103,16 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	// next = text.lastIndexOf(search, selection);
 	//
 	// if (next > -1) {
-	// mEditor.setSelection(next, next + search.length());
-	// if (!mEditor.isFocused())
-	// mEditor.requestFocus();
+	// mAdvancedEditText.setSelection(next, next + search.length());
+	// if (!mAdvancedEditText.isFocused())
+	// mAdvancedEditText.requestFocus();
 	// } else {
 	// if (Settings.SEARCHWRAP) {
 	// next = text.lastIndexOf(search);
 	// if (next > -1) {
-	// mEditor.setSelection(next, next + search.length());
-	// if (!mEditor.isFocused())
-	// mEditor.requestFocus();
+	// mAdvancedEditText.setSelection(next, next + search.length());
+	// if (!mAdvancedEditText.isFocused())
+	// mAdvancedEditText.requestFocus();
 	// } else {
 	// Crouton.showText(this, R.string.toast_search_not_found,
 	// Style.INFO);
@@ -3203,7 +3203,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		}
 
 		if (!isLogsExist) {
-			//			Toast.makeText(TedActivity.this,
+			//			Toast.makeText(EToCMainActivity.this,
 			//					"Required Log files not available",
 			//					Toast.LENGTH_SHORT).show();
 			return;
@@ -3315,10 +3315,10 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	 * is displayed through this handler
 	 */
 	// private static class MyHandler extends Handler {
-	// private final WeakReference<TedActivity> mActivity;
+	// private final WeakReference<EToCMainActivity> mActivity;
 	//
-	// public MyHandler(TedActivity activity) {
-	// mActivity = new WeakReference<TedActivity>(activity);
+	// public MyHandler(EToCMainActivity activity) {
+	// mActivity = new WeakReference<EToCMainActivity>(activity);
 	// }
 	//
 	// @Override
@@ -3544,7 +3544,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	// usbService = ((UsbService.UsbBinder) arg1).getService();
 	// usbService.setHandler(mHandler);
 	//
-	// //Toast.makeText(TedActivity.this, text, duration)
+	// //Toast.makeText(EToCMainActivity.this, text, duration)
 	// //setFilters();
 	// //invalidateOptionsMenu();
 	// }
@@ -3815,7 +3815,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 								// if((readingCount%limit) == 1){
 								// //addNewSeries();
 								// if(idx_count<=1){
-								// // Toast.makeText(TedActivity.this,
+								// // Toast.makeText(EToCMainActivity.this,
 								// // "Series Changed",
 								// // Toast.LENGTH_LONG).show();
 								// currentSeries =
@@ -3839,7 +3839,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 								// currentdataset.getSeriesAt(0);
 
 								// file writing
-								// Toast.makeText(TedActivity.this, filename,
+								// Toast.makeText(EToCMainActivity.this, filename,
 								// Toast.LENGTH_SHORT).show();
 
 								// auto
@@ -4127,7 +4127,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				//				Message msg = new Message();
 				//				msg.what = 0;
 				//				msg.obj = arr;
-				//				TedActivity.mHandler.sendMessage(msg);
+				//				EToCMainActivity.mHandler.sendMessage(msg);
 
 				//future = future - delay;
 				//				if(i == 0){
