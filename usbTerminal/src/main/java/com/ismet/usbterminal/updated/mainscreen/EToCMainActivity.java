@@ -60,6 +60,7 @@ import com.ismet.usbterminal.TedSettingsActivity;
 import com.ismet.usbterminal.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
+import com.ismet.usbterminal.updated.mainscreen.tasks.SendDataToUsbTask;
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
 import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
@@ -71,10 +72,7 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -187,6 +185,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private EToCOpenChartTask mEToCOpenChartTask;
 
+	private SendDataToUsbTask mSendDataToUsbTask;
+
 	private Runnable mRunnable;
 
 	private TextView txtOutput;
@@ -196,31 +196,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	private Button sendButton, buttonClear, buttonMeasure;
 
 	private Button buttonOn1, buttonOn2, buttonPpm;
-	
-	@Override
-	public int getFragmentContainerId() {
-		return R.id.fragment_container;
-	}
-	
-	@Override
-	public DrawerLayout getDrawerLayout() {
-		return null;
-	}
-	
-	@Override
-	public int getToolbarId() {
-		return R.id.toolbar;
-	}
-	
-	@Override
-	public int getLeftDrawerFragmentId() {
-		return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED;
-	}
-	
-	@Override
-	public FrameLayout getFrameLayout() {
-		return (FrameLayout) findViewById(R.id.frame_container);
-	}
 
 	/**
 	 * @see android.app.Activity#onCreate(Bundle)
@@ -956,8 +931,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 										}
 									}
 								}
-								new SendCommandTask(simpleCommands, loopCommands).execute(new
-										Long[]{future, delay_timer});
+
+								if(mSendDataToUsbTask != null && mSendDataToUsbTask.getStatus()
+										== AsyncTask.Status.RUNNING) {
+									mSendDataToUsbTask.cancel(true);
+								} else if(mSendDataToUsbTask == null) {
+									mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
+											loopCommands, EToCMainActivity.this);
+								}
+
+								mSendDataToUsbTask.execute(future, delay_timer);
 							}
 							// end collect commands
 
@@ -1094,6 +1077,31 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	}
 
 	@Override
+	public int getFragmentContainerId() {
+		return R.id.fragment_container;
+	}
+
+	@Override
+	public DrawerLayout getDrawerLayout() {
+		return null;
+	}
+
+	@Override
+	public int getToolbarId() {
+		return R.id.toolbar;
+	}
+
+	@Override
+	public int getLeftDrawerFragmentId() {
+		return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED;
+	}
+
+	@Override
+	public FrameLayout getFrameLayout() {
+		return (FrameLayout) findViewById(R.id.frame_container);
+	}
+
+	@Override
 	public int getLayoutId() {
 		return R.layout.layout_editor_updated;
 	}
@@ -1103,88 +1111,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		return new EmptyFragment();
 	}
 
-	public XYMultipleSeriesRenderer getRenderer() {
-		return renderer;
+	@Override
+	public int getFolderDrawable() {
+		return R.drawable.folder;
 	}
 
-	public XYSeries getCurrentSeries() {
-		return currentSeries;
-	}
-
-	public SharedPreferences getPrefs() {
-		return prefs;
-	}
-
-	public int getReadingCount() {
-		return readingCount;
-	}
-
-	public int getCountMeasure() {
-		return count_measure;
-	}
-
-	public int getOldCountMeasure() {
-		return old_count_measure;
-	}
-
-	public void execute(Runnable runnable) {
-		executor.execute(runnable);
-	}
-
-	public boolean isTimerRunning() {
-		return isTimerRunning;
-	}
-
-	public void incCountMeasure() {
-		count_measure++;
-	}
-
-	public void repaintChartView() {
-		mChartView.repaint();
-	}
-
-	public void setCurrentSeries(int index) {
-		currentSeries = currentdataset.getSeriesAt(index);
-	}
-
-	public void setChartIdx(int chart_idx) {
-		this.chart_idx = chart_idx;
-	}
-
-	public int getChartIdx() {
-		return chart_idx;
-	}
-
-	public void refreshOldCountMeasure() {
-		old_count_measure = count_measure;
-	}
-
-	public String getSubDirDate() {
-		return sub_dir_date;
-	}
-
-	public void setSubDirDate(String sub_dir_date) {
-		this.sub_dir_date = sub_dir_date;
-	}
-
-	public String getChartDate() {
-		return chart_date;
-	}
-
-	public void setChartDate(String chart_date) {
-		this.chart_date = chart_date;
-	}
-
-	public Map<Integer, String> getMapChartDate() {
-		return mapChartDate;
-	}
-
-	public XYSeries getChartSeries() {
-		return chartSeries;
-	}
-
-	public GraphicalView getChartView() {
-		return mChartView;
+	@Override
+	public int getFileDrawable() {
+		return R.drawable.file;
 	}
 
 	public void sendCommand(String command) {
@@ -1314,6 +1248,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			mEToCOpenChartTask = null;
 		}
 
+		if(mSendDataToUsbTask != null && mSendDataToUsbTask.getStatus() == AsyncTask.Status
+				.RUNNING) {
+			mSendDataToUsbTask.cancel(true);
+			mSendDataToUsbTask = null;
+		}
+
 		unbindService(mServiceConnection);
 	}
 
@@ -1419,16 +1359,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 				break;
 		}
-	}
-
-	@Override
-	public int getFolderDrawable() {
-		return R.drawable.folder;
-	}
-
-	@Override
-	public int getFileDrawable() {
-		return R.drawable.file;
 	}
 
 	/**
@@ -2279,18 +2209,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
 		registerReceiver(mUsbReceiver, filter);
 	}
-	
-	public void setUsbConnected(boolean isUsbConnected) {
-		this.isUsbConnected = isUsbConnected;
-	}
-	
-	public ScrollView getScrollView() {
-		return mScrollView;
-	}
-
-	public TextView getTxtOutput() {
-		return txtOutput;
-	}
 
 	public void sendMessageWithUsbDataReceived(byte bytes[]) {
 		Message message = mHandler.obtainMessage();
@@ -2313,131 +2231,110 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		message.sendToTarget();
 	}
 
+	public XYMultipleSeriesRenderer getRenderer() {
+		return renderer;
+	}
+
+	public XYSeries getCurrentSeries() {
+		return currentSeries;
+	}
+
+	public SharedPreferences getPrefs() {
+		return prefs;
+	}
+
+	public int getReadingCount() {
+		return readingCount;
+	}
+
+	public int getCountMeasure() {
+		return count_measure;
+	}
+
+	public int getOldCountMeasure() {
+		return old_count_measure;
+	}
+
+	public void execute(Runnable runnable) {
+		executor.execute(runnable);
+	}
+
+	public boolean isTimerRunning() {
+		return isTimerRunning;
+	}
+
+	public void incCountMeasure() {
+		count_measure++;
+	}
+
+	public void repaintChartView() {
+		mChartView.repaint();
+	}
+
+	public void setCurrentSeries(int index) {
+		currentSeries = currentdataset.getSeriesAt(index);
+	}
+
+	public void setChartIdx(int chart_idx) {
+		this.chart_idx = chart_idx;
+	}
+
+	public int getChartIdx() {
+		return chart_idx;
+	}
+
+	public void refreshOldCountMeasure() {
+		old_count_measure = count_measure;
+	}
+
+	public String getSubDirDate() {
+		return sub_dir_date;
+	}
+
+	public void setSubDirDate(String sub_dir_date) {
+		this.sub_dir_date = sub_dir_date;
+	}
+
+	public String getChartDate() {
+		return chart_date;
+	}
+
+	public void setChartDate(String chart_date) {
+		this.chart_date = chart_date;
+	}
+
+	public Map<Integer, String> getMapChartDate() {
+		return mapChartDate;
+	}
+
+	public XYSeries getChartSeries() {
+		return chartSeries;
+	}
+
+	public GraphicalView getChartView() {
+		return mChartView;
+	}
+	
+	public void setUsbConnected(boolean isUsbConnected) {
+		this.isUsbConnected = isUsbConnected;
+	}
+	
+	public ScrollView getScrollView() {
+		return mScrollView;
+	}
+
+	public TextView getTxtOutput() {
+		return txtOutput;
+	}
+
+	public void setTimerRunning(boolean isTimerRunning) {
+		this.isTimerRunning = isTimerRunning;
+	}
+
+	public void incReadingCount() {
+		readingCount++;
+	}
+
 	public void refreshCurrentSeries() {
 		currentSeries = GraphPopulatorUtils.addNewSet(renderer, currentdataset);
-	}
-
-	public class SendCommandTask extends AsyncTask<Long, Integer, String> {
-
-		ArrayList<String> simpleCommands = new ArrayList<>();
-
-		ArrayList<String> loopCommands = new ArrayList<>();
-
-		public SendCommandTask(ArrayList<String> simpleCommands, ArrayList<String> loopCommands) {
-			this.simpleCommands = simpleCommands;
-			this.loopCommands = loopCommands;
-		}
-
-		@Override
-		protected String doInBackground(Long... params) {
-			Long future = params[0];
-			Long delay = params[1];
-
-			boolean isauto = prefs.getBoolean("isauto", false);
-			if (isauto) {
-				for (int l = 0; l < 3; l++) {
-					processChart(future, delay);
-				}
-			} else {
-				processChart(future, delay);
-			}
-
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-			super.onPostExecute(result);
-			isTimerRunning = false;
-
-			Toast.makeText(EToCMainActivity.this, "Timer Stopped", Toast.LENGTH_LONG).show();
-		}
-
-		public void processChart(long future, long delay) {
-			for (int i = 0; i < simpleCommands.size(); i++) {
-				if (simpleCommands.get(i).contains("delay")) {
-					int delayC = Integer.parseInt(simpleCommands.get(i).replace("delay", "").trim
-							());
-					try {
-						Thread.sleep(delayC);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					Message msg = new Message();
-					msg.what = 1;
-					msg.obj = simpleCommands.get(i);
-					mHandler.sendMessage(msg);
-				}
-			}
-
-			isTimerRunning = true;
-			//int i = 0;
-			long len = future / delay;
-			long count = 0;
-
-			//boolean isauto = prefs.getBoolean("isauto", false);
-
-			//			if(isauto){
-			//				len = 3 * len;
-			//			}
-
-			while (count < len) {
-				readingCount = readingCount + 1;
-
-
-				String cmd = loopCommands.get(0);
-				Message msg = new Message();
-				msg.what = 1;
-				msg.obj = cmd;
-				mHandler.sendMessage(msg);
-				//
-				try {
-					long half_delay = delay / 2;
-					Thread.sleep(half_delay);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//
-				cmd = loopCommands.get(1);
-				msg = new Message();
-				msg.what = 1;
-				msg.obj = cmd;
-				mHandler.sendMessage(msg);
-				//
-				try {
-					long half_delay = delay / 2;
-					Thread.sleep(half_delay);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				//				byte [] arr = new byte[]{(byte) 0xFE,0x44,0x11,0x22,0x33,0x44,
-				// 0x55};
-				//				Message msg = new Message();
-				//				msg.what = 0;
-				//				msg.obj = arr;
-				//				EToCMainActivity.mHandler.sendMessage(msg);
-
-				//future = future - delay;
-				//				if(i == 0){
-				//					i = 1;
-				//				}else{
-				//					i = 0;
-				//				}
-
-				//				try {
-				//					Thread.sleep(delay);
-				//				} catch (InterruptedException e) {
-				//					// TODO Auto-generated catch block
-				//					e.printStackTrace();
-				//				}
-
-				count++;
-			}
-		}
-	}
-}
+	}}
