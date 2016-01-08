@@ -48,26 +48,6 @@
         <!-- Ted main activity ... ie a text field :) -->
         <!-- android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|fontScale|screenSize|smallestScreenSize"
              -->
-        <activity
-            android:name=".TedActivity"
-            android:screenOrientation="landscape"
-            android:theme="@style/AppThemeCompat"
-            android:windowSoftInputMode="stateHidden|adjustResize" >
-
-            <!-- Launcher Intent -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
-        </activity>
 
         <activity
             android:name=".updated.mainscreen.EToCMainActivity"
@@ -91,7 +71,35 @@
                 android:resource="@xml/device_filter" />
         </activity>
 
+        <activity
+            android:name=".TedActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppThemeCompat"
+            android:windowSoftInputMode="stateHidden|adjustResize" >
+
+            <!-- Launcher Intent -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+        </activity>
+
         <!-- Ted settings activity -->
+        <activity
+            android:name=".updated.TedSettingsActivity"
+            android:label="@string/title_settings"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden" >
+        </activity>
+
         <activity
             android:name=".TedSettingsActivity"
             android:label="@string/title_settings"
@@ -101,6 +109,13 @@
 
         <!-- Ted save as activity -->
         <activity
+            android:name=".updated.TedSaveAsActivity"
+            android:label="@string/title_save_as"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+
+        <activity
             android:name=".TedSaveAsActivity"
             android:label="@string/title_save_as"
             android:screenOrientation="landscape"
@@ -109,12 +124,25 @@
 
         <!-- Ted open activity -->
         <activity
+            android:name=".updated.TedOpenActivity"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden" >
+        </activity>
+
+        <activity
             android:name=".TedOpenActivity"
             android:screenOrientation="landscape"
             android:windowSoftInputMode="stateHidden" >
         </activity>
 
         <!-- Ted open recent activity -->
+        <activity
+            android:name=".updated.TedOpenRecentActivity"
+            android:label="@string/title_open_recent"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden" >
+        </activity>
+
         <activity
             android:name=".TedOpenRecentActivity"
             android:label="@string/title_open_recent"
@@ -123,6 +151,13 @@
         </activity>
 
         <!-- Ted Select font activity -->
+        <activity
+            android:name=".updated.TedFontActivity"
+            android:label="@string/title_font"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden" >
+        </activity>
+
         <activity
             android:name=".TedFontActivity"
             android:label="@string/title_font"
