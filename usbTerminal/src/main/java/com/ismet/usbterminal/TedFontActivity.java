@@ -53,7 +53,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderClick(java.io.File)
 	 */
 	protected boolean onFolderClick(File folder) {
-		RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, mCurrentFolder, false);
+		RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, folder, false);
 		return true;
 	}
 

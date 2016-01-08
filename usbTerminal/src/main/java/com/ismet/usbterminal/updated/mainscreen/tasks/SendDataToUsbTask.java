@@ -91,46 +91,49 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 			synchronized (weakActivity.get()) {
 				EToCMainActivity activity = weakActivity.get();
 
-				while (count < len) {
-					activity.incCountMeasure();
+				if (loopCommands.size() > 1) {
+					while (count < len) {
+						activity.incCountMeasure();
 
-					publishProgress(new Pair<>(1, loopCommands.get(0)));
-					try {
-						long half_delay = delay / 2;
-						Thread.sleep(half_delay);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+						publishProgress(new Pair<>(1, loopCommands.get(0)));
+						try {
+							long half_delay = delay / 2;
+							Thread.sleep(half_delay);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						publishProgress(new Pair<>(1, loopCommands.get(1)));
+						//
+						try {
+							long half_delay = delay / 2;
+							Thread.sleep(half_delay);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						//				byte [] arr = new byte[]{(byte) 0xFE,0x44,0x11,0x22,0x33,0x44,
+
+						// 0x55};
+						//				Message msg = new Message();
+						//				msg.what = 0;
+						//				msg.obj = arr;
+						//				EToCMainActivity.mHandler.sendMessage(msg);
+
+						//future = future - delay;
+						//				if(i == 0){
+						//					i = 1;
+						//				}else{
+						//					i = 0;
+						//				}
+
+						//				try {
+						//					Thread.sleep(delay);
+						//				} catch (InterruptedException e) {
+						//					e.printStackTrace();
+						//				}
+
+						count++;
 					}
-					publishProgress(new Pair<>(1, loopCommands.get(1)));
-					//
-					try {
-						long half_delay = delay / 2;
-						Thread.sleep(half_delay);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-					//				byte [] arr = new byte[]{(byte) 0xFE,0x44,0x11,0x22,0x33,0x44,
-					// 0x55};
-					//				Message msg = new Message();
-					//				msg.what = 0;
-					//				msg.obj = arr;
-					//				EToCMainActivity.mHandler.sendMessage(msg);
-
-					//future = future - delay;
-					//				if(i == 0){
-					//					i = 1;
-					//				}else{
-					//					i = 0;
-					//				}
-
-					//				try {
-					//					Thread.sleep(delay);
-					//				} catch (InterruptedException e) {
-					//					e.printStackTrace();
-					//				}
-
-					count++;
 				}
 			}
 		}

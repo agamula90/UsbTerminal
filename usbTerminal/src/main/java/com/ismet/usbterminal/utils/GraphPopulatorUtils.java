@@ -230,8 +230,9 @@ public class GraphPopulatorUtils {
 	private static XYMultipleSeriesRenderer initRendererXYLabels(XYMultipleSeriesRenderer renderer) {
 		renderer.setXLabels(0);
 		renderer.setYLabels(15);
-		renderer.setLabelsTextSize(26);
+		renderer.setLabelsTextSize(13);
 		renderer.setShowGrid(true);
+        renderer.setShowCustomTextGrid(true);
 		renderer.setGridColor(Color.rgb(136, 136, 136));
 		renderer.setBackgroundColor(Color.WHITE);
 		renderer.setApplyBackgroundColor(true);
@@ -257,6 +258,7 @@ public class GraphPopulatorUtils {
 		renderer.setXLabels(4);
 		renderer.setYLabels(10);
 		renderer.setShowGrid(true);
+        renderer.setShowCustomTextGrid(true);
 		renderer.setGridColor(Color.rgb(136, 136, 136));
 		renderer.setBackgroundColor(Color.WHITE);
 		renderer.setApplyBackgroundColor(true);
@@ -320,7 +322,7 @@ public class GraphPopulatorUtils {
 
 	private static void addXYSeriesRenderer(XYMultipleSeriesRenderer renderer, int[] colors,
 			PointStyle[] styles) {
-		renderer.setLabelsTextSize(26);
+		renderer.setLabelsTextSize(13);
 		renderer.setPointSize(5f);
 		renderer.setMargins(new int[]{20, 30, 15, 20});
 		int length = colors.length;
