@@ -43,7 +43,7 @@ public class Settings {
     /**
      * Text size setting
      */
-    public static int TEXT_SIZE = 16;
+    public static int TEXT_SIZE = 13;
 
     /**
      * Default end of line
@@ -119,7 +119,7 @@ public class Settings {
                 true);
         WORDWRAP = settings.getBoolean(PREFERENCE_WORDWRAP, false);
         TEXT_SIZE = getStringPreferenceAsInteger(settings,
-                PREFERENCE_TEXT_SIZE, "16");
+                PREFERENCE_TEXT_SIZE, "13");
         DEFAULT_END_OF_LINE = getStringPreferenceAsInteger(settings,
                 PREFERENCE_END_OF_LINES, ("" + EOL_LINUX));
         FORCE_AUTO_SAVE = settings.getBoolean(PREFERENCE_AUTO_SAVE, false);

@@ -224,7 +224,8 @@
                     android:paddingTop="0dp"
                     android:text=""
                     android:textColor="#ffffff"
-                    android:textSize="@dimen/edit_text_size_default"/>
+                    android:textSize="@dimen/edit_text_size_default"
+                    android:typeface="monospace"/>
 
                 <fragment
                     android:id="@+id/bottom_fragment"

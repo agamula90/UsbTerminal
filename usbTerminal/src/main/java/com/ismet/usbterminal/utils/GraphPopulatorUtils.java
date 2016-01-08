@@ -230,9 +230,8 @@ public class GraphPopulatorUtils {
 	private static XYMultipleSeriesRenderer initRendererXYLabels(XYMultipleSeriesRenderer renderer) {
 		renderer.setXLabels(0);
 		renderer.setYLabels(15);
-		renderer.setLabelsTextSize(12);
+		renderer.setLabelsTextSize(26);
 		renderer.setShowGrid(true);
-		renderer.setShowCustomTextGrid(true);
 		renderer.setGridColor(Color.rgb(136, 136, 136));
 		renderer.setBackgroundColor(Color.WHITE);
 		renderer.setApplyBackgroundColor(true);
@@ -249,6 +248,7 @@ public class GraphPopulatorUtils {
 		renderer.setPanEnabled(false, false);
 		renderer.setZoomButtonsVisible(false);
 		renderer.setShowLegend(false);
+        renderer.setShowLabels(true);
 		// renderer.setScale(1);
 		return renderer;
 	}
@@ -272,7 +272,10 @@ public class GraphPopulatorUtils {
 		renderer.setZoomEnabled(false, false);
 		renderer.setPanEnabled(false, false);
 		renderer.setZoomButtonsVisible(false);
-		renderer.setScale(1);
+        renderer.setShowLegend(false);
+        renderer.setShowLabels(true);
+
+        renderer.setScale(1);
 
 		return renderer;
 	}
@@ -317,10 +320,7 @@ public class GraphPopulatorUtils {
 
 	private static void addXYSeriesRenderer(XYMultipleSeriesRenderer renderer, int[] colors,
 			PointStyle[] styles) {
-		renderer.setAxisTitleTextSize(16);
-		renderer.setChartTitleTextSize(20);
-		renderer.setLabelsTextSize(15);
-		renderer.setLegendTextSize(15);
+		renderer.setLabelsTextSize(26);
 		renderer.setPointSize(5f);
 		renderer.setMargins(new int[]{20, 30, 15, 20});
 		int length = colors.length;
@@ -359,6 +359,11 @@ public class GraphPopulatorUtils {
 		renderer.setAxesColor(axesColor);
 		renderer.setLabelsColor(labelsColor);
 	}
+
+    public static void clearYTextLabels(XYMultipleSeriesRenderer renderer) {
+        renderer.setYAxisMin(0);
+        renderer.setYAxisMax(10);
+    }
 
 	/**
 	 * Builds an XY multiple dataset using the provided values.

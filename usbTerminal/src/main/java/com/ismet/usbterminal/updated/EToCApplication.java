@@ -32,7 +32,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		instance = this;
 		Log.v("EToCApplication", "onCreate triggered");
 
-		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+		/*Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
 			public void uncaughtException(Thread thread, Throwable ex) {
 
@@ -50,7 +50,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 					new PrintStream(fos).print
 							("=========================================================\r" +
 									formatter.format(currentTime) + "\r"
-	                                /* + ex.getStackTrace().toString()+ "\r"+ */ +
+	                                /* + ex.getStackTrace().toString()+ "\r"+ * / +
 							"=========================================================\r");
 					ex.printStackTrace(new PrintStream(fos));
 					fos.close();
@@ -88,6 +88,6 @@ public class EToCApplication extends InterpolationCalculatorApp {
 					e1.printStackTrace();
 				}
 			}
-		});
+		});*/
 	}
 }

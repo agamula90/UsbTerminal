@@ -119,7 +119,6 @@ public class UsbService extends Service implements UsbServiceWritable {
 					mConnection.close();
 					mConnection = null;
 				}
-
 			}
 		}
 	};

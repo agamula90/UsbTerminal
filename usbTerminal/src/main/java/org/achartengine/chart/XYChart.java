@@ -368,7 +368,7 @@ public abstract class XYChart extends AbstractChart {
 					.getMarginsColor());
 		}
 
-		boolean showLabels = mRenderer.isShowLabels() && hasValues;
+		boolean showLabels = mRenderer.isShowLabels();// && hasValues;
 		boolean showGridX = mRenderer.isShowGridX();
 		// boolean showCustomTextGridX = mRenderer.isShowCustomTextGridX();
 		boolean showCustomTextGridY = mRenderer.isShowCustomTextGridY();
@@ -437,6 +437,9 @@ public abstract class XYChart extends AbstractChart {
 					}
 				}
 			}
+
+			//TODO it's set for not display names of grid axis
+			showLabels = false;
 
 			if (showLabels) {
 				paint.setColor(mRenderer.getLabelsColor());
