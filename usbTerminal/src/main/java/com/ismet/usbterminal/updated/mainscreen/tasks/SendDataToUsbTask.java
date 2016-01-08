@@ -15,12 +15,15 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 
     private final List<String> loopCommands;
 
+    private final boolean autoPpm;
+
     private final WeakReference<EToCMainActivity> weakActivity;
 
     public SendDataToUsbTask(List<String> simpleCommands, List<String> loopCommands,
-                             EToCMainActivity activity) {
+                             boolean autoPpm, EToCMainActivity activity) {
         this.simpleCommands = simpleCommands;
         this.loopCommands = loopCommands;
+        this.autoPpm = autoPpm;
         this.weakActivity = new WeakReference<>(activity);
     }
 
@@ -143,7 +146,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
             }
         }
 
-        if (weakActivity.get() != null) {
+        if (weakActivity.get() != null && autoPpm) {
             publishProgress(new Pair<Integer, String>(2, null));
         }
     }

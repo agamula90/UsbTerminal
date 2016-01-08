@@ -916,6 +916,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 ArrayList<String> loopCommands = new ArrayList<String>();
                                 boolean isLoop = false;
                                 int loopcmd1Idx = -1, loopcmd2Idx = -1;
+
+                                boolean autoPpm = false;
+
                                 for (int i = 0; i < commands.length; i++) {
                                     String command = commands[i];
                                     //Log.d("command", command);
@@ -935,6 +938,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                                             loopcmd1Idx = Integer.parseInt(line1) - 1;
                                             loopcmd2Idx = Integer.parseInt(line2) - 1;
+                                        } else if(command.equals("autoppm")){
+                                            autoPpm = true;
                                         } else if (isLoop) {
                                             if (i == loopcmd1Idx) {
                                                 loopCommands.add(command);
@@ -953,7 +958,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     mSendDataToUsbTask.cancel(true);
                                 }
                                 mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
-                                        loopCommands, EToCMainActivity.this);
+                                        loopCommands, autoPpm, EToCMainActivity.this);
 
                                 mSendDataToUsbTask.execute(future, delay_timer);
                             }
