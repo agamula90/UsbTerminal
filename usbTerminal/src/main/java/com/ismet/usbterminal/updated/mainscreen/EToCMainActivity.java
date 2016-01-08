@@ -319,8 +319,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editOn.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editOff.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
                         String strOff = editOff.getText().toString();
@@ -361,8 +361,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editOn.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editOff.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
                 };
@@ -448,8 +448,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editOn.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editOff.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
                         String strOff = editOff.getText().toString();
@@ -491,8 +491,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editOn.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editOff.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
                 };
@@ -791,8 +791,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editDelay.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editDuration.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strDelay = editDelay.getText().toString();
                         String strDuration = editDuration.getText().toString();
@@ -1035,8 +1035,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(editDelay.getWindowToken(), 0);
-                        inputManager.hideSoftInputFromWindow(editDuration.getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
                 };

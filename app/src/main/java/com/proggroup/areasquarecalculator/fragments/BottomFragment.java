@@ -80,6 +80,8 @@ public class BottomFragment extends Fragment {
 
 	private File mAvgFiles[];
 
+    private boolean mAutoSelected;
+
 	private boolean mDoPostLoadingCalculations;
 
 	private LoadGraphDataTask.OnGraphDataLoadedCallback onGraphDataLoadedCallback;
@@ -369,7 +371,24 @@ public class BottomFragment extends Fragment {
 			avgPointsLayout.addView(tv);
 
 			if (mAvgFiles.length == 1 || mAvgFiles.length <= 3) {
+
+                //TODO it's remove to work only on auto calculations
+                mAutoSelected = true;
+
 				for (int i = 0; i < mAvgFiles.length - 1; i++) {
+                    if(mAutoSelected) {
+                        File file = mAvgFiles[i].getParentFile();
+                        tv = new TextView(getActivity());
+                        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
+                                .edit_text_size_default));
+                        tv.setText("\"" + file.getName() + "\":  ");
+                        tv.setTextColor(Color.WHITE);
+
+                        avgPointsLayout.addView(tv);
+                    }
+
+                    mAutoSelected = false;
+
 					File file = mAvgFiles[i];
 					tv = new TextView(getActivity());
 					tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
@@ -480,9 +499,9 @@ public class BottomFragment extends Fragment {
 				if (mDoPostLoadingCalculations) {
 					File mesFile = CalculatePpmSimpleFragment.findMesFile(Constants.BASE_DIRECTORY
 							.getParentFile());
-					if (mesFile != null && CalculatePpmSimpleFragment.findMesFile(mesFile) !=
-							null) {
-						mesFile = CalculatePpmSimpleFragment.findMesFile(mesFile);
+					if (mesFile != null && CalculatePpmSimpleFragment.findNewestFolder(mesFile,
+							"MES") != null) {
+						mesFile = CalculatePpmSimpleFragment.findNewestFolder(mesFile, "MES");
 						File mesFiles[] = mesFile.listFiles();
 						if (mesFiles == null && mesFile.getParentFile() != null) {
 							mesFiles = mesFile.getParentFile().listFiles();
@@ -538,6 +557,7 @@ public class BottomFragment extends Fragment {
 							} else {
 								if (newestCalFile2 == null) {
 									mAvgFiles = new File[]{newestCalFile1};
+                                    mAutoSelected = true;
 									mAutoAvgPoint = new AvgPoint(Arrays.asList(new
 											Float[]{square1}));
 									fillAvgPointsLayout();
@@ -553,6 +573,7 @@ public class BottomFragment extends Fragment {
 								} else {
 									if (newestCalFile3 == null) {
 										mAvgFiles = new File[]{newestCalFile1, newestCalFile2};
+                                        mAutoSelected = true;
 										mAutoAvgPoint = new AvgPoint(Arrays.asList(new
 												Float[]{square1, square2}));
 										fillAvgPointsLayout();
@@ -568,6 +589,7 @@ public class BottomFragment extends Fragment {
 									} else {
 										mAvgFiles = new File[]{newestCalFile1, newestCalFile2,
 												newestCalFile3};
+                                        mAutoSelected = true;
 										mAutoAvgPoint = new AvgPoint(Arrays.asList(new
 												Float[]{square1, square2, square3}));
 										fillAvgPointsLayout();
