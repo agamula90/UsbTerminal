@@ -66,6 +66,7 @@ import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
+import com.proggroup.areasquarecalculator.fragments.BottomFragment;
 
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.AbstractChart;
@@ -2357,5 +2358,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     public void refreshCurrentSeries() {
         currentSeries = GraphPopulatorUtils.addNewSet(renderer, currentdataset);
+    }
+
+    public void invokeAutoCalculations() {
+        getSupportFragmentManager().findFragmentById(R.id
+                .bottom_fragment).getView().findViewById(R.id.calculate_ppm_auto).performClick();
     }
 }
