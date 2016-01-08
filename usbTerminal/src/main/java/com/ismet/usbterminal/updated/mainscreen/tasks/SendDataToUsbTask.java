@@ -47,9 +47,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
     protected void onProgressUpdate(Pair<Integer, String>... values) {
         super.onProgressUpdate(values);
         if (weakActivity.get() != null) {
-            synchronized (weakActivity.get()) {
-                weakActivity.get().sendMessageWithUsbDataReady(values[0].second);
-            }
+            weakActivity.get().sendMessageWithUsbDataReady(values[0].second);
         }
     }
 
@@ -75,6 +73,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
         } else {
             return;
         }
+
         //int i = 0;
         long len = future / delay;
         long count = 0;
@@ -89,7 +88,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
             if (loopCommands.size() > 0) {
                 while (count < len) {
                     if (weakActivity.get() != null) {
-                        weakActivity.get().incCountMeasure();
+                        weakActivity.get().incReadingCount();
                     } else {
                         return;
                     }
@@ -145,13 +144,11 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
         if (weakActivity.get() != null) {
-            synchronized (weakActivity.get()) {
                 EToCMainActivity activity = weakActivity.get();
 
                 activity.setTimerRunning(false);
 
                 Toast.makeText(activity, "Timer Stopped", Toast.LENGTH_LONG).show();
-            }
         }
     }
 }

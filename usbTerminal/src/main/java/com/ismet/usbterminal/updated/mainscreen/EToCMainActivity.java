@@ -1272,6 +1272,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         }
 
         unbindService(mServiceConnection);
+
+        if(mHandler != null) {
+            mHandler.removeCallbacks(null);
+        }
     }
 
     /**
@@ -2233,7 +2237,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         message.sendToTarget();
     }
 
-    public synchronized void sendOpenChartDataToHandler(String value) {
+    public void sendOpenChartDataToHandler(String value) {
         Message message = mHandler.obtainMessage();
         message.obj = value;
         message.what = EToCMainHandler.MESSAGE_OPEN_CHART;

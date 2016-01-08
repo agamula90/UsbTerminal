@@ -11,7 +11,7 @@ import com.ismet.usbterminal.updated.UsbService;
 
 import java.lang.ref.WeakReference;
 
-public class EToCMainUsbReceiver extends BroadcastReceiver{
+public class EToCMainUsbReceiver extends BroadcastReceiver {
 
     private final WeakReference<EToCMainActivity> weakActivity;
 
@@ -23,13 +23,11 @@ public class EToCMainUsbReceiver extends BroadcastReceiver{
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-        if(action.equals(UsbService.ACTION_DATA_RECEIVED)) {
-            if(weakActivity.get() != null) {
-                synchronized (weakActivity.get()) {
-                    EToCMainActivity activity = weakActivity.get();
-                    activity.sendMessageWithUsbDataReceived(intent.getByteArrayExtra(UsbService
-                            .DATA_RECEIVED));
-                }
+        if (action.equals(UsbService.ACTION_DATA_RECEIVED)) {
+            if (weakActivity.get() != null) {
+                EToCMainActivity activity = weakActivity.get();
+                activity.sendMessageWithUsbDataReceived(intent.getByteArrayExtra(UsbService
+                        .DATA_RECEIVED));
             }
             return;
         }
@@ -91,30 +89,30 @@ public class EToCMainUsbReceiver extends BroadcastReceiver{
     private void handleUsbIntent(String toastMessage, Boolean
             isUsbConnected, Boolean startService, boolean permissionDiscarded) {
 
-        if(weakActivity.get() != null) {
+        if (weakActivity.get() != null) {
             synchronized (weakActivity.get()) {
                 EToCMainActivity activity = weakActivity.get();
 
-                if(isUsbConnected != null) {
+                if (isUsbConnected != null) {
                     activity.setUsbConnected(isUsbConnected);
                     activity.invalidateOptionsMenu();
                 }
 
-                if(toastMessage != null) {
+                if (toastMessage != null) {
                     Toast customToast = Toast.makeText(activity, toastMessage, Toast.LENGTH_LONG);
                     customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
                     customToast.show();
                 }
 
-                if(startService != null) {
-                    if(startService) {
+                if (startService != null) {
+                    if (startService) {
                         activity.startService(new Intent(activity, UsbService.class));
                     } else {
                         activity.stopService(new Intent(activity, UsbService.class));
                     }
                 }
 
-                if(permissionDiscarded) {
+                if (permissionDiscarded) {
                     activity.finish();
                 }
             }

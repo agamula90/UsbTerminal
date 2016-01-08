@@ -59,7 +59,6 @@ public class FileWriteRunnable implements Runnable{
 			FileOutputStream fos = new FileOutputStream(file, true);
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
 			writer.write(formattedTime + "," + co2 + "\n");
-			writer.flush();
 			writer.close();
 
 		} catch (Exception e) {
