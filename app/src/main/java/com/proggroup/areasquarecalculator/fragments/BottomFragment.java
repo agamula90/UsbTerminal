@@ -180,6 +180,12 @@ public class BottomFragment extends Fragment {
                                 (i)));
                     }
 
+                    if(squares.size() < 2) {
+                        Toast.makeText(getActivity(), "Please load Correct Calibration Curve!",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
                     CurveFragment.initLine(lineChart, activity, squares);
 
                     viewGroup.removeAllViews();

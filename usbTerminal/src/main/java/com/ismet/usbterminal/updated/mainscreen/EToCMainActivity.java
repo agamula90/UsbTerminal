@@ -60,6 +60,7 @@ import com.ismet.usbterminal.updated.TedSaveAsActivity;
 import com.ismet.usbterminal.updated.TedSettingsActivity;
 import com.ismet.usbterminal.updated.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
+import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
 import com.ismet.usbterminal.updated.mainscreen.tasks.SendDataToUsbTask;
@@ -230,6 +231,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         Settings.updateFromPreferences(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
 
+        loadPreferencesFromLocalData();
+
         mHandler = new EToCMainHandler(this);
 
         //
@@ -299,12 +302,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable.writeToUsb(command.getBytes());
                     mUsbServiceWritable.writeToUsb("\r".getBytes());
                 }
-
-                mExportLayout.removeAllViews();
-                View v1 = new View(EToCMainActivity.this);
-                v1.setBackgroundColor(Color.RED);
-                mExportLayout.addView(v1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams
-                        .MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             }
         });
 
@@ -362,7 +359,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     .LENGTH_LONG).show();
                             return;
                         }
-
 
                         Editor edit = prefs.edit();
                         edit.putString(PrefConstants.ON1, strOn);
@@ -1176,6 +1172,81 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         //		 ().get("chart"));
     }
 
+    private void loadPreferencesFromLocalData() {
+        File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
+                .SYSTEM_SETTINGS_FOLDER_NAME);
+        if(!settingsFolder.exists()) {
+            return;
+        }
+        File button1DataFile = new File(settingsFolder, AppData.BUTTON1_DATA);
+        if(button1DataFile.exists()) {
+            String button1Data = TextFileUtils.readTextFile(button1DataFile);
+            if(!button1Data.isEmpty()) {
+                String values[] = button1Data.split(AppData.SPLIT_STRING);
+                if(values.length == 4) {
+                    SharedPreferences.Editor editor = getPrefs().edit();
+                    editor.putString(PrefConstants.ON_NAME1, values[0]);
+                    editor.putString(PrefConstants.OFF_NAME1, values[1]);
+                    editor.putString(PrefConstants.ON1, values[2]);
+                    editor.putString(PrefConstants.OFF1, values[3]);
+                    editor.apply();
+                }
+            }
+        }
+        File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
+        if(button2DataFile.exists()) {
+            String button2Data = TextFileUtils.readTextFile(button2DataFile);
+            if(!button2Data.isEmpty()) {
+                String values[] = button2Data.split(AppData.SPLIT_STRING);
+                if(values.length == 4) {
+                    SharedPreferences.Editor editor = getPrefs().edit();
+                    editor.putString(PrefConstants.ON_NAME2, values[0]);
+                    editor.putString(PrefConstants.OFF_NAME2, values[1]);
+                    editor.putString(PrefConstants.ON2, values[2]);
+                    editor.putString(PrefConstants.OFF2, values[3]);
+                    editor.apply();
+                }
+            }
+        }
+    }
+
+    private void savePreferencesToLocalData() {
+        File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
+                .SYSTEM_SETTINGS_FOLDER_NAME);
+        if(!settingsFolder.exists()) {
+            settingsFolder.mkdir();
+        }
+
+        SharedPreferences preferences = getPrefs();
+
+        File button1DataFile = new File(settingsFolder, AppData.BUTTON1_DATA);
+
+        StringBuilder button1DataBuilder = new StringBuilder();
+        button1DataBuilder.append(preferences.getString(PrefConstants.ON_NAME1, ""));
+        button1DataBuilder.append(AppData.SPLIT_STRING);
+        button1DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME1, ""));
+        button1DataBuilder.append(AppData.SPLIT_STRING);
+        button1DataBuilder.append(preferences.getString(PrefConstants.ON1, ""));
+        button1DataBuilder.append(AppData.SPLIT_STRING);
+        button1DataBuilder.append(preferences.getString(PrefConstants.OFF1, ""));
+
+        TextFileUtils.writeTextFile(button1DataFile.getAbsolutePath(), button1DataBuilder
+                .toString());
+
+        File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
+        StringBuilder button2DataBuilder = new StringBuilder();
+        button2DataBuilder.append(preferences.getString(PrefConstants.ON_NAME2, ""));
+        button2DataBuilder.append(AppData.SPLIT_STRING);
+        button2DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME2, ""));
+        button2DataBuilder.append(AppData.SPLIT_STRING);
+        button2DataBuilder.append(preferences.getString(PrefConstants.ON2, ""));
+        button2DataBuilder.append(AppData.SPLIT_STRING);
+        button2DataBuilder.append(preferences.getString(PrefConstants.OFF2, ""));
+
+        TextFileUtils.writeTextFile(button2DataFile.getAbsolutePath(), button2DataBuilder
+                .toString());
+    }
+
     @Override
     public int getFragmentContainerId() {
         return R.id.fragment_container;
@@ -1234,6 +1305,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     @Override
     public void onGraphDetached() {
         mExportLayout.setBackgroundColor(Color.TRANSPARENT);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        savePreferencesToLocalData();
     }
 
     public void sendCommand(String command) {
