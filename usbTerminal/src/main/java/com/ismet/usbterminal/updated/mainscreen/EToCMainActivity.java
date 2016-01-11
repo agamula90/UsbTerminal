@@ -35,6 +35,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -66,8 +67,13 @@ import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
 import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
+import com.lamerman.FileDialog;
+import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
+import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.fragments.BottomFragment;
+import com.proggroup.areasquarecalculator.fragments.CalculatePpmSimpleFragment;
+import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.AbstractChart;
@@ -78,7 +84,9 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -101,6 +109,8 @@ import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.showMenuItemA
 import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher {
+
+    private static final int REQUEST_SELECT_FOLDER_SAVING = 10;
 
     private static Handler mHandler;
 
@@ -200,6 +210,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private Button buttonOn1, buttonOn2, buttonPpm;
 
+    private TextView mPathForSavingInside;
+
+    private LinearLayout mExportLayout;
+
     /**
      * @see android.app.Activity#onCreate(Bundle)
      */
@@ -285,8 +299,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable.writeToUsb(command.getBytes());
                     mUsbServiceWritable.writeToUsb("\r".getBytes());
                 }
+
+                mExportLayout.removeAllViews();
+                View v1 = new View(EToCMainActivity.this);
+                v1.setBackgroundColor(Color.RED);
+                mExportLayout.addView(v1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams
+                        .MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             }
         });
+
+        mExportLayout = getExportLayout();
 
         buttonOn1.setOnLongClickListener(new OnLongClickListener() {
 
@@ -756,6 +778,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 ll_user_comment = (LinearLayout) contentView.findViewById(R.id
                                         .ll_user_comment);
 
+                                mPathForSavingInside = (TextView) contentView.findViewById(R.id
+                                        .path_for_saving_inside);
+
                                 int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
                                 int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
                                 int volume = prefs.getInt(PrefConstants.VOLUME, 20);
@@ -790,6 +815,46 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                             editKnownPpm.setEnabled(false);
                                             llkppm.setVisibility(View.GONE);
                                         }
+                                    }
+                                });
+
+                                if(sub_dir_date.isEmpty()) {
+                                    Date currentTime = new Date();
+                                    SimpleDateFormat formatter_date = new SimpleDateFormat
+                                            ("yyyyMMdd_HHmmss");
+
+                                    setSubDirDate(formatter_date.format(currentTime));
+                                    String subDirnameDefault = "CAL_" + sub_dir_date + "_" +
+                                            user_comment;
+                                    getPrefs().edit().putString(PrefConstants.SAVE_FOLDER,
+                                            subDirnameDefault).apply();
+                                }
+
+                                mPathForSavingInside.setText(getPrefs().getString(PrefConstants
+                                        .SAVE_FOLDER, ""));
+
+                                mPathForSavingInside.setOnClickListener(new OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Intent intent = new Intent(EToCMainActivity.this, FileDialog
+                                                .class);
+
+                                        File extFile = Constants.BASE_DIRECTORY;
+
+                                        intent.putExtra(FileDialog.START_PATH, extFile.getAbsolutePath());
+                                        intent.putExtra(FileDialog.ROOT_PATH, extFile.getAbsolutePath());
+                                        intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode
+                                                .MODE_CREATE);
+
+                                        intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
+
+                                        IntentFolderWrapUtils.wrapFolderForDrawables
+                                                (EToCMainActivity.this, intent);
+
+                                        new File(extFile, getPrefs().getString(PrefConstants
+                                                .SAVE_FOLDER, "")).mkdir();
+
+                                        startActivityForResult(intent, REQUEST_SELECT_FOLDER_SAVING);
                                     }
                                 });
                             }
@@ -1156,6 +1221,21 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         return R.drawable.file;
     }
 
+    @Override
+    public LinearLayout graphContainer() {
+        return (LinearLayout) findViewById(R.id.exported_chart_layout);
+    }
+
+    @Override
+    public void onGraphAttached() {
+        mExportLayout.setBackgroundColor(Color.WHITE);
+    }
+
+    @Override
+    public void onGraphDetached() {
+        mExportLayout.setBackgroundColor(Color.TRANSPARENT);
+    }
+
     public void sendCommand(String command) {
         if ((command != null) && (!command.equals("")) && (!command.equals("\n"))) {
             command = command.replace("\r", "");
@@ -1379,6 +1459,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         }
 
         switch (requestCode) {
+            case REQUEST_SELECT_FOLDER_SAVING:
+                String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
+                File fileFrom = new File(filePath);
+                String fileName = fileFrom.getName();
+                if(!fileName.contains("CAL")) {
+                    File parentFile = fileFrom.getParentFile();
+                    fileFrom.delete();
+                    fileFrom = new File(parentFile, "CAL_" + fileName);
+                    fileFrom.mkdir();
+                }
+                filePath = fileFrom.getName();
+                getPrefs().edit().putString(PrefConstants.SAVE_FOLDER, filePath).commit();
+                mPathForSavingInside.setText(filePath);
+                break;
             case REQUEST_SAVE_AS:
                 if (BuildConfig.DEBUG)
                     Log.d(TAG, "Save as : " + extras.getString("path"));
@@ -1611,7 +1705,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private boolean shouldQuit() {
         int entriesCount = getSupportFragmentManager().getBackStackEntryCount();
-        return entriesCount == 0;
+        return entriesCount == 0 && mExportLayout.getChildCount() == 0;
     }
 
     /**

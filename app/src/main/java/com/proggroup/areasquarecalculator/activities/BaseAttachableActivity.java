@@ -12,6 +12,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
@@ -31,6 +32,8 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 
 	private Toolbar mToolbar;
 
+	private LinearLayout mExportLayout;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -48,7 +51,13 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 			fragment = manager.findFragmentById(mainContainerId);
 		}
 		manager.beginTransaction().replace(mainContainerId, fragment).commit();
+
+        mExportLayout = graphContainer();
 	}
+
+    protected LinearLayout getExportLayout() {
+        return mExportLayout;
+    }
 
 	@Override
 	public void finish() {
@@ -57,7 +66,17 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 		InterpolationCalculatorApp.getInstance().setAvgSquarePoints(null);
 	}
 
-	public abstract int getLayoutId();
+    @Override
+    public void onBackPressed() {
+        if(mExportLayout.getChildCount() > 0) {
+            mExportLayout.removeAllViews();
+            onGraphDetached();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    public abstract int getLayoutId();
 
 	public abstract Fragment getFirstFragment();
 

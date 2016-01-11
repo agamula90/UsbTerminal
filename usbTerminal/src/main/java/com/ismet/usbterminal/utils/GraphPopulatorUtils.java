@@ -161,7 +161,7 @@ public class GraphPopulatorUtils {
 		GraphicalView mChartView = new GraphicalView(activity, mChart);
 		view.removeAllViews();
 		view.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
-				.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+				.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 		mChartView.repaint();
 
 		// TODO set fields
@@ -222,7 +222,7 @@ public class GraphPopulatorUtils {
 		GraphicalView mChartView = new GraphicalView(activity, mChart);
 		// mChartView.addZoomListener(mZoomListener, true, false);
 		view.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
-				.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+				.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 		// to reflect margin
 		// mChartView.repaint();
 	}

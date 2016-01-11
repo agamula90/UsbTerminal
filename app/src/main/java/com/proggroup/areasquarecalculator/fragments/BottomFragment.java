@@ -1,6 +1,5 @@
 package com.proggroup.areasquarecalculator.fragments;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -8,8 +7,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.charts.LineChart;
 import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
@@ -105,7 +104,7 @@ public class BottomFragment extends Fragment {
 	}
 
 	@Override
-	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+	public void onViewCreated(final View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
 		loadPpmCurve = view.findViewById(R.id.load_ppm_curve);
@@ -168,16 +167,28 @@ public class BottomFragment extends Fragment {
 						LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
 
 				if (libraryContentAttachable != null) {
-					FragmentManager fragmentManager = libraryContentAttachable
-							.getSupportFragmentManager();
+					LinearLayout viewGroup = libraryContentAttachable.graphContainer();
 
-					int fragmentContainerId = libraryContentAttachable.getFragmentContainerId();
+                    LineChart lineChart = new LineChart(activity);
 
-					FragmentTransaction transaction = fragmentManager.beginTransaction();
-					transaction.replace(fragmentContainerId, CurveFragment.newInstance(ppmStrings,
-							squareStrings));
-					transaction.addToBackStack(null);
-					transaction.commit();
+                    int countPoints = squareStrings.size();
+
+                    SparseArray<Float> squares = new SparseArray<>(countPoints);
+
+                    for (int i = 0; i < countPoints; i++) {
+                        squares.put(Integer.parseInt(ppmStrings.get(i)), Float.parseFloat(squareStrings.get
+                                (i)));
+                    }
+
+                    CurveFragment.initLine(lineChart, activity, squares);
+
+                    viewGroup.removeAllViews();
+                    viewGroup.addView(lineChart, new LinearLayout.LayoutParams(ViewGroup
+                            .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                    libraryContentAttachable.onGraphAttached();
+
+                    lineChart.invalidate();
 				}
 			}
 		});

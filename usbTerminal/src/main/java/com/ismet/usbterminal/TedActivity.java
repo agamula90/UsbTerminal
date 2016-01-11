@@ -353,7 +353,12 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	public int getLeftDrawerFragmentId() {
 		return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED;
 	}
-	
+
+	@Override
+	public LinearLayout graphContainer() {
+		return null;
+	}
+
 	@Override
 	public FrameLayout getFrameLayout() {
 		return (FrameLayout) findViewById(R.id.frame_container);
@@ -1440,8 +1445,18 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 			txtOutput.setText(text);
 		}
 	}
-	
-	@Override
+
+    @Override
+    public void onGraphAttached() {
+
+    }
+
+    @Override
+    public void onGraphDetached() {
+
+    }
+
+    @Override
 	public int getLayoutId() {
 		return R.layout.layout_editor_updated;
 	}

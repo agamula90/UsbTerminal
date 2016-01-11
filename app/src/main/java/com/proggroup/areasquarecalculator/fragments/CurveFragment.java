@@ -1,5 +1,6 @@
 package com.proggroup.areasquarecalculator.fragments;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -93,7 +94,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 					(i)));
 		}
 
-		initLine();
+		initLine(mLineChart, getActivity(), squares);
 		initGrid();
 	}
 
@@ -209,8 +210,9 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		});
 	}
 
-	private void initLine() {
-		mLineChart.setOnChartValueSelectedListener(this);
+	public static void initLine(LineChart mLineChart, Activity activity, SparseArray<Float>
+			 squares) {
+		//mLineChart.setOnChartValueSelectedListener(this);
 		mLineChart.setExtraOffsets(40, 50, 50, 0);
 		mLineChart.setDrawGridBackground(false);
 		mLineChart.setDoubleTapToZoomEnabled(false);
@@ -232,7 +234,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 
 		// create a custom MarkerView (extend MarkerView) and specify the layout
 		// to use for it
-		ChartMarkerView mv = new ChartMarkerView(getActivity(), R.layout.chart_marer_view);
+		ChartMarkerView mv = new ChartMarkerView(activity, R.layout.chart_marer_view);
 
 		// set the marker to the chart
 		mLineChart.setMarkerView(mv);
@@ -243,7 +245,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		xAxis.setTextSize(12f);
 		xAxis.setLabelsToSkip(0);
 
-		setData();
+		setData(mLineChart, squares);
 
 		YAxis leftAxis = mLineChart.getAxisLeft();
 		leftAxis.setEnabled(false);
@@ -263,7 +265,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		l.setForm(Legend.LegendForm.LINE);
 	}
 
-	private void setData() {
+	private static void setData(LineChart mLineChart, SparseArray<Float> squares) {
 
 		ArrayList<String> xVals = new ArrayList<>();
 

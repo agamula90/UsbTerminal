@@ -24,4 +24,5 @@ public class PrefConstants {
     public static final String USER_COMMENT = "uc";
     public static final String IS_AUTO = "isauto";
     public static final String SAVE_AS_CALIBRATION = "save_as_calibration";
+    public static final String SAVE_FOLDER = "save_folder";
 }
