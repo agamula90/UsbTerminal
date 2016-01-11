@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 
@@ -114,12 +115,12 @@ public class EToCMainHandler extends Handler {
                                 // Toast.LENGTH_SHORT).show();
 
                                 // auto
-                                int delay_v = activity.getPrefs().getInt("delay", 2);
-                                int duration_v = activity.getPrefs().getInt("duration", 3);
+                                int delay_v = activity.getPrefs().getInt(PrefConstants.DELAY, 2);
+                                int duration_v = activity.getPrefs().getInt(PrefConstants.DURATION, 3);
                                 int rCount1 = (int) ((duration_v * 60) / delay_v);
                                 int rCount2 = (int) (duration_v * 60);
-                                boolean isauto = activity.getPrefs().getBoolean("isauto",
-                                        false);
+                                boolean isauto = activity.getPrefs().getBoolean(PrefConstants
+                                         .IS_AUTO, false);
                                 if (isauto) {
                                     if (activity.getReadingCount() == rCount1) {
                                         activity.incCountMeasure();
@@ -151,8 +152,8 @@ public class EToCMainHandler extends Handler {
                                     activity.getCurrentSeries().add(activity.getReadingCount()
                                             , co2);
                                     activity.repaintChartView();
-                                    int kppm = activity.getPrefs().getInt("kppm", -1);
-                                    int volume = activity.getPrefs().getInt("volume", -1);
+                                    int kppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
+                                    int volume = activity.getPrefs().getInt(PrefConstants.VOLUME, -1);
 
                                     String strppm = "";
                                     String strvolume = "";
@@ -169,7 +170,8 @@ public class EToCMainHandler extends Handler {
                                         strvolume = "_" + volume;
                                     }
 
-                                    String str_uc = activity.getPrefs().getString("uc", "");
+                                    String str_uc = activity.getPrefs().getString(PrefConstants
+                                            .USER_COMMENT, "");
                                     if (strppm.equals("_")) {
                                         String filename1 = "";
                                         String dirname1 = "AEToC_MES_Files";

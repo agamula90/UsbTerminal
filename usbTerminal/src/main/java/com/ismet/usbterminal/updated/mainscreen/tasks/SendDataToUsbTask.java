@@ -1,9 +1,11 @@
 package com.ismet.usbterminal.updated.mainscreen.tasks;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v4.util.Pair;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 
 import java.lang.ref.WeakReference;
@@ -33,13 +35,20 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
         Long delay = params[1];
 
         if (weakActivity.get() != null) {
-            boolean isauto = weakActivity.get().getPrefs().getBoolean("isauto", false);
+
+            SharedPreferences preferences = weakActivity.get().getPrefs();
+
+            boolean isauto = preferences.getBoolean(PrefConstants.IS_AUTO, false);
             if (isauto) {
                 for (int l = 0; l < 3; l++) {
                     processChart(future, delay);
                 }
             } else {
                 processChart(future, delay);
+            }
+
+            if (autoPpm && !preferences.getBoolean(PrefConstants.SAVE_AS_CALIBRATION, false)) {
+                publishProgress(new Pair<Integer, String>(2, null));
             }
         }
 
@@ -85,7 +94,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
         long len = future / delay;
         long count = 0;
 
-        //boolean isauto = prefs.getBoolean("isauto", false);
+//        boolean isauto = weakActivity.get().getPrefs().getBoolean("isauto", false);
 
         //			if(isauto){
         //				len = 3 * len;
@@ -144,10 +153,6 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
                     count++;
                 }
             }
-        }
-
-        if (weakActivity.get() != null && autoPpm) {
-            publishProgress(new Pair<Integer, String>(2, null));
         }
     }
 

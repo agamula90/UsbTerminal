@@ -59,6 +59,7 @@ import com.ismet.usbterminal.updated.TedSaveAsActivity;
 import com.ismet.usbterminal.updated.TedSettingsActivity;
 import com.ismet.usbterminal.updated.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
+import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
 import com.ismet.usbterminal.updated.mainscreen.tasks.SendDataToUsbTask;
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
@@ -250,27 +251,30 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // }, 1000, 1000);
 
         buttonOn1 = (Button) findViewById(R.id.buttonOn1);
-        final String str_on_name1 = prefs.getString("on_name1", "On");
+        final String str_on_name1 = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
+                 .ON_NAME_DEFAULT);
         buttonOn1.setText(str_on_name1);
-        buttonOn1.setTag("on");
+        buttonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         buttonOn1.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // ASCII
-                String str_on_name1t = prefs.getString("on_name1", "On");
-                String str_off_name1t = prefs.getString("off_name1", "Off");
+                String str_on_name1t = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
+                         .ON_NAME_DEFAULT);
+                String str_off_name1t = prefs.getString(PrefConstants.OFF_NAME1, PrefConstants
+                         .OFF_NAME_DEFAULT);
 
                 String s = buttonOn1.getTag().toString();
                 String command = "";//"/5H1000R";
-                if (s.equals("on")) {
-                    command = prefs.getString("on1", "");
+                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                    command = prefs.getString(PrefConstants.ON1, "");
                     buttonOn1.setText(str_off_name1t);
-                    buttonOn1.setTag("off");
+                    buttonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
                 } else {
-                    command = prefs.getString("off1", "");
+                    command = prefs.getString(PrefConstants.OFF1, "");
                     buttonOn1.setText(str_on_name1t);
-                    buttonOn1.setTag("on");
+                    buttonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
                 Utils.appendText(txtOutput, "Tx: " + command);
@@ -300,10 +304,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
                                 editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
-                                String str_on = prefs.getString("on1", "");
-                                String str_off = prefs.getString("off1", "");
-                                String str_on_name = prefs.getString("on_name1", "On");
-                                String str_off_name = prefs.getString("off_name1", "Off");
+                                String str_on = prefs.getString(PrefConstants.ON1, "");
+                                String str_off = prefs.getString(PrefConstants.OFF1, "");
+                                String str_on_name = prefs.getString(PrefConstants.ON_NAME1,
+                                        PrefConstants.ON_NAME_DEFAULT);
+                                String str_off_name = prefs.getString(PrefConstants.OFF_NAME1,
+                                        PrefConstants.OFF_NAME_DEFAULT);
 
                                 editOn.setText(str_on);
                                 editOff.setText(str_off);
@@ -337,10 +343,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 
                         Editor edit = prefs.edit();
-                        edit.putString("on1", strOn);
-                        edit.putString("off1", strOff);
-                        edit.putString("on_name1", strOn1);
-                        edit.putString("off_name1", strOff1);
+                        edit.putString(PrefConstants.ON1, strOn);
+                        edit.putString(PrefConstants.OFF1, strOff);
+                        edit.putString(PrefConstants.ON_NAME1, strOn1);
+                        edit.putString(PrefConstants.OFF_NAME1, strOff1);
                         edit.commit();
 
                         String s = buttonOn1.getTag().toString();
@@ -377,28 +383,31 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         });
 
         buttonOn2 = (Button) findViewById(R.id.buttonOn2);
-        final String str_on_name2 = prefs.getString("on_name2", "On");
+        final String str_on_name2 = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
+                 .ON_NAME_DEFAULT);
         //final String str_off_name1 = prefs.getString("off_name1", "");
         buttonOn2.setText(str_on_name2);
-        buttonOn2.setTag("on");
+        buttonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         buttonOn2.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // ASCII
-                String str_on_name2t = prefs.getString("on_name2", "On");
-                String str_off_name2t = prefs.getString("off_name2", "Off");
+                String str_on_name2t = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
+                         .ON_NAME_DEFAULT);
+                String str_off_name2t = prefs.getString(PrefConstants.OFF_NAME2, PrefConstants
+                         .OFF_NAME_DEFAULT);
 
                 String s = buttonOn2.getTag().toString();
                 String command = "";//"/5H1000R";
-                if (s.equals("on")) {
-                    command = prefs.getString("on2", "");
+                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                    command = prefs.getString(PrefConstants.ON2, "");
                     buttonOn2.setText(str_off_name2t);
-                    buttonOn2.setTag("off");
+                    buttonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
                 } else {
-                    command = prefs.getString("off2", "");
+                    command = prefs.getString(PrefConstants.OFF2, "");
                     buttonOn2.setText(str_on_name2t);
-                    buttonOn2.setTag("on");
+                    buttonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
                 Utils.appendText(txtOutput, "Tx: " + command);
@@ -427,12 +436,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
                                 editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
-                                String str_on_name = prefs.getString("on_name2", "On");
-                                String str_off_name = prefs.getString("off_name2", "Off");
+                                String str_on_name = prefs.getString(PrefConstants.ON_NAME2,
+                                        PrefConstants.ON_NAME_DEFAULT);
+                                String str_off_name = prefs.getString(PrefConstants.OFF_NAME2,
+                                        PrefConstants.OFF_NAME_DEFAULT);
 
 
-                                String str_on = prefs.getString("on2", "");
-                                String str_off = prefs.getString("off2", "");
+                                String str_on = prefs.getString(PrefConstants.ON2, "");
+                                String str_off = prefs.getString(PrefConstants.OFF2, "");
 
                                 editOn.setText(str_on);
                                 editOff.setText(str_off);
@@ -466,15 +477,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 
                         Editor edit = prefs.edit();
-                        edit.putString("on2", strOn);
-                        edit.putString("off2", strOff);
-                        edit.putString("on_name2", strOn1);
-                        edit.putString("off_name2", strOff1);
+                        edit.putString(PrefConstants.ON2, strOn);
+                        edit.putString(PrefConstants.OFF2, strOff);
+                        edit.putString(PrefConstants.ON_NAME2, strOn1);
+                        edit.putString(PrefConstants.OFF_NAME2, strOff1);
                         edit.commit();
 
 
                         String s = buttonOn2.getTag().toString();
-                        if (s.equals("on")) {
+                        if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
                             buttonOn2.setText(strOn1);
                         } else {
                             buttonOn2.setText(strOff1);
@@ -745,11 +756,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 ll_user_comment = (LinearLayout) contentView.findViewById(R.id
                                         .ll_user_comment);
 
-                                int delay_v = prefs.getInt("delay", 2);
-                                int duration_v = prefs.getInt("duration", 3);
-                                int volume = prefs.getInt("volume", 20);
-                                int kppm = prefs.getInt("kppm", -1);
-                                String user_comment = prefs.getString("uc", "");
+                                int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
+                                int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
+                                int volume = prefs.getInt(PrefConstants.VOLUME, 20);
+                                int kppm = prefs.getInt(PrefConstants.KPPM, -1);
+                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT, "");
 
                                 editDelay.setText("" + delay_v);
                                 editDuration.setText("" + duration_v);
@@ -760,7 +771,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     editKnownPpm.setText("" + kppm);
                                 }
 
-                                boolean isauto = prefs.getBoolean("isauto", false);
+                                boolean isauto = prefs.getBoolean(PrefConstants.IS_AUTO, false);
                                 if (isauto) {
                                     chkAutoManual.setChecked(true);
                                 } else {
@@ -813,7 +824,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             } else {
                                 int kppm = Integer.parseInt(strkPPM);
                                 Editor edit = prefs.edit();
-                                edit.putInt("kppm", kppm);
+                                edit.putInt(PrefConstants.KPPM, kppm);
                                 edit.commit();
                             }
                         }
@@ -828,7 +839,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 return;
                             } else {
                                 Editor edit = prefs.edit();
-                                edit.putString("uc", str_uc);
+                                edit.putString(PrefConstants.USER_COMMENT, str_uc);
                                 edit.commit();
                             }
                         }
@@ -841,13 +852,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         } else {
                             int volume = Integer.parseInt(strVolume);
                             Editor edit = prefs.edit();
-                            edit.putInt("volume", volume);
+                            edit.putInt(PrefConstants.VOLUME, volume);
                             edit.commit();
                         }
 
                         boolean b = chkAutoManual.isChecked();
                         Editor edit = prefs.edit();
-                        edit.putBoolean("isauto", b);
+                        edit.putBoolean(PrefConstants.IS_AUTO, b);
+                        edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, chkKnownPpm.isChecked());
                         edit.commit();
 
                         int delay = Integer.parseInt(strDelay);
@@ -883,8 +895,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             count_measure++;
 
                             edit = prefs.edit();
-                            edit.putInt("delay", delay);
-                            edit.putInt("duration", duration);
+                            edit.putInt(PrefConstants.DELAY, delay);
+                            edit.putInt(PrefConstants.DURATION, duration);
                             edit.commit();
 
                             long future = duration * 60 * 1000;
@@ -1073,8 +1085,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         bindService(new Intent(this, UsbService.class),
                 mServiceConnection, BIND_AUTO_CREATE);
 
-        int delay_v = prefs.getInt("delay", 2);
-        int duration_v = prefs.getInt("duration", 3);
+        int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
+        int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
         GraphData graphData = GraphPopulatorUtils.createXYChart(duration_v,
                 delay_v, EToCMainActivity.this);
         renderer = graphData.renderer;
