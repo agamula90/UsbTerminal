@@ -211,9 +211,10 @@
                         android:layout_weight="2"
                         android:gravity="end|right"
                         android:paddingLeft="4dp"
-                        android:paddingRight="@dimen/layout_margin_default">
+                        android:paddingRight="@dimen/layout_margin_default"
+                        android:id="@+id/all_charts_layout">
 
-                        <com.proggroup.areasquarecalculator.views.SquareLayout
+                        <FrameLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent">
 
@@ -228,7 +229,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:orientation="horizontal"/>
-                        </com.proggroup.areasquarecalculator.views.SquareLayout>
+                        </FrameLayout>
                     </LinearLayout>
 
                 </LinearLayout>

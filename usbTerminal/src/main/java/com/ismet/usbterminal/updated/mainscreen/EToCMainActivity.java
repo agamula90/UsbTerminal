@@ -269,7 +269,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         buttonOn1 = (Button) findViewById(R.id.buttonOn1);
         final String str_on_name1 = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                 .ON_NAME_DEFAULT);
+                .ON_NAME_DEFAULT);
         buttonOn1.setText(str_on_name1);
         buttonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         buttonOn1.setOnClickListener(new OnClickListener() {
@@ -278,9 +278,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             public void onClick(View v) {
                 // ASCII
                 String str_on_name1t = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                         .ON_NAME_DEFAULT);
+                        .ON_NAME_DEFAULT);
                 String str_off_name1t = prefs.getString(PrefConstants.OFF_NAME1, PrefConstants
-                         .OFF_NAME_DEFAULT);
+                        .OFF_NAME_DEFAULT);
 
                 String s = buttonOn1.getTag().toString();
                 String command = "";//"/5H1000R";
@@ -345,7 +345,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -386,7 +386,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -402,7 +402,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         buttonOn2 = (Button) findViewById(R.id.buttonOn2);
         final String str_on_name2 = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                 .ON_NAME_DEFAULT);
+                .ON_NAME_DEFAULT);
         //final String str_off_name1 = prefs.getString("off_name1", "");
         buttonOn2.setText(str_on_name2);
         buttonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
@@ -412,9 +412,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             public void onClick(View v) {
                 // ASCII
                 String str_on_name2t = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                         .ON_NAME_DEFAULT);
+                        .ON_NAME_DEFAULT);
                 String str_off_name2t = prefs.getString(PrefConstants.OFF_NAME2, PrefConstants
-                         .OFF_NAME_DEFAULT);
+                        .OFF_NAME_DEFAULT);
 
                 String s = buttonOn2.getTag().toString();
                 String command = "";//"/5H1000R";
@@ -478,7 +478,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -521,7 +521,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -671,12 +671,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         if (isCleared) {
                             boolean existInitedGraphCurve = false;
                             for (int i = 0; i < currentdataset.getSeriesCount(); i++) {
-                                if(currentdataset.getSeriesAt(i).getItemCount() != 0) {
+                                if (currentdataset.getSeriesAt(i).getItemCount() != 0) {
                                     existInitedGraphCurve = true;
                                     break;
                                 }
                             }
-                            if(!existInitedGraphCurve) {
+                            if (!existInitedGraphCurve) {
                                 GraphPopulatorUtils.clearYTextLabels(renderer);
                             }
                             mChartView.repaint();
@@ -781,7 +781,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
                                 int volume = prefs.getInt(PrefConstants.VOLUME, 20);
                                 int kppm = prefs.getInt(PrefConstants.KPPM, -1);
-                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT, "");
+                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT,
+                                        "");
 
                                 editDelay.setText("" + delay_v);
                                 editDuration.setText("" + duration_v);
@@ -814,20 +815,19 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     }
                                 });
 
-                                if(sub_dir_date.isEmpty()) {
+
+                                final String path = getPrefs().getString(PrefConstants
+                                        .SAVE_FOLDER, "");
+
+                                if (!path.isEmpty()) {
+                                    mPathForSavingInside.setText(path);
+                                } else {
                                     Date currentTime = new Date();
                                     SimpleDateFormat formatter_date = new SimpleDateFormat
                                             ("yyyyMMdd_HHmmss");
-
                                     setSubDirDate(formatter_date.format(currentTime));
-                                    String subDirnameDefault = "CAL_" + sub_dir_date + "_" +
-                                            user_comment;
-                                    getPrefs().edit().putString(PrefConstants.SAVE_FOLDER,
-                                            subDirnameDefault).apply();
+                                    mPathForSavingInside.setText("CAL_" + sub_dir_date);
                                 }
-
-                                mPathForSavingInside.setText(getPrefs().getString(PrefConstants
-                                        .SAVE_FOLDER, ""));
 
                                 mPathForSavingInside.setOnClickListener(new OnClickListener() {
                                     @Override
@@ -837,8 +837,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                                         File extFile = Constants.BASE_DIRECTORY;
 
-                                        intent.putExtra(FileDialog.START_PATH, extFile.getAbsolutePath());
-                                        intent.putExtra(FileDialog.ROOT_PATH, extFile.getAbsolutePath());
+                                        intent.putExtra(FileDialog.START_PATH, extFile
+                                                .getAbsolutePath());
+                                        intent.putExtra(FileDialog.ROOT_PATH, extFile
+                                                .getAbsolutePath());
                                         intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode
                                                 .MODE_CREATE);
 
@@ -847,10 +849,41 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         IntentFolderWrapUtils.wrapFolderForDrawables
                                                 (EToCMainActivity.this, intent);
 
-                                        new File(extFile, getPrefs().getString(PrefConstants
-                                                .SAVE_FOLDER, "")).mkdir();
+                                        String saveFolder = getPrefs().getString(PrefConstants
+                                                .SAVE_FOLDER, "");
 
-                                        startActivityForResult(intent, REQUEST_SELECT_FOLDER_SAVING);
+                                        if (!saveFolder.isEmpty()) {
+                                            new File(extFile, saveFolder).mkdir();
+                                        }
+
+                                        startActivityForResult(intent,
+                                                REQUEST_SELECT_FOLDER_SAVING);
+                                    }
+                                });
+
+                                editUserComment.addTextChangedListener(new TextWatcher() {
+                                    @Override
+                                    public void beforeTextChanged(CharSequence s, int start, int
+                                            count, int after) {
+
+                                    }
+
+                                    @Override
+                                    public void onTextChanged(CharSequence s, int start, int
+                                            before, int count) {
+
+                                    }
+
+                                    @Override
+                                    public void afterTextChanged(Editable s) {
+                                        if (path.isEmpty()) {
+                                            if (s.length() == 0) {
+                                                mPathForSavingInside.setText("CAL_" + sub_dir_date);
+                                            } else {
+                                                mPathForSavingInside.setText("CAL_" + sub_dir_date +
+                                                        "_" + s.toString());
+                                            }
+                                        }
                                     }
                                 });
                             }
@@ -864,8 +897,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
-                                 .getCurrentFocus().getWindowToken(), 0);
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
 
                         String strDelay = editDelay.getText().toString();
                         String strDuration = editDuration.getText().toString();
@@ -1011,7 +1044,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                                             loopcmd1Idx = Integer.parseInt(line1) - 1;
                                             loopcmd2Idx = Integer.parseInt(line2) - 1;
-                                        } else if(command.equals("autoppm")){
+                                        } else if (command.equals("autoppm")) {
                                             autoPpm = true;
                                         } else if (isLoop) {
                                             if (i == loopcmd1Idx) {
@@ -1102,6 +1135,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             //									ctimer.start();
 
                         }
+
+                        String subDirnameDefault = mPathForSavingInside.getText().toString();
+                        getPrefs().edit().putString(PrefConstants.SAVE_FOLDER,
+                                subDirnameDefault).apply();
+
                         dialog.cancel();
                     }
                 };
@@ -1114,7 +1152,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -1175,15 +1213,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     private void loadPreferencesFromLocalData() {
         File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
                 .SYSTEM_SETTINGS_FOLDER_NAME);
-        if(!settingsFolder.exists()) {
+        if (!settingsFolder.exists()) {
             return;
         }
         File button1DataFile = new File(settingsFolder, AppData.BUTTON1_DATA);
-        if(button1DataFile.exists()) {
+        if (button1DataFile.exists()) {
             String button1Data = TextFileUtils.readTextFile(button1DataFile);
-            if(!button1Data.isEmpty()) {
+            if (!button1Data.isEmpty()) {
                 String values[] = button1Data.split(AppData.SPLIT_STRING);
-                if(values.length == 4) {
+                if (values.length == 4) {
                     SharedPreferences.Editor editor = getPrefs().edit();
                     editor.putString(PrefConstants.ON_NAME1, values[0]);
                     editor.putString(PrefConstants.OFF_NAME1, values[1]);
@@ -1194,11 +1232,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         }
         File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
-        if(button2DataFile.exists()) {
+        if (button2DataFile.exists()) {
             String button2Data = TextFileUtils.readTextFile(button2DataFile);
-            if(!button2Data.isEmpty()) {
+            if (!button2Data.isEmpty()) {
                 String values[] = button2Data.split(AppData.SPLIT_STRING);
-                if(values.length == 4) {
+                if (values.length == 4) {
                     SharedPreferences.Editor editor = getPrefs().edit();
                     editor.putString(PrefConstants.ON_NAME2, values[0]);
                     editor.putString(PrefConstants.OFF_NAME2, values[1]);
@@ -1213,7 +1251,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     private void savePreferencesToLocalData() {
         File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
                 .SYSTEM_SETTINGS_FOLDER_NAME);
-        if(!settingsFolder.exists()) {
+        if (!settingsFolder.exists()) {
             settingsFolder.mkdir();
         }
 
@@ -1448,7 +1486,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         unbindService(mServiceConnection);
 
-        if(mHandler != null) {
+        if (mHandler != null) {
             mHandler.removeCallbacks(null);
         }
     }
@@ -1540,7 +1578,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
                 File fileFrom = new File(filePath);
                 String fileName = fileFrom.getName();
-                if(!fileName.contains("CAL")) {
+                if (!fileName.contains("CAL")) {
                     File parentFile = fileFrom.getParentFile();
                     fileFrom.delete();
                     fileFrom = new File(parentFile, "CAL_" + fileName);

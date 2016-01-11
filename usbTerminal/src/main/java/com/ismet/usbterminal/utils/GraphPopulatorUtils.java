@@ -144,7 +144,9 @@ public class GraphPopulatorUtils {
 
 	public static GraphicalView attachXYChartIntoLayout(EToCMainActivity activity,
 			AbstractChart mChart) {
-		final LinearLayout view = (LinearLayout) activity.findViewById(R.id.chart);
+		final LinearLayout chartLayout = (LinearLayout) activity.findViewById(R.id.chart);
+        final LinearLayout allChartsLayout = (LinearLayout) activity.findViewById(R.id
+                 .all_charts_layout);
 
 		LinearLayout topContainer = (LinearLayout) activity.findViewById(R.id.top_container);
 
@@ -155,12 +157,12 @@ public class GraphPopulatorUtils {
 
 			AutoExpandKeyboardUtils.expand(activity, topContainer, activity.findViewById(R.id
 					.bottom_fragment), activity.getToolbar(), textBelow);
-			view.getLayoutParams().height = topContainer.getMinimumHeight();
+            allChartsLayout.getLayoutParams().height = topContainer.getMinimumHeight();
 		}
 
 		GraphicalView mChartView = new GraphicalView(activity, mChart);
-		view.removeAllViews();
-		view.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
+		chartLayout.removeAllViews();
+        chartLayout.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
 				.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 		mChartView.repaint();
 
