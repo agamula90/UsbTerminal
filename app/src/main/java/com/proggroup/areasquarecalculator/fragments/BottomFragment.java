@@ -243,8 +243,8 @@ public class BottomFragment extends Fragment {
 			public void onClick(View v) {
 
 				mDoPostLoadingCalculations = true;
-				File calFolder = CalculatePpmSimpleFragment.findCalFolder(Constants
-						.BASE_DIRECTORY);
+				File calFolder = CalculatePpmSimpleFragment.findNewestFolder(Constants
+						.BASE_DIRECTORY, "CAL");
 
 				Activity activity = getActivity();
 				FrameLayout frameLayout = null;
