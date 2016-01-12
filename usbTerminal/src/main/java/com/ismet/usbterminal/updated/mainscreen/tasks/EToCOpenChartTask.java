@@ -21,9 +21,9 @@ public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		String fpath = params[0];
+		String filePath = params[0];
 
-		File file = new File(fpath);
+		File file = new File(filePath);
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String line;
@@ -34,11 +34,11 @@ public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 			}
 			br.close();
 
-			if (fpath.contains("R1")) {
+			if (filePath.contains("R1")) {
 				c = 1;
-			} else if (fpath.contains("R2")) {
+			} else if (filePath.contains("R2")) {
 				//
-			} else if (fpath.contains("R3")) {
+			} else if (filePath.contains("R3")) {
 				c = 2 * c;
 			}
 

@@ -38,8 +38,8 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 
             SharedPreferences preferences = weakActivity.get().getPrefs();
 
-            boolean isauto = preferences.getBoolean(PrefConstants.IS_AUTO, false);
-            if (isauto) {
+            boolean isAuto = preferences.getBoolean(PrefConstants.IS_AUTO, false);
+            if (isAuto) {
                 for (int l = 0; l < 3; l++) {
                     processChart(future, delay);
                 }

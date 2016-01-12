@@ -25,4 +25,8 @@ public class PrefConstants {
     public static final String IS_AUTO = "isauto";
     public static final String SAVE_AS_CALIBRATION = "save_as_calibration";
     public static final String SAVE_FOLDER = "save_folder";
+
+    public static final String MEASURE_FILE_NAME1 = "measure_file1";
+    public static final String MEASURE_FILE_NAME2 = "measure_file2";
+    public static final String MEASURE_FILE_NAME3 = "measure_file3";
 }

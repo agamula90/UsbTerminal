@@ -44,6 +44,8 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -81,6 +83,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -482,14 +485,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             return;
                         }
 
-
                         Editor edit = prefs.edit();
                         edit.putString(PrefConstants.ON2, strOn);
                         edit.putString(PrefConstants.OFF2, strOff);
                         edit.putString(PrefConstants.ON_NAME2, strOn1);
                         edit.putString(PrefConstants.OFF_NAME2, strOff1);
                         edit.commit();
-
 
                         String s = buttonOn2.getTag().toString();
                         if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
@@ -687,19 +688,24 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         buttonMeasure.setOnClickListener(new OnClickListener() {
 
-            EditText editDelay, editDuration, editKnownPpm, editVolume, editUserComment;
+            EditText editDelay, editDuration, editKnownPpm, editVolume, editUserComment,
+                    commandsEditText1, commandsEditText2, commandsEditText3;
 
             CheckBox chkAutoManual, chkKnownPpm;
 
             LinearLayout llkppm, ll_user_comment;
 
+            RadioGroup mRadioGroup;
+
+            RadioButton mRadio1, mRadio2, mRadio3;
+
             @Override
             public void onClick(View v) {
-                if (mAdvancedEditText.getText().toString().isEmpty()) {
+                /*if (mAdvancedEditText.getText().toString().isEmpty()) {
                     Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
-                }
+                }*/
 
                 if (isTimerRunning) {
                     Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
@@ -763,6 +769,22 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 ll_user_comment = (LinearLayout) contentView.findViewById(R.id
                                         .ll_user_comment);
 
+                                commandsEditText1 = (EditText) contentView.findViewById(R.id
+                                        .commandsEditText1);
+
+                                commandsEditText2 = (EditText) contentView.findViewById(R.id
+                                        .commandsEditText1);
+
+                                commandsEditText3 = (EditText) contentView.findViewById(R.id
+                                        .commandsEditText1);
+
+                                mRadio1 = (RadioButton) contentView.findViewById(R.id.radio1);
+                                mRadio2 = (RadioButton) contentView.findViewById(R.id.radio2);
+                                mRadio3 = (RadioButton) contentView.findViewById(R.id.radio3);
+
+                                mRadioGroup = (RadioGroup) contentView.findViewById(R.id
+                                        .radio_group);
+
                                 int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
                                 int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
                                 int volume = prefs.getInt(PrefConstants.VOLUME, 20);
@@ -773,6 +795,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editDuration.setText("" + duration_v);
                                 editVolume.setText("" + volume);
                                 editUserComment.setText(user_comment);
+
+                                commandsEditText1.setText(prefs.getString(PrefConstants
+                                        .MEASURE_FILE_NAME1, ""));
+                                commandsEditText2.setText(prefs.getString(PrefConstants
+                                        .MEASURE_FILE_NAME2, ""));
+                                commandsEditText3.setText(prefs.getString(PrefConstants
+                                        .MEASURE_FILE_NAME3, ""));
 
                                 if (kppm != -1) {
                                     editKnownPpm.setText("" + kppm);
@@ -923,16 +952,65 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 currentSeries = currentdataset.getSeriesAt(2);
                             }
 
+                            int checkedId = mRadioGroup.getCheckedRadioButtonId();
+
+                            if(mAdvancedEditText.getText().toString().equals("") && checkedId ==
+                                     -1) {
+                                Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
+                                        .LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            final String contentForUpload;
+                            final boolean success;
+
+                            if(checkedId != -1) {
+                                if (mRadio1.getId() == checkedId) {
+                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
+                                            (Environment.getExternalStorageDirectory(), AppData
+                                            .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText1
+                                            .getText().toString()));
+                                    success = true;
+                                } else if(mRadio2.getId() == checkedId) {
+                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
+                                            (Environment.getExternalStorageDirectory(), AppData
+                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText2
+                                            .getText().toString()));
+                                    success = true;
+                                } else if(mRadio3.getId() == checkedId) {
+                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
+                                            (Environment.getExternalStorageDirectory(), AppData
+                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText3
+                                            .getText().toString()));
+                                    success = true;
+                                } else {
+                                    contentForUpload = null;
+                                    success = false;
+                                }
+                            } else {
+                                contentForUpload = mAdvancedEditText.getText().toString();
+                                success = true;
+                            }
+
+                            Editor editor = getPrefs().edit();
+                            editor.putString(PrefConstants.MEASURE_FILE_NAME1, commandsEditText1
+                                    .getText().toString());
+                            editor.putString(PrefConstants.MEASURE_FILE_NAME2, commandsEditText2
+                                    .getText().toString());
+                            editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
+                                    .getText().toString());
+                            editor.commit();
+
                             // collect commands
-                            if (!mAdvancedEditText.getText().toString().equals("")) {
-                                String multiLines = mAdvancedEditText.getText().toString();
+                            if(contentForUpload != null && !contentForUpload.isEmpty()) {
+                                String multiLines = contentForUpload;
                                 String[] commands;
                                 String delimiter = "\n";
 
                                 commands = multiLines.split(delimiter);
 
-                                ArrayList<String> simpleCommands = new ArrayList<String>();
-                                ArrayList<String> loopCommands = new ArrayList<String>();
+                                List<String> simpleCommands = new ArrayList<>();
+                                List<String> loopCommands = new ArrayList<>();
                                 boolean isLoop = false;
                                 int loopcmd1Idx = -1, loopcmd2Idx = -1;
 
@@ -980,7 +1058,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         loopCommands, autoPpm, EToCMainActivity.this);
 
                                 mSendDataToUsbTask.execute(future, delay_timer);
+                            } else if(success){
+                                Toast.makeText(EToCMainActivity.this, "File not found", Toast
+                                        .LENGTH_LONG).show();
+                                return;
+                            } else {
+                                Toast.makeText(EToCMainActivity.this, "Unexpected error", Toast
+                                        .LENGTH_LONG).show();
+                                return;
                             }
+
                             // end collect commands
 
 
