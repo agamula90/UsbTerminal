@@ -120,7 +120,7 @@ public class EToCMainHandler extends Handler {
                                 int rCount1 = (int) ((duration_v * 60) / delay_v);
                                 int rCount2 = (int) (duration_v * 60);
                                 boolean isauto = activity.getPrefs().getBoolean(PrefConstants
-                                         .IS_AUTO, false);
+                                        .IS_AUTO, false);
                                 if (isauto) {
                                     if (activity.getReadingCount() == rCount1) {
                                         activity.incCountMeasure();
@@ -139,6 +139,10 @@ public class EToCMainHandler extends Handler {
                                             ("yyyyMMdd_HHmmss");
                                     activity.setChartDate(formatter_date.format(currentTime));
 
+                                    if (activity.getCountMeasure() == 1) {
+                                        activity.setSubDirDate(formatter_date.format
+                                                (currentTime));
+                                    }
                                     activity.refreshOldCountMeasure();
                                     activity.getMapChartDate().put(activity.getChartIdx(),
                                             activity.getChartDate());
@@ -168,10 +172,6 @@ public class EToCMainHandler extends Handler {
 
                                     String str_uc = activity.getPrefs().getString(PrefConstants
                                             .USER_COMMENT, "");
-
-                                    String saveFolder = activity.getPrefs().getString
-                                            (PrefConstants.SAVE_FOLDER, "");
-
                                     if (strppm.equals("_")) {
                                         String filename1 = "";
                                         String dirname1 = "AEToC_MES_Files";
@@ -181,7 +181,8 @@ public class EToCMainHandler extends Handler {
                                                 strvolume + "_R" + activity.getChartIdx() + "" +
                                                 ".csv";
                                         //dirname1 = "AEToC_MES_Files";
-                                        subDirname1 = saveFolder.replace("CAL", "MES");;
+                                        subDirname1 = "MES_" + activity.getSubDirDate() + "_" +
+                                                str_uc;//+"_"+strppm;
 
                                         activity.execute(new FileWriteRunnable("" + co2,
                                                 filename1, dirname1, subDirname1));
@@ -194,7 +195,8 @@ public class EToCMainHandler extends Handler {
                                                 strvolume + strppm + "_R" + activity
                                                 .getChartIdx() + ".csv";
                                         //dirname2 = "AEToC_MES_Files";
-                                        subDirname2 = saveFolder;
+                                        subDirname2 = "CAL_" + activity.getSubDirDate() + "_" +
+                                                str_uc;//strppm;//;
 
                                         activity.execute(new FileWriteRunnable("" +
                                                 co2, filename2, dirname2, subDirname2));

@@ -12,14 +12,14 @@ import java.util.Locale;
 
 public class FileWriteRunnable implements Runnable{
 
-	private final String co2;
+	private final String content;
 
 	private final String filename;
 	private final String dirName;
 	private final String subDirname;
 
-	public FileWriteRunnable(String co2, String filename, String dirName, String subDirname) {
-		this.co2 = co2;
+	public FileWriteRunnable(String content, String filename, String dirName, String subDirname) {
+		this.content = content;
 		this.filename = filename;
 		this.dirName = dirName;
 		this.subDirname = subDirname;
@@ -58,7 +58,7 @@ public class FileWriteRunnable implements Runnable{
 
 			FileOutputStream fos = new FileOutputStream(file, true);
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
-			writer.write(formattedTime + "," + co2 + "\n");
+			writer.write(formattedTime + "," + content + "\n");
 			writer.close();
 
 		} catch (Exception e) {

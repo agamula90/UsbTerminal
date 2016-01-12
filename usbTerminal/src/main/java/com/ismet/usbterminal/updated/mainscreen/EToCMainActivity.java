@@ -35,7 +35,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -68,13 +67,8 @@ import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
 import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
-import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.fragments.BottomFragment;
-import com.proggroup.areasquarecalculator.fragments.CalculatePpmSimpleFragment;
-import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.AbstractChart;
@@ -85,9 +79,7 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -110,8 +102,6 @@ import static fr.xgouchet.androidlib.ui.activity.ActivityDecorator.showMenuItemA
 import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher {
-
-    private static final int REQUEST_SELECT_FOLDER_SAVING = 10;
 
     private static Handler mHandler;
 
@@ -211,8 +201,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private Button buttonOn1, buttonOn2, buttonPpm;
 
-    private TextView mPathForSavingInside;
-
     private LinearLayout mExportLayout;
 
     /**
@@ -237,6 +225,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         //
         mReadIntent = true;
+
+        mExportLayout = getExportLayout();
 
         // editor
         mAdvancedEditText = (AdvancedEditText) findViewById(R.id.editor);
@@ -305,8 +295,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        mExportLayout = getExportLayout();
-
         buttonOn1.setOnLongClickListener(new OnLongClickListener() {
 
             private EditText editOn, editOff, editOn1, editOff1;
@@ -345,7 +333,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -359,6 +347,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     .LENGTH_LONG).show();
                             return;
                         }
+
 
                         Editor edit = prefs.edit();
                         edit.putString(PrefConstants.ON1, strOn);
@@ -386,7 +375,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -478,7 +467,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -521,7 +510,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -671,12 +660,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         if (isCleared) {
                             boolean existInitedGraphCurve = false;
                             for (int i = 0; i < currentdataset.getSeriesCount(); i++) {
-                                if (currentdataset.getSeriesAt(i).getItemCount() != 0) {
+                                if(currentdataset.getSeriesAt(i).getItemCount() != 0) {
                                     existInitedGraphCurve = true;
                                     break;
                                 }
                             }
-                            if (!existInitedGraphCurve) {
+                            if(!existInitedGraphCurve) {
                                 GraphPopulatorUtils.clearYTextLabels(renderer);
                             }
                             mChartView.repaint();
@@ -774,15 +763,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 ll_user_comment = (LinearLayout) contentView.findViewById(R.id
                                         .ll_user_comment);
 
-                                mPathForSavingInside = (TextView) contentView.findViewById(R.id
-                                        .path_for_saving_inside);
-
                                 int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
                                 int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
                                 int volume = prefs.getInt(PrefConstants.VOLUME, 20);
                                 int kppm = prefs.getInt(PrefConstants.KPPM, -1);
-                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT,
-                                        "");
+                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT, "");
 
                                 editDelay.setText("" + delay_v);
                                 editDuration.setText("" + duration_v);
@@ -814,78 +799,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         }
                                     }
                                 });
-
-
-                                final String path = getPrefs().getString(PrefConstants
-                                        .SAVE_FOLDER, "");
-
-                                if (!path.isEmpty()) {
-                                    mPathForSavingInside.setText(path);
-                                } else {
-                                    Date currentTime = new Date();
-                                    SimpleDateFormat formatter_date = new SimpleDateFormat
-                                            ("yyyyMMdd_HHmmss");
-                                    setSubDirDate(formatter_date.format(currentTime));
-                                    mPathForSavingInside.setText("CAL_" + sub_dir_date);
-                                }
-
-                                mPathForSavingInside.setOnClickListener(new OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        Intent intent = new Intent(EToCMainActivity.this, FileDialog
-                                                .class);
-
-                                        File extFile = Constants.BASE_DIRECTORY;
-
-                                        intent.putExtra(FileDialog.START_PATH, extFile
-                                                .getAbsolutePath());
-                                        intent.putExtra(FileDialog.ROOT_PATH, extFile
-                                                .getAbsolutePath());
-                                        intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode
-                                                .MODE_CREATE);
-
-                                        intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
-
-                                        IntentFolderWrapUtils.wrapFolderForDrawables
-                                                (EToCMainActivity.this, intent);
-
-                                        String saveFolder = getPrefs().getString(PrefConstants
-                                                .SAVE_FOLDER, "");
-
-                                        if (!saveFolder.isEmpty()) {
-                                            new File(extFile, saveFolder).mkdir();
-                                        }
-
-                                        startActivityForResult(intent,
-                                                REQUEST_SELECT_FOLDER_SAVING);
-                                    }
-                                });
-
-                                editUserComment.addTextChangedListener(new TextWatcher() {
-                                    @Override
-                                    public void beforeTextChanged(CharSequence s, int start, int
-                                            count, int after) {
-
-                                    }
-
-                                    @Override
-                                    public void onTextChanged(CharSequence s, int start, int
-                                            before, int count) {
-
-                                    }
-
-                                    @Override
-                                    public void afterTextChanged(Editable s) {
-                                        if (path.isEmpty()) {
-                                            if (s.length() == 0) {
-                                                mPathForSavingInside.setText("CAL_" + sub_dir_date);
-                                            } else {
-                                                mPathForSavingInside.setText("CAL_" + sub_dir_date +
-                                                        "_" + s.toString());
-                                            }
-                                        }
-                                    }
-                                });
                             }
                         };
 
@@ -897,7 +810,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strDelay = editDelay.getText().toString();
@@ -1044,7 +957,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                                             loopcmd1Idx = Integer.parseInt(line1) - 1;
                                             loopcmd2Idx = Integer.parseInt(line2) - 1;
-                                        } else if (command.equals("autoppm")) {
+                                        } else if(command.equals("autoppm")){
                                             autoPpm = true;
                                         } else if (isLoop) {
                                             if (i == loopcmd1Idx) {
@@ -1135,11 +1048,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             //									ctimer.start();
 
                         }
-
-                        String subDirnameDefault = mPathForSavingInside.getText().toString();
-                        getPrefs().edit().putString(PrefConstants.SAVE_FOLDER,
-                                subDirnameDefault).apply();
-
                         dialog.cancel();
                     }
                 };
@@ -1152,7 +1060,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -1326,13 +1234,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     @Override
-    public int getFileDrawable() {
-        return R.drawable.file;
+    public LinearLayout graphContainer() {
+        return (LinearLayout) findViewById(R.id.exported_chart_layout);
     }
 
     @Override
-    public LinearLayout graphContainer() {
-        return (LinearLayout) findViewById(R.id.exported_chart_layout);
+    public int getFileDrawable() {
+        return R.drawable.file;
     }
 
     @Override
@@ -1343,12 +1251,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     @Override
     public void onGraphDetached() {
         mExportLayout.setBackgroundColor(Color.TRANSPARENT);
-    }
-
-    @Override
-    public void finish() {
-        super.finish();
-        savePreferencesToLocalData();
     }
 
     public void sendCommand(String command) {
@@ -1486,7 +1388,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         unbindService(mServiceConnection);
 
-        if (mHandler != null) {
+        if(mHandler != null) {
             mHandler.removeCallbacks(null);
         }
     }
@@ -1574,20 +1476,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         }
 
         switch (requestCode) {
-            case REQUEST_SELECT_FOLDER_SAVING:
-                String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
-                File fileFrom = new File(filePath);
-                String fileName = fileFrom.getName();
-                if (!fileName.contains("CAL")) {
-                    File parentFile = fileFrom.getParentFile();
-                    fileFrom.delete();
-                    fileFrom = new File(parentFile, "CAL_" + fileName);
-                    fileFrom.mkdir();
-                }
-                filePath = fileFrom.getName();
-                getPrefs().edit().putString(PrefConstants.SAVE_FOLDER, filePath).commit();
-                mPathForSavingInside.setText(filePath);
-                break;
             case REQUEST_SAVE_AS:
                 if (BuildConfig.DEBUG)
                     Log.d(TAG, "Save as : " + extras.getString("path"));
@@ -2364,6 +2252,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // promptSaveDirty();
         // added by nkl
         executeRunnableAndClean();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        savePreferencesToLocalData();
     }
 
     /**

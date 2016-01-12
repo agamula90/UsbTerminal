@@ -156,7 +156,7 @@ public class GraphPopulatorUtils {
 			View textBelow = activity.findViewById(R.id.scroll_below_text);
 
 			AutoExpandKeyboardUtils.expand(activity, topContainer, activity.findViewById(R.id
-					.bottom_fragment), activity.getToolbar(), textBelow);
+					.bottom_fragment), activity.getToolbar() ,textBelow);
             allChartsLayout.getLayoutParams().height = topContainer.getMinimumHeight();
 		}
 

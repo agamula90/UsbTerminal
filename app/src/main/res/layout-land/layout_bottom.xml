@@ -6,7 +6,7 @@
 
     <Space
         android:layout_width="@dimen/text_width_margin"
-        android:layout_height="@dimen/text_width_margin"/>
+        android:layout_height="1dp"/>
 
     <HorizontalScrollView
         android:layout_width="wrap_content"
