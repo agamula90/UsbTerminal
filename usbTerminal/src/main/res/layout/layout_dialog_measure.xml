@@ -57,12 +57,13 @@
         <EditText
             android:id="@+id/commandsEditText1"
             style="@style/EditTextDefaultStyle"
-            android:layout_width="80dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:singleLine="true"
-            android:nextFocusRight="@+id/edit2"
-            android:nextFocusDown="@+id/edit2"
-            android:nextFocusForward="@+id/edit2"/>
+            android:nextFocusRight="@+id/commandsEditText2"
+            android:nextFocusDown="@+id/commandsEditText2"
+            android:nextFocusForward="@+id/commandsEditText2"/>
 
         <RadioButton
             android:id="@+id/radio2"
@@ -72,12 +73,13 @@
         <EditText
             android:id="@+id/commandsEditText2"
             style="@style/EditTextDefaultStyle"
-            android:layout_width="80dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:singleLine="true"
-            android:nextFocusRight="@+id/edit3"
-            android:nextFocusDown="@+id/edit3"
-            android:nextFocusForward="@+id/edit3"/>
+            android:nextFocusRight="@+id/commandsEditText3"
+            android:nextFocusDown="@+id/commandsEditText3"
+            android:nextFocusForward="@+id/commandsEditText3"/>
 
         <RadioButton
             android:id="@+id/radio3"
@@ -87,7 +89,8 @@
         <EditText
             android:id="@+id/commandsEditText3"
             style="@style/EditTextDefaultStyle"
-            android:layout_width="80dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:singleLine="true"/>
 

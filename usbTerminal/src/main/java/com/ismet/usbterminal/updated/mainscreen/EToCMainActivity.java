@@ -29,6 +29,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -70,7 +71,6 @@ import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
-import com.proggroup.areasquarecalculator.fragments.BottomFragment;
 
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.AbstractChart;
@@ -107,7 +107,7 @@ import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher {
 
-    private static Handler mHandler;
+    private static Handler sHandler;
 
     /*
      * Notifications from UsbService will be received here.
@@ -155,40 +155,40 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
      */
     protected AdvancedEditText mAdvancedEditText;
 
-    private boolean isUsbConnected = false;
+    private boolean mIsUsbConnected = false;
 
     // String filename = "";
-    private int count_measure = 0, old_count_measure = 0;
+    private int countMeasures = 0, oldCountMeasures = 0;
     //String chart_time = "";
 
-    private boolean isTimerRunning = false;
+    private boolean mIsTimerRunning = false;
 
-    private int readingCount = 0;
+    private int mReadingCount = 0;
 
     // int idx_count = 0;
-    private int chart_idx = 0;
+    private int mChartIndex = 0;
 
-    private String chart_date = "", sub_dir_date = null;
+    private String mChartDate = "", mSubDirDate = null;
 
-    private Map<Integer, String> mapChartDate = new HashMap<>();
+    private Map<Integer, String> mMapChartIndexToDate = new HashMap<>();
 
-    private SharedPreferences prefs;
+    private SharedPreferences mPrefs;
 
-    private XYSeries currentSeries;
+    private XYSeries mCurrentSeries;
 
     private GraphicalView mChartView;
 
-    private XYMultipleSeriesDataset currentdataset;
+    private XYMultipleSeriesDataset mGraphSeriesDataset;
 
-    private XYMultipleSeriesRenderer renderer;
+    private XYMultipleSeriesRenderer mRenderer;
 
-    private XYSeries chartSeries = null;
+    private XYSeries mGraphSeries = null;
 
     private ServiceConnection mServiceConnection;
 
     private UsbServiceWritable mUsbServiceWritable;
 
-    private ExecutorService executor;
+    private ExecutorService mExecutor;
     //private CountDownTimer ctimer;
 
     private EToCOpenChartTask mEToCOpenChartTask;
@@ -197,13 +197,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private Runnable mRunnable;
 
-    private TextView txtOutput;
+    private TextView mTxtOutput;
 
     private ScrollView mScrollView;
 
-    private Button sendButton, buttonClear, buttonMeasure;
+    private Button mSendButton, mButtonClear, mButtonMeasure;
 
-    private Button buttonOn1, buttonOn2, buttonPpm;
+    private Button mButtonOn1, mButtonOn2, mButtonPpm;
 
     private LinearLayout mExportLayout;
 
@@ -217,15 +217,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         if (BuildConfig.DEBUG)
             Log.d(TAG, "onCreate");
 
-        executor = Executors.newSingleThreadExecutor();
+        mExecutor = Executors.newSingleThreadExecutor();
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(EToCMainActivity.this);
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(EToCMainActivity.this);
 
         Settings.updateFromPreferences(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE));
 
         loadPreferencesFromLocalData();
 
-        mHandler = new EToCMainHandler(this);
+        sHandler = new EToCMainHandler(this);
 
         //
         mReadIntent = true;
@@ -240,7 +240,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mWarnedShouldQuit = false;
         mDoNotBackup = false;
 
-        txtOutput = (TextView) findViewById(R.id.output);
+        mTxtOutput = (TextView) findViewById(R.id.output);
         mScrollView = (ScrollView) findViewById(R.id.mScrollView);
 
         // Timer mTimer = new Timer();
@@ -254,41 +254,41 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // @Override
         // public void run() {
         // // TODO Auto-generated method stub
-        // txtOutput.append("asdf\n");
-        // mScrollView.smoothScrollTo(0, txtOutput.getBottom());
+        // mTxtOutput.append("asdf\n");
+        // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
         // }
         // });
         // }
         // }, 1000, 1000);
 
-        buttonOn1 = (Button) findViewById(R.id.buttonOn1);
-        final String str_on_name1 = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
+        mButtonOn1 = (Button) findViewById(R.id.buttonOn1);
+        final String str_on_name1 = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
                 .ON_NAME_DEFAULT);
-        buttonOn1.setText(str_on_name1);
-        buttonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-        buttonOn1.setOnClickListener(new OnClickListener() {
+        mButtonOn1.setText(str_on_name1);
+        mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+        mButtonOn1.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // ASCII
-                String str_on_name1t = prefs.getString(PrefConstants.ON_NAME1, PrefConstants
+                String str_on_name1t = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
                         .ON_NAME_DEFAULT);
-                String str_off_name1t = prefs.getString(PrefConstants.OFF_NAME1, PrefConstants
+                String str_off_name1t = mPrefs.getString(PrefConstants.OFF_NAME1, PrefConstants
                         .OFF_NAME_DEFAULT);
 
-                String s = buttonOn1.getTag().toString();
+                String s = mButtonOn1.getTag().toString();
                 String command = "";//"/5H1000R";
                 if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    command = prefs.getString(PrefConstants.ON1, "");
-                    buttonOn1.setText(str_off_name1t);
-                    buttonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+                    command = mPrefs.getString(PrefConstants.ON1, "");
+                    mButtonOn1.setText(str_off_name1t);
+                    mButtonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
                 } else {
-                    command = prefs.getString(PrefConstants.OFF1, "");
-                    buttonOn1.setText(str_on_name1t);
-                    buttonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+                    command = mPrefs.getString(PrefConstants.OFF1, "");
+                    mButtonOn1.setText(str_on_name1t);
+                    mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-                Utils.appendText(txtOutput, "Tx: " + command);
+                Utils.appendText(mTxtOutput, "Tx: " + command);
 
                 mScrollView.smoothScrollTo(0, 0);
 
@@ -299,7 +299,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        buttonOn1.setOnLongClickListener(new OnLongClickListener() {
+        mButtonOn1.setOnLongClickListener(new OnLongClickListener() {
 
             private EditText editOn, editOff, editOn1, editOff1;
 
@@ -315,11 +315,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
                                 editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
-                                String str_on = prefs.getString(PrefConstants.ON1, "");
-                                String str_off = prefs.getString(PrefConstants.OFF1, "");
-                                String str_on_name = prefs.getString(PrefConstants.ON_NAME1,
+                                String str_on = mPrefs.getString(PrefConstants.ON1, "");
+                                String str_off = mPrefs.getString(PrefConstants.OFF1, "");
+                                String str_on_name = mPrefs.getString(PrefConstants.ON_NAME1,
                                         PrefConstants.ON_NAME_DEFAULT);
-                                String str_off_name = prefs.getString(PrefConstants.OFF_NAME1,
+                                String str_off_name = mPrefs.getString(PrefConstants.OFF_NAME1,
                                         PrefConstants.OFF_NAME_DEFAULT);
 
                                 editOn.setText(str_on);
@@ -337,7 +337,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -353,18 +353,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         }
 
 
-                        Editor edit = prefs.edit();
+                        Editor edit = mPrefs.edit();
                         edit.putString(PrefConstants.ON1, strOn);
                         edit.putString(PrefConstants.OFF1, strOff);
                         edit.putString(PrefConstants.ON_NAME1, strOn1);
                         edit.putString(PrefConstants.OFF_NAME1, strOff1);
                         edit.commit();
 
-                        String s = buttonOn1.getTag().toString();
+                        String s = mButtonOn1.getTag().toString();
                         if (s.equals("on")) {
-                            buttonOn1.setText(strOn1);
+                            mButtonOn1.setText(strOn1);
                         } else {
-                            buttonOn1.setText(strOff1);
+                            mButtonOn1.setText(strOff1);
                         }
 
                         dialog.cancel();
@@ -379,7 +379,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -393,35 +393,35 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        buttonOn2 = (Button) findViewById(R.id.buttonOn2);
-        final String str_on_name2 = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
+        mButtonOn2 = (Button) findViewById(R.id.buttonOn2);
+        final String str_on_name2 = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
                 .ON_NAME_DEFAULT);
-        //final String str_off_name1 = prefs.getString("off_name1", "");
-        buttonOn2.setText(str_on_name2);
-        buttonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-        buttonOn2.setOnClickListener(new OnClickListener() {
+        //final String str_off_name1 = mPrefs.getString("off_name1", "");
+        mButtonOn2.setText(str_on_name2);
+        mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+        mButtonOn2.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // ASCII
-                String str_on_name2t = prefs.getString(PrefConstants.ON_NAME2, PrefConstants
+                String str_on_name2t = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
                         .ON_NAME_DEFAULT);
-                String str_off_name2t = prefs.getString(PrefConstants.OFF_NAME2, PrefConstants
+                String str_off_name2t = mPrefs.getString(PrefConstants.OFF_NAME2, PrefConstants
                         .OFF_NAME_DEFAULT);
 
-                String s = buttonOn2.getTag().toString();
+                String s = mButtonOn2.getTag().toString();
                 String command = "";//"/5H1000R";
                 if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    command = prefs.getString(PrefConstants.ON2, "");
-                    buttonOn2.setText(str_off_name2t);
-                    buttonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+                    command = mPrefs.getString(PrefConstants.ON2, "");
+                    mButtonOn2.setText(str_off_name2t);
+                    mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
                 } else {
-                    command = prefs.getString(PrefConstants.OFF2, "");
-                    buttonOn2.setText(str_on_name2t);
-                    buttonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+                    command = mPrefs.getString(PrefConstants.OFF2, "");
+                    mButtonOn2.setText(str_on_name2t);
+                    mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-                Utils.appendText(txtOutput, "Tx: " + command);
+                Utils.appendText(mTxtOutput, "Tx: " + command);
                 mScrollView.smoothScrollTo(0, 0);
 
                 if (mUsbServiceWritable != null) {
@@ -431,7 +431,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        buttonOn2.setOnLongClickListener(new OnLongClickListener() {
+        mButtonOn2.setOnLongClickListener(new OnLongClickListener() {
 
             private EditText editOn, editOff, editOn1, editOff1;
 
@@ -447,14 +447,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
                                 editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
-                                String str_on_name = prefs.getString(PrefConstants.ON_NAME2,
+                                String str_on_name = mPrefs.getString(PrefConstants.ON_NAME2,
                                         PrefConstants.ON_NAME_DEFAULT);
-                                String str_off_name = prefs.getString(PrefConstants.OFF_NAME2,
+                                String str_off_name = mPrefs.getString(PrefConstants.OFF_NAME2,
                                         PrefConstants.OFF_NAME_DEFAULT);
 
 
-                                String str_on = prefs.getString(PrefConstants.ON2, "");
-                                String str_off = prefs.getString(PrefConstants.OFF2, "");
+                                String str_on = mPrefs.getString(PrefConstants.ON2, "");
+                                String str_off = mPrefs.getString(PrefConstants.OFF2, "");
 
                                 editOn.setText(str_on);
                                 editOff.setText(str_off);
@@ -471,7 +471,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strOn = editOn.getText().toString();
@@ -486,18 +486,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             return;
                         }
 
-                        Editor edit = prefs.edit();
+                        Editor edit = mPrefs.edit();
                         edit.putString(PrefConstants.ON2, strOn);
                         edit.putString(PrefConstants.OFF2, strOff);
                         edit.putString(PrefConstants.ON_NAME2, strOn1);
                         edit.putString(PrefConstants.OFF_NAME2, strOff1);
                         edit.commit();
 
-                        String s = buttonOn2.getTag().toString();
+                        String s = mButtonOn2.getTag().toString();
                         if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                            buttonOn2.setText(strOn1);
+                            mButtonOn2.setText(strOn1);
                         } else {
-                            buttonOn2.setText(strOff1);
+                            mButtonOn2.setText(strOff1);
                         }
 
                         dialog.cancel();
@@ -512,7 +512,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -527,8 +527,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        buttonPpm = (Button) findViewById(R.id.buttonPpm);
-        buttonPpm.setOnClickListener(new OnClickListener() {
+        mButtonPpm = (Button) findViewById(R.id.buttonPpm);
+        mButtonPpm.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -537,12 +537,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        sendButton = (Button) findViewById(R.id.buttonSend);
-        sendButton.setOnClickListener(new OnClickListener() {
+        mSendButton = (Button) findViewById(R.id.buttonSend);
+        mSendButton.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //				if (isTimerRunning) {
+                //				if (mIsTimerRunning) {
                 //					Toast.makeText(EToCMainActivity.this,
                 //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
                 //							.show();
@@ -569,23 +569,28 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         });
 
-        buttonClear = (Button) findViewById(R.id.buttonClear);
-        buttonMeasure = (Button) findViewById(R.id.buttonMeasure);
+        mButtonClear = (Button) findViewById(R.id.buttonClear);
+        mButtonMeasure = (Button) findViewById(R.id.buttonMeasure);
 
-        buttonClear.setOnClickListener(new OnClickListener() {
+        mButtonClear.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                if (isTimerRunning) {
+                if (mIsTimerRunning) {
                     Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
                             .LENGTH_SHORT).show();
                     return;
                 }
 
-                CharSequence[] items = new CharSequence[]{"Tx", "LM", "Chart 1", "Chart 2",
+                CharSequence[] items = new CharSequence[]{"Measures", "Tx", "LM", "Chart 1",
+                        "Chart 2",
                         "Chart" + " 3"};
-                boolean[] checkedItems = new boolean[]{false, false, false, false, false};
-                final Map<Integer, Boolean> mapItemsState = new HashMap<>();
+                boolean[] checkedItems = new boolean[]{false, false, false, false, false, false};
+                final SparseBooleanArray mItemsChecked = new SparseBooleanArray(checkedItems
+                        .length);
+                for (int i = 0; i < checkedItems.length; i++) {
+                    mItemsChecked.put(i, checkedItems[i]);
+                }
 
                 AlertDialog.Builder alert = new AlertDialog.Builder(EToCMainActivity.this);
                 alert.setTitle("Select items");
@@ -594,85 +599,80 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                     @Override
                     public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        mapItemsState.put(which, isChecked);
+                        mItemsChecked.put(which, isChecked);
                     }
                 });
                 alert.setPositiveButton("Clear", new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (mapItemsState.containsKey(0)) {
-                            if (mapItemsState.get(0)) {
-                                mAdvancedEditText.setText("");
-                            }
+                        if (mItemsChecked.get(1)) {
+                            mAdvancedEditText.setText("");
                         }
 
-                        if (mapItemsState.containsKey(1)) {
-                            if (mapItemsState.get(1)) {
-                                txtOutput.setText("");
-                            }
+                        if (mItemsChecked.get(2)) {
+                            mTxtOutput.setText("");
                         }
 
                         boolean isCleared = false;
-                        if (mapItemsState.containsKey(2)) {
-                            if (mapItemsState.get(2)) {
-                                // txtOutput.setText("");
-                                if (currentdataset != null) {
-                                    currentdataset.getSeriesAt(0).clear();
-                                    //mChartView.repaint();
-                                    isCleared = true;
-                                }
+                        if (mItemsChecked.get(3)) {
+                            // mTxtOutput.setText("");
+                            if (mGraphSeriesDataset != null) {
+                                mGraphSeriesDataset.getSeriesAt(0).clear();
+                                //mChartView.repaint();
+                                isCleared = true;
+                            }
 
-                                if (mapChartDate.containsKey(1)) {
-                                    Utils.deleteFiles(mapChartDate.get(1), "_R1");
-                                }
+                            if (mMapChartIndexToDate.containsKey(1)) {
+                                Utils.deleteFiles(mMapChartIndexToDate.get(1), "_R1");
                             }
                         }
 
-                        if (mapItemsState.containsKey(3)) {
-                            if (mapItemsState.get(3)) {
-                                // txtOutput.setText("");
-                                if (currentdataset != null) {
-                                    currentdataset.getSeriesAt(1).clear();
-                                    //mChartView.repaint();
-                                    isCleared = true;
-                                }
+                        if (mItemsChecked.get(4)) {
+                            // mTxtOutput.setText("");
+                            if (mGraphSeriesDataset != null) {
+                                mGraphSeriesDataset.getSeriesAt(1).clear();
+                                //mChartView.repaint();
+                                isCleared = true;
+                            }
 
-                                if (mapChartDate.containsKey(2)) {
-                                    Utils.deleteFiles(mapChartDate.get(2), "_R2");
-                                }
+                            if (mMapChartIndexToDate.containsKey(2)) {
+                                Utils.deleteFiles(mMapChartIndexToDate.get(2), "_R2");
                             }
                         }
 
-                        if (mapItemsState.containsKey(4)) {
-                            if (mapItemsState.get(4)) {
-                                // txtOutput.setText("");
-                                if (currentdataset != null) {
-                                    currentdataset.getSeriesAt(2).clear();
-                                    //mChartView.repaint();
-                                    isCleared = true;
-                                }
+                        if (mItemsChecked.get(5)) {
+                            // mTxtOutput.setText("");
+                            if (mGraphSeriesDataset != null) {
+                                mGraphSeriesDataset.getSeriesAt(2).clear();
+                                //mChartView.repaint();
+                                isCleared = true;
+                            }
 
-                                if (mapChartDate.containsKey(3)) {
-                                    Utils.deleteFiles(mapChartDate.get(3), "_R3");
-                                }
+                            if (mMapChartIndexToDate.containsKey(3)) {
+                                Utils.deleteFiles(mMapChartIndexToDate.get(3), "_R3");
                             }
                         }
 
                         if (isCleared) {
                             boolean existInitedGraphCurve = false;
-                            for (int i = 0; i < currentdataset.getSeriesCount(); i++) {
-                                if(currentdataset.getSeriesAt(i).getItemCount() != 0) {
+                            for (int i = 0; i < mGraphSeriesDataset.getSeriesCount(); i++) {
+                                if (mGraphSeriesDataset.getSeriesAt(i).getItemCount() != 0) {
                                     existInitedGraphCurve = true;
                                     break;
                                 }
                             }
-                            if(!existInitedGraphCurve) {
-                                GraphPopulatorUtils.clearYTextLabels(renderer);
+                            if (!existInitedGraphCurve) {
+                                GraphPopulatorUtils.clearYTextLabels(mRenderer);
                             }
                             mChartView.repaint();
-                            //renderer.setLabelsTextSize(12);
+                            //mRenderer.setLabelsTextSize(12);
                         }
+
+                        if(mItemsChecked.get(0)) {
+                            clearData();
+                        }
+
                         dialog.cancel();
                     }
                 });
@@ -687,7 +687,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        buttonMeasure.setOnClickListener(new OnClickListener() {
+        mButtonMeasure.setOnClickListener(new OnClickListener() {
 
             EditText editDelay, editDuration, editKnownPpm, editVolume, editUserComment,
                     commandsEditText1, commandsEditText2, commandsEditText3;
@@ -708,14 +708,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     return;
                 }*/
 
-                if (isTimerRunning) {
+                if (mIsTimerRunning) {
                     Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
                             .LENGTH_SHORT).show();
                     return;
                 }
 
-                if (renderer != null) {
-                    XYSeries[] arrSeries = currentdataset.getSeries();
+                if (mRenderer != null) {
+                    XYSeries[] arrSeries = mGraphSeriesDataset.getSeries();
 
                     int i = 0;
                     boolean isChart1Clear = true;
@@ -786,24 +786,25 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 mRadioGroup = (RadioGroup) contentView.findViewById(R.id
                                         .radio_group);
 
-                                int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
-                                int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
-                                int volume = prefs.getInt(PrefConstants.VOLUME, 20);
-                                int kppm = prefs.getInt(PrefConstants.KPPM, -1);
-                                String user_comment = prefs.getString(PrefConstants.USER_COMMENT, "");
+                                int delay_v = mPrefs.getInt(PrefConstants.DELAY, 2);
+                                int duration_v = mPrefs.getInt(PrefConstants.DURATION, 3);
+                                int volume = mPrefs.getInt(PrefConstants.VOLUME, 20);
+                                int kppm = mPrefs.getInt(PrefConstants.KPPM, -1);
+                                String user_comment = mPrefs.getString(PrefConstants
+                                        .USER_COMMENT, "");
 
                                 editDelay.setText("" + delay_v);
                                 editDuration.setText("" + duration_v);
                                 editVolume.setText("" + volume);
                                 editUserComment.setText(user_comment);
 
-                                commandsEditText1.setText(prefs.getString(PrefConstants
+                                commandsEditText1.setText(mPrefs.getString(PrefConstants
                                         .MEASURE_FILE_NAME1, PrefConstants
                                         .MEASURE_FILE_NAME1_DEFAULT));
-                                commandsEditText2.setText(prefs.getString(PrefConstants
+                                commandsEditText2.setText(mPrefs.getString(PrefConstants
                                         .MEASURE_FILE_NAME2, PrefConstants
                                         .MEASURE_FILE_NAME2_DEFAULT));
-                                commandsEditText3.setText(prefs.getString(PrefConstants
+                                commandsEditText3.setText(mPrefs.getString(PrefConstants
                                         .MEASURE_FILE_NAME3, PrefConstants
                                         .MEASURE_FILE_NAME3_DEFAULT));
 
@@ -811,7 +812,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     editKnownPpm.setText("" + kppm);
                                 }
 
-                                boolean isauto = prefs.getBoolean(PrefConstants.IS_AUTO, false);
+                                boolean isauto = mPrefs.getBoolean(PrefConstants.IS_AUTO, false);
                                 if (isauto) {
                                     chkAutoManual.setChecked(true);
                                 } else {
@@ -843,7 +844,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
 
                         String strDelay = editDelay.getText().toString();
@@ -863,12 +864,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 return;
                             } else {
                                 int kppm = Integer.parseInt(strkPPM);
-                                Editor edit = prefs.edit();
+                                Editor edit = mPrefs.edit();
                                 edit.putInt(PrefConstants.KPPM, kppm);
                                 edit.commit();
                             }
                         } else {
-                            Editor edit = prefs.edit();
+                            Editor edit = mPrefs.edit();
                             edit.remove(PrefConstants.KPPM);
                             edit.commit();
                         }
@@ -882,7 +883,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         Toast.LENGTH_LONG).show();
                                 return;
                             } else {
-                                Editor edit = prefs.edit();
+                                Editor edit = mPrefs.edit();
                                 edit.putString(PrefConstants.USER_COMMENT, str_uc);
                                 edit.commit();
                             }
@@ -895,13 +896,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             return;
                         } else {
                             int volume = Integer.parseInt(strVolume);
-                            Editor edit = prefs.edit();
+                            Editor edit = mPrefs.edit();
                             edit.putInt(PrefConstants.VOLUME, volume);
                             edit.commit();
                         }
 
                         boolean b = chkAutoManual.isChecked();
-                        Editor edit = prefs.edit();
+                        Editor edit = mPrefs.edit();
                         edit.putBoolean(PrefConstants.IS_AUTO, b);
                         edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, chkKnownPpm.isChecked());
                         edit.commit();
@@ -917,17 +918,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                             // resest so user can set new delay or
                             // duration
-                            // if(count_measure == 4){
-                            // old_count_measure=0;
-                            // count_measure=0;
+                            // if(countMeasures == 4){
+                            // oldCountMeasures=0;
+                            // countMeasures=0;
                             // }
 
-                            if (count_measure == 0) {
+                            if (countMeasures == 0) {
                                 GraphData graphData = GraphPopulatorUtils.createXYChart(duration,
                                         delay, EToCMainActivity.this);
-                                renderer = graphData.renderer;
-                                currentdataset = graphData.seriesDataset;
-                                currentSeries = graphData.xySeries;
+                                mRenderer = graphData.renderer;
+                                mGraphSeriesDataset = graphData.seriesDataset;
+                                mCurrentSeries = graphData.xySeries;
                                 Intent intent = graphData.intent;
 
                                 mChartView = GraphPopulatorUtils.attachXYChartIntoLayout
@@ -936,9 +937,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                                 ("chart"));
                             }
 
-                            count_measure++;
+                            countMeasures++;
 
-                            edit = prefs.edit();
+                            edit = mPrefs.edit();
                             edit.putInt(PrefConstants.DELAY, delay);
                             edit.putInt(PrefConstants.DURATION, duration);
                             edit.commit();
@@ -946,24 +947,24 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             long future = duration * 60 * 1000;
                             long delay_timer = delay * 1000;
 
-                            if (currentdataset.getSeriesAt(0).getItemCount() == 0) {
-                                chart_idx = 1;
-                                readingCount = 0;
-                                currentSeries = currentdataset.getSeriesAt(0);
-                            } else if (currentdataset.getSeriesAt(1).getItemCount() == 0) {
-                                chart_idx = 2;
-                                readingCount = (duration * 60) / delay;
-                                currentSeries = currentdataset.getSeriesAt(1);
-                            } else if (currentdataset.getSeriesAt(2).getItemCount() == 0) {
-                                chart_idx = 3;
-                                readingCount = duration * 60;
-                                currentSeries = currentdataset.getSeriesAt(2);
+                            if (mGraphSeriesDataset.getSeriesAt(0).getItemCount() == 0) {
+                                mChartIndex = 1;
+                                mReadingCount = 0;
+                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(0);
+                            } else if (mGraphSeriesDataset.getSeriesAt(1).getItemCount() == 0) {
+                                mChartIndex = 2;
+                                mReadingCount = (duration * 60) / delay;
+                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(1);
+                            } else if (mGraphSeriesDataset.getSeriesAt(2).getItemCount() == 0) {
+                                mChartIndex = 3;
+                                mReadingCount = duration * 60;
+                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(2);
                             }
 
                             int checkedId = mRadioGroup.getCheckedRadioButtonId();
 
-                            if(mAdvancedEditText.getText().toString().equals("") && checkedId ==
-                                     -1) {
+                            if (mAdvancedEditText.getText().toString().equals("") && checkedId ==
+                                    -1) {
                                 Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                                         .LENGTH_SHORT).show();
                                 return;
@@ -972,20 +973,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             final String contentForUpload;
                             final boolean success;
 
-                            if(checkedId != -1) {
+                            if (checkedId != -1) {
                                 if (mRadio1.getId() == checkedId) {
                                     contentForUpload = TextFileUtils.readTextFile(new File(new File
                                             (Environment.getExternalStorageDirectory(), AppData
-                                            .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText1
+                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText1
                                             .getText().toString()));
                                     success = true;
-                                } else if(mRadio2.getId() == checkedId) {
+                                } else if (mRadio2.getId() == checkedId) {
                                     contentForUpload = TextFileUtils.readTextFile(new File(new File
                                             (Environment.getExternalStorageDirectory(), AppData
                                                     .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText2
                                             .getText().toString()));
                                     success = true;
-                                } else if(mRadio3.getId() == checkedId) {
+                                } else if (mRadio3.getId() == checkedId) {
                                     contentForUpload = TextFileUtils.readTextFile(new File(new File
                                             (Environment.getExternalStorageDirectory(), AppData
                                                     .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText3
@@ -1010,7 +1011,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             editor.commit();
 
                             // collect commands
-                            if(contentForUpload != null && !contentForUpload.isEmpty()) {
+                            if (contentForUpload != null && !contentForUpload.isEmpty()) {
                                 String multiLines = contentForUpload;
                                 String[] commands;
                                 String delimiter = "\n";
@@ -1043,7 +1044,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                                             loopcmd1Idx = Integer.parseInt(line1) - 1;
                                             loopcmd2Idx = Integer.parseInt(line2) - 1;
-                                        } else if(command.equals("autoppm")){
+                                        } else if (command.equals("autoppm")) {
                                             autoPpm = true;
                                         } else if (isLoop) {
                                             if (i == loopcmd1Idx) {
@@ -1066,7 +1067,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         loopCommands, autoPpm, EToCMainActivity.this);
 
                                 mSendDataToUsbTask.execute(future, delay_timer);
-                            } else if(success){
+                            } else if (success) {
                                 Toast.makeText(EToCMainActivity.this, "File not found", Toast
                                         .LENGTH_LONG).show();
                                 return;
@@ -1089,8 +1090,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             // millisUntilFinished) {
                             //											// TODO
                             // Auto-generated method stub
-                            //											readingCount =
-                            // readingCount + 1;
+                            //											mReadingCount =
+                            // mReadingCount + 1;
                             //											sendMessage();
                             //
                             ////											byte [] arr =
@@ -1101,7 +1102,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             ////											msg.what = 0;
                             ////											msg.obj = arr;
                             ////											EToCMainActivity
-                            // .mHandler.sendMessage(msg);
+                            // .sHandler.sendMessage(msg);
                             //										}
                             //
                             //										@Override
@@ -1109,8 +1110,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             // () {
                             //											// TODO
                             // Auto-generated method stub
-                            //											readingCount =
-                            // readingCount + 1;
+                            //											mReadingCount =
+                            // mReadingCount + 1;
                             //											sendMessage();
                             //
                             ////											byte [] arr =
@@ -1121,9 +1122,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             ////											msg.what = 0;
                             ////											msg.obj = arr;
                             ////											EToCMainActivity
-                            // .mHandler.sendMessage(msg);
+                            // .sHandler.sendMessage(msg);
                             //
-                            //											isTimerRunning =
+                            //											mIsTimerRunning =
                             // false;
                             //											Toast.makeText
                             // (EToCMainActivity.this,
@@ -1139,7 +1140,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             //											"Timer Started",
                             // Toast.LENGTH_LONG)
                             //											.show();
-                            //									isTimerRunning = true;
+                            //									mIsTimerRunning = true;
                             //									ctimer.start();
 
                         }
@@ -1155,7 +1156,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         InputMethodManager inputManager = (InputMethodManager) getSystemService
                                 (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog)dialog)
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
                     }
@@ -1187,13 +1188,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         bindService(new Intent(this, UsbService.class),
                 mServiceConnection, BIND_AUTO_CREATE);
 
-        int delay_v = prefs.getInt(PrefConstants.DELAY, 2);
-        int duration_v = prefs.getInt(PrefConstants.DURATION, 3);
+        int delay_v = mPrefs.getInt(PrefConstants.DELAY, 2);
+        int duration_v = mPrefs.getInt(PrefConstants.DURATION, 3);
         GraphData graphData = GraphPopulatorUtils.createXYChart(duration_v,
                 delay_v, EToCMainActivity.this);
-        renderer = graphData.renderer;
-        currentdataset = graphData.seriesDataset;
-        currentSeries = graphData.xySeries;
+        mRenderer = graphData.renderer;
+        mGraphSeriesDataset = graphData.seriesDataset;
+        mCurrentSeries = graphData.xySeries;
         Intent intent = graphData.intent;
 
         mChartView = GraphPopulatorUtils.attachXYChartIntoLayout(EToCMainActivity
@@ -1278,7 +1279,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         button1DataFile.createNewFile();
 
         StringBuilder button1DataBuilder = new StringBuilder();
-        button1DataBuilder.append(preferences.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT));
+        button1DataBuilder.append(preferences.getString(PrefConstants.ON_NAME1, PrefConstants
+                .ON_NAME_DEFAULT));
         button1DataBuilder.append(AppData.SPLIT_STRING);
         button1DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME1, PrefConstants
                 .OFF_NAME_DEFAULT));
@@ -1293,7 +1295,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
         button2DataFile.createNewFile();
         StringBuilder button2DataBuilder = new StringBuilder();
-        button2DataBuilder.append(preferences.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT));
+        button2DataBuilder.append(preferences.getString(PrefConstants.ON_NAME2, PrefConstants
+                .ON_NAME_DEFAULT));
         button2DataBuilder.append(AppData.SPLIT_STRING);
         button2DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME2, PrefConstants
                 .OFF_NAME_DEFAULT));
@@ -1310,16 +1313,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         StringBuilder measureDefaultFilesBuilder = new StringBuilder();
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT));
+                .MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT));
         measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT));
+                .MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT));
         measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT));
+                .MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT));
 
         TextFileUtils.writeTextFile(measureDefaultFilesFile.getAbsolutePath(),
-                 measureDefaultFilesBuilder.toString());
+                measureDefaultFilesBuilder.toString());
     }
 
     @Override
@@ -1407,7 +1410,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable.writeToUsb("\r".getBytes());
                 }
 
-                Utils.appendText(txtOutput, "Tx: " + command);
+                Utils.appendText(mTxtOutput, "Tx: " + command);
                 mScrollView.smoothScrollTo(0, 0);
             } else {
                 Toast.makeText(EToCMainActivity.this, "serial port not found", Toast.LENGTH_LONG)
@@ -1451,15 +1454,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             mUsbServiceWritable.writeToUsb("\r".getBytes());
                         }
 
-                        Utils.appendText(txtOutput, "Tx: " + command);
+                        Utils.appendText(mTxtOutput, "Tx: " + command);
                         mScrollView.smoothScrollTo(0, 0);
                     } else {
                         Toast.makeText(EToCMainActivity.this, "serial port not found", Toast
                                 .LENGTH_LONG).show();
                     }
 
-                    // txtOutput.append("Tx: " + command + "\n");
-                    // mScrollView.smoothScrollTo(0, txtOutput.getBottom());
+                    // mTxtOutput.append("Tx: " + command + "\n");
+                    // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
 
                     // String cr = "\r";
                     // if (UsbService.serialPort != null){ // if UsbService
@@ -1469,8 +1472,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     // UsbService.write(cr.getBytes());
                     // }
 
-                    // txtOutput.append("Tx: " + cr + "\n");
-                    // mScrollView.smoothScrollTo(0, txtOutput.getBottom());
+                    // mTxtOutput.append("Tx: " + cr + "\n");
+                    // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
                 }
             }
         } else {
@@ -1483,8 +1486,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         .show();
             }
 
-            // txtOutput.append("Tx: " + data + "\n");
-            // mScrollView.smoothScrollTo(0, txtOutput.getBottom());
+            // mTxtOutput.append("Tx: " + data + "\n");
+            // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
         }
 
     }
@@ -1497,9 +1500,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         //			ctimer.cancel();
         //		}
 
-        if (executor != null) {
-            executor.shutdown();
-            while (!executor.isTerminated()) {
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+            while (!mExecutor.isTerminated()) {
             }
         }
 
@@ -1517,8 +1520,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         unbindService(mServiceConnection);
 
-        if(mHandler != null) {
-            mHandler.removeCallbacks(null);
+        if (sHandler != null) {
+            sHandler.removeCallbacks(null);
         }
     }
 
@@ -1657,7 +1660,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         menu.close();
 
         // boolean isUsbConnected = checkUsbConnection();
-        if (isUsbConnected) {
+        if (mIsUsbConnected) {
             wrapMenuItem(addMenuItem(menu, MENU_ID_CONNECT_DISCONNECT, R.string.menu_disconnect, R
                     .drawable.usb_connected), true);
         } else {
@@ -1704,7 +1707,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // showMenuItemAsAction(menu.findItem(MENU_ID_SEARCH),
         // R.drawable.ic_menu_search);
 
-        if (isUsbConnected) {
+        if (mIsUsbConnected) {
             showMenuItemAsAction(menu.findItem(MENU_ID_CONNECT_DISCONNECT), R.drawable
                     .usb_connected, MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem
                     .SHOW_AS_ACTION_WITH_TEXT);
@@ -1733,8 +1736,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mWarnedShouldQuit = false;
         switch (item.getItemId()) {
             case MENU_ID_CONNECT_DISCONNECT:
-                Log.d("isUsbConnected", "" + isUsbConnected);
-                if (isUsbConnected) {
+                Log.d("isUsbConnected", "" + mIsUsbConnected);
+                if (mIsUsbConnected) {
                     // unregisterReceiver(mUsbReceiver);
                     // unbindService(usbConnection);
                     // if(UsbService.mHandlerStop != null){
@@ -2207,16 +2210,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         if (filepath.contains("R1")) {
             isLogsExist = true;
-            currentdataset.getSeriesAt(0).clear();
-            chartSeries = currentdataset.getSeriesAt(0);
+            mGraphSeriesDataset.getSeriesAt(0).clear();
+            mGraphSeries = mGraphSeriesDataset.getSeriesAt(0);
         } else if (filepath.contains("R2")) {
             isLogsExist = true;
-            currentdataset.getSeriesAt(1).clear();
-            chartSeries = currentdataset.getSeriesAt(1);
+            mGraphSeriesDataset.getSeriesAt(1).clear();
+            mGraphSeries = mGraphSeriesDataset.getSeriesAt(1);
         } else if (filepath.contains("R3")) {
             isLogsExist = true;
-            currentdataset.getSeriesAt(2).clear();
-            chartSeries = currentdataset.getSeriesAt(2);
+            mGraphSeriesDataset.getSeriesAt(2).clear();
+            mGraphSeries = mGraphSeriesDataset.getSeriesAt(2);
         }
 
         if (!isLogsExist) {
@@ -2239,7 +2242,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
      * render chart from selected file
      */
     private void openChart() {
-        if (isTimerRunning) {
+        if (mIsTimerRunning) {
             Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
                     .LENGTH_SHORT).show();
             return;
@@ -2277,16 +2280,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                 if (filename.contains("R1")) {
                     isLogsExist = true;
-                    currentdataset.getSeriesAt(0).clear();
-                    chartSeries = currentdataset.getSeriesAt(0);
+                    mGraphSeriesDataset.getSeriesAt(0).clear();
+                    mGraphSeries = mGraphSeriesDataset.getSeriesAt(0);
                 } else if (filename.contains("R2")) {
                     isLogsExist = true;
-                    currentdataset.getSeriesAt(1).clear();
-                    chartSeries = currentdataset.getSeriesAt(1);
+                    mGraphSeriesDataset.getSeriesAt(1).clear();
+                    mGraphSeries = mGraphSeriesDataset.getSeriesAt(1);
                 } else if (filename.contains("R3")) {
                     isLogsExist = true;
-                    currentdataset.getSeriesAt(2).clear();
-                    chartSeries = currentdataset.getSeriesAt(2);
+                    mGraphSeriesDataset.getSeriesAt(2).clear();
+                    mGraphSeries = mGraphSeriesDataset.getSeriesAt(2);
                 }
 
                 if (!isLogsExist) {
@@ -2387,6 +2390,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     public void finish() {
         super.finish();
         try {
+            Crouton.clearCroutonsForActivity(this);
             savePreferencesToLocalData();
         } catch (Exception e) {
             e.printStackTrace();
@@ -2486,60 +2490,60 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public void sendMessageWithUsbDataReceived(byte bytes[]) {
-        Message message = mHandler.obtainMessage();
+        Message message = sHandler.obtainMessage();
         message.obj = bytes;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_RECEIVED;
         message.sendToTarget();
     }
 
     public void sendOpenChartDataToHandler(String value) {
-        Message message = mHandler.obtainMessage();
+        Message message = sHandler.obtainMessage();
         message.obj = value;
         message.what = EToCMainHandler.MESSAGE_OPEN_CHART;
         message.sendToTarget();
     }
 
     public void sendMessageWithUsbDataReady(String dataForSend) {
-        Message message = mHandler.obtainMessage();
+        Message message = sHandler.obtainMessage();
         message.obj = dataForSend;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
         message.sendToTarget();
     }
 
     public XYMultipleSeriesRenderer getRenderer() {
-        return renderer;
+        return mRenderer;
     }
 
     public XYSeries getCurrentSeries() {
-        return currentSeries;
+        return mCurrentSeries;
     }
 
     public SharedPreferences getPrefs() {
-        return prefs;
+        return mPrefs;
     }
 
     public int getReadingCount() {
-        return readingCount;
+        return mReadingCount;
     }
 
     public int getCountMeasure() {
-        return count_measure;
+        return countMeasures;
     }
 
     public int getOldCountMeasure() {
-        return old_count_measure;
+        return oldCountMeasures;
     }
 
     public void execute(Runnable runnable) {
-        executor.execute(runnable);
+        mExecutor.execute(runnable);
     }
 
     public boolean isTimerRunning() {
-        return isTimerRunning;
+        return mIsTimerRunning;
     }
 
     public void incCountMeasure() {
-        count_measure++;
+        countMeasures++;
     }
 
     public void repaintChartView() {
@@ -2547,43 +2551,43 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public void setCurrentSeries(int index) {
-        currentSeries = currentdataset.getSeriesAt(index);
+        mCurrentSeries = mGraphSeriesDataset.getSeriesAt(index);
     }
 
     public void setChartIdx(int chart_idx) {
-        this.chart_idx = chart_idx;
+        this.mChartIndex = chart_idx;
     }
 
     public int getChartIdx() {
-        return chart_idx;
+        return mChartIndex;
     }
 
     public void refreshOldCountMeasure() {
-        old_count_measure = count_measure;
+        oldCountMeasures = countMeasures;
     }
 
     public String getSubDirDate() {
-        return sub_dir_date;
+        return mSubDirDate;
     }
 
     public void setSubDirDate(String sub_dir_date) {
-        this.sub_dir_date = sub_dir_date;
+        this.mSubDirDate = sub_dir_date;
     }
 
     public String getChartDate() {
-        return chart_date;
+        return mChartDate;
     }
 
     public void setChartDate(String chart_date) {
-        this.chart_date = chart_date;
+        this.mChartDate = chart_date;
     }
 
     public Map<Integer, String> getMapChartDate() {
-        return mapChartDate;
+        return mMapChartIndexToDate;
     }
 
     public XYSeries getChartSeries() {
-        return chartSeries;
+        return mGraphSeries;
     }
 
     public GraphicalView getChartView() {
@@ -2591,7 +2595,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public void setUsbConnected(boolean isUsbConnected) {
-        this.isUsbConnected = isUsbConnected;
+        this.mIsUsbConnected = isUsbConnected;
     }
 
     public ScrollView getScrollView() {
@@ -2599,23 +2603,34 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public TextView getTxtOutput() {
-        return txtOutput;
+        return mTxtOutput;
     }
 
     public void setTimerRunning(boolean isTimerRunning) {
-        this.isTimerRunning = isTimerRunning;
+        this.mIsTimerRunning = isTimerRunning;
     }
 
     public void incReadingCount() {
-        readingCount++;
+        mReadingCount++;
     }
 
     public void refreshCurrentSeries() {
-        currentSeries = GraphPopulatorUtils.addNewSet(renderer, currentdataset);
+        mCurrentSeries = GraphPopulatorUtils.addNewSet(mRenderer, mGraphSeriesDataset);
     }
 
     public void invokeAutoCalculations() {
         getSupportFragmentManager().findFragmentById(R.id
                 .bottom_fragment).getView().findViewById(R.id.calculate_ppm_auto).performClick();
+    }
+
+    public void clearData() {
+        setSubDirDate(null);
+        for (XYSeries series : mGraphSeriesDataset.getSeries()) {
+            series.clear();
+        }
+        countMeasures = oldCountMeasures = 0;
+        mMapChartIndexToDate.clear();
+        GraphPopulatorUtils.clearYTextLabels(mRenderer);
+        repaintChartView();
     }
 }

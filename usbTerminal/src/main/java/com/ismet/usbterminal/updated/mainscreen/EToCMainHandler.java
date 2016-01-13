@@ -72,7 +72,6 @@ public class EToCMainHandler extends Handler {
                                         int vmax = (int) (co2 + (co2 * 15) / 100f);
                                         activity.getRenderer().setYAxisMax(vmax);
                                     }
-
                                 }
 
                                 // int yMin = (int) renderer.getYAxisMin();
