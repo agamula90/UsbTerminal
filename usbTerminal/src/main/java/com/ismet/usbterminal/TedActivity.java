@@ -3759,7 +3759,42 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 		filter.addAction(ACTION_USB_ATTACHED);
 		registerReceiver(mUsbReceiver, filter);
 	}
-	
+
+	@Override
+	public String reportDate() {
+		return null;
+	}
+
+	@Override
+	public String sampleId() {
+		return null;
+	}
+
+	@Override
+	public String location() {
+		return null;
+	}
+
+	@Override
+	public int countMinutes() {
+		return 0;
+	}
+
+	@Override
+	public int volume() {
+		return 0;
+	}
+
+	@Override
+	public String operator() {
+		return null;
+	}
+
+	@Override
+	public String date() {
+		return null;
+	}
+
 	public static class MyHandler extends Handler {
 
 		private final WeakReference<TedActivity> myActivity;

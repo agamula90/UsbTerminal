@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.Html;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -26,9 +28,11 @@ import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
+import com.proggroup.areasquarecalculator.data.ReportData;
 import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
+import com.proggroup.areasquarecalculator.utils.ReportCreator;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -64,6 +68,8 @@ public class BottomFragment extends Fragment {
 	private View calculatePpmSimpleLoaded, calculatePpmAuto;
 
 	private TextView resultPpmLoaded;
+
+	private View mReport;
 
 	private View mClearRow2;
 
@@ -116,6 +122,62 @@ public class BottomFragment extends Fragment {
 		calculatePpmAuto = view.findViewById(R.id.calculate_ppm_auto);
 		resultPpmLoaded = (TextView) view.findViewById(R.id.result_ppm_loaded);
 		mClearRow2 = view.findViewById(R.id.clear_row);
+
+        mReport = view.findViewById(R.id.report);
+
+        mReport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(resultPpmLoaded.getText().length() == 0) {
+                    Toast.makeText(getActivity(), "Do auto calculations!", Toast.LENGTH_LONG)
+                            .show();
+                    return;
+                }
+
+                Activity activity = getActivity();
+                LibraryContentAttachable libraryContentAttachable = activity instanceof
+                        LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
+
+                if (libraryContentAttachable != null) {
+                    LinearLayout viewGroup = libraryContentAttachable.graphContainer();
+                    viewGroup.removeAllViews();
+                    WebView webView = new WebView(activity);
+                    viewGroup.addView(webView, new LinearLayout.LayoutParams(ViewGroup
+                            .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                    libraryContentAttachable.onGraphAttached();
+
+                    ReportData reportData = new ReportData();
+                    reportData.setPpm(Float.parseFloat(resultPpmLoaded.getText().toString()));
+
+                    File parentFile = mAvgFiles[0].getParentFile();
+
+                    reportData.setMeasurementFolder(parentFile.getName());
+
+                    List<String> measurementFiles = new ArrayList<>();
+
+                    for (File avgFile : mAvgFiles) {
+                        measurementFiles.add(avgFile.getName());
+                    }
+
+                    reportData.setMeasurementFiles(measurementFiles);
+
+                    List<Float> measurementValues = mAutoAvgPoint.getValues();
+                    reportData.setMeasurementAverages(measurementValues);
+
+                    reportData.setCalibrationCurveFolder(mCurveFile.getName());
+
+                    reportData.setPpmData(ppmPoints);
+                    reportData.setAvgData(avgSquarePoints);
+                    reportData.setCountMeasurements(mAvgFiles.length);
+
+                    String htmlText = Html.toHtml(ReportCreator.createReport(ReportCreator
+                            .defaultReport(reportData, libraryContentAttachable)));
+
+                    webView.loadDataWithBaseURL(null, htmlText, null, "UTF-8", null);
+                }
+            }
+        });
 
 		loadPpmCurve.setOnClickListener(new View.OnClickListener() {
 
@@ -449,8 +511,8 @@ public class BottomFragment extends Fragment {
 				tv = new TextView(getActivity());
 				tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
 						.edit_text_size_default));
-				tv.setText(ppmPoints.get(i).intValue() + " " + FloatFormatter.format
-						(avgSquarePoints.get(i)) + "    ");
+				tv.setText(composePpmCurveText(Arrays.asList(ppmPoints.get(i)), Arrays
+                        .asList(avgSquarePoints.get(i))));
 				tv.setTextColor(Color.WHITE);
 
 				avgPointsLayout.addView(tv);
@@ -469,6 +531,16 @@ public class BottomFragment extends Fragment {
 
 		calculatePpmLayoutLoaded.setVisibility(View.VISIBLE);
 	}
+
+    public static final String composePpmCurveText(List<Float> ppmPoints, List<Float>
+            avgSquarePoints) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < ppmPoints.size(); i++) {
+            builder.append(ppmPoints.get(i).intValue() + " " + FloatFormatter.format
+                    (avgSquarePoints.get(i)) + "    ");
+        }
+        return builder.toString();
+    }
 
 	//load curve if press on folder -> then create calibration curve, as on auto load button.
 

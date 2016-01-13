@@ -2633,4 +2633,40 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         GraphPopulatorUtils.clearYTextLabels(mRenderer);
         repaintChartView();
     }
+
+    //TODO implement this for handle report changes
+    @Override
+    public String reportDate() {
+        return null;
+    }
+
+    @Override
+    public String sampleId() {
+        return null;
+    }
+
+    @Override
+    public String location() {
+        return null;
+    }
+
+    @Override
+    public int countMinutes() {
+        return 0;
+    }
+
+    @Override
+    public int volume() {
+        return 0;
+    }
+
+    @Override
+    public String operator() {
+        return null;
+    }
+
+    @Override
+    public String date() {
+        return null;
+    }
 }

@@ -2,6 +2,11 @@ package com.ismet.usbterminal.updated.mainscreen;
 
 import android.os.Handler;
 import android.os.Message;
+import android.text.Editable;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.style.AbsoluteSizeSpan;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.data.AppData;

@@ -5,7 +5,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-public interface LibraryContentAttachable {
+public interface LibraryContentAttachable extends ReportAttachable{
 
 	FragmentManager getSupportFragmentManager();
 
