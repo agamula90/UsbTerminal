@@ -773,10 +773,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                         .commandsEditText1);
 
                                 commandsEditText2 = (EditText) contentView.findViewById(R.id
-                                        .commandsEditText1);
+                                        .commandsEditText2);
 
                                 commandsEditText3 = (EditText) contentView.findViewById(R.id
-                                        .commandsEditText1);
+                                        .commandsEditText3);
 
                                 mRadio1 = (RadioButton) contentView.findViewById(R.id.radio1);
                                 mRadio2 = (RadioButton) contentView.findViewById(R.id.radio2);
@@ -797,11 +797,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 editUserComment.setText(user_comment);
 
                                 commandsEditText1.setText(prefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME1, ""));
+                                        .MEASURE_FILE_NAME1, PrefConstants
+                                        .MEASURE_FILE_NAME1_DEFAULT));
                                 commandsEditText2.setText(prefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME2, ""));
+                                        .MEASURE_FILE_NAME2, PrefConstants
+                                        .MEASURE_FILE_NAME2_DEFAULT));
                                 commandsEditText3.setText(prefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME3, ""));
+                                        .MEASURE_FILE_NAME3, PrefConstants
+                                        .MEASURE_FILE_NAME3_DEFAULT));
 
                                 if (kppm != -1) {
                                     editKnownPpm.setText("" + kppm);
@@ -1300,13 +1303,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
         StringBuilder measureDefaultFilesBuilder = new StringBuilder();
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME1, ""));
+                 .MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT));
         measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME2, ""));
+                 .MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT));
         measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
-                 .MEASURE_FILE_NAME3, ""));
+                 .MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT));
 
         TextFileUtils.writeTextFile(measureDefaultFilesFile.getAbsolutePath(),
                  measureDefaultFilesBuilder.toString());

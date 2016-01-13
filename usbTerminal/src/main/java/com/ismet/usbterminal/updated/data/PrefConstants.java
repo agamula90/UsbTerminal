@@ -29,4 +29,8 @@ public class PrefConstants {
     public static final String MEASURE_FILE_NAME1 = "measure_file1";
     public static final String MEASURE_FILE_NAME2 = "measure_file2";
     public static final String MEASURE_FILE_NAME3 = "measure_file3";
+
+    public static final String MEASURE_FILE_NAME1_DEFAULT = "MScript1.txt";
+    public static final String MEASURE_FILE_NAME2_DEFAULT = "MScript2.txt";
+    public static final String MEASURE_FILE_NAME3_DEFAULT = "MScript3.txt";
 }
