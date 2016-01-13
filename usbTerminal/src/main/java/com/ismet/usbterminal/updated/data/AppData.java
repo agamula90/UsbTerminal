@@ -8,5 +8,7 @@ public class AppData {
     public static final String BUTTON1_DATA = "Button1.txt";
     public static final String BUTTON2_DATA = "Button2.txt";
 
+    public static final String MEASURE_DEFAULT_FILES = "MeasureFiles.txt";
+
     public static final String SPLIT_STRING = ";";
 }

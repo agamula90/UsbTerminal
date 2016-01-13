@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
@@ -21,6 +22,9 @@ public class EToCMainHandler extends Handler {
     public static final int MESSAGE_OPEN_CHART = 2;
 
     private final WeakReference<EToCMainActivity> weakActivity;
+
+    private static final SimpleDateFormat FORMATTER = new SimpleDateFormat
+            ("yyyyMMdd_HHmmss");
 
     public EToCMainHandler(EToCMainActivity tedActivity) {
         super();
@@ -133,75 +137,67 @@ public class EToCMainHandler extends Handler {
                                     }
                                 }
 
-                                if (activity.getCountMeasure() != activity.getOldCountMeasure()) {
-                                    Date currentTime = new Date();
-                                    SimpleDateFormat formatter_date = new SimpleDateFormat
-                                            ("yyyyMMdd_HHmmss");
-                                    activity.setChartDate(formatter_date.format(currentTime));
+                                Date currentDate = new Date();
 
-                                    if (activity.getCountMeasure() == 1) {
-                                        activity.setSubDirDate(formatter_date.format
-                                                (currentTime));
-                                    }
+                                if (activity.getCountMeasure() != activity.getOldCountMeasure()) {
+                                    activity.setChartDate(FORMATTER.format(currentDate));
+
                                     activity.refreshOldCountMeasure();
                                     activity.getMapChartDate().put(activity.getChartIdx(),
                                             activity.getChartDate());
+                                }
+
+                                if (activity.getSubDirDate() == null) {
+                                    activity.setSubDirDate(FORMATTER.format
+                                            (currentDate));
                                 }
 
                                 if (activity.isTimerRunning()) {
                                     activity.getCurrentSeries().add(activity.getReadingCount()
                                             , co2);
                                     activity.repaintChartView();
-                                    int kppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
-                                    int volume = activity.getPrefs().getInt(PrefConstants.VOLUME, -1);
+                                    int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
+                                    int volumeValue = activity.getPrefs().getInt(PrefConstants
+                                             .VOLUME, -1);
 
-                                    String strppm = "";
-                                    String strvolume = "";
+                                    final String ppmPrefix;
+                                    final String volume = "_" + (volumeValue == -1 ? "" : "" +
+                                            volumeValue);
 
-                                    if (kppm == -1) {
-                                        strppm = "_";
+                                    if (ppm == -1) {
+                                        ppmPrefix = "_";
                                     } else {
-                                        strppm = "_" + kppm;
-                                    }
-
-                                    if (volume == -1) {
-                                        strvolume = "_";
-                                    } else {
-                                        strvolume = "_" + volume;
+                                        ppmPrefix = "_" + ppm;
                                     }
 
                                     String str_uc = activity.getPrefs().getString(PrefConstants
                                             .USER_COMMENT, "");
-                                    if (strppm.equals("_")) {
-                                        String filename1 = "";
-                                        String dirname1 = "AEToC_MES_Files";
-                                        String subDirname1 = "";
 
-                                        filename1 = "MES_" + activity.getChartDate() +
-                                                strvolume + "_R" + activity.getChartIdx() + "" +
+                                    final String fileName;
+                                    final String dirName;
+                                    final String subDirName;
+
+                                    if (ppmPrefix.equals("_")) {
+                                        dirName = AppData.MES_FOLDER_NAME;
+
+                                        fileName = "MES_" + activity.getChartDate() +
+                                                volume + "_R" + activity.getChartIdx() + "" +
                                                 ".csv";
-                                        //dirname1 = "AEToC_MES_Files";
-                                        subDirname1 = "MES_" + activity.getSubDirDate() + "_" +
-                                                str_uc;//+"_"+strppm;
+                                        subDirName = "MES_" + activity.getSubDirDate() + "_" +
+                                                str_uc;
 
-                                        activity.execute(new FileWriteRunnable("" + co2,
-                                                filename1, dirname1, subDirname1));
                                     } else {
-                                        String filename2 = "";
-                                        String dirname2 = "AEToC_CAL_Files";
-                                        String subDirname2 = "";
+                                        dirName = AppData.CAL_FOLDER_NAME;
 
-                                        filename2 = "CAL_" + activity.getChartDate() +
-                                                strvolume + strppm + "_R" + activity
+                                        fileName = "CAL_" + activity.getChartDate() +
+                                                volume + ppmPrefix + "_R" + activity
                                                 .getChartIdx() + ".csv";
-                                        //dirname2 = "AEToC_MES_Files";
-                                        subDirname2 = "CAL_" + activity.getSubDirDate() + "_" +
-                                                str_uc;//strppm;//;
-
-                                        activity.execute(new FileWriteRunnable("" +
-                                                co2, filename2, dirname2, subDirname2));
+                                        subDirName = "CAL_" + activity.getSubDirDate() + "_" +
+                                                str_uc;
                                     }
 
+                                    activity.execute(new FileWriteRunnable("" + co2,
+                                            fileName, dirName, subDirName));
                                 }
 
                                 if (co2 == 10000) {

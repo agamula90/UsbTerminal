@@ -167,7 +167,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     // int idx_count = 0;
     private int chart_idx = 0;
 
-    private String chart_date = "", sub_dir_date = "";
+    private String chart_date = "", sub_dir_date = null;
 
     private Map<Integer, String> mapChartDate = new HashMap<>();
 
@@ -863,6 +863,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 edit.putInt(PrefConstants.KPPM, kppm);
                                 edit.commit();
                             }
+                        } else {
+                            Editor edit = prefs.edit();
+                            edit.remove(PrefConstants.KPPM);
+                            edit.commit();
                         }
 
                         //else
@@ -1241,6 +1245,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
             }
         }
+        File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
+        if (measureDefaultFilesFile.exists()) {
+            String measureFilesData = TextFileUtils.readTextFile(measureDefaultFilesFile);
+            if (!measureFilesData.isEmpty()) {
+                String values[] = measureFilesData.split(AppData.SPLIT_STRING);
+                if (values.length == 3) {
+                    SharedPreferences.Editor editor = getPrefs().edit();
+                    editor.putString(PrefConstants.MEASURE_FILE_NAME1, values[0]);
+                    editor.putString(PrefConstants.MEASURE_FILE_NAME2, values[1]);
+                    editor.putString(PrefConstants.MEASURE_FILE_NAME3, values[2]);
+                    editor.apply();
+                }
+            }
+        }
     }
 
     private void savePreferencesToLocalData() {
@@ -1278,6 +1296,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         TextFileUtils.writeTextFile(button2DataFile.getAbsolutePath(), button2DataBuilder
                 .toString());
+
+        File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
+        StringBuilder measureDefaultFilesBuilder = new StringBuilder();
+        measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
+                 .MEASURE_FILE_NAME1, ""));
+        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
+        measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
+                 .MEASURE_FILE_NAME2, ""));
+        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING);
+        measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
+                 .MEASURE_FILE_NAME3, ""));
+
+        TextFileUtils.writeTextFile(measureDefaultFilesFile.getAbsolutePath(),
+                 measureDefaultFilesBuilder.toString());
     }
 
     @Override
