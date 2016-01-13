@@ -79,6 +79,7 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -1264,7 +1265,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         }
     }
 
-    private void savePreferencesToLocalData() {
+    private void savePreferencesToLocalData() throws IOException {
         File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
                 .SYSTEM_SETTINGS_FOLDER_NAME);
         if (!settingsFolder.exists()) {
@@ -1274,11 +1275,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         SharedPreferences preferences = getPrefs();
 
         File button1DataFile = new File(settingsFolder, AppData.BUTTON1_DATA);
+        button1DataFile.createNewFile();
 
         StringBuilder button1DataBuilder = new StringBuilder();
-        button1DataBuilder.append(preferences.getString(PrefConstants.ON_NAME1, ""));
+        button1DataBuilder.append(preferences.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT));
         button1DataBuilder.append(AppData.SPLIT_STRING);
-        button1DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME1, ""));
+        button1DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME1, PrefConstants
+                .OFF_NAME_DEFAULT));
         button1DataBuilder.append(AppData.SPLIT_STRING);
         button1DataBuilder.append(preferences.getString(PrefConstants.ON1, ""));
         button1DataBuilder.append(AppData.SPLIT_STRING);
@@ -1288,10 +1291,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 .toString());
 
         File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
+        button2DataFile.createNewFile();
         StringBuilder button2DataBuilder = new StringBuilder();
-        button2DataBuilder.append(preferences.getString(PrefConstants.ON_NAME2, ""));
+        button2DataBuilder.append(preferences.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT));
         button2DataBuilder.append(AppData.SPLIT_STRING);
-        button2DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME2, ""));
+        button2DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME2, PrefConstants
+                .OFF_NAME_DEFAULT));
         button2DataBuilder.append(AppData.SPLIT_STRING);
         button2DataBuilder.append(preferences.getString(PrefConstants.ON2, ""));
         button2DataBuilder.append(AppData.SPLIT_STRING);
@@ -1301,6 +1306,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 .toString());
 
         File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
+        measureDefaultFilesFile.createNewFile();
+
         StringBuilder measureDefaultFilesBuilder = new StringBuilder();
         measureDefaultFilesBuilder.append(preferences.getString(PrefConstants
                  .MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT));
@@ -2379,7 +2386,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     @Override
     public void finish() {
         super.finish();
-        savePreferencesToLocalData();
+        try {
+            savePreferencesToLocalData();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
