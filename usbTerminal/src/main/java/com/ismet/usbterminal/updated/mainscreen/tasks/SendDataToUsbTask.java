@@ -47,7 +47,8 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
                 processChart(future, delay);
             }
 
-            if (autoPpm && !preferences.getBoolean(PrefConstants.SAVE_AS_CALIBRATION, false)) {
+            if (isAuto && autoPpm && !preferences.getBoolean(PrefConstants.SAVE_AS_CALIBRATION,
+                    false)) {
                 publishProgress(new Pair<Integer, String>(2, null));
             }
         }

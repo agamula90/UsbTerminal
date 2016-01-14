@@ -361,7 +361,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         edit.putString(PrefConstants.OFF1, strOff);
                         edit.putString(PrefConstants.ON_NAME1, strOn1);
                         edit.putString(PrefConstants.OFF_NAME1, strOff1);
-                        edit.commit();
+                        edit.apply();
 
                         String s = mButtonOn1.getTag().toString();
                         if (s.equals("on")) {
@@ -494,7 +494,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         edit.putString(PrefConstants.OFF2, strOff);
                         edit.putString(PrefConstants.ON_NAME2, strOn1);
                         edit.putString(PrefConstants.OFF_NAME2, strOff1);
-                        edit.commit();
+                        edit.apply();
 
                         String s = mButtonOn2.getTag().toString();
                         if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
@@ -869,12 +869,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 int kppm = Integer.parseInt(strkPPM);
                                 Editor edit = mPrefs.edit();
                                 edit.putInt(PrefConstants.KPPM, kppm);
-                                edit.commit();
+                                edit.apply();
                             }
                         } else {
                             Editor edit = mPrefs.edit();
                             edit.remove(PrefConstants.KPPM);
-                            edit.commit();
+                            edit.apply();
                         }
 
                         //else
@@ -888,7 +888,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             } else {
                                 Editor edit = mPrefs.edit();
                                 edit.putString(PrefConstants.USER_COMMENT, str_uc);
-                                edit.commit();
+                                edit.apply();
                             }
                         }
 
@@ -901,14 +901,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             int volume = Integer.parseInt(strVolume);
                             Editor edit = mPrefs.edit();
                             edit.putInt(PrefConstants.VOLUME, volume);
-                            edit.commit();
+                            edit.apply();
                         }
 
                         boolean b = chkAutoManual.isChecked();
                         Editor edit = mPrefs.edit();
                         edit.putBoolean(PrefConstants.IS_AUTO, b);
                         edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, chkKnownPpm.isChecked());
-                        edit.commit();
+                        edit.apply();
 
                         int delay = Integer.parseInt(strDelay);
                         int duration = Integer.parseInt(strDuration);
@@ -945,7 +945,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             edit = mPrefs.edit();
                             edit.putInt(PrefConstants.DELAY, delay);
                             edit.putInt(PrefConstants.DURATION, duration);
-                            edit.commit();
+                            edit.apply();
 
                             long future = duration * 60 * 1000;
                             long delay_timer = delay * 1000;
@@ -1011,7 +1011,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     .getText().toString());
                             editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
                                     .getText().toString());
-                            editor.commit();
+                            editor.apply();
 
                             // collect commands
                             if (contentForUpload != null && !contentForUpload.isEmpty()) {
@@ -2671,12 +2671,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     @Override
     public int countMinutes() {
-        return getPrefs().getInt(PrefConstants.DURATION, 0);
+        return mPrefs.getInt(PrefConstants.DURATION, 0);
     }
 
     @Override
     public int volume() {
-        return getPrefs().getInt(PrefConstants.VOLUME, 0);
+        return mPrefs.getInt(PrefConstants.VOLUME, 0);
     }
 
     @Override

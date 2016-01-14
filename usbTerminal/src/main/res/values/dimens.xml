@@ -5,5 +5,6 @@
     <dimen name="widget_size">72dp</dimen>
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="default_margin">10dp</dimen>
 
 </resources>

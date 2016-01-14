@@ -192,8 +192,7 @@ public class ReportCreator {
         duration = changedToMax(duration, maxCount);
 
         String minutesText = measurementFilesTextEmptyString + duration + (countMinutes > 0 ?
-                countMinutes : UNKNOWN) +
-                " minutes";
+                countMinutes : UNKNOWN) + " minutes";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, minutesText));
 
@@ -202,8 +201,7 @@ public class ReportCreator {
         volume = changedToMax(volume, maxCount);
 
         String volumeText = measurementFilesTextEmptyString + volume + (countVolumes > 0 ?
-                countVolumes : UNKNOWN) +
-                " uL";
+                countVolumes : UNKNOWN) + " uL";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, volumeText));
 

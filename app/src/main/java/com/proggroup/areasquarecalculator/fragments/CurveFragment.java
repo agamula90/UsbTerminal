@@ -339,6 +339,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 
 		// create a dataset and give it a type
 		LineDataSet set1 = new LineDataSet(yVals, null/*"Square values"*/);
+        set1.setHighLightColor(Color.GREEN);
 		set1.setColor(Color.BLACK);
 		set1.setCircleColor(Color.BLACK);
 		set1.setLineWidth(2f);

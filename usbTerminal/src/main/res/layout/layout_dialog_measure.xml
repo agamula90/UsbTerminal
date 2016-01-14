@@ -30,7 +30,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/helper_layout"
-        android:layout_marginLeft="@dimen/layout_margin_default">
+        android:layout_marginLeft="@dimen/default_margin"
+        android:layout_marginRight="@dimen/default_margin"
+        android:layout_marginStart="@dimen/default_margin"
+        android:layout_marginEnd="@dimen/default_margin">
 
         <TextView
             android:layout_width="wrap_content"
@@ -47,7 +50,11 @@
         android:orientation="horizontal"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:layout_below="@+id/helper_layout">
+        android:layout_below="@+id/helper_layout"
+        android:paddingLeft="@dimen/default_margin"
+        android:paddingStart="@dimen/default_margin"
+        android:paddingEnd="@dimen/default_margin"
+        android:paddingRight="@dimen/default_margin">
 
         <RadioButton
             android:id="@+id/radio1"
@@ -101,7 +108,8 @@
         android:layout_width="190dip"
         android:layout_height="wrap_content"
         android:layout_below="@+id/radio_group"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/default_margin">
         <!--android:layout_below="@+id/path_layout" >-->
 
         <LinearLayout

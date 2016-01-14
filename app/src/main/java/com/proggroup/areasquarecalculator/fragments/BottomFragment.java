@@ -291,7 +291,7 @@ public class BottomFragment extends Fragment {
                     params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                              ViewGroup.LayoutParams.WRAP_CONTENT);
                     params.gravity = GravityCompat.END | Gravity.BOTTOM;
-                    params.rightMargin = 20;
+                    params.rightMargin = 10;
                     params.bottomMargin = 20;
                     frameLayout.addView(textView, params);
 
