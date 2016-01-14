@@ -214,7 +214,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 			 squares) {
 		//mLineChart.setOnChartValueSelectedListener(this);
         //0, 50, 50, 0
-		mLineChart.setExtraOffsets(50, 40, 60, 10);
+		mLineChart.setExtraOffsets(30, 40, 60, 10);
 		mLineChart.setDrawGridBackground(false);
 		mLineChart.setDoubleTapToZoomEnabled(false);
 

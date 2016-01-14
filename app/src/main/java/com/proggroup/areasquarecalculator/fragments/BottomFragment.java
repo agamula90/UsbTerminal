@@ -295,6 +295,16 @@ public class BottomFragment extends Fragment {
                     params.bottomMargin = 20;
                     frameLayout.addView(textView, params);
 
+                    textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
+                    textView.setTextColor(Color.BLACK);
+                    textView.setText("SAV");
+
+                    params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                    params.leftMargin = 20;
+                    params.topMargin = 20;
+                    frameLayout.addView(textView, params);
+
                     libraryContentAttachable.onGraphAttached();
 
                     lineChart.invalidate();

@@ -241,11 +241,13 @@ public class ReportCreator {
 
         String startMargin = "  ";
 
+        builder.append(startMargin);
+
         for (ReportDataItem reportDataItem : dataForInsert) {
-            builder.append(startMargin);
             builder.append(reportDataItem.getText());
             if (reportDataItem.isAutoAddBreak()) {
                 builder.append("\n");
+                builder.append(startMargin);
             }
         }
 
@@ -253,7 +255,8 @@ public class ReportCreator {
         int currentLineStartPosition = 0;
         for (ReportDataItem reportDataItem : dataForInsert) {
             String text = reportDataItem.getText();
-            int length = text.length() + startMargin.length();
+            int length = text.length() + (reportDataItem.isAutoAddBreak() ? startMargin.length()
+                    : 0);
 
             spannable.setSpan(new TypefaceSpan("monospace"), currentLineStartPosition,
                      currentLineStartPosition + length, Spanned .SPAN_INCLUSIVE_INCLUSIVE);
