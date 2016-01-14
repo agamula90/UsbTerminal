@@ -212,7 +212,7 @@
         android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/radio_group"
-        android:layout_marginLeft="2dip"
+        android:layout_marginLeft="40dp"
         android:layout_toRightOf="@+id/ll1"
         android:orientation="vertical">
         <!--android:layout_below="@+id/path_layout"> -->

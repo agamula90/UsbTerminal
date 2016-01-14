@@ -31,7 +31,7 @@ public class ReportCreator {
              reportAttachable) {
         List<ReportDataItem> reportDataItemList = new ArrayList<>();
 
-        int backgroundColor = Color.rgb(0, 255, 255);
+        int backgroundColor = Color.rgb(38, 166, 154);
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.HEADER_TITLE_SIZE, "EToC Report",
                 backgroundColor, false));
@@ -44,7 +44,16 @@ public class ReportCreator {
             reportDate = UNKNOWN;
         }
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, "Date " +
+        String dateString = "Date ";
+        String sampleIdString = "SampleId ";
+        String locationString = "Location ";
+        String ppmString = "PPM ";
+
+        int maxCount = maxCount(dateString, sampleIdString, locationString, ppmString);
+
+        dateString = changedToMax(dateString, maxCount);
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, dateString +
                  reportDate));
 
         String sampleId = reportAttachable.sampleId();
@@ -53,7 +62,9 @@ public class ReportCreator {
             sampleId = UNKNOWN;
         }
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, "SampleId " +
+        sampleIdString = changedToMax(sampleIdString, maxCount);
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, sampleIdString +
                  sampleId));
 
         String location = reportAttachable.location();
@@ -62,32 +73,38 @@ public class ReportCreator {
             location = UNKNOWN;
         }
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, "Location " +
+        locationString = changedToMax(locationString, maxCount);
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, locationString +
                  location));
 
-        ReportDataItem data = new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, "PPM ",
+        reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, ""));
+
+        ppmString = changedToMax(ppmString, maxCount);
+
+        ReportDataItem data = new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, ppmString,
                 backgroundColor, false);
         data.setAutoAddBreak(false);
         reportDataItemList.add(data);
 
-        String ppmText = "    " + reportData.getPpm();
-
-        reportDataItemList.add(new ReportDataItem(FontTextSize.BIG_TEXT_SIZE, ppmText,
-                backgroundColor, false));
+        reportDataItemList.add(new ReportDataItem(FontTextSize.BIG_TEXT_SIZE, "" + reportData
+                .getPpm(), backgroundColor, false));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 
         String measurementFolder = reportData.getMeasurementFolder();
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurement Folder:    " +
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurement Folder: " +
                 measurementFolder));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurement " +
-                 "Files:"));
+        String measurementFilesText = "Measurement Files:";
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
+                 measurementFilesText));
 
         List<String> measurementFiles = reportData.getMeasurementFiles();
         List<Float> measurementAverages = reportData.getMeasurementAverages();
@@ -100,10 +117,12 @@ public class ReportCreator {
 
         String maxLengthString = "";
 
+        String measurementFilesTextEmptyString = changedToMax("", measurementFilesText.length());
+
         for (int i = 0; i < countMeasurements; i++) {
             reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
-                    measurementFiles.get(i) + asvString + FloatFormatter.format
-                            (measurementAverages.get(i))));
+                    measurementFilesTextEmptyString + measurementFiles.get(i) + asvString +
+                    FloatFormatter.format(measurementAverages.get(i))));
             average += measurementAverages.get(i);
             if(maxLengthString.length() < measurementFiles.get(i).length()) {
                 maxLengthString = measurementFiles.get(i);
@@ -114,7 +133,8 @@ public class ReportCreator {
 
         StringBuilder measureAverageBuilder = new StringBuilder();
 
-        for (int i = 0; i < maxLengthString.length(); i++) {
+        for (int i = 0; i < maxLengthString.length() + measurementFilesTextEmptyString.length();
+              i++) {
             measureAverageBuilder.append(" ");
         }
 
@@ -140,28 +160,49 @@ public class ReportCreator {
 
         String calibrationFolder = reportData.getCalibrationCurveFolder();
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Calibration Curve :      " +
-                calibrationFolder));
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Calibration " +
+                "Curve: " + calibrationFolder));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, BottomFragment
                 .composePpmCurveText(reportData.getPpmData(), reportData.getAvgData())));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurements data:"));
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Auto           " +
-                ":" + "    " + reportData.getCountMeasurements() + "measurements"));
+        measurementFilesText = "Measurements data:";
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
+                 measurementFilesText));
+
+        measurementFilesTextEmptyString = changedToMax("", measurementFilesText.length());
+
+        String auto = "Auto: ";
+        String duration = "Duration: ";
+        String volume = "Volume: ";
+
+        maxCount = maxCount(auto, duration, volume);
+
+        auto = changedToMax(auto, maxCount);
+
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
+                measurementFilesTextEmptyString + auto +
+                 reportData.getCountMeasurements() + " measurements"));
 
         int countMinutes = reportAttachable.countMinutes();
 
-        String minutesText = "Duration:       " + (countMinutes > 0 ? countMinutes : UNKNOWN) +
+        duration = changedToMax(duration, maxCount);
+
+        String minutesText = measurementFilesTextEmptyString + duration + (countMinutes > 0 ?
+                countMinutes : UNKNOWN) +
                 " minutes";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, minutesText));
 
         int countVolumes = reportAttachable.volume();
 
-        String volumeText = "Volume :        " + (countVolumes > 0 ? countVolumes : UNKNOWN) +
+        volume = changedToMax(volume, maxCount);
+
+        String volumeText = measurementFilesTextEmptyString + volume + (countVolumes > 0 ?
+                countVolumes : UNKNOWN) +
                 " uL";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, volumeText));
@@ -174,9 +215,25 @@ public class ReportCreator {
         String date = reportAttachable.date();
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
-                "Operator:" + (operator != null ? operator : UNKNOWN) + "                " +"Date" +
-                        "  " + (date != null ? date : UNKNOWN)));
+                "Operator: " + (operator != null ? operator : UNKNOWN) + "                "
+                        +"Date: " + (date != null ? date : UNKNOWN)));
         return reportDataItemList;
+    }
+
+    private static int maxCount(String... values) {
+        int max = 0;
+        for (String value : values) {
+            max = Math.max(max, value.length());
+        }
+        return max;
+    }
+
+    public static String changedToMax(String value, int maxCount) {
+        StringBuilder builder = new StringBuilder(value);
+        for (int i = 0; i < maxCount - value.length(); i++) {
+            builder.append(" ");
+        }
+        return builder.toString();
     }
 
     public static Spannable createReport(List<ReportDataItem> dataForInsert) {

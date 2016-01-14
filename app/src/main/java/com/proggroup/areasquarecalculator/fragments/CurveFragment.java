@@ -213,7 +213,8 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 	public static void initLine(LineChart mLineChart, Activity activity, SparseArray<Float>
 			 squares) {
 		//mLineChart.setOnChartValueSelectedListener(this);
-		mLineChart.setExtraOffsets(40, 50, 50, 0);
+        //0, 50, 50, 0
+		mLineChart.setExtraOffsets(0, 50, 40, 10);
 		mLineChart.setDrawGridBackground(false);
 		mLineChart.setDoubleTapToZoomEnabled(false);
 
@@ -244,11 +245,13 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		xAxis.setDrawGridLines(false);
 		xAxis.setTextSize(12f);
 		xAxis.setLabelsToSkip(0);
+        xAxis.setEnabled(true);
 
 		setData(mLineChart, squares);
 
 		YAxis leftAxis = mLineChart.getAxisLeft();
 		leftAxis.setEnabled(false);
+        leftAxis.setDrawGridLines(false);
 		mLineChart.getAxisRight().setEnabled(false);
 
 		leftAxis.setAxisMaxValue(squares.valueAt(squares.size() - 1) + 100);
@@ -263,6 +266,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		// get the legend (only possible after setting data)
 		Legend l = mLineChart.getLegend();
 		l.setForm(Legend.LegendForm.LINE);
+        l.setEnabled(false);
 	}
 
 	private static void setData(LineChart mLineChart, SparseArray<Float> squares) {
@@ -273,7 +277,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		int xMax = squares.keyAt(squares.size() - 1);
 
 		int j = 0;
-		int nextKey = squares.keyAt(j);
+		int nextKey;
 
 		List<Integer> indexes = new ArrayList<>(squares.size());
 
@@ -285,13 +289,31 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 			gcd = gcd(gcd, squares.keyAt(i + 1) - squares.keyAt(i), minGcd);
 		}
 
+      /*  for (int i = 0; i < squares.size() - 1; i++) {
+            int currentKey = squares.keyAt(i);
+            nextKey = squares.keyAt(i + 1);
+            if(nextKey - currentKey > gcd) {
+                int countValues = (int) ((nextKey - currentKey) / (float) gcd) - 1;
+                for (int k = 0; k < countValues; k++) {
+                    squares.put(currentKey + (k + 1) * gcd, -1f);
+                }
+            }
+        }*/
+
+        nextKey = squares.keyAt(0);
+
 		for (int i = xMin; i < xMax; i += gcd) {
 			if (i >= nextKey) {
 				j++;
 				xVals.add(i + "");
 				nextKey = squares.keyAt(j);
-				indexes.add(xVals.size() - 1);
+                if(squares.valueAt(j - 1) >= 0) {
+                    indexes.add(xVals.size() - 1);
+                } else {
+                    indexes.add(-1);
+                }
 			} else {
+				//xVals.add(i + "");
 				xVals.add("");
 			}
 		}
@@ -308,11 +330,13 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		ArrayList<Entry> yVals = new ArrayList<Entry>();
 
 		for (int i = 0; i < squares.size(); i++) {
-			yVals.add(new Entry(squares.valueAt(i), indexes.get(i)));
+            if(indexes.get(i) >= 0) {
+                yVals.add(new Entry(squares.valueAt(i), indexes.get(i)));
+            }
 		}
 
 		// create a dataset and give it a type
-		LineDataSet set1 = new LineDataSet(yVals, "Square values");
+		LineDataSet set1 = new LineDataSet(yVals, null/*"Square values"*/);
 		set1.setColor(Color.BLACK);
 		set1.setCircleColor(Color.BLACK);
 		set1.setLineWidth(2f);
@@ -321,7 +345,7 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		set1.setValueTextSize(12f);
 		set1.setFillAlpha(65);
 		set1.setFillColor(Color.BLACK);
-		set1.setDrawFilled(true);
+		set1.setDrawFilled(false);
 		set1.setDrawCircleHole(true);
 
 		ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();

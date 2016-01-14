@@ -19,4 +19,5 @@
     <dimen name="result_width">90dp</dimen>
     <dimen name="grid_view_curve_height">60dp</dimen>
     <dimen name="progress_margin">7dp</dimen>
+    <dimen name="graph_padding">5dp</dimen>
 </resources>

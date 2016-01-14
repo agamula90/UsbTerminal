@@ -82,7 +82,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,7 +207,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private Button mButtonOn1, mButtonOn2, mButtonPpm;
 
-    private LinearLayout mExportLayout;
+    private LinearLayout mExportLayout, mMarginLayout;
 
     /**
      * @see android.app.Activity#onCreate(Bundle)
@@ -231,6 +233,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mReadIntent = true;
 
         mExportLayout = getExportLayout();
+        mMarginLayout = (LinearLayout) findViewById(R.id.margin_layout);
 
         // editor
         mAdvancedEditText = (AdvancedEditText) findViewById(R.id.editor);
@@ -1377,11 +1380,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     @Override
     public void onGraphAttached() {
+        mMarginLayout.setBackgroundColor(Color.BLACK);
         mExportLayout.setBackgroundColor(Color.WHITE);
     }
 
     @Override
     public void onGraphDetached() {
+        mMarginLayout.setBackgroundColor(Color.TRANSPARENT);
         mExportLayout.setBackgroundColor(Color.TRANSPARENT);
     }
 
@@ -2634,10 +2639,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         repaintChartView();
     }
 
+    private Date mReportDate;
+
+    private static final SimpleDateFormat FORMATTER = new SimpleDateFormat
+            ("MM.dd.yyyy HH:mm:ss");
+
     //TODO implement this for handle report changes
     @Override
     public String reportDate() {
-        return null;
+        mReportDate = new Date();
+
+        return FORMATTER.format(mReportDate);
     }
 
     @Override
@@ -2652,12 +2664,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     @Override
     public int countMinutes() {
-        return 0;
+        return getPrefs().getInt(PrefConstants.DURATION, 0);
     }
 
     @Override
     public int volume() {
-        return 0;
+        return getPrefs().getInt(PrefConstants.VOLUME, 0);
     }
 
     @Override
@@ -2667,6 +2679,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     @Override
     public String date() {
-        return null;
+        return FORMATTER.format(mReportDate);
     }
 }

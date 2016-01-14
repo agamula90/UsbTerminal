@@ -7,9 +7,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.GravityCompat;
 import android.text.Html;
 import android.util.SparseArray;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -251,8 +253,35 @@ public class BottomFragment extends Fragment {
                     CurveFragment.initLine(lineChart, activity, squares);
 
                     viewGroup.removeAllViews();
-                    viewGroup.addView(lineChart, new LinearLayout.LayoutParams(ViewGroup
+
+                    FrameLayout frameLayout = new FrameLayout(activity);
+
+                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
+                            .LayoutParams.MATCH_PARENT, 60);
+                    params.gravity = GravityCompat.END | Gravity.BOTTOM;
+
+                    //View v1 = new View(activity);
+                    //v1.setBackgroundColor(Color.BLACK);
+
+                    //frameLayout.addView(v1, params);
+
+                    LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(ViewGroup
+                            .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                    viewGroup.addView(frameLayout, containerParams);
+
+					frameLayout.addView(lineChart, new FrameLayout.LayoutParams(ViewGroup
                             .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                    TextView textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
+                    textView.setTextColor(Color.BLACK);
+                    textView.setText("X");
+
+                    params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                             ViewGroup.LayoutParams.WRAP_CONTENT);
+                    params.gravity = GravityCompat.END | Gravity.BOTTOM;
+                    params.rightMargin = 20;
+                    params.bottomMargin = 20;
+                    frameLayout.addView(textView, params);
 
                     libraryContentAttachable.onGraphAttached();
 
