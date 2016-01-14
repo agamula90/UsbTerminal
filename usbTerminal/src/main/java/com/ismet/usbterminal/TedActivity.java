@@ -3761,7 +3761,12 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	}
 
 	@Override
-	public String reportDate() {
+	public Date currentDate() {
+		return null;
+	}
+
+	@Override
+	public String reportDateString() {
 		return null;
 	}
 
@@ -3791,7 +3796,17 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 	}
 
 	@Override
-	public String date() {
+	public String dateString() {
+		return null;
+	}
+
+	@Override
+	public void writeReport(String reportHtml, String fileName) {
+
+	}
+
+	@Override
+	public String reportFolders() {
 		return null;
 	}
 

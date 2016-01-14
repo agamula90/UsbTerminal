@@ -1,6 +1,5 @@
 package com.proggroup.areasquarecalculator.utils;
 
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Layout;
@@ -18,6 +17,7 @@ import com.proggroup.areasquarecalculator.data.ReportData;
 import com.proggroup.areasquarecalculator.data.ReportDataItem;
 import com.proggroup.areasquarecalculator.fragments.BottomFragment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class ReportCreator {
         //It's \n line
         reportDataItemList.add(new ReportDataItem(FontTextSize.HEADER_TITLE_SIZE, ""));
 
-        String reportDate = reportAttachable.reportDate();
+        String reportDate = reportAttachable.reportDateString();
 
         if(reportDate == null) {
             reportDate = UNKNOWN;
@@ -212,7 +212,7 @@ public class ReportCreator {
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 
         String operator = reportAttachable.operator();
-        String date = reportAttachable.date();
+        String date = reportAttachable.dateString();
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                 "Operator: " + (operator != null ? operator : UNKNOWN) + "                "
@@ -238,7 +238,11 @@ public class ReportCreator {
 
     public static Spannable createReport(List<ReportDataItem> dataForInsert) {
         StringBuilder builder = new StringBuilder();
+
+        String startMargin = "  ";
+
         for (ReportDataItem reportDataItem : dataForInsert) {
+            builder.append(startMargin);
             builder.append(reportDataItem.getText());
             if (reportDataItem.isAutoAddBreak()) {
                 builder.append("\n");
@@ -249,7 +253,7 @@ public class ReportCreator {
         int currentLineStartPosition = 0;
         for (ReportDataItem reportDataItem : dataForInsert) {
             String text = reportDataItem.getText();
-            int length = text.length();
+            int length = text.length() + startMargin.length();
 
             spannable.setSpan(new TypefaceSpan("monospace"), currentLineStartPosition,
                      currentLineStartPosition + length, Spanned .SPAN_INCLUSIVE_INCLUSIVE);
@@ -280,5 +284,41 @@ public class ReportCreator {
             currentLineStartPosition += length + (reportDataItem.isAutoAddBreak() ? 1 : 0);
         }
         return spannable;
+    }
+
+    public static final String REPORT_START_NAME = "RPT_MES_";
+
+    public static final int countReports(String folder) {
+        File file = new File(folder);
+        File files[] = file.listFiles();
+        if(files == null) {
+            return 0;
+        }
+
+        List<File> reportFiles = new ArrayList<>();
+        for (File htmlFile : files) {
+            String htmlName = htmlFile.getName();
+            if (!htmlFile.isDirectory() && (htmlName.endsWith(".html") || htmlName
+                    .endsWith(".xhtml")) && htmlName.startsWith(REPORT_START_NAME)) {
+                reportFiles.add(htmlFile);
+            }
+        }
+
+        int maxCount = 0;
+
+        for (File htmlFile : reportFiles) {
+            String name = htmlFile.getName();
+            try {
+                String str = name.substring(name.lastIndexOf('_') + 1, name
+                        .lastIndexOf("."));
+                int count = Integer.parseInt(str);
+                if(count > maxCount) {
+                    maxCount = count;
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
+
+        return maxCount + 1;
     }
 }

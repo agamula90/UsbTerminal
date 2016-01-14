@@ -38,6 +38,7 @@ import com.proggroup.areasquarecalculator.utils.ReportCreator;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,6 +57,9 @@ public class BottomFragment extends Fragment {
 	private static final String THIRD_TEXT_TAG = "third_texxt";
 
 	private static final String FOURTH_TEXT_TAG = "fourth_text";
+
+    private static final SimpleDateFormat FORMATTER = new SimpleDateFormat
+            ("yyyyMMdd_HHmmss");
 
 	private View loadPpmCurve;
 
@@ -176,6 +180,14 @@ public class BottomFragment extends Fragment {
                     String htmlText = Html.toHtml(ReportCreator.createReport(ReportCreator
                             .defaultReport(reportData, libraryContentAttachable)));
 
+                    int reportNumber = ReportCreator.countReports(libraryContentAttachable
+                            .reportFolders());
+
+                    String fileName = ReportCreator.REPORT_START_NAME + FORMATTER.format
+                            (libraryContentAttachable.currentDate()) + "_" + reportNumber;
+
+                    libraryContentAttachable.writeReport(htmlText, fileName);
+
                     webView.loadDataWithBaseURL(null, htmlText, null, "UTF-8", null);
                 }
             }
@@ -274,7 +286,7 @@ public class BottomFragment extends Fragment {
 
                     TextView textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
                     textView.setTextColor(Color.BLACK);
-                    textView.setText("X");
+                    textView.setText("ppm");
 
                     params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                              ViewGroup.LayoutParams.WRAP_CONTENT);

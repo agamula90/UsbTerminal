@@ -2393,7 +2393,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     @Override
     public void finish() {
-        super.finish();
         try {
             Crouton.clearCroutonsForActivity(this);
             savePreferencesToLocalData();
@@ -2401,6 +2400,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             e.printStackTrace();
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
+        super.finish();
     }
 
     /**
@@ -2645,8 +2645,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             ("MM.dd.yyyy HH:mm:ss");
 
     //TODO implement this for handle report changes
+
+
     @Override
-    public String reportDate() {
+    public Date currentDate() {
+        return mReportDate;
+    }
+
+    @Override
+    public String reportDateString() {
         mReportDate = new Date();
 
         return FORMATTER.format(mReportDate);
@@ -2678,7 +2685,25 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     @Override
-    public String date() {
+    public String dateString() {
         return FORMATTER.format(mReportDate);
+    }
+
+    @Override
+    public void writeReport(String reportHtml, String fileName) {
+        File file = new File(reportFolders(), fileName + ".html");
+        file.getParentFile().mkdirs();
+        try {
+            file.createNewFile();
+            TextFileUtils.writeTextFile(file.getAbsolutePath(), reportHtml);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String reportFolders() {
+        return new File(Environment.getExternalStorageDirectory(), AppData
+                .REPORT_FOLDER_NAME).getAbsolutePath();
     }
 }
