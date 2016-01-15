@@ -586,7 +586,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     return;
                 }
 
-                CharSequence[] items = new CharSequence[]{"New saure to New Measure", "Tx",
+                CharSequence[] items = new CharSequence[]{"New Measure", "Tx",
                          "LM", "Chart 1", "Chart 2", "Chart" + " 3"};
                 boolean[] checkedItems = new boolean[]{false, false, false, false, false, false};
                 final SparseBooleanArray mItemsChecked = new SparseBooleanArray(checkedItems

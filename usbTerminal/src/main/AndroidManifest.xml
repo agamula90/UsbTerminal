@@ -45,6 +45,20 @@
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
 
+        <activity
+            android:name=".updated.EToCLoginActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize|stateVisible" >
+            <intent-filter>
+                <!--<action android:name="android.intent.action.MAIN" /> -->
+                <action android:name="android.intent.action.VIEW" />
+
+                <!--<category android:name="android.intent.category.LAUNCHER" /> -->
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Ted main activity ... ie a text field :) -->
         <!-- android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|fontScale|screenSize|smallestScreenSize"
              -->
@@ -55,11 +69,13 @@
             android:theme="@style/AppThemeCompat"
             android:windowSoftInputMode="stateHidden|adjustResize" >
 
-            <!-- Launcher Intent -->
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <!--<action android:name="android.intent.action.VIEW" /> -->
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <!--<category android:name="android.intent.category.DEFAULT" /> -->
             </intent-filter>
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />

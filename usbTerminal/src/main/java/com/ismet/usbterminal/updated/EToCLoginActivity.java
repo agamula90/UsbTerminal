@@ -1,4 +1,4 @@
-package com.ismet.usbterminal;
+package com.ismet.usbterminal.updated;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -27,13 +27,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.ismet.usbterminal.R;
+import com.ismet.usbterminal.TedActivity;
+import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
+public class EToCLoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 
 	/**
 	 * A dummy authentication store containing known user names and passwords.
@@ -57,11 +61,11 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		setTitle(R.string.title_activity_login);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
 				.LayoutParams.FLAG_FULLSCREEN);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-
 
 		// Set up the login form.
 		mEmailView = (AutoCompleteTextView) findViewById(R.id.username);
@@ -251,7 +255,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 	private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
 		// Create adapter to tell the AutoCompleteTextView what to show in its
 		// dropdown list.
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(LoginActivity.this, android.R
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(EToCLoginActivity.this, android.R
 				.layout.simple_dropdown_item_1line, emailAddressCollection);
 
 		mEmailView.setAdapter(adapter);
@@ -342,7 +346,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 			showProgress(false);
 
 			if (success) {
-				Intent intent = new Intent(LoginActivity.this, TedActivity.class);
+				Intent intent = new Intent(EToCLoginActivity.this, EToCMainActivity.class);
 				startActivity(intent);
 				finish();
 			} else {
