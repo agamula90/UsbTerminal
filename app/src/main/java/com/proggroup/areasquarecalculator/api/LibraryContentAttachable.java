@@ -28,4 +28,6 @@ public interface LibraryContentAttachable extends ReportAttachable{
     void onGraphAttached();
 
     void onGraphDetached();
+
+	String toolbarTitle();
 }

@@ -87,8 +87,6 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 	private void setupDrawer(int fragmentId, DrawerLayout drawerLayout) {
 		mToolbar = (Toolbar) findViewById(getToolbarId());
 
-		mToolbar.setTitle(R.string.app_name);
-
 		setSupportActionBar(mToolbar);
 
 		ActionBar ab = getSupportActionBar();
@@ -101,8 +99,7 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 
 		ab.setCustomView(R.layout.toolbar);
 
-		((TextView) ab.getCustomView().findViewById(R.id.title)).setText(getString(R.string
-				.app_name));
+		((TextView) ab.getCustomView().findViewById(R.id.title)).setText(toolbarTitle());
 
 		if (fragmentId == LEFT_DRAWER_FRAGMENT_ID_UNDEFINED) {
 			ab.setDisplayHomeAsUpEnabled(false);

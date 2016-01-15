@@ -19,6 +19,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -585,9 +586,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     return;
                 }
 
-                CharSequence[] items = new CharSequence[]{"Measures", "Tx", "LM", "Chart 1",
-                        "Chart 2",
-                        "Chart" + " 3"};
+                CharSequence[] items = new CharSequence[]{"New saure to New Measure", "Tx",
+                         "LM", "Chart 1", "Chart 2", "Chart" + " 3"};
                 boolean[] checkedItems = new boolean[]{false, false, false, false, false, false};
                 final SparseBooleanArray mItemsChecked = new SparseBooleanArray(checkedItems
                         .length);
@@ -1388,6 +1388,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     public void onGraphDetached() {
         mMarginLayout.setBackgroundColor(Color.TRANSPARENT);
         mExportLayout.setBackgroundColor(Color.TRANSPARENT);
+    }
+
+    @Override
+    public String toolbarTitle() {
+        return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME);
     }
 
     public void sendCommand(String command) {

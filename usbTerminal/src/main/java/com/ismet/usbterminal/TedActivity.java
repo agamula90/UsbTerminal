@@ -1456,7 +1456,12 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 
     }
 
-    @Override
+	@Override
+	public String toolbarTitle() {
+		return null;
+	}
+
+	@Override
 	public int getLayoutId() {
 		return R.layout.layout_editor_updated;
 	}
