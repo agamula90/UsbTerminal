@@ -587,7 +587,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
 
                 CharSequence[] items = new CharSequence[]{"New Measure", "Tx",
-                         "LM", "Chart 1", "Chart 2", "Chart" + " 3"};
+                        "LM", "Chart 1", "Chart 2", "Chart" + " 3"};
                 boolean[] checkedItems = new boolean[]{false, false, false, false, false, false};
                 final SparseBooleanArray mItemsChecked = new SparseBooleanArray(checkedItems
                         .length);
@@ -672,7 +672,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             //mRenderer.setLabelsTextSize(12);
                         }
 
-                        if(mItemsChecked.get(0)) {
+                        if (mItemsChecked.get(0)) {
                             clearData();
                         }
 
@@ -789,9 +789,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 mRadioGroup = (RadioGroup) contentView.findViewById(R.id
                                         .radio_group);
 
-                                int delay_v = mPrefs.getInt(PrefConstants.DELAY, 2);
-                                int duration_v = mPrefs.getInt(PrefConstants.DURATION, 3);
-                                int volume = mPrefs.getInt(PrefConstants.VOLUME, 20);
+                                int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants
+                                        .DELAY_DEFAULT);
+                                int duration_v = mPrefs.getInt(PrefConstants.DURATION,
+                                        PrefConstants.DURATION_DEFAULT);
+                                int volume = mPrefs.getInt(PrefConstants.VOLUME, PrefConstants
+                                        .VOLUME_DEFAULT);
                                 int kppm = mPrefs.getInt(PrefConstants.KPPM, -1);
                                 String user_comment = mPrefs.getString(PrefConstants
                                         .USER_COMMENT, "");
@@ -1191,8 +1194,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         bindService(new Intent(this, UsbService.class),
                 mServiceConnection, BIND_AUTO_CREATE);
 
-        int delay_v = mPrefs.getInt(PrefConstants.DELAY, 2);
-        int duration_v = mPrefs.getInt(PrefConstants.DURATION, 3);
+        int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT);
+        int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
+        SharedPreferences preferences = getPrefs();
+
+        if (!preferences.contains(PrefConstants.DELAY)) {
+            SharedPreferences.Editor editor = getPrefs().edit();
+            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT);
+            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
+            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT);
+            editor.apply();
+        }
+
         GraphData graphData = GraphPopulatorUtils.createXYChart(duration_v,
                 delay_v, EToCMainActivity.this);
         mRenderer = graphData.renderer;

@@ -18,8 +18,17 @@ public class PrefConstants {
     public static final String OFF2 = "off2";
 
     public static final String DELAY = "delay";
+
+    public static final int DELAY_DEFAULT = 2;
+
     public static final String DURATION = "duration";
+
+    public static final int DURATION_DEFAULT = 3;
+
     public static final String VOLUME = "volume";
+
+    public static final int VOLUME_DEFAULT = 20;
+
     public static final String KPPM = "kppm";
     public static final String USER_COMMENT = "uc";
     public static final String IS_AUTO = "isauto";
