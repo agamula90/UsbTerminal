@@ -247,7 +247,8 @@ public class BottomFragment extends Fragment {
                                         new PrintAttributes.Builder().build());
                             } else {
                                 Toast.makeText(getActivity(), "Impossible to print because of " +
-                                        "old api!", Toast.LENGTH_LONG).show();
+                                        "old api! Current api: " + Build.VERSION.SDK_INT + ". " +
+                                        "Required api: 19", Toast.LENGTH_LONG).show();
                             }
                         }
                     });
