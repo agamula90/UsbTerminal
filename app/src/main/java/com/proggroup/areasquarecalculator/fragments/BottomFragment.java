@@ -147,7 +147,7 @@ public class BottomFragment extends Fragment {
                     return;
                 }
 
-                Activity activity = getActivity();
+                final Activity activity = getActivity();
                 LibraryContentAttachable libraryContentAttachable = activity instanceof
                         LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
 
@@ -202,8 +202,8 @@ public class BottomFragment extends Fragment {
 
                     webView.loadDataWithBaseURL(null, htmlText, null, "UTF-8", null);
 
-                    Button button = new Button(getActivity());
-                    button.setTextAppearance(getActivity(), R.style.ButtonDefaultStyle);
+                    Button button = new Button(activity);
+                    /*button.setTextAppearance(activity, R.style.ButtonDefaultStyle);*/
                     if (Build.VERSION.SDK_INT >= 21) {
                         button.setBackground(getResources().getDrawable(R.drawable
                                 .button_drawable, null));
