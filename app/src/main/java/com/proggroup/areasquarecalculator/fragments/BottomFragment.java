@@ -225,8 +225,6 @@ public class BottomFragment extends Fragment {
                     button.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            PrintManager printManager = (PrintManager) getActivity()
-                                    .getSystemService(Context.PRINT_SERVICE);
                             final PrintDocumentAdapter printAdapter;
 
                             // Get a print adapter instance
@@ -243,6 +241,8 @@ public class BottomFragment extends Fragment {
 
                             if (printAdapter != null && Build.VERSION.SDK_INT >= 19) {
                                 // Create a print job with name and adapter instance
+                                PrintManager printManager = (PrintManager) getActivity()
+                                        .getSystemService(Context.PRINT_SERVICE);
                                 printManager.print(jobName, printAdapter,
                                         new PrintAttributes.Builder().build());
                             } else {
