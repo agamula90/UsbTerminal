@@ -11,6 +11,15 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.proggroup.areasquarecalculator.api.ReportAttachable;
 import com.proggroup.areasquarecalculator.data.FontTextSize;
 import com.proggroup.areasquarecalculator.data.ReportData;
@@ -18,6 +27,8 @@ import com.proggroup.areasquarecalculator.data.ReportDataItem;
 import com.proggroup.areasquarecalculator.fragments.BottomFragment;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +39,7 @@ public class ReportCreator {
     private static final String UNKNOWN = "Unknown";
 
     public static List<ReportDataItem> defaultReport(ReportData reportData, ReportAttachable
-             reportAttachable) {
+            reportAttachable) {
         List<ReportDataItem> reportDataItemList = new ArrayList<>();
 
         int backgroundColor = Color.rgb(38, 166, 154);
@@ -40,7 +51,7 @@ public class ReportCreator {
 
         String reportDate = reportAttachable.reportDateString();
 
-        if(reportDate == null) {
+        if (reportDate == null) {
             reportDate = UNKNOWN;
         }
 
@@ -54,29 +65,29 @@ public class ReportCreator {
         dateString = changedToMax(dateString, maxCount);
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, dateString +
-                 reportDate));
+                reportDate));
 
         String sampleId = reportAttachable.sampleId();
 
-        if(sampleId == null) {
+        if (sampleId == null) {
             sampleId = UNKNOWN;
         }
 
         sampleIdString = changedToMax(sampleIdString, maxCount);
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, sampleIdString +
-                 sampleId));
+                sampleId));
 
         String location = reportAttachable.location();
 
-        if(location == null) {
+        if (location == null) {
             location = UNKNOWN;
         }
 
         locationString = changedToMax(locationString, maxCount);
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, locationString +
-                 location));
+                location));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.MEDIUM_TEXT_SIZE, ""));
 
@@ -95,7 +106,8 @@ public class ReportCreator {
 
         String measurementFolder = reportData.getMeasurementFolder();
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurement Folder: " +
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Measurement " +
+                "Folder: " +
                 measurementFolder));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
@@ -104,7 +116,7 @@ public class ReportCreator {
         String measurementFilesText = "Measurement Files:";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
-                 measurementFilesText));
+                measurementFilesText));
 
         List<String> measurementFiles = reportData.getMeasurementFiles();
         List<Float> measurementAverages = reportData.getMeasurementAverages();
@@ -122,9 +134,9 @@ public class ReportCreator {
         for (int i = 0; i < countMeasurements; i++) {
             reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                     measurementFilesTextEmptyString + measurementFiles.get(i) + asvString +
-                    FloatFormatter.format(measurementAverages.get(i))));
+                            FloatFormatter.format(measurementAverages.get(i))));
             average += measurementAverages.get(i);
-            if(maxLengthString.length() < measurementFiles.get(i).length()) {
+            if (maxLengthString.length() < measurementFiles.get(i).length()) {
                 maxLengthString = measurementFiles.get(i);
             }
         }
@@ -134,7 +146,7 @@ public class ReportCreator {
         StringBuilder measureAverageBuilder = new StringBuilder();
 
         for (int i = 0; i < maxLengthString.length() + measurementFilesTextEmptyString.length();
-              i++) {
+             i++) {
             measureAverageBuilder.append(" ");
         }
 
@@ -143,7 +155,7 @@ public class ReportCreator {
         String averageString = FloatFormatter.format(average);
 
         for (int i = 0; i < asvString.length() + averageString.length(); i++) {
-            if(i < beforeAsvString.length()) {
+            if (i < beforeAsvString.length()) {
                 lineBuilder.append(" ");
             } else {
                 lineBuilder.append("-");
@@ -171,7 +183,7 @@ public class ReportCreator {
         measurementFilesText = "Measurements data:";
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
-                 measurementFilesText));
+                measurementFilesText));
 
         measurementFilesTextEmptyString = changedToMax("", measurementFilesText.length());
 
@@ -185,7 +197,7 @@ public class ReportCreator {
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                 measurementFilesTextEmptyString + auto +
-                 reportData.getCountMeasurements() + " measurements"));
+                        reportData.getCountMeasurements() + " measurements"));
 
         int countMinutes = reportAttachable.countMinutes();
 
@@ -214,7 +226,7 @@ public class ReportCreator {
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                 "Operator: " + (operator != null ? operator : UNKNOWN) + "                "
-                        +"Date: " + (date != null ? date : UNKNOWN)));
+                        + "Date: " + (date != null ? date : UNKNOWN)));
         return reportDataItemList;
     }
 
@@ -257,7 +269,7 @@ public class ReportCreator {
                     : 0);
 
             spannable.setSpan(new TypefaceSpan("monospace"), currentLineStartPosition,
-                     currentLineStartPosition + length, Spanned .SPAN_INCLUSIVE_INCLUSIVE);
+                    currentLineStartPosition + length, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 
             if (currentLineStartPosition == 0) {
                 spannable.setSpan(new AlignmentSpan() {
@@ -287,12 +299,69 @@ public class ReportCreator {
         return spannable;
     }
 
+    public static void createReport(List<ReportDataItem> dataForInsert, String folderForWrite)
+            throws DocumentException, FileNotFoundException {
+
+        String startMargin = "  ";
+
+        Document document = new Document();
+        PdfWriter.getInstance(document, new FileOutputStream(folderForWrite));
+        document.open();
+
+        boolean isNextLineNew = true;
+        boolean isFirstItem = true;
+
+        Paragraph newParagraph = null;
+
+        for (ReportDataItem reportDataItem : dataForInsert) {
+            if (isNextLineNew) {
+                reportDataItem.applyLeftPadding(startMargin);
+            }
+
+            Font font = new Font(Font.FontFamily.COURIER, reportDataItem.getFontSize() / 1.2f);
+
+            if (reportDataItem.isBold()) {
+                font.setStyle(Font.BOLD);
+            }
+
+            if (reportDataItem.getForegroundColor() != Color.TRANSPARENT) {
+                int color = reportDataItem.getForegroundColor();
+                font.setColor(Color.red(color), Color.green(color), Color.blue(color));
+            }
+
+            if(isNextLineNew) {
+                if(newParagraph != null) {
+                    document.add(newParagraph);
+                }
+                newParagraph = new Paragraph(reportDataItem.getText(), font);
+            } else {
+                if(newParagraph != null) {
+                    newParagraph.add(new Phrase(reportDataItem.getText(), font));
+                }
+            }
+
+            if(isFirstItem) {
+                newParagraph.setAlignment(Element.ALIGN_CENTER);
+            }
+
+            isNextLineNew = reportDataItem.isAutoAddBreak();
+            isFirstItem = false;
+        }
+
+        if(newParagraph != null) {
+            document.add(newParagraph);
+        }
+
+        document.newPage();
+        document.close();
+    }
+
     public static final String REPORT_START_NAME = "RPT_MES_";
 
     public static final int countReports(String folder) {
         File file = new File(folder);
         File files[] = file.listFiles();
-        if(files == null) {
+        if (files == null) {
             return 0;
         }
 
@@ -313,7 +382,7 @@ public class ReportCreator {
                 String str = name.substring(name.lastIndexOf('_') + 1, name
                         .lastIndexOf("."));
                 int count = Integer.parseInt(str);
-                if(count > maxCount) {
+                if (count > maxCount) {
                     maxCount = count;
                 }
             } catch (NumberFormatException e) {

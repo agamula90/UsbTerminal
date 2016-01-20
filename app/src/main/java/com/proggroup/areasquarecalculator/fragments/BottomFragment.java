@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.itextpdf.text.DocumentException;
 import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
@@ -38,6 +39,7 @@ import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.data.ReportData;
+import com.proggroup.areasquarecalculator.data.ReportDataItem;
 import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
@@ -45,6 +47,7 @@ import com.proggroup.areasquarecalculator.utils.ReportCreator;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -189,11 +192,14 @@ public class BottomFragment extends Fragment {
                     reportData.setAvgData(avgSquarePoints);
                     reportData.setCountMeasurements(mAvgFiles.length);
 
-                    String htmlText = Html.toHtml(ReportCreator.createReport(ReportCreator
-                            .defaultReport(reportData, libraryContentAttachable)));
+                    final List<ReportDataItem> reportDataItems = ReportCreator
+                            .defaultReport(reportData, libraryContentAttachable);
 
-                    int reportNumber = ReportCreator.countReports(libraryContentAttachable
-                            .reportFolders());
+                    String htmlText = Html.toHtml(ReportCreator.createReport(reportDataItems));
+
+                    final String reportFolder = libraryContentAttachable.reportFolders();
+
+                    int reportNumber = ReportCreator.countReports(reportFolder);
 
                     final String fileName = ReportCreator.REPORT_START_NAME + FORMATTER.format
                             (libraryContentAttachable.currentDate()) + "_" + reportNumber;
@@ -203,7 +209,6 @@ public class BottomFragment extends Fragment {
                     webView.loadDataWithBaseURL(null, htmlText, null, "UTF-8", null);
 
                     Button button = new Button(activity);
-                    /*button.setTextAppearance(activity, R.style.ButtonDefaultStyle);*/
                     if (Build.VERSION.SDK_INT >= 21) {
                         button.setBackground(getResources().getDrawable(R.drawable
                                 .button_drawable, null));
@@ -214,7 +219,6 @@ public class BottomFragment extends Fragment {
                         button.setBackgroundResource(R.drawable.button_drawable);
                     }
                     button.setText("Print");
-                    //button.setBackgroundResource(R.drawable.button_drawable);
                     FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
                             .LayoutParams.WRAP_CONTENT, (int) getResources().getDimension(R.dimen
                             .button_height_default));
@@ -227,7 +231,6 @@ public class BottomFragment extends Fragment {
                         public void onClick(View v) {
                             final PrintDocumentAdapter printAdapter;
 
-                            // Get a print adapter instance
                             String jobName = fileName + " Report";
                             if (Build.VERSION.SDK_INT >= 21) {
                                 printAdapter = webView
@@ -240,6 +243,16 @@ public class BottomFragment extends Fragment {
                             }
 
                             if (printAdapter != null && Build.VERSION.SDK_INT >= 19) {
+                                File newPdf = new File(reportFolder, fileName + ".pdf");
+                                try {
+                                    ReportCreator.createReport(reportDataItems, newPdf
+                                                .getAbsolutePath());
+                                } catch (DocumentException e) {
+                                    e.printStackTrace();
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+
                                 // Create a print job with name and adapter instance
                                 PrintManager printManager = (PrintManager) getActivity()
                                         .getSystemService(Context.PRINT_SERVICE);

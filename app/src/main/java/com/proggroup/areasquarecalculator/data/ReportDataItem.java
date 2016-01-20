@@ -6,7 +6,9 @@ public class ReportDataItem {
 
     private int mForegroundColor = Color.TRANSPARENT;
     private boolean mIsBold;
-    private @FontTextSize int mFontSize;
+    private
+    @FontTextSize
+    int mFontSize;
     private String mText;
     private boolean mAutoAddBreak = true;
 
@@ -33,7 +35,9 @@ public class ReportDataItem {
         this.mAutoAddBreak = autoAddBreak;
     }
 
-    public @FontTextSize int getFontSize() {
+    public
+    @FontTextSize
+    int getFontSize() {
         return mFontSize;
     }
 
@@ -43,6 +47,10 @@ public class ReportDataItem {
 
     public String getText() {
         return mText;
+    }
+
+    public void applyLeftPadding(String paddingString) {
+        mText = paddingString + mText;
     }
 
     public boolean isBold() {
