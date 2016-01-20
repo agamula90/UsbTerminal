@@ -144,7 +144,7 @@ public class BottomFragment extends Fragment {
         mReport.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (resultPpmLoaded.getText().length() == 0) {
+                if (resultPpmLoaded.getText().length() == 0 || mAvgFiles == null) {
                     Toast.makeText(getActivity(), "Do auto calculations!", Toast.LENGTH_LONG)
                             .show();
                     return;
@@ -183,7 +183,9 @@ public class BottomFragment extends Fragment {
 
                     reportData.setMeasurementFiles(measurementFiles);
 
-                    List<Float> measurementValues = mAutoAvgPoint.getValues();
+                    List<Float> measurementValues = new ArrayList<>(mAutoAvgPoint.getValues());
+                    measurementValues.set(measurementValues.size() - 1, measurementValues.get
+                            (measurementValues.size() - 1) / 10f);
                     reportData.setMeasurementAverages(measurementValues);
 
                     reportData.setCalibrationCurveFolder(mCurveFile.getName());
@@ -218,7 +220,7 @@ public class BottomFragment extends Fragment {
                     } else {
                         button.setBackgroundResource(R.drawable.button_drawable);
                     }
-                    button.setText("Print");
+                    button.setText("PDF");
                     FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
                             .LayoutParams.WRAP_CONTENT, (int) getResources().getDimension(R.dimen
                             .button_height_default));

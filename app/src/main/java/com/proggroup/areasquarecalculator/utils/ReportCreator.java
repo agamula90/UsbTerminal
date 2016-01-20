@@ -127,52 +127,73 @@ public class ReportCreator {
         String beforeAsvString = "    ";
         String asvString = beforeAsvString + "ASV  ";
 
-        String maxLengthString = "";
-
         String measurementFilesTextEmptyString = changedToMax("", measurementFilesText.length());
+
+        int maxCountSymbolsInFileName = 0;
+        int maxPowerOfSquare = 0;
+
+        for (int i = 0; i < countMeasurements; i++) {
+            if (maxCountSymbolsInFileName < measurementFiles.get(i).length()) {
+                maxCountSymbolsInFileName = measurementFiles.get(i).length();
+            }
+            if (maxPowerOfSquare < FloatFormatter.format(measurementAverages.get(i)).length()) {
+                maxPowerOfSquare = FloatFormatter.format(measurementAverages.get(i)).length();
+            }
+        }
+
+        List<String> measurementAverageStrings = new ArrayList<>(measurementAverages.size());
+
+        for (int i = 0; i < countMeasurements; i++) {
+            measurementFiles.set(i, changedToMax(measurementFiles.get(i),
+                    maxCountSymbolsInFileName));
+
+            measurementAverageStrings.add(changedToMaxFromLeft(FloatFormatter.format
+                    (measurementAverages.get(i)), maxPowerOfSquare));
+        }
+
+        StringBuilder lineBuilder = new StringBuilder();
+        StringBuilder measureAverageBuilder = new StringBuilder();
 
         for (int i = 0; i < countMeasurements; i++) {
             reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                     measurementFilesTextEmptyString + measurementFiles.get(i) + asvString +
-                            FloatFormatter.format(measurementAverages.get(i))));
-            average += measurementAverages.get(i);
-            if (maxLengthString.length() < measurementFiles.get(i).length()) {
-                maxLengthString = measurementFiles.get(i);
+                            measurementAverageStrings.get(i)));
+
+            if (i == 0) {
+                measureAverageBuilder.append(measurementFilesTextEmptyString);
+                lineBuilder.append(measurementFilesTextEmptyString);
+                measureAverageBuilder.append(changedToMax("", measurementFiles.get(i).length
+                        ()));
+                lineBuilder.append(changedToMax("", measurementFiles.get(i).length()));
+                measureAverageBuilder.append(changedToMax("", beforeAsvString.length()));
+                lineBuilder.append(changedToMax("", beforeAsvString.length()));
+                measureAverageBuilder.append(changedToMax("", asvString.length() - beforeAsvString
+                        .length()));
+                lineBuilder.append(changedToMax("", '-', asvString.length() - beforeAsvString
+                        .length()));
             }
+            average += measurementAverages.get(i);
         }
 
         average /= countMeasurements;
 
-        StringBuilder measureAverageBuilder = new StringBuilder();
+        measureAverageBuilder.append(changedToMaxFromLeft(FloatFormatter.format
+                (average), maxPowerOfSquare));
 
-        for (int i = 0; i < maxLengthString.length() + measurementFilesTextEmptyString.length();
-             i++) {
-            measureAverageBuilder.append(" ");
-        }
-
-        StringBuilder lineBuilder = new StringBuilder(measureAverageBuilder);
-
-        String averageString = FloatFormatter.format(average);
-
-        for (int i = 0; i < asvString.length() + averageString.length(); i++) {
-            if (i < beforeAsvString.length()) {
-                lineBuilder.append(" ");
-            } else {
-                lineBuilder.append("-");
-            }
-        }
+        lineBuilder.append(changedToMax("", '-', maxPowerOfSquare));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
                 lineBuilder.toString()));
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE,
-                measureAverageBuilder.toString() + asvString + FloatFormatter.format(average)));
+                measureAverageBuilder.toString()));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 
         String calibrationFolder = reportData.getCalibrationCurveFolder();
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Calibration " +
+        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, "Calibration" +
+                " " +
                 "Curve: " + calibrationFolder));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, BottomFragment
                 .composePpmCurveText(reportData.getPpmData(), reportData.getAvgData())));
@@ -243,6 +264,23 @@ public class ReportCreator {
         for (int i = 0; i < maxCount - value.length(); i++) {
             builder.append(" ");
         }
+        return builder.toString();
+    }
+
+    public static String changedToMax(String value, char addSymbol, int maxCount) {
+        StringBuilder builder = new StringBuilder(value);
+        for (int i = 0; i < maxCount - value.length(); i++) {
+            builder.append(addSymbol);
+        }
+        return builder.toString();
+    }
+
+    public static String changedToMaxFromLeft(String value, int maxCount) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < maxCount - value.length(); i++) {
+            builder.append(" ");
+        }
+        builder.append(value);
         return builder.toString();
     }
 
@@ -318,7 +356,7 @@ public class ReportCreator {
                 reportDataItem.applyLeftPadding(startMargin);
             }
 
-            Font font = new Font(Font.FontFamily.COURIER, reportDataItem.getFontSize() / 1.2f);
+            Font font = new Font(Font.FontFamily.COURIER, reportDataItem.getFontSize() / 1.8f);
 
             if (reportDataItem.isBold()) {
                 font.setStyle(Font.BOLD);
@@ -329,18 +367,18 @@ public class ReportCreator {
                 font.setColor(Color.red(color), Color.green(color), Color.blue(color));
             }
 
-            if(isNextLineNew) {
-                if(newParagraph != null) {
+            if (isNextLineNew) {
+                if (newParagraph != null) {
                     document.add(newParagraph);
                 }
                 newParagraph = new Paragraph(reportDataItem.getText(), font);
             } else {
-                if(newParagraph != null) {
+                if (newParagraph != null) {
                     newParagraph.add(new Phrase(reportDataItem.getText(), font));
                 }
             }
 
-            if(isFirstItem) {
+            if (isFirstItem) {
                 newParagraph.setAlignment(Element.ALIGN_CENTER);
             }
 
@@ -348,7 +386,7 @@ public class ReportCreator {
             isFirstItem = false;
         }
 
-        if(newParagraph != null) {
+        if (newParagraph != null) {
             document.add(newParagraph);
         }
 
