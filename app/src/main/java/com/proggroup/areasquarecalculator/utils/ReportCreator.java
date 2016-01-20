@@ -46,8 +46,6 @@ public class ReportCreator {
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.HEADER_TITLE_SIZE, "EToC Report",
                 backgroundColor, false));
-        //It's \n line
-        reportDataItemList.add(new ReportDataItem(FontTextSize.HEADER_TITLE_SIZE, ""));
 
         String reportDate = reportAttachable.reportDateString();
 
@@ -100,7 +98,6 @@ public class ReportCreator {
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.BIG_TEXT_SIZE, "" + reportData
                 .getPpm(), backgroundColor, false));
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 
@@ -238,7 +235,6 @@ public class ReportCreator {
 
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, volumeText));
 
-        reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
         reportDataItemList.add(new ReportDataItem(FontTextSize.NORMAL_TEXT_SIZE, ""));
 

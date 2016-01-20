@@ -220,12 +220,16 @@ public class BottomFragment extends Fragment {
                     } else {
                         button.setBackgroundResource(R.drawable.button_drawable);
                     }
-                    button.setText("PDF");
+                    button.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R
+                            .dimen.edit_text_size_default));
+                    button.setText("SAVE PDF");
+                    int padding = (int)getResources().getDimension(R.dimen.text_margin_default);
+                    button.setPadding(padding, padding, padding, padding);
                     FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
                             .LayoutParams.WRAP_CONTENT, (int) getResources().getDimension(R.dimen
                             .button_height_default));
                     params.gravity = GravityCompat.END | Gravity.RIGHT;
-                    params.rightMargin = 20;
+                    params.rightMargin = 10;
                     params.topMargin = 10;
                     frameLayout.addView(button, params);
                     button.setOnClickListener(new View.OnClickListener() {
