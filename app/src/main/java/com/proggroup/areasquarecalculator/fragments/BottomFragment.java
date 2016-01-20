@@ -243,25 +243,26 @@ public class BottomFragment extends Fragment {
                             }
 
                             if (printAdapter != null && Build.VERSION.SDK_INT >= 19) {
-                                File newPdf = new File(reportFolder, fileName + ".pdf");
-                                try {
-                                    ReportCreator.createReport(reportDataItems, newPdf
-                                                .getAbsolutePath());
-                                } catch (DocumentException e) {
-                                    e.printStackTrace();
-                                } catch (FileNotFoundException e) {
-                                    e.printStackTrace();
-                                }
-
                                 // Create a print job with name and adapter instance
                                 PrintManager printManager = (PrintManager) getActivity()
                                         .getSystemService(Context.PRINT_SERVICE);
                                 printManager.print(jobName, printAdapter,
                                         new PrintAttributes.Builder().build());
                             } else {
+                                /*
                                 Toast.makeText(getActivity(), "Impossible to print because of " +
                                         "old api! Current api: " + Build.VERSION.SDK_INT + ". " +
-                                        "Required api: 19", Toast.LENGTH_LONG).show();
+                                        "Required api: 19", Toast.LENGTH_LONG).show();*/
+                            }
+
+                            File newPdf = new File(reportFolder, fileName + ".pdf");
+                            try {
+                                ReportCreator.createReport(reportDataItems, newPdf
+                                        .getAbsolutePath());
+                            } catch (DocumentException e) {
+                                e.printStackTrace();
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
                             }
                         }
                     });
