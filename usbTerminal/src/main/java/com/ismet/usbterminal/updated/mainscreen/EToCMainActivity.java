@@ -2809,9 +2809,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     private boolean isClicked = false;
 
     public void simulateClick() {
-        String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
+        /*String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
         sendMessageWithUsbDataReceived(value.getBytes());
-        isClicked = !isClicked;
+        isClicked = !isClicked;*/
     }
 
     public void refreshTextAccordToSensor(boolean isTemperature, String text) {
