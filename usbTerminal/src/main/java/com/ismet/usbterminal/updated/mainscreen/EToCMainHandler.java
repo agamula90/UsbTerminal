@@ -44,13 +44,7 @@ public class EToCMainHandler extends Handler {
             EToCMainActivity activity = weakActivity.get();
             switch (msg.what) {
                 case MESSAGE_USB_DATA_RECEIVED:
-                    // String data = (String) msg.obj;
-                    // data = data.replace("\r", "");
-                    // data = data.replace("\n", "");
-
-                    // byte [] arrT1 = data.getBytes();
                     byte[] usbReadBytes = (byte[]) msg.obj;
-                    // String strH="";
                     String data = "";
                     if (usbReadBytes.length == 7) {
                         if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
@@ -212,12 +206,18 @@ public class EToCMainHandler extends Handler {
 
                             data += "\nCO2: " + co2 + " ppm";
 
+                            activity.refreshTextAccordToSensor(false, co2 + "");
                         } else {
                             data = new String(usbReadBytes);
+                            data = data.replace("\r", "");
+                            data = data.replace("\n", "");
+                            data = "tmp:" + data;
                         }
                     } else {
                         data = new String(usbReadBytes);
-
+                        data = data.replace("\r", "");
+                        data = data.replace("\n", "");
+                        activity.refreshTextAccordToSensor(true, data);
                     }
 
                     Utils.appendText(activity.getTxtOutput(), "Rx: " + data);

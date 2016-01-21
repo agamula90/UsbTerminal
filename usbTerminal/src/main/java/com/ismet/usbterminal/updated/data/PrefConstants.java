@@ -17,6 +17,11 @@ public class PrefConstants {
     public static final String ON2 = "on2";
     public static final String OFF2 = "off2";
 
+    public static final String ON_NAME3 = "on_name3";
+    public static final String OFF_NAME3 = "off_name3";
+    public static final String ON3 = "on3";
+    public static final String OFF3 = "off3";
+
     public static final String DELAY = "delay";
 
     public static final int DELAY_DEFAULT = 2;
@@ -42,4 +47,6 @@ public class PrefConstants {
     public static final String MEASURE_FILE_NAME1_DEFAULT = "MScript1.txt";
     public static final String MEASURE_FILE_NAME2_DEFAULT = "MScript2.txt";
     public static final String MEASURE_FILE_NAME3_DEFAULT = "MScript3.txt";
+
+    public static final String TEMPERATURE_SHIFT = "TempShift";
 }

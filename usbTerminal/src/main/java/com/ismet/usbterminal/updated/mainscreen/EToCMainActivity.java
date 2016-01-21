@@ -19,7 +19,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -65,6 +64,7 @@ import com.ismet.usbterminal.updated.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PrefConstants;
+import com.ismet.usbterminal.updated.data.TemperatureData;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
 import com.ismet.usbterminal.updated.mainscreen.tasks.SendDataToUsbTask;
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
@@ -204,11 +204,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private ScrollView mScrollView;
 
+    private Button mButtonOn1, mButtonOn2, mButtonOn3;
+
     private Button mSendButton, mButtonClear, mButtonMeasure;
 
-    private Button mButtonOn1, mButtonOn2, mButtonPpm;
+    private Button mPowerOn, mTemperature, mCo2;
 
     private LinearLayout mExportLayout, mMarginLayout;
+
+    private TemperatureData mTemperatureData;
+
+    private int mTemperatureShift;
 
     /**
      * @see android.app.Activity#onCreate(Bundle)
@@ -247,6 +253,21 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mTxtOutput = (TextView) findViewById(R.id.output);
         mScrollView = (ScrollView) findViewById(R.id.mScrollView);
 
+        mPowerOn = (Button) findViewById(R.id.power_on);
+
+        mPowerOn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                simulateClick();
+            }
+        });
+
+        mTemperature = (Button) findViewById(R.id.temperature);
+
+        mTemperature.setBackgroundColor(Color.BLUE);
+
+        mCo2 = (Button) findViewById(R.id.co2);
+
         // Timer mTimer = new Timer();
         // mTimer.scheduleAtFixedRate(new TimerTask() {
         //
@@ -266,9 +287,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // }, 1000, 1000);
 
         mButtonOn1 = (Button) findViewById(R.id.buttonOn1);
-        final String str_on_name1 = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                .ON_NAME_DEFAULT);
-        mButtonOn1.setText(str_on_name1);
+        mButtonOn1.setText(mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
+                .ON_NAME_DEFAULT));
         mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         mButtonOn1.setOnClickListener(new OnClickListener() {
 
@@ -398,10 +418,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         });
 
         mButtonOn2 = (Button) findViewById(R.id.buttonOn2);
-        final String str_on_name2 = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                .ON_NAME_DEFAULT);
-        //final String str_off_name1 = mPrefs.getString("off_name1", "");
-        mButtonOn2.setText(str_on_name2);
+        mButtonOn2.setText(mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
+                .ON_NAME_DEFAULT));
         mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         mButtonOn2.setOnClickListener(new OnClickListener() {
 
@@ -531,13 +549,124 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         });
 
-        mButtonPpm = (Button) findViewById(R.id.buttonPpm);
-        mButtonPpm.setOnClickListener(new OnClickListener() {
+        mButtonOn3 = (Button) findViewById(R.id.buttonPpm);
+        //final String str_off_name1 = mPrefs.getString("off_name1", "");
+        mButtonOn3.setText(mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
+                .ON_NAME_DEFAULT));
+        mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+        mButtonOn3.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                // TODO Auto-generated method stub
+                String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
+                        .ON_NAME_DEFAULT);
+                String str_off_name3 = mPrefs.getString(PrefConstants.OFF_NAME3, PrefConstants
+                        .OFF_NAME_DEFAULT);
 
+                String s = mButtonOn3.getTag().toString();
+                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                    mButtonOn3.setText(str_off_name3);
+                    mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+                } else {
+                    mButtonOn3.setText(str_on_name3);
+                    mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+                }
+            }
+        });
+
+        mButtonOn3.setOnLongClickListener(new OnLongClickListener() {
+
+            private EditText editOn, editOff, editOn1, editOff1;
+
+            @Override
+            public boolean onLongClick(View v) {
+                AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
+                        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
+
+                            @Override
+                            public void onInitLayout(View contentView) {
+                                editOn = (EditText) contentView.findViewById(R.id.editOn);
+                                editOff = (EditText) contentView.findViewById(R.id.editOff);
+                                editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
+                                editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
+
+                                String str_on_name = mPrefs.getString(PrefConstants.ON_NAME3,
+                                        PrefConstants.ON_NAME_DEFAULT);
+                                String str_off_name = mPrefs.getString(PrefConstants.OFF_NAME3,
+                                        PrefConstants.OFF_NAME_DEFAULT);
+
+
+                                String str_on = mPrefs.getString(PrefConstants.ON3, "");
+                                String str_off = mPrefs.getString(PrefConstants.OFF3, "");
+
+                                editOn.setText(str_on);
+                                editOff.setText(str_off);
+                                editOn1.setText(str_on_name);
+                                editOff1.setText(str_off_name);
+                            }
+                        };
+
+                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
+                        () {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+
+                        String strOn = editOn.getText().toString();
+                        String strOff = editOff.getText().toString();
+                        String strOn1 = editOn1.getText().toString();
+                        String strOff1 = editOff1.getText().toString();
+
+                        if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
+                                strOff1.equals("")) {
+                            Toast.makeText(EToCMainActivity.this, "Please enter all values", Toast
+                                    .LENGTH_LONG).show();
+                            return;
+                        }
+
+                        Editor edit = mPrefs.edit();
+                        edit.putString(PrefConstants.ON3, strOn);
+                        edit.putString(PrefConstants.OFF3, strOff);
+                        edit.putString(PrefConstants.ON_NAME3, strOn1);
+                        edit.putString(PrefConstants.OFF_NAME3, strOff1);
+                        edit.apply();
+
+                        String s = mButtonOn3.getTag().toString();
+                        if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                            mButtonOn3.setText(strOn1);
+                        } else {
+                            mButtonOn3.setText(strOff1);
+                        }
+
+                        dialog.cancel();
+                    }
+                };
+
+                DialogInterface.OnClickListener cancelListener = new DialogInterface
+                        .OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+                        dialog.cancel();
+                    }
+                };
+
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(EToCMainActivity.this, R.layout
+                                .layout_dialog_on_off, "Set On/Off commands", okListener,
+                        cancelListener,
+                        initLayoutListener).create().show();
+
+                return true;
             }
         });
 
@@ -1251,6 +1380,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
             }
         }
+
         File button2DataFile = new File(settingsFolder, AppData.BUTTON2_DATA);
         if (button2DataFile.exists()) {
             String button2Data = TextFileUtils.readTextFile(button2DataFile);
@@ -1266,6 +1396,37 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
             }
         }
+
+        File button3DataFile = new File(settingsFolder, AppData.BUTTON3_DATA);
+        if (button3DataFile.exists()) {
+            String button3Data = TextFileUtils.readTextFile(button3DataFile);
+            if (!button3Data.isEmpty()) {
+                String values[] = button3Data.split(AppData.SPLIT_STRING);
+                if (values.length == 4) {
+                    SharedPreferences.Editor editor = getPrefs().edit();
+                    editor.putString(PrefConstants.ON_NAME3, values[0]);
+                    editor.putString(PrefConstants.OFF_NAME3, values[1]);
+                    editor.putString(PrefConstants.ON3, values[2]);
+                    editor.putString(PrefConstants.OFF3, values[3]);
+                    editor.apply();
+                }
+            }
+        }
+
+        File temperatureShiftFolder = new File(settingsFolder, AppData.TEMPERATURE_SHIFT_FILE);
+        if (temperatureShiftFolder.exists()) {
+            String temperatureData = TextFileUtils.readTextFile(temperatureShiftFolder);
+            if (!temperatureData.isEmpty()) {
+                try {
+                    mTemperatureShift = Integer.parseInt(temperatureData);
+                } catch (NumberFormatException e) {
+                    mTemperatureShift = 0;
+                }
+            }
+        } else {
+            mTemperatureShift = 0;
+        }
+
         File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
         if (measureDefaultFilesFile.exists()) {
             String measureFilesData = TextFileUtils.readTextFile(measureDefaultFilesFile);
@@ -1322,6 +1483,22 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         button2DataBuilder.append(preferences.getString(PrefConstants.OFF2, ""));
 
         TextFileUtils.writeTextFile(button2DataFile.getAbsolutePath(), button2DataBuilder
+                .toString());
+
+        File button3DataFile = new File(settingsFolder, AppData.BUTTON3_DATA);
+        button2DataFile.createNewFile();
+        StringBuilder button3DataBuilder = new StringBuilder();
+        button3DataBuilder.append(preferences.getString(PrefConstants.ON_NAME3, PrefConstants
+                .ON_NAME_DEFAULT));
+        button3DataBuilder.append(AppData.SPLIT_STRING);
+        button3DataBuilder.append(preferences.getString(PrefConstants.OFF_NAME3, PrefConstants
+                .OFF_NAME_DEFAULT));
+        button3DataBuilder.append(AppData.SPLIT_STRING);
+        button3DataBuilder.append(preferences.getString(PrefConstants.ON3, ""));
+        button3DataBuilder.append(AppData.SPLIT_STRING);
+        button3DataBuilder.append(preferences.getString(PrefConstants.OFF3, ""));
+
+        TextFileUtils.writeTextFile(button3DataFile.getAbsolutePath(), button3DataBuilder
                 .toString());
 
         File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
@@ -2627,6 +2804,30 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     public TextView getTxtOutput() {
         return mTxtOutput;
+    }
+
+    private boolean isClicked = false;
+
+    public void simulateClick() {
+        String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
+        sendMessageWithUsbDataReceived(value.getBytes());
+        isClicked = !isClicked;
+    }
+
+    public void refreshTextAccordToSensor(boolean isTemperature, String text) {
+        if(isTemperature) {
+            mTemperatureData = TemperatureData.parse(text);
+            if(mTemperatureData.isCorrect()) {
+                if(mTemperatureData.getHeaterOn() == 1) {
+                    mTemperature.setBackgroundColor(Color.BLUE);
+                } else {
+                    mTemperature.setBackgroundColor(Color.RED);
+                }
+                mTemperature.setText("" + (mTemperatureData.getTemperature1() + mTemperatureShift));
+            }
+        } else {
+            mCo2.setText(text);
+        }
     }
 
     public void setTimerRunning(boolean isTimerRunning) {
