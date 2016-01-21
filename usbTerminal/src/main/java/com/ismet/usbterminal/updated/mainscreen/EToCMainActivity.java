@@ -16,6 +16,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -264,9 +265,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         mTemperature = (Button) findViewById(R.id.temperature);
 
-        mTemperature.setBackgroundColor(Color.BLUE);
+	    changeBackground(mTemperature, false);
 
         mCo2 = (Button) findViewById(R.id.co2);
+
+	    changeBackground(mCo2, false);
 
         // Timer mTimer = new Timer();
         // mTimer.scheduleAtFixedRate(new TimerTask() {
@@ -2809,21 +2812,50 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     private boolean isClicked = false;
 
     public void simulateClick() {
-        /*String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
+       /* String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
         sendMessageWithUsbDataReceived(value.getBytes());
         isClicked = !isClicked;*/
     }
+
+	private void changeBackground(Button button, boolean isPressed) {
+		if(isPressed) {
+			if(Build.VERSION.SDK_INT >= 16) {
+				button.setBackground(getResources().getDrawable(R.drawable
+						.temperature_button_drawable_pressed));
+			} else {
+				button.setBackgroundDrawable(getResources().getDrawable(R
+						.drawable.temperature_button_drawable_pressed));
+			}
+		} else {
+			if(Build.VERSION.SDK_INT >= 16) {
+				button.setBackground(getResources().getDrawable(R.drawable
+						.temperature_button_drawable_unpressed));
+			} else {
+				button.setBackgroundDrawable(getResources().getDrawable(R
+						.drawable
+						.temperature_button_drawable_unpressed));
+			}
+		}
+	}
 
     public void refreshTextAccordToSensor(boolean isTemperature, String text) {
         if(isTemperature) {
             mTemperatureData = TemperatureData.parse(text);
             if(mTemperatureData.isCorrect()) {
-                if(mTemperatureData.getHeaterOn() == 1) {
-                    mTemperature.setBackgroundColor(Color.BLUE);
-                } else {
-                    mTemperature.setBackgroundColor(Color.RED);
-                }
-                mTemperature.setText("" + (mTemperatureData.getTemperature1() + mTemperatureShift));
+	            Runnable updateRunnable = new Runnable() {
+
+		            @Override
+		            public void run() {
+			            //changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
+
+			            mTemperature.setText("" + (mTemperatureData.getTemperature1() +
+					            mTemperatureShift));
+		            }
+	            };
+	                //mTemperature.post(updateRunnable);
+	            updateRunnable.run();
+            } else {
+	            mTemperature.setText("" + mTemperatureData.getWrongPosition());
             }
         } else {
             mCo2.setText(text);
