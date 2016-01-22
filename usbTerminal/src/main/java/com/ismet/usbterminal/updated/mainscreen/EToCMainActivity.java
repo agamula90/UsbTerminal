@@ -190,6 +190,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private ServiceConnection mServiceConnection;
 
+    private boolean mServiceBounded;
+
     private UsbServiceWritable mUsbServiceWritable;
 
     private ExecutorService mExecutor;
@@ -228,6 +230,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             Log.d(TAG, "onCreate");
 
         mExecutor = Executors.newSingleThreadExecutor();
+
+        mServiceBounded = false;
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(EToCMainActivity.this);
 
@@ -282,6 +286,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
 
                 if (powerOn) {
+                    mServiceBounded = true;
                     bindService(new Intent(EToCMainActivity.this, UsbService.class),
                             mServiceConnection, BIND_AUTO_CREATE);
                 } else {
@@ -357,6 +362,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         edit.putString(PrefConstants.POWER_ON_NAME, strOn1);
                         edit.putString(PrefConstants.POWER_OFF_NAME, strOff1);
                         edit.apply();
+
+                        String a = mPrefs.getString(PrefConstants.POWER_ON_NAME, "asd");
 
                         String s = mPower.getTag().toString();
                         if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
@@ -1658,7 +1665,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
         buttonPowerDataFile.createNewFile();
         StringBuilder buttonPowerDataBuilder = new StringBuilder();
-        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON, PrefConstants
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME, PrefConstants
                 .POWER_ON_NAME_DEFAULT));
         buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
         buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF_NAME,
@@ -1890,7 +1897,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             mSendDataToUsbTask = null;
         }
 
-        unbindService(mServiceConnection);
+        if(mServiceBounded) {
+            unbindService(mServiceConnection);
+        }
 
         if (mHandler != null) {
             mHandler.removeCallbacks(null);
@@ -2891,6 +2900,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable = null;
                 }
                 unbindService(mServiceConnection);
+                mServiceBounded = false;
             }
         });
     }
