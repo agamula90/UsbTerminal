@@ -9,6 +9,7 @@ public class AppData {
     public static final String BUTTON1_DATA = "Button1.txt";
     public static final String BUTTON2_DATA = "Button2.txt";
     public static final String BUTTON3_DATA = "Button3.txt";
+    public static final String POWER_DATA = "Power.txt";
 
     public static final String MEASURE_DEFAULT_FILES = "MeasureFiles.txt";
 

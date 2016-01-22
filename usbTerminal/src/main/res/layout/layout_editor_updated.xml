@@ -46,7 +46,7 @@
                             android:weightSum="3">
 
                             <Button
-                                android:id="@+id/power_on"
+                                android:id="@+id/power"
                                 style="@style/ButtonDefaultStyle"
                                 android:layout_width="0dp"
                                 android:layout_gravity="center_vertical"

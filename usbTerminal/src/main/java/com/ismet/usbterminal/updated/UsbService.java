@@ -102,24 +102,11 @@ public class UsbService extends Service implements UsbServiceWritable {
 				}
 			} else if (action.equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
 				// Usb device was disconnected. send an intent to the Main Activity
-				Intent intent = new Intent(ACTION_USB_DISCONNECTED);
-				context.sendBroadcast(intent);
-				mSerialPortConnected = false;
+				disconnect();
 
-				if (mSerialPort != null) {
-					try {
-						mSerialPort.close();
-						mSerialPort = null;
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-
-				if (mConnection != null) {
-					mConnection.close();
-					mConnection = null;
-				}
-			}
+                Intent intent = new Intent(ACTION_USB_DISCONNECTED);
+                context.sendBroadcast(intent);
+            }
 		}
 	};
 
@@ -183,21 +170,7 @@ public class UsbService extends Service implements UsbServiceWritable {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-
-		mSerialPortConnected = false;
-		if (mSerialPort != null) {
-			try {
-				mSerialPort.close();
-				mSerialPort = null;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (mConnection != null) {
-			mConnection.close();
-			mConnection = null;
-		}
+		disconnect();
 
 		unregisterReceiver(usbReceiver);
 	}
@@ -284,11 +257,29 @@ public class UsbService extends Service implements UsbServiceWritable {
 		return mDevice;
 	}
 
+	@Override
+	public void disconnect() {
+        mSerialPortConnected = false;
+        if (mSerialPort != null) {
+            try {
+                mSerialPort.close();
+                mSerialPort = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (mConnection != null) {
+            mConnection.close();
+            mConnection = null;
+        }
+	}
+
 	/*
-	 * A simple thread to open a serial port.
-	 * Although it should be a fast operation. moving usb operations away from UI thread is a
-	 * good thing.
-	 */
+         * A simple thread to open a serial port.
+         * Although it should be a fast operation. moving usb operations away from UI thread is a
+         * good thing.
+         */
 	private class ConnectionThread extends Thread {
 
 		@Override

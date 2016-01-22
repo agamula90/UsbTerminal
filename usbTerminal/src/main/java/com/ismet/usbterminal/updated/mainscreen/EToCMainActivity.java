@@ -110,7 +110,7 @@ import static fr.xgouchet.texteditor.common.Constants.*;
 
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher {
 
-    private static Handler sHandler;
+    private Handler mHandler;
 
     /*
      * Notifications from UsbService will be received here.
@@ -208,7 +208,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private Button mSendButton, mButtonClear, mButtonMeasure;
 
-    private Button mPowerOn, mTemperature, mCo2;
+    private Button mPower, mTemperature, mCo2;
 
     private LinearLayout mExportLayout, mMarginLayout;
 
@@ -234,7 +234,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         loadPreferencesFromLocalData();
 
-        sHandler = new EToCMainHandler(this);
+        mHandler = new EToCMainHandler(this);
 
         //
         mReadIntent = true;
@@ -253,12 +253,140 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mTxtOutput = (TextView) findViewById(R.id.output);
         mScrollView = (ScrollView) findViewById(R.id.mScrollView);
 
-        mPowerOn = (Button) findViewById(R.id.power_on);
+        mPower = (Button) findViewById(R.id.power);
+        mPower.setText(mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+                .POWER_ON_NAME_DEFAULT));
+        mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
 
-        mPowerOn.setOnClickListener(new OnClickListener() {
+        mPower.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                simulateClick();
+                String powerOnName = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+                        .POWER_ON_NAME_DEFAULT);
+                String powerOffName = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
+                        .POWER_OFF_NAME_DEFAULT);
+
+                String s = mPower.getTag().toString();
+
+                boolean powerOn;
+
+                if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
+                    mPower.setText(powerOffName);
+                    mPower.setTag(PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase());
+                    powerOn = true;
+                } else {
+                    mPower.setText(powerOnName);
+                    mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
+                    powerOn = false;
+                }
+
+                if (powerOn) {
+                    bindService(new Intent(EToCMainActivity.this, UsbService.class),
+                            mServiceConnection, BIND_AUTO_CREATE);
+                } else {
+                    SharedPreferences preferences = getPrefs();
+                    String powerOffCommand = preferences.getString(PrefConstants.POWER_OFF,
+                            PrefConstants.POWER_OFF_COMMAND_DEFAULT);
+
+                    sendMessageWithUsbDataReady(powerOffCommand);
+                    disconnectFromService();
+                }
+            }
+        });
+
+        mPower.setOnLongClickListener(new OnLongClickListener() {
+
+            private EditText editOn, editOff, editOn1, editOff1;
+
+            @Override
+            public boolean onLongClick(View v) {
+                AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
+                        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
+
+                            @Override
+                            public void onInitLayout(View contentView) {
+                                editOn = (EditText) contentView.findViewById(R.id.editOn);
+                                editOff = (EditText) contentView.findViewById(R.id.editOff);
+                                editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
+                                editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
+
+                                String str_on_name = mPrefs.getString(PrefConstants.POWER_ON_NAME,
+                                        PrefConstants.POWER_ON_NAME_DEFAULT);
+                                String str_off_name = mPrefs.getString(PrefConstants
+                                        .POWER_OFF_NAME, PrefConstants.POWER_OFF_NAME_DEFAULT);
+
+                                String str_on = mPrefs.getString(PrefConstants.POWER_ON,
+                                        PrefConstants.POWER_ON_COMMAND_DEFAULT);
+                                String str_off = mPrefs.getString(PrefConstants.POWER_OFF,
+                                        PrefConstants.POWER_OFF_COMMAND_DEFAULT);
+
+                                editOn.setText(str_on);
+                                editOff.setText(str_off);
+                                editOn1.setText(str_on_name);
+                                editOff1.setText(str_off_name);
+                            }
+                        };
+
+                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
+                        () {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+
+                        String strOn = editOn.getText().toString();
+                        String strOff = editOff.getText().toString();
+                        String strOn1 = editOn1.getText().toString();
+                        String strOff1 = editOff1.getText().toString();
+
+                        if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
+                                strOff1.equals("")) {
+                            Toast.makeText(EToCMainActivity.this, "Please enter all values", Toast
+                                    .LENGTH_LONG).show();
+                            return;
+                        }
+
+                        Editor edit = mPrefs.edit();
+                        edit.putString(PrefConstants.POWER_ON, strOn);
+                        edit.putString(PrefConstants.POWER_OFF, strOff);
+                        edit.putString(PrefConstants.POWER_ON_NAME, strOn1);
+                        edit.putString(PrefConstants.POWER_OFF_NAME, strOff1);
+                        edit.apply();
+
+                        String s = mPower.getTag().toString();
+                        if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
+                            mPower.setText(strOn1);
+                        } else {
+                            mPower.setText(strOff1);
+                        }
+
+                        dialog.cancel();
+                    }
+                };
+
+                DialogInterface.OnClickListener cancelListener = new DialogInterface
+                        .OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+                        dialog.cancel();
+                    }
+                };
+
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(EToCMainActivity.this, R.layout
+                                .layout_dialog_on_off, "Set On/Off commands", okListener,
+                        cancelListener, initLayoutListener).create().show();
+
+                return true;
             }
         });
 
@@ -1237,7 +1365,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             ////											msg.what = 0;
                             ////											msg.obj = arr;
                             ////											EToCMainActivity
-                            // .sHandler.sendMessage(msg);
+                            // .mHandler.sendMessage(msg);
                             //										}
                             //
                             //										@Override
@@ -1257,7 +1385,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             ////											msg.what = 0;
                             ////											msg.obj = arr;
                             ////											EToCMainActivity
-                            // .sHandler.sendMessage(msg);
+                            // .mHandler.sendMessage(msg);
                             //
                             //											mIsTimerRunning =
                             // false;
@@ -1312,16 +1440,23 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 UsbService.UsbBinder binder = (UsbService.UsbBinder) service;
                 mUsbServiceWritable = binder.getApi();
                 mUsbServiceWritable.searchForUsbDevice();
+
+                SharedPreferences preferences = getPrefs();
+
+                String powerOnCommand = preferences.getString(PrefConstants.POWER_ON, PrefConstants
+                        .POWER_ON_COMMAND_DEFAULT);
+
+                sendMessageWithUsbDataReady(powerOnCommand);
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                mUsbServiceWritable = null;
+                if(mUsbServiceWritable != null) {
+                    mUsbServiceWritable.disconnect();
+                    mUsbServiceWritable = null;
+                }
             }
         };
-
-        bindService(new Intent(this, UsbService.class),
-                mServiceConnection, BIND_AUTO_CREATE);
 
         int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT);
         int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
@@ -1413,6 +1548,22 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             }
         }
 
+        File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
+        if (buttonPowerDataFile.exists()) {
+            String powerData = TextFileUtils.readTextFile(buttonPowerDataFile);
+            if (!powerData.isEmpty()) {
+                String values[] = powerData.split(AppData.SPLIT_STRING);
+                if (values.length == 4) {
+                    SharedPreferences.Editor editor = getPrefs().edit();
+                    editor.putString(PrefConstants.POWER_ON_NAME, values[0]);
+                    editor.putString(PrefConstants.POWER_OFF_NAME, values[1]);
+                    editor.putString(PrefConstants.POWER_ON, values[2]);
+                    editor.putString(PrefConstants.POWER_OFF, values[3]);
+                    editor.apply();
+                }
+            }
+        }
+
         File temperatureShiftFolder = new File(settingsFolder, AppData.TEMPERATURE_SHIFT_FILE);
         if (temperatureShiftFolder.exists()) {
             String temperatureData = TextFileUtils.readTextFile(temperatureShiftFolder);
@@ -1499,6 +1650,24 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         button3DataBuilder.append(preferences.getString(PrefConstants.OFF3, ""));
 
         TextFileUtils.writeTextFile(button3DataFile.getAbsolutePath(), button3DataBuilder
+                .toString());
+
+        File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
+        buttonPowerDataFile.createNewFile();
+        StringBuilder buttonPowerDataBuilder = new StringBuilder();
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON, PrefConstants
+                .POWER_ON_NAME_DEFAULT));
+        buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF_NAME,
+                PrefConstants.POWER_OFF_NAME_DEFAULT));
+        buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON, PrefConstants
+                .POWER_ON_COMMAND_DEFAULT));
+        buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF,
+                PrefConstants.POWER_OFF_COMMAND_DEFAULT));
+
+        TextFileUtils.writeTextFile(buttonPowerDataFile.getAbsolutePath(), buttonPowerDataBuilder
                 .toString());
 
         File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
@@ -1720,8 +1889,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         unbindService(mServiceConnection);
 
-        if (sHandler != null) {
-            sHandler.removeCallbacks(null);
+        if (mHandler != null) {
+            mHandler.removeCallbacks(null);
         }
     }
 
@@ -2690,24 +2859,37 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public void sendMessageWithUsbDataReceived(byte bytes[]) {
-        Message message = sHandler.obtainMessage();
+        Message message = mHandler.obtainMessage();
         message.obj = bytes;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_RECEIVED;
         message.sendToTarget();
     }
 
     public void sendOpenChartDataToHandler(String value) {
-        Message message = sHandler.obtainMessage();
+        Message message = mHandler.obtainMessage();
         message.obj = value;
         message.what = EToCMainHandler.MESSAGE_OPEN_CHART;
         message.sendToTarget();
     }
 
     public void sendMessageWithUsbDataReady(String dataForSend) {
-        Message message = sHandler.obtainMessage();
+        Message message = mHandler.obtainMessage();
         message.obj = dataForSend;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
         message.sendToTarget();
+    }
+
+    public void disconnectFromService() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(mUsbServiceWritable != null) {
+                    mUsbServiceWritable.disconnect();
+                    mUsbServiceWritable = null;
+                }
+                unbindService(mServiceConnection);
+            }
+        });
     }
 
     public XYMultipleSeriesRenderer getRenderer() {
@@ -2815,10 +2997,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
     }
 
     public void refreshTextAccordToSensor(boolean isTemperature, String text) {
-        if(isTemperature) {
+        if (isTemperature) {
             mTemperatureData = TemperatureData.parse(text);
-            if(mTemperatureData.isCorrect()) {
-                if(mTemperatureData.getHeaterOn() == 1) {
+            if (mTemperatureData.isCorrect()) {
+                if (mTemperatureData.getHeaterOn() == 1) {
                     mTemperature.setBackgroundColor(Color.BLUE);
                 } else {
                     mTemperature.setBackgroundColor(Color.RED);
