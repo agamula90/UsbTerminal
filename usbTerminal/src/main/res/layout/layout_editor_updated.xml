@@ -51,6 +51,7 @@
                                 android:layout_width="0dp"
                                 android:layout_gravity="center_vertical"
                                 android:layout_weight="1"
+                                android:textColor="@android:color/black"
                                 android:text="power on"/>
 
                             <Button
@@ -60,8 +61,9 @@
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:text=""
-                                android:enabled="false"/>
+                                android:textSize="18sp"
+                                android:text="" />
+                                <!--android:enabled="false" /> -->
 
                             <!-- <Button
                                 android:id="@+id/buttonOff"
@@ -80,8 +82,9 @@
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:text=""
-                                android:enabled="false"/>
+                                android:textSize="18sp"
+                                android:text="" />
+                                <!--android:enabled="false"/> -->
                         </LinearLayout>
 
                         <LinearLayout
@@ -178,7 +181,7 @@
                                 android:id="@+id/editor"
                                 android:layout_width="match_parent"
                                 android:layout_height="0dp"
-                                android:layout_weight="1.4"
+                                android:layout_weight="1.7"
                                 android:gravity="top|left"
                                 android:imeOptions="actionSend"
                                 android:inputType="textMultiLine"
@@ -194,7 +197,7 @@
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="0dp"
-                                android:layout_weight="2.6"
+                                android:layout_weight="2.3"
                                 android:orientation="vertical">
 
                                 <!-- Line Monitor -->
