@@ -7,7 +7,7 @@ import android.hardware.usb.UsbManager;
 import android.view.Gravity;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.updated.UsbService;
+import com.ismet.usbterminal.updated.services.UsbService;
 
 import java.lang.ref.WeakReference;
 
@@ -28,6 +28,13 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
                 EToCMainActivity activity = weakActivity.get();
                 activity.sendMessageWithUsbDataReceived(intent.getByteArrayExtra(UsbService
                         .DATA_RECEIVED));
+            }
+            return;
+        } else if(action.equals(EToCMainHandler.USB_DATA_READY)) {
+            if (weakActivity.get() != null) {
+                EToCMainActivity activity = weakActivity.get();
+                activity.sendMessageWithUsbDataReady(intent.getStringExtra(EToCMainHandler
+                        .DATA_EXTRA));
             }
             return;
         }

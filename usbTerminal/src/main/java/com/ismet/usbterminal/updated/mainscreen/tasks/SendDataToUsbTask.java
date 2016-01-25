@@ -5,8 +5,11 @@ import android.os.AsyncTask;
 import android.support.v4.util.Pair;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PrefConstants;
+import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.updated.services.PullStateManagingService;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -51,6 +54,10 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
                     false)) {
                 publishProgress(new Pair<Integer, String>(2, null));
             }
+
+            /*EToCApplication.getInstance().setPullState(PullState.NONE);
+            weakActivity.get().startService(PullStateManagingService.intentForService
+                    (weakActivity.get(), true));*/
         }
 
         return null;

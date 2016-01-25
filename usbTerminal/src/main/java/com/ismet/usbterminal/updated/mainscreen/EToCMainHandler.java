@@ -1,5 +1,6 @@
 package com.ismet.usbterminal.updated.mainscreen;
 
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
@@ -9,8 +10,11 @@ import android.text.style.AbsoluteSizeSpan;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PrefConstants;
+import com.ismet.usbterminal.updated.data.PullState;
+import com.ismet.usbterminal.updated.services.PullStateManagingService;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 
@@ -19,6 +23,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class EToCMainHandler extends Handler {
+
+    public static final String USB_DATA_READY = "com.ismet.usbservice.USB_DATA_READY";
+    public static final String DATA_EXTRA = "data_extra";
 
     public static final int MESSAGE_USB_DATA_RECEIVED = 0;
 
@@ -207,6 +214,14 @@ public class EToCMainHandler extends Handler {
                             data += "\nCO2: " + co2 + " ppm";
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
+
+                            EToCApplication application = EToCApplication.getInstance();
+
+                            if(application.getPullState() != PullState.NONE) {
+                                application.setPullState(PullState.NONE);
+                                activity.startService(PullStateManagingService
+                                         .intentForTemperature(activity));
+                            }
                         } else {
                             data = new String(usbReadBytes);
                             data = data.replace("\r", "");
@@ -218,10 +233,19 @@ public class EToCMainHandler extends Handler {
                         data = data.replace("\r", "");
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
+
+                        EToCApplication application = EToCApplication.getInstance();
+
+                        if(application.getPullState() != PullState.NONE) {
+                            application.setPullState(PullState.NONE);
+                            activity.startService(PullStateManagingService.intentForCo2(activity));
+                        }
                     }
 
                     Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
                     activity.getScrollView().smoothScrollTo(0, 0);
+
+                    EToCApplication.getInstance().setPullState(PullState.NONE);
                     break;
                 case MESSAGE_USB_DATA_READY:
                     String command = (String) msg.obj;

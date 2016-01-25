@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated;
+package com.ismet.usbterminal.updated.services;
 
 
 import android.app.PendingIntent;
@@ -16,6 +16,7 @@ import android.os.IBinder;
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
+import com.ismet.usbterminal.updated.UsbServiceWritable;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -57,11 +57,14 @@ import android.widget.Toast;
 import com.ismet.usbterminal.BuildConfig;
 import com.ismet.usbterminal.EmptyFragment;
 import com.ismet.usbterminal.R;
+import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.TedOpenActivity;
 import com.ismet.usbterminal.updated.TedOpenRecentActivity;
 import com.ismet.usbterminal.updated.TedSaveAsActivity;
 import com.ismet.usbterminal.updated.TedSettingsActivity;
-import com.ismet.usbterminal.updated.UsbService;
+import com.ismet.usbterminal.updated.data.PullState;
+import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.ismet.usbterminal.updated.services.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PowerState;
@@ -817,6 +820,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 //					sendMessage();
                 //				}
 
+                EToCApplication.getInstance().setPullState(PullState.NONE);
+                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+                        false));
                 sendMessage();
 
             }
@@ -973,6 +979,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             .LENGTH_SHORT).show();
                     return;
                 }*/
+
+                EToCApplication.getInstance().setPullState(PullState.NONE);
+                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+                        false));
 
                 if (mIsTimerRunning) {
                     Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
@@ -1439,6 +1449,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         setFilters();
 
+        startService(PullStateManagingService.intentForService(this, true));
+
         mServiceConnection = new ServiceConnection() {
 
             @Override
@@ -1758,6 +1770,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME);
     }
 
+    public static void sendBroadCastWithData(Context context, String data) {
+        Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
+        intent.putExtra(EToCMainHandler.DATA_EXTRA, data);
+        context.sendBroadcast(intent);
+    }
+
     public void sendCommand(String command) {
         if ((command != null) && (!command.equals("")) && (!command.equals("\n"))) {
             command = command.replace("\r", "");
@@ -1803,51 +1821,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             for (int i = 0; i < commands.length; i++) {
                 String command = commands[i];
                 Log.d("command", command);
-                if ((command != null) && (!command.equals("")) && (!command.equals("\n"))) {
-                    command = command.replace("\r", "");
-                    command = command.replace("\n", "");
-                    command = command.trim();
-
-                    if (mUsbServiceWritable != null) {
-                        if (command.contains("(") && command.contains(")")) {
-                            // HEX
-                            command = command.replace("(", "");
-                            command = command.replace(")", "");
-                            command = command.trim();
-                            String[] arr = command.split("-");
-
-                            byte[] bytes = new byte[arr.length];
-                            for (int j = 0; j < bytes.length; j++) {
-                                bytes[j] = (byte) Integer.parseInt(arr[j], 16);
-                            }
-                            mUsbServiceWritable.writeToUsb(bytes);
-                        } else {
-                            // ASCII
-                            mUsbServiceWritable.writeToUsb(command.getBytes());
-                            mUsbServiceWritable.writeToUsb("\r".getBytes());
-                        }
-
-                        Utils.appendText(mTxtOutput, "Tx: " + command);
-                        mScrollView.smoothScrollTo(0, 0);
-                    } else {
-                        Toast.makeText(EToCMainActivity.this, "serial port not found", Toast
-                                .LENGTH_LONG).show();
-                    }
-
-                    // mTxtOutput.append("Tx: " + command + "\n");
-                    // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
-
-                    // String cr = "\r";
-                    // if (UsbService.serialPort != null){ // if UsbService
-                    // // was correctly
-                    // // binded, Send
-                    // // data
-                    // UsbService.write(cr.getBytes());
-                    // }
-
-                    // mTxtOutput.append("Tx: " + cr + "\n");
-                    // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
-                }
+                sendCommand(command);
             }
         } else {
             if (mUsbServiceWritable != null) { // if UsbService was
@@ -1898,6 +1872,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         if (mHandler != null) {
             mHandler.removeCallbacks(null);
         }
+
+        stopService(new Intent(this, PullStateManagingService.class));
     }
 
     /**
@@ -2861,6 +2837,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbService.ACTION_DATA_RECEIVED);
+        filter.addAction(EToCMainHandler.USB_DATA_READY);
         registerReceiver(mUsbReceiver, filter);
     }
 

@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
+import com.ismet.usbterminal.updated.data.PullData;
+import com.ismet.usbterminal.updated.data.PullState;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.io.File;
@@ -25,6 +27,10 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	public static EToCApplication getInstance() {
 		return instance;
 	}
+
+	private volatile @PullState int mPullState;
+
+    private final PullData pullData = new PullData();
 
 	@Override
 	public void onCreate() {
@@ -90,4 +96,16 @@ public class EToCApplication extends InterpolationCalculatorApp {
 			}
 		});*/
 	}
+
+    public void setPullState(@PullState int pullState) {
+        this.mPullState = pullState;
+    }
+
+    public int getPullState() {
+        return mPullState;
+    }
+
+    public PullData getPullData() {
+        return pullData;
+    }
 }

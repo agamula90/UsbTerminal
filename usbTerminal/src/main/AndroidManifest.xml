@@ -33,10 +33,13 @@
 
         <service
             android:name=".UsbService"
-            android:enabled="true" >
-        </service>
+            android:enabled="true"  />
 
-        <service android:name=".updated.UsbService" android:enabled="true"/>
+        <service android:name=".updated.services.UsbService" android:enabled="true"
+                 android:stopWithTask="true"/>
+
+        <service android:name=".updated.services.PullStateManagingService"
+                  android:enabled="true" />
 
         <activity
             android:name=".LoginActivity"
