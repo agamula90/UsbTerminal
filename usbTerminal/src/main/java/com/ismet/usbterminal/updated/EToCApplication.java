@@ -19,6 +19,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class EToCApplication extends InterpolationCalculatorApp {
 
@@ -31,6 +32,12 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	private volatile @PullState int mPullState;
 
     private final PullData pullData = new PullData();
+
+	private ScheduledExecutorService mPullTemperatureService;
+
+	private ScheduledExecutorService mPullCo2Service;
+
+	private ScheduledExecutorService mPullTempService;
 
 	@Override
 	public void onCreate() {
@@ -108,4 +115,28 @@ public class EToCApplication extends InterpolationCalculatorApp {
     public PullData getPullData() {
         return pullData;
     }
+
+	public void setPullCo2Service(ScheduledExecutorService mPullCo2Service) {
+		this.mPullCo2Service = mPullCo2Service;
+	}
+
+	public ScheduledExecutorService getPullCo2Service() {
+		return mPullCo2Service;
+	}
+
+	public void setPullTemperatureService(ScheduledExecutorService mPullTemperatureService) {
+		this.mPullTemperatureService = mPullTemperatureService;
+	}
+
+	public ScheduledExecutorService getPullTemperatureService() {
+		return mPullTemperatureService;
+	}
+
+	public void swapPull() {
+		mPullTempService = mPullState == PullState.CO2 ? mPullCo2Service : mPullTemperatureService;
+	}
+
+	public ScheduledExecutorService getPullTempService() {
+		return mPullTempService;
+	}
 }

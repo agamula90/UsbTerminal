@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PullStateManagingService extends IntentService {
+public class PullStateManagingService extends Service {
 
     public static final String IS_AUTO_PULL_ON = "is_auto_pull_on";
     public static final String EXTRA_IS_TEMPERATURE = "is_temperature";
@@ -40,10 +40,6 @@ public class PullStateManagingService extends IntentService {
 
     private AtomicBoolean mIsAutoHandling = new AtomicBoolean(true);
 
-    public PullStateManagingService() {
-        super("PullStateManagingService");
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -55,20 +51,20 @@ public class PullStateManagingService extends IntentService {
         super.onCreate();
         eToCApplication = EToCApplication.getInstance();
 
-        mPullTemperatureService = Executors.newSingleThreadScheduledExecutor();
-        mPullCo2Service = Executors.newSingleThreadScheduledExecutor();
+        mPullTemperatureService = eToCApplication.getPullTemperatureService();
+        mPullCo2Service = eToCApplication.getPullCo2Service();
     }
 
     public static Intent intentForCo2(Context context) {
         EToCApplication application = EToCApplication.getInstance();
         Intent intent = new Intent(application, PullStateManagingService.class);
-        /*
+
         intent.putExtra(IS_AUTO_PULL_ON, true);
         intent.putExtra(EXTRA_IS_TEMPERATURE_CO2_HANDLING, true);
-        intent.putExtra(EXTRA_IS_TEMPERATURE, false);*/
-        application.getPullData().isAutoPullOn = true;
+        intent.putExtra(EXTRA_IS_TEMPERATURE, false);
+        /*application.getPullData().isAutoPullOn = true;
         application.getPullData().isTemperature = false;
-        application.getPullData().isValuesHandling = true;
+        application.getPullData().isValuesHandling = true;*/
 
         return intent;
     }
@@ -76,12 +72,12 @@ public class PullStateManagingService extends IntentService {
     public static Intent intentForTemperature(Context context) {
         EToCApplication application = EToCApplication.getInstance();
         Intent intent = new Intent(application, PullStateManagingService.class);
-        /*intent.putExtra(IS_AUTO_PULL_ON, true);
+        intent.putExtra(IS_AUTO_PULL_ON, true);
         intent.putExtra(EXTRA_IS_TEMPERATURE_CO2_HANDLING, true);
-        intent.putExtra(EXTRA_IS_TEMPERATURE, true);*/
-        application.getPullData().isAutoPullOn = true;
+        intent.putExtra(EXTRA_IS_TEMPERATURE, true);
+        /*application.getPullData().isAutoPullOn = true;
         application.getPullData().isValuesHandling = true;
-        application.getPullData().isTemperature = true;
+        application.getPullData().isTemperature = true;*/
 
         return intent;
     }
@@ -89,39 +85,37 @@ public class PullStateManagingService extends IntentService {
     public static Intent intentForService(Context context, boolean isAutoPull) {
         EToCApplication application = EToCApplication.getInstance();
         Intent intent = new Intent(application, PullStateManagingService.class);
-        /*intent.putExtra(IS_AUTO_PULL_ON, isAutoPull);*/
-        application.getPullData().isAutoPullOn = isAutoPull;
+        intent.putExtra(IS_AUTO_PULL_ON, isAutoPull);
+        /*application.getPullData().isAutoPullOn = isAutoPull;
         application.getPullData().isValuesHandling = false;
-        application.getPullData().isTemperature = false;
+        application.getPullData().isTemperature = false;*/
         return intent;
     }
 
     @Override
-    public void onHandleIntent(Intent intent) {
-        //Bundle extras = intent.getExtras();
-        //if (extras != null) {
-        //boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
-        boolean isPull = eToCApplication.getPullData().isAutoPullOn;
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Bundle extras = intent.getExtras();
+        if (extras != null) {
+        boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
             if (isPull) {
                 mIsAutoHandling.set(true);
 
-                //boolean isValuesHandling = intent.getBooleanExtra
-                //        (EXTRA_IS_TEMPERATURE_CO2_HANDLING, false);
-                boolean isValuesHandling = eToCApplication.
-                        getPullData().isValuesHandling;
+                boolean isValuesHandling = intent.getBooleanExtra
+                        (EXTRA_IS_TEMPERATURE_CO2_HANDLING, false);
 
                 if (isValuesHandling) {
-                    //boolean isTemperature = intent.getBooleanExtra(EXTRA_IS_TEMPERATURE,
-                    //        false);
-                    boolean isTemperature = eToCApplication.getPullData().isTemperature;
+                    boolean isTemperature = intent.getBooleanExtra(EXTRA_IS_TEMPERATURE,
+                            false);
                     if (isTemperature) {
                         eToCApplication.setPullState(PullState.TEMPERATURE);
                         try {
                             if(mPullTemperatureScheduledFuture != null) {
                                 mPullTemperatureScheduledFuture.cancel(true);
                             }
-                            mPullTemperatureService.shutdown();
-                            mPullTemperatureService.awaitTermination(1, TimeUnit.SECONDS);
+	                        if(mPullTemperatureService != null) {
+		                        mPullTemperatureService.shutdown();
+		                       // mPullTemperatureService.awaitTermination(1, TimeUnit.SECONDS);
+	                        }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -130,14 +124,17 @@ public class PullStateManagingService extends IntentService {
                         mPullTemperatureScheduledFuture = mPullTemperatureService
                                 .scheduleWithFixedDelay(mAutoPullTemperatureCo2Runnable, 0, 1,
                                           TimeUnit.SECONDS);
+	                    eToCApplication.setPullTemperatureService(mPullTemperatureService);
                     } else {
                         eToCApplication.setPullState(PullState.CO2);
                         try {
                             if(mPullCo2ScheduledFuture != null) {
                                 mPullCo2ScheduledFuture.cancel(true);
                             }
-                            mPullCo2Service.shutdown();
-                            mPullCo2Service.awaitTermination(1, TimeUnit.SECONDS);
+	                        if(mPullCo2Service != null) {
+		                        mPullCo2Service.shutdown();
+		                       // mPullCo2Service.awaitTermination(1, TimeUnit.SECONDS);
+	                        }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -145,24 +142,33 @@ public class PullStateManagingService extends IntentService {
                         mPullCo2Service = Executors.newSingleThreadScheduledExecutor();
                         mPullCo2ScheduledFuture = mPullCo2Service.scheduleWithFixedDelay
                                 (mAutoPullCo2Runnable, 0, 1, TimeUnit.SECONDS);
+	                    eToCApplication.setPullCo2Service(mPullCo2Service);
                     }
                 } else {
                     startService(intentForTemperature(PullStateManagingService.this));
+	                startService(intentForCo2(PullStateManagingService.this));
                 }
             } else {
                 mIsAutoHandling.set(false);
                 try {
-                    mPullTemperatureService.shutdown();
+	                if(mPullTemperatureService != null) {
+		                mPullTemperatureService.shutdown();
+		                eToCApplication.setPullTemperatureService(null);
+	                }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 try {
-                    mPullCo2Service.shutdown();
+	                if(mPullCo2Service != null) {
+		                mPullCo2Service.shutdown();
+		                eToCApplication.setPullCo2Service(null);
+	                }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        //}
+        }
+	    return START_STICKY;
     }
 
     private Runnable initAutoPullTemperatureCo2Runnable() {

@@ -51,6 +51,9 @@ public class EToCMainHandler extends Handler {
             EToCMainActivity activity = weakActivity.get();
             switch (msg.what) {
                 case MESSAGE_USB_DATA_RECEIVED:
+	                EToCApplication application = EToCApplication.getInstance();
+	                int pullState = application.getPullState();
+
                     byte[] usbReadBytes = (byte[]) msg.obj;
                     String data = "";
                     if (usbReadBytes.length == 7) {
@@ -215,8 +218,6 @@ public class EToCMainHandler extends Handler {
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            EToCApplication application = EToCApplication.getInstance();
-
                             if(application.getPullState() != PullState.NONE) {
                                 application.setPullState(PullState.NONE);
                                 activity.startService(PullStateManagingService
@@ -234,18 +235,18 @@ public class EToCMainHandler extends Handler {
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
 
-                        EToCApplication application = EToCApplication.getInstance();
-
                         if(application.getPullState() != PullState.NONE) {
                             application.setPullState(PullState.NONE);
                             activity.startService(PullStateManagingService.intentForCo2(activity));
                         }
                     }
 
-                    Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
-                    activity.getScrollView().smoothScrollTo(0, 0);
+	                if(pullState == PullState.NONE) {
+		                Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
+		                activity.getScrollView().smoothScrollTo(0, 0);
+	                }
 
-                    EToCApplication.getInstance().setPullState(PullState.NONE);
+                    application.setPullState(PullState.NONE);
                     break;
                 case MESSAGE_USB_DATA_READY:
                     String command = (String) msg.obj;

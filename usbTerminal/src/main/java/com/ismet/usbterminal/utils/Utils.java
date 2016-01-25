@@ -14,6 +14,9 @@ import android.text.style.StyleSpan;
 import android.util.Pair;
 import android.widget.TextView;
 
+import com.ismet.usbterminal.updated.EToCApplication;
+import com.ismet.usbterminal.updated.data.PullState;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,10 @@ public class Utils {
 		} else {
 			txtOutput.setText(text);
 		}
+	}
+
+	public static boolean isPullStateNone() {
+		return EToCApplication.getInstance().getPullState() == PullState.NONE;
 	}
 
 	public static void deleteFiles(String date, String chartidx) {

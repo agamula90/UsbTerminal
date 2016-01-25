@@ -449,14 +449,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-                Utils.appendText(mTxtOutput, "Tx: " + command);
+	            EToCApplication.getInstance().setPullState(PullState.NONE);
+	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+			            false));
+	            sendCommand(command);
+	            mHandler.postDelayed(new Runnable() {
 
-                mScrollView.smoothScrollTo(0, 0);
-
-                if (mUsbServiceWritable != null) {
-                    mUsbServiceWritable.writeToUsb(command.getBytes());
-                    mUsbServiceWritable.writeToUsb("\r".getBytes());
-                }
+		            @Override
+		            public void run() {
+			            startService(PullStateManagingService.intentForService(EToCMainActivity
+					            .this, true));
+		            }
+	            }, 1000);
             }
         });
 
@@ -580,13 +584,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-                Utils.appendText(mTxtOutput, "Tx: " + command);
-                mScrollView.smoothScrollTo(0, 0);
+	            EToCApplication.getInstance().setPullState(PullState.NONE);
+	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+			            false));
+	            sendCommand(command);
+	            mHandler.postDelayed(new Runnable() {
 
-                if (mUsbServiceWritable != null) {
-                    mUsbServiceWritable.writeToUsb(command.getBytes());
-                    mUsbServiceWritable.writeToUsb("\r".getBytes());
-                }
+		            @Override
+		            public void run() {
+			            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+					            true));
+		            }
+	            }, 1000);
             }
         });
 
@@ -822,9 +831,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                 EToCApplication.getInstance().setPullState(PullState.NONE);
                 startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-                        false));
+		                false));
                 sendMessage();
+				mHandler.postDelayed(new Runnable() {
 
+					@Override
+					public void run() {
+						startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+								true));
+					}
+				}, 1000);
             }
         });
 
@@ -1801,8 +1817,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable.writeToUsb("\r".getBytes());
                 }
 
-                Utils.appendText(mTxtOutput, "Tx: " + command);
-                mScrollView.smoothScrollTo(0, 0);
+	            if(Utils.isPullStateNone()) {
+		            Utils.appendText(mTxtOutput, "Tx: " + command);
+		            mScrollView.smoothScrollTo(0, 0);
+	            }
             } else {
                 Toast.makeText(EToCMainActivity.this, "serial port not found", Toast.LENGTH_LONG)
                         .show();
