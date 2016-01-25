@@ -1,13 +1,7 @@
 package com.ismet.usbterminal.updated.mainscreen;
 
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.text.Editable;
-import android.text.Html;
-import android.text.Spannable;
-import android.text.style.AbsoluteSizeSpan;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
@@ -27,16 +21,22 @@ public class EToCMainHandler extends Handler {
     public static final String USB_DATA_READY = "com.ismet.usbservice.USB_DATA_READY";
     public static final String DATA_EXTRA = "data_extra";
 
+	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
+
     public static final int MESSAGE_USB_DATA_RECEIVED = 0;
 
     public static final int MESSAGE_USB_DATA_READY = 1;
 
     public static final int MESSAGE_OPEN_CHART = 2;
 
+	public static final int MESSAGE_RESUME_AUTO_PULLING = 3;
+
     private final WeakReference<EToCMainActivity> weakActivity;
 
     private static final SimpleDateFormat FORMATTER = new SimpleDateFormat
             ("yyyyMMdd_HHmmss");
+
+	private @PullState int mTempState;
 
     public EToCMainHandler(EToCMainActivity tedActivity) {
         super();
@@ -219,9 +219,10 @@ public class EToCMainHandler extends Handler {
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
                             if(application.getPullState() != PullState.NONE) {
-                                application.setPullState(PullState.NONE);
-                                activity.startService(PullStateManagingService
-                                         .intentForTemperature(activity));
+	                            mTempState = PullState.TEMPERATURE;
+	                            application.setPullState(PullState.NONE);
+	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
+	                            sendMessageDelayed(message, DELAY_BEFORE_START_AUTO_PULLING);
                             }
                         } else {
                             data = new String(usbReadBytes);
@@ -236,8 +237,10 @@ public class EToCMainHandler extends Handler {
                         activity.refreshTextAccordToSensor(true, data);
 
                         if(application.getPullState() != PullState.NONE) {
-                            application.setPullState(PullState.NONE);
-                            activity.startService(PullStateManagingService.intentForCo2(activity));
+	                        mTempState = PullState.CO2;
+	                        application.setPullState(PullState.NONE);
+	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
+	                        sendMessageDelayed(message, DELAY_BEFORE_START_AUTO_PULLING);
                         }
                     }
 
@@ -246,7 +249,6 @@ public class EToCMainHandler extends Handler {
 		                activity.getScrollView().smoothScrollTo(0, 0);
 	                }
 
-                    application.setPullState(PullState.NONE);
                     break;
                 case MESSAGE_USB_DATA_READY:
                     String command = (String) msg.obj;
@@ -276,6 +278,11 @@ public class EToCMainHandler extends Handler {
                     activity.getChartSeries().add(c, co2);
                     activity.getChartView().repaint();
                     break;
+	            case MESSAGE_RESUME_AUTO_PULLING:
+		            EToCApplication.getInstance().setPullState(mTempState);
+		            mTempState = PullState.NONE;
+		            activity.startService(PullStateManagingService.intentForData(activity));
+		            break;
             }
         }
     }

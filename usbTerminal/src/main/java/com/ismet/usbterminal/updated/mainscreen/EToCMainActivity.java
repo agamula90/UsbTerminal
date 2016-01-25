@@ -1817,10 +1817,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mUsbServiceWritable.writeToUsb("\r".getBytes());
                 }
 
-	            if(Utils.isPullStateNone()) {
+	            //if(Utils.isPullStateNone()) {
 		            Utils.appendText(mTxtOutput, "Tx: " + command);
 		            mScrollView.smoothScrollTo(0, 0);
-	            }
+	            //}
             } else {
                 Toast.makeText(EToCMainActivity.this, "serial port not found", Toast.LENGTH_LONG)
                         .show();
