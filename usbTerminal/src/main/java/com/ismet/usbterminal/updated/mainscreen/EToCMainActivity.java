@@ -64,6 +64,7 @@ import com.ismet.usbterminal.updated.TedSettingsActivity;
 import com.ismet.usbterminal.updated.UsbService;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.data.AppData;
+import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.data.TemperatureData;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
@@ -219,6 +220,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     private int mTemperatureShift;
 
+    private
+    @PowerState
+    int mPowerState;
+
     /**
      * @see android.app.Activity#onCreate(Bundle)
      */
@@ -230,6 +235,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             Log.d(TAG, "onCreate");
 
         mExecutor = Executors.newSingleThreadExecutor();
+
+        mPowerState = PowerState.OFF;
 
         mServiceBounded = false;
 
@@ -285,18 +292,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     powerOn = false;
                 }
 
-                if (powerOn) {
-                    mServiceBounded = true;
-                    bindService(new Intent(EToCMainActivity.this, UsbService.class),
-                            mServiceConnection, BIND_AUTO_CREATE);
-                } else {
-                    SharedPreferences preferences = getPrefs();
-                    String powerOffCommand = preferences.getString(PrefConstants.POWER_OFF,
-                            PrefConstants.POWER_OFF_COMMAND_DEFAULT);
-
-                    sendMessageWithUsbDataReady(powerOffCommand);
-                    disconnectFromService();
-                }
+                mPowerState = powerOn ? PowerState.ON : PowerState.OFF;
             }
         });
 
@@ -400,11 +396,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         mTemperature = (Button) findViewById(R.id.temperature);
 
-	    changeBackground(mTemperature, false);
+        changeBackground(mTemperature, false);
 
         mCo2 = (Button) findViewById(R.id.co2);
 
-	    changeBackground(mCo2, false);
+        changeBackground(mCo2, false);
 
         // Timer mTimer = new Timer();
         // mTimer.scheduleAtFixedRate(new TimerTask() {
@@ -1450,23 +1446,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 UsbService.UsbBinder binder = (UsbService.UsbBinder) service;
                 mUsbServiceWritable = binder.getApi();
                 mUsbServiceWritable.searchForUsbDevice();
-
-                SharedPreferences preferences = getPrefs();
-
-                String powerOnCommand = preferences.getString(PrefConstants.POWER_ON, PrefConstants
-                        .POWER_ON_COMMAND_DEFAULT);
-
-                sendMessageWithUsbDataReady(powerOnCommand);
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                if(mUsbServiceWritable != null) {
+                if (mUsbServiceWritable != null) {
                     mUsbServiceWritable.disconnect();
                     mUsbServiceWritable = null;
                 }
             }
         };
+
+        mServiceBounded = true;
+        bindService(new Intent(EToCMainActivity.this, UsbService.class),
+                mServiceConnection, BIND_AUTO_CREATE);
 
         int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT);
         int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
@@ -1665,7 +1658,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
         buttonPowerDataFile.createNewFile();
         StringBuilder buttonPowerDataBuilder = new StringBuilder();
-        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+        buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME,
+                PrefConstants
                 .POWER_ON_NAME_DEFAULT));
         buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
         buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF_NAME,
@@ -1897,7 +1891,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             mSendDataToUsbTask = null;
         }
 
-        if(mServiceBounded) {
+        if (mServiceBounded) {
             unbindService(mServiceConnection);
         }
 
@@ -2895,7 +2889,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if(mUsbServiceWritable != null) {
+                if (mUsbServiceWritable != null) {
                     mUsbServiceWritable.disconnect();
                     mUsbServiceWritable = null;
                 }
@@ -3009,45 +3003,45 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         isClicked = !isClicked;*/
     }
 
-	private void changeBackground(Button button, boolean isPressed) {
-		if(isPressed) {
-			if(Build.VERSION.SDK_INT >= 16) {
-				button.setBackground(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_pressed));
-			} else {
-				button.setBackgroundDrawable(getResources().getDrawable(R
-						.drawable.temperature_button_drawable_pressed));
-			}
-		} else {
-			if(Build.VERSION.SDK_INT >= 16) {
-				button.setBackground(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_unpressed));
-			} else {
-				button.setBackgroundDrawable(getResources().getDrawable(R
-						.drawable
-						.temperature_button_drawable_unpressed));
-			}
-		}
-	}
+    private void changeBackground(Button button, boolean isPressed) {
+        if (isPressed) {
+            if (Build.VERSION.SDK_INT >= 16) {
+                button.setBackground(getResources().getDrawable(R.drawable
+                        .temperature_button_drawable_pressed));
+            } else {
+                button.setBackgroundDrawable(getResources().getDrawable(R
+                        .drawable.temperature_button_drawable_pressed));
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= 16) {
+                button.setBackground(getResources().getDrawable(R.drawable
+                        .temperature_button_drawable_unpressed));
+            } else {
+                button.setBackgroundDrawable(getResources().getDrawable(R
+                        .drawable
+                        .temperature_button_drawable_unpressed));
+            }
+        }
+    }
 
     public void refreshTextAccordToSensor(boolean isTemperature, String text) {
-        if(isTemperature) {
+        if (isTemperature) {
             mTemperatureData = TemperatureData.parse(text);
-            if(mTemperatureData.isCorrect()) {
-	            Runnable updateRunnable = new Runnable() {
+            if (mTemperatureData.isCorrect()) {
+                Runnable updateRunnable = new Runnable() {
 
-		            @Override
-		            public void run() {
-			            //changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
+                    @Override
+                    public void run() {
+                        //changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
 
-			            mTemperature.setText("" + (mTemperatureData.getTemperature1() +
-					            mTemperatureShift));
-		            }
-	            };
-	                //mTemperature.post(updateRunnable);
-	            updateRunnable.run();
+                        mTemperature.setText("" + (mTemperatureData.getTemperature1() +
+                                mTemperatureShift));
+                    }
+                };
+                //mTemperature.post(updateRunnable);
+                updateRunnable.run();
             } else {
-	            mTemperature.setText("" + mTemperatureData.getWrongPosition());
+                mTemperature.setText("" + mTemperatureData.getWrongPosition());
             }
         } else {
             mCo2.setText(text);
