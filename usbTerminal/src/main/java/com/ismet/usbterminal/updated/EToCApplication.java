@@ -1,24 +1,11 @@
 package com.ismet.usbterminal.updated;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
 
 import com.ismet.usbterminal.updated.data.PullData;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class EToCApplication extends InterpolationCalculatorApp {
@@ -33,11 +20,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
     private final PullData pullData = new PullData();
 
-	private ScheduledExecutorService mPullTemperatureService;
-
-	private ScheduledExecutorService mPullCo2Service;
-
-	private ScheduledExecutorService mPullTempService;
+	private ScheduledExecutorService mPullDataService;
 
 	@Override
 	public void onCreate() {
@@ -108,7 +91,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
         this.mPullState = pullState;
     }
 
-    public int getPullState() {
+    public @PullState int getPullState() {
         return mPullState;
     }
 
@@ -116,27 +99,11 @@ public class EToCApplication extends InterpolationCalculatorApp {
         return pullData;
     }
 
-	public void setPullCo2Service(ScheduledExecutorService mPullCo2Service) {
-		this.mPullCo2Service = mPullCo2Service;
+	public void setPullDataService(ScheduledExecutorService mPullTemperatureService) {
+		this.mPullDataService = mPullTemperatureService;
 	}
 
-	public ScheduledExecutorService getPullCo2Service() {
-		return mPullCo2Service;
-	}
-
-	public void setPullTemperatureService(ScheduledExecutorService mPullTemperatureService) {
-		this.mPullTemperatureService = mPullTemperatureService;
-	}
-
-	public ScheduledExecutorService getPullTemperatureService() {
-		return mPullTemperatureService;
-	}
-
-	public void swapPull() {
-		mPullTempService = mPullState == PullState.CO2 ? mPullCo2Service : mPullTemperatureService;
-	}
-
-	public ScheduledExecutorService getPullTempService() {
-		return mPullTempService;
+	public ScheduledExecutorService getPullDataService() {
+		return mPullDataService;
 	}
 }

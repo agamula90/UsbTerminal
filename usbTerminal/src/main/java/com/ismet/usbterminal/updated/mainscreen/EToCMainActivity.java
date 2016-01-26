@@ -1454,6 +1454,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
+
+                        EToCApplication.getInstance().setPullState(PullState.TEMPERATURE);
+                        startService(PullStateManagingService.intentForService(EToCMainActivity
+                                .this, true));
                     }
                 };
 

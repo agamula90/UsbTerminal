@@ -59,6 +59,11 @@ public class EToCMainHandler extends Handler {
                     if (usbReadBytes.length == 7) {
                         if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
                                 .format("%02X", usbReadBytes[1]).equals("44"))) {
+
+                            if(pullState != PullState.NONE) {
+                                application.getPullDataService().shutdown();
+                            }
+
                             // SENSOR Response
                             String strHex = "";
                             for (byte b : usbReadBytes) {
@@ -218,11 +223,12 @@ public class EToCMainHandler extends Handler {
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            if(application.getPullState() != PullState.NONE) {
+                            if(pullState != PullState.NONE) {
 	                            mTempState = PullState.TEMPERATURE;
 	                            application.setPullState(PullState.NONE);
 	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
-	                            sendMessageDelayed(message, DELAY_BEFORE_START_AUTO_PULLING);
+                                sendMessageDelayed(message, PullStateManagingService
+                                         .DELAY_ON_CHANGE_REQUEST);
                             }
                         } else {
                             data = new String(usbReadBytes);
@@ -231,23 +237,27 @@ public class EToCMainHandler extends Handler {
                             data = "tmp:" + data;
                         }
                     } else {
+                        if(pullState != PullState.NONE) {
+                            application.getPullDataService().shutdown();
+                        }
                         data = new String(usbReadBytes);
                         data = data.replace("\r", "");
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
 
-                        if(application.getPullState() != PullState.NONE) {
+                        if(pullState != PullState.NONE) {
 	                        mTempState = PullState.CO2;
 	                        application.setPullState(PullState.NONE);
 	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
-	                        sendMessageDelayed(message, DELAY_BEFORE_START_AUTO_PULLING);
+                            sendMessageDelayed(message, PullStateManagingService
+                                     .DELAY_ON_CHANGE_REQUEST);
                         }
                     }
 
-	                if(pullState == PullState.NONE) {
+	                //if(pullState == PullState.NONE) {
 		                Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
 		                activity.getScrollView().smoothScrollTo(0, 0);
-	                }
+	                //}
 
                     break;
                 case MESSAGE_USB_DATA_READY:
@@ -281,6 +291,7 @@ public class EToCMainHandler extends Handler {
 	            case MESSAGE_RESUME_AUTO_PULLING:
 		            EToCApplication.getInstance().setPullState(mTempState);
 		            mTempState = PullState.NONE;
+
 		            activity.startService(PullStateManagingService.intentForData(activity));
 		            break;
             }
