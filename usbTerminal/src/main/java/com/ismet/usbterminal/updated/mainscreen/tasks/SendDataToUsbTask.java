@@ -55,7 +55,9 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
                 publishProgress(new Pair<Integer, String>(2, null));
             }
 
-            EToCApplication.getInstance().setPullState(PullState.NONE);
+            EToCApplication application = EToCApplication.getInstance();
+            application.setUnScheduling(false);
+            application.setMeasureStarted(false);
             weakActivity.get().startService(PullStateManagingService.intentForService
                     (weakActivity.get(), true));
         }

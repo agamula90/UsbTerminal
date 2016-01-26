@@ -15,10 +15,14 @@ import com.ismet.usbterminal.utils.Utils;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class EToCMainHandler extends Handler {
 
     public static final String USB_DATA_READY = "com.ismet.usbservice.USB_DATA_READY";
+    public static final String UN_SCHEDULING = "com.ismet.usbservice.UN_SCHEDULING";
     public static final String DATA_EXTRA = "data_extra";
 
 	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
@@ -30,6 +34,8 @@ public class EToCMainHandler extends Handler {
     public static final int MESSAGE_OPEN_CHART = 2;
 
 	public static final int MESSAGE_RESUME_AUTO_PULLING = 3;
+
+    public static final int MESSAGE_UN_SCHEDULING = 4;
 
     private final WeakReference<EToCMainActivity> weakActivity;
 
@@ -49,9 +55,9 @@ public class EToCMainHandler extends Handler {
 
         if (weakActivity.get() != null) {
             EToCMainActivity activity = weakActivity.get();
+            EToCApplication application = EToCApplication.getInstance();
             switch (msg.what) {
                 case MESSAGE_USB_DATA_RECEIVED:
-	                EToCApplication application = EToCApplication.getInstance();
 	                int pullState = application.getPullState();
 
                     byte[] usbReadBytes = (byte[]) msg.obj;
@@ -61,7 +67,7 @@ public class EToCMainHandler extends Handler {
                                 .format("%02X", usbReadBytes[1]).equals("44"))) {
 
                             if(pullState != PullState.NONE) {
-                                application.getPullDataService().shutdown();
+                                application.unScheduleTasks();
                             }
 
                             // SENSOR Response
@@ -223,7 +229,7 @@ public class EToCMainHandler extends Handler {
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            if(pullState != PullState.NONE) {
+                            if(pullState != PullState.NONE && !application.isUnScheduling()) {
 	                            mTempState = PullState.TEMPERATURE;
 	                            application.setPullState(PullState.NONE);
 	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
@@ -238,14 +244,14 @@ public class EToCMainHandler extends Handler {
                         }
                     } else {
                         if(pullState != PullState.NONE) {
-                            application.getPullDataService().shutdown();
+                            application.unScheduleTasks();
                         }
                         data = new String(usbReadBytes);
                         data = data.replace("\r", "");
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
 
-                        if(pullState != PullState.NONE) {
+                        if(pullState != PullState.NONE && !application.isUnScheduling()) {
 	                        mTempState = PullState.CO2;
 	                        application.setPullState(PullState.NONE);
 	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
@@ -289,11 +295,17 @@ public class EToCMainHandler extends Handler {
                     activity.getChartView().repaint();
                     break;
 	            case MESSAGE_RESUME_AUTO_PULLING:
-		            EToCApplication.getInstance().setPullState(mTempState);
+		            application.setPullState(mTempState);
 		            mTempState = PullState.NONE;
 
-		            activity.startService(PullStateManagingService.intentForData(activity));
+                    if(!application.isUnScheduling()) {
+                        activity.startService(PullStateManagingService.intentForData(activity));
+                    }
 		            break;
+                case MESSAGE_UN_SCHEDULING:
+                    application.setUnScheduling(false);
+                    application.setMeasureStarted(false);
+                    break;
             }
         }
     }

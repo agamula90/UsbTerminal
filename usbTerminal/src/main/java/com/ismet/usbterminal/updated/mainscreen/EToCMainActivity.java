@@ -449,7 +449,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-	            EToCApplication.getInstance().setPullState(PullState.NONE);
 	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
 			            false));
 	            sendCommand(command);
@@ -562,6 +561,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mButtonOn2.setText(mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
                 .ON_NAME_DEFAULT));
         mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+
+        EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
+                (PrefConstants.ON2, "/5H750R"));
+
         mButtonOn2.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -574,17 +577,27 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                 String s = mButtonOn2.getTag().toString();
                 String command = "";//"/5H1000R";
+
+                final String defaultValue;
+                final String prefName;
+
                 if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                    prefName = PrefConstants.OFF2;
+                    defaultValue = "/5H0000R";
                     command = mPrefs.getString(PrefConstants.ON2, "");
                     mButtonOn2.setText(str_off_name2t);
                     mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
                 } else {
+                    prefName = PrefConstants.ON2;
+                    defaultValue = "/5H750R";
                     command = mPrefs.getString(PrefConstants.OFF2, "");
                     mButtonOn2.setText(str_on_name2t);
                     mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
                 }
 
-	            EToCApplication.getInstance().setPullState(PullState.NONE);
+                EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
+                        (prefName, defaultValue));
+
 	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
 			            false));
 	            sendCommand(command);
@@ -662,11 +675,22 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         edit.apply();
 
                         String s = mButtonOn2.getTag().toString();
+
+                        final String defaultValue;
+                        final String prefName;
+
                         if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                            prefName = PrefConstants.ON2;
+                            defaultValue = "/5H750R";
                             mButtonOn2.setText(strOn1);
                         } else {
+                            prefName = PrefConstants.OFF2;
+                            defaultValue = "/5H0000R";
                             mButtonOn2.setText(strOff1);
                         }
+
+                        EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
+                                (prefName, defaultValue));
 
                         dialog.cancel();
                     }
@@ -829,7 +853,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 //					sendMessage();
                 //				}
 
-                EToCApplication.getInstance().setPullState(PullState.NONE);
                 startService(PullStateManagingService.intentForService(EToCMainActivity.this,
 		                false));
                 sendMessage();
@@ -837,8 +860,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 					@Override
 					public void run() {
-						startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-								true));
+						startService(PullStateManagingService.intentForService(EToCMainActivity
+                                .this, true));
 					}
 				}, 1000);
             }
@@ -995,10 +1018,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             .LENGTH_SHORT).show();
                     return;
                 }*/
-
-                EToCApplication.getInstance().setPullState(PullState.NONE);
-                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-                        false));
 
                 if (mIsTimerRunning) {
                     Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
@@ -1307,6 +1326,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                             // collect commands
                             if (contentForUpload != null && !contentForUpload.isEmpty()) {
+                                EToCApplication.getInstance().setMeasureStarted(true);
+                                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+                                        false));
+
                                 String multiLines = contentForUpload;
                                 String[] commands;
                                 String delimiter = "\n";
@@ -1454,10 +1477,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
                                 .getCurrentFocus().getWindowToken(), 0);
                         dialog.cancel();
-
-                        EToCApplication.getInstance().setPullState(PullState.TEMPERATURE);
-                        startService(PullStateManagingService.intentForService(EToCMainActivity
-                                .this, true));
                     }
                 };
 
@@ -2860,6 +2879,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbService.ACTION_DATA_RECEIVED);
         filter.addAction(EToCMainHandler.USB_DATA_READY);
+        filter.addAction(EToCMainHandler.UN_SCHEDULING);
         registerReceiver(mUsbReceiver, filter);
     }
 
@@ -2882,6 +2902,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         message.obj = dataForSend;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
         message.sendToTarget();
+    }
+
+    public void sendUnSchedulingMessage() {
+        Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_UN_SCHEDULING);
+        mHandler.sendMessageDelayed(message, PullStateManagingService.DELAY_ON_CHANGE_REQUEST);
     }
 
     public void disconnectFromService() {

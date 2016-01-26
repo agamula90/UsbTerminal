@@ -6,7 +6,9 @@ import com.ismet.usbterminal.updated.data.PullData;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 public class EToCApplication extends InterpolationCalculatorApp {
 
@@ -18,9 +20,17 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private volatile @PullState int mPullState;
 
+    private boolean mUnScheduling;
+
+    private boolean isMeasureStarted;
+
     private final PullData pullData = new PullData();
 
 	private ScheduledExecutorService mPullDataService;
+
+	private List<ScheduledFuture> mScheduledFutures;
+
+    private String mCurrentTemperatureRequest;
 
 	@Override
 	public void onCreate() {
@@ -99,11 +109,51 @@ public class EToCApplication extends InterpolationCalculatorApp {
         return pullData;
     }
 
-	public void setPullDataService(ScheduledExecutorService mPullTemperatureService) {
+	public void initPullDataService(ScheduledExecutorService mPullTemperatureService) {
 		this.mPullDataService = mPullTemperatureService;
+	}
+
+	public void clearPullDataService() {
+		this.mPullDataService = null;
 	}
 
 	public ScheduledExecutorService getPullDataService() {
 		return mPullDataService;
 	}
+
+    public void unScheduleTasks() {
+        if(mScheduledFutures != null) {
+            for (ScheduledFuture future : mScheduledFutures) {
+                future.cancel(true);
+            }
+        }
+    }
+
+    public void setScheduledFutures(List<ScheduledFuture> scheduledFutures) {
+        this.mScheduledFutures = scheduledFutures;
+    }
+
+    public void setCurrentTemperatureRequest(String mCurrentTemperatureRequest) {
+        this.mCurrentTemperatureRequest = mCurrentTemperatureRequest;
+    }
+
+    public String getCurrentTemperatureRequest() {
+        return mCurrentTemperatureRequest;
+    }
+
+    public void setUnScheduling(boolean mUnScheduling) {
+        this.mUnScheduling = mUnScheduling;
+    }
+
+    public boolean isUnScheduling() {
+        return mUnScheduling;
+    }
+
+    public void setMeasureStarted(boolean measureStarted) {
+        isMeasureStarted = measureStarted;
+    }
+
+    public boolean isMeasureStarted() {
+        return isMeasureStarted;
+    }
 }

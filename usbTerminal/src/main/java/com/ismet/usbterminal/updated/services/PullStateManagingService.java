@@ -10,9 +10,13 @@ import android.support.annotation.Nullable;
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.updated.mainscreen.EToCMainHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,8 +24,7 @@ public class PullStateManagingService extends Service {
 
     public static final String IS_AUTO_PULL_ON = "is_auto_pull_on";
 
-    private static final String TEMPERATURE_REQUEST = "FE-44-00-08-02-9F-25";
-    private static final String CO2_REQUEST = "/5H750R";
+    private static final String CO2_REQUEST = "(FE-44-00-08-02-9F-25)";
     private static final int MAX_WAIT_TIME_FOR_CANCEL_EXECUTOR = 100;
     public static final int DELAY_ON_CHANGE_REQUEST = 1000;
 
@@ -59,26 +62,52 @@ public class PullStateManagingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Bundle extras = intent.getExtras();
-        if (extras != null) {
+        if (extras != null && !eToCApplication.isUnScheduling()) {
             boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
             if (isPull) {
                 mIsAutoHandling.set(true);
-                eToCApplication.setPullState(PullState.TEMPERATURE);
-
-                try {
-                    if (mPullDataService != null) {
-                        mPullDataService.shutdown();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if(eToCApplication.getPullState() == PullState.NONE) {
+                    eToCApplication.setPullState(PullState.TEMPERATURE);
                 }
 
-                mPullDataService = Executors.newSingleThreadScheduledExecutor();
+                if(mPullDataService == null) {
+                    mPullDataService = Executors.newSingleThreadScheduledExecutor();
+                    eToCApplication.initPullDataService(mPullDataService);
+                } else {
+                    eToCApplication.unScheduleTasks();
+                }
+
+                Runnable autoSendRequest = new Runnable() {
+                    @Override
+                    public void run() {
+                        int pullState = eToCApplication.getPullState();
+                        if(pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                            return;
+                        }
+
+                        boolean isTemperature = eToCApplication.getPullState() == PullState
+                                .TEMPERATURE;
+                        if (isTemperature) {
+                            initAutoPullTemperatureRunnable().run();
+                        } else {
+                            initAutoPullCo2Runnable().run();
+                        }
+                    }
+                };
+
+                List<ScheduledFuture> scheduledFutures = new ArrayList<>(2);
+
+                scheduledFutures.add(mPullDataService.scheduleWithFixedDelay(autoSendRequest, 0, 1,
+                        TimeUnit.SECONDS));
 
                 Runnable autoChangeRunnable = new Runnable() {
                     @Override
                     public void run() {
                         int pullState = eToCApplication.getPullState();
+
+                        if(pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                            return;
+                        }
 
                         try {
                             Thread.sleep(DELAY_ON_CHANGE_REQUEST);
@@ -106,55 +135,22 @@ public class PullStateManagingService extends Service {
                     }
                 };
 
-                mPullDataService.scheduleWithFixedDelay(autoChangeRunnable, 0, 1, TimeUnit
-                        .SECONDS);
+                scheduledFutures.add(mPullDataService.scheduleWithFixedDelay(autoChangeRunnable, 0,
+                        1, TimeUnit.SECONDS));
 
-                Runnable autoSendRequest = new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean isTemperature = eToCApplication.getPullState() == PullState
-                                .TEMPERATURE;
-                        if (isTemperature) {
-                            initAutoPullTemperatureCo2Runnable().run();
-                        } else {
-                            initAutoPullCo2Runnable().run();
-                        }
-                    }
-                };
-
-                mPullDataService.scheduleWithFixedDelay(autoSendRequest, 0, 1, TimeUnit
-                        .SECONDS);
-
-                eToCApplication.setPullDataService(mPullDataService);
+                eToCApplication.setScheduledFutures(scheduledFutures);
             } else {
                 mIsAutoHandling.set(false);
-                try {
-                    if (mPullDataService != null) {
-                        mPullDataService.shutdown();
-                        eToCApplication.setPullDataService(null);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                eToCApplication.unScheduleTasks();
+                if(eToCApplication.isMeasureStarted()) {
+                    eToCApplication.setUnScheduling(true);
                 }
             }
         }
         return START_STICKY;
     }
 
-    private Runnable initAutoPullTemperatureCo2Runnable() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                if (eToCApplication.getPullState() == PullState.NONE) {
-                    return;
-                }
-                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
-                        TEMPERATURE_REQUEST);
-            }
-        };
-    }
-
-    public Runnable initAutoPullCo2Runnable() {
+    private Runnable initAutoPullCo2Runnable() {
         return new Runnable() {
             @Override
             public void run() {
@@ -163,6 +159,19 @@ public class PullStateManagingService extends Service {
                 }
                 EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         CO2_REQUEST);
+            }
+        };
+    }
+
+    public Runnable initAutoPullTemperatureRunnable() {
+        return new Runnable() {
+            @Override
+            public void run() {
+                if (eToCApplication.getPullState() == PullState.NONE) {
+                    return;
+                }
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                        eToCApplication.getCurrentTemperatureRequest());
             }
         };
     }
