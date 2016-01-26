@@ -9,6 +9,7 @@ import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class EToCApplication extends InterpolationCalculatorApp {
 
@@ -29,6 +30,10 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	private List<ScheduledFuture> mScheduledFutures;
 
     private String mCurrentTemperatureRequest;
+
+	private long mTimeOfRecreating;
+
+	private long mRenewTime;
 
 	@Override
 	public void onCreate() {
@@ -146,4 +151,33 @@ public class EToCApplication extends InterpolationCalculatorApp {
     public boolean isPullingStopped() {
         return mStopPulling;
     }
+
+	public void refreshTimeOfRecreating() {
+		mTimeOfRecreating = System.currentTimeMillis();
+	}
+
+	public long getTimeOfRecreating() {
+		return mTimeOfRecreating;
+	}
+
+	public boolean reNewTimeOfRecreating() {
+		mRenewTime = System.currentTimeMillis();
+
+		boolean isRefreshed = false;
+
+		if(timeElapsed(mRenewTime, mTimeOfRecreating)) {
+			refreshTimeOfRecreating();
+			isRefreshed = true;
+		}
+
+		return isRefreshed;
+	}
+
+	public boolean timeElapsed(long firstTime, long secondTime) {
+		return firstTime - secondTime >= TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+	}
+
+	public long getRenewTime() {
+		return mRenewTime;
+	}
 }

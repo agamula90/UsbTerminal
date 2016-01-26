@@ -25,12 +25,22 @@ public class Utils {
 	private Utils() {
 	}
 
-	public static void appendText(TextView txtOutput, String text) {
+	public synchronized static void appendText(TextView txtOutput, String text) {
 		int lineCount = txtOutput.getLineCount();
-		if(lineCount == 30) {
+		if(lineCount >= 30) {
+			int countLines = 0;
+
 			String textString = txtOutput.getText().toString();
-			int brIndex = textString.lastIndexOf('\n');
-			textString = textString.substring(0, brIndex);
+
+			for (int i = 0; i < textString.length(); i++) {
+				if(textString.charAt(i) == '\n') {
+					countLines++;
+				}
+				if(countLines == 30) {
+					textString = textString.substring(0, i);
+					break;
+				}
+			}
 			txtOutput.setText(textString);
 		}
 		if (!TextUtils.isEmpty(txtOutput.getText())) {
