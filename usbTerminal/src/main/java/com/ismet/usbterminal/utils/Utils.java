@@ -26,6 +26,13 @@ public class Utils {
 	}
 
 	public static void appendText(TextView txtOutput, String text) {
+		int lineCount = txtOutput.getLineCount();
+		if(lineCount == 30) {
+			String textString = txtOutput.getText().toString();
+			int brIndex = textString.lastIndexOf('\n');
+			textString = textString.substring(0, brIndex);
+			txtOutput.setText(textString);
+		}
 		if (!TextUtils.isEmpty(txtOutput.getText())) {
 			txtOutput.setText(text + "\n" + txtOutput.getText());
 		} else {

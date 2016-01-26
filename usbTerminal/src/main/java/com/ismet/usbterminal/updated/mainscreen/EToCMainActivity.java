@@ -424,43 +424,42 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         // }, 1000, 1000);
 
         mButtonOn1 = (Button) findViewById(R.id.buttonOn1);
-        mButtonOn1.setText(mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                .ON_NAME_DEFAULT));
+        mButtonOn1.setText(mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT));
         mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         mButtonOn1.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                // ASCII
-                String str_on_name1t = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name1t = mPrefs.getString(PrefConstants.OFF_NAME1, PrefConstants
-                        .OFF_NAME_DEFAULT);
+	        @Override
+	        public void onClick(View v) {
+		        // ASCII
+		        String str_on_name1t = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
+				        .ON_NAME_DEFAULT);
+		        String str_off_name1t = mPrefs.getString(PrefConstants.OFF_NAME1, PrefConstants
+				        .OFF_NAME_DEFAULT);
 
-                String s = mButtonOn1.getTag().toString();
-                String command = "";//"/5H1000R";
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    command = mPrefs.getString(PrefConstants.ON1, "");
-                    mButtonOn1.setText(str_off_name1t);
-                    mButtonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-                } else {
-                    command = mPrefs.getString(PrefConstants.OFF1, "");
-                    mButtonOn1.setText(str_on_name1t);
-                    mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-                }
+		        String s = mButtonOn1.getTag().toString();
+		        String command = "";//"/5H1000R";
+		        if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+			        command = mPrefs.getString(PrefConstants.ON1, "");
+			        mButtonOn1.setText(str_off_name1t);
+			        mButtonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+		        } else {
+			        command = mPrefs.getString(PrefConstants.OFF1, "");
+			        mButtonOn1.setText(str_on_name1t);
+			        mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+		        }
 
-	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-			            false));
-	            sendCommand(command);
-	            mHandler.postDelayed(new Runnable() {
+		        startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+				        false));
+		        sendCommand(command);
+		        mHandler.postDelayed(new Runnable() {
 
-		            @Override
-		            public void run() {
-			            startService(PullStateManagingService.intentForService(EToCMainActivity
-					            .this, true));
-		            }
-	            }, 1000);
-            }
+			        @Override
+			        public void run() {
+				        startService(PullStateManagingService.intentForService(EToCMainActivity
+						        .this, true));
+			        }
+		        }, 1000);
+	        }
         });
 
         mButtonOn1.setOnLongClickListener(new OnLongClickListener() {
@@ -558,58 +557,56 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         });
 
         mButtonOn2 = (Button) findViewById(R.id.buttonOn2);
-        mButtonOn2.setText(mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                .ON_NAME_DEFAULT));
+        mButtonOn2.setText(mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT));
         mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
 
         EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
-                (PrefConstants.ON2, "/5H750R"));
+		        (PrefConstants.ON2, "/5H750R"));
 
         mButtonOn2.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                // ASCII
-                String str_on_name2t = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name2t = mPrefs.getString(PrefConstants.OFF_NAME2, PrefConstants
-                        .OFF_NAME_DEFAULT);
+	        @Override
+	        public void onClick(View v) {
+		        // ASCII
+		        String str_on_name2t = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT);
+		        String str_off_name2t = mPrefs.getString(PrefConstants.OFF_NAME2, PrefConstants
+				        .OFF_NAME_DEFAULT);
 
-                String s = mButtonOn2.getTag().toString();
-                String command = "";//"/5H1000R";
+		        String s = mButtonOn2.getTag().toString();
+		        String command = "";//"/5H1000R";
 
-                final String defaultValue;
-                final String prefName;
+		        final String defaultValue;
+		        final String prefName;
 
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    prefName = PrefConstants.OFF2;
-                    defaultValue = "/5H0000R";
-                    command = mPrefs.getString(PrefConstants.ON2, "");
-                    mButtonOn2.setText(str_off_name2t);
-                    mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-                } else {
-                    prefName = PrefConstants.ON2;
-                    defaultValue = "/5H750R";
-                    command = mPrefs.getString(PrefConstants.OFF2, "");
-                    mButtonOn2.setText(str_on_name2t);
-                    mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-                }
+		        if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+			        prefName = PrefConstants.OFF2;
+			        defaultValue = "/5H0000R";
+			        command = mPrefs.getString(PrefConstants.ON2, "");
+			        mButtonOn2.setText(str_off_name2t);
+			        mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+		        } else {
+			        prefName = PrefConstants.ON2;
+			        defaultValue = "/5H750R";
+			        command = mPrefs.getString(PrefConstants.OFF2, "");
+			        mButtonOn2.setText(str_on_name2t);
+			        mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+		        }
 
-                EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
-                        (prefName, defaultValue));
+		        EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
+				        (prefName, defaultValue));
 
-	            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-			            false));
-	            sendCommand(command);
-	            mHandler.postDelayed(new Runnable() {
+		        startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+				        false));
+		        sendCommand(command);
+		        mHandler.postDelayed(new Runnable() {
 
-		            @Override
-		            public void run() {
-			            startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-					            true));
-		            }
-	            }, 1000);
-            }
+			        @Override
+			        public void run() {
+				        startService(PullStateManagingService.intentForService(EToCMainActivity
+						        .this, true));
+			        }
+		        }, 1000);
+	        }
         });
 
         mButtonOn2.setOnLongClickListener(new OnLongClickListener() {
@@ -721,27 +718,25 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         mButtonOn3 = (Button) findViewById(R.id.buttonPpm);
         //final String str_off_name1 = mPrefs.getString("off_name1", "");
-        mButtonOn3.setText(mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
-                .ON_NAME_DEFAULT));
+        mButtonOn3.setText(mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT));
         mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
         mButtonOn3.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name3 = mPrefs.getString(PrefConstants.OFF_NAME3, PrefConstants
-                        .OFF_NAME_DEFAULT);
+	        @Override
+	        public void onClick(View v) {
+		        String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT);
+		        String str_off_name3 = mPrefs.getString(PrefConstants.OFF_NAME3, PrefConstants
+				        .OFF_NAME_DEFAULT);
 
-                String s = mButtonOn3.getTag().toString();
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    mButtonOn3.setText(str_off_name3);
-                    mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-                } else {
-                    mButtonOn3.setText(str_on_name3);
-                    mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-                }
-            }
+		        String s = mButtonOn3.getTag().toString();
+		        if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+			        mButtonOn3.setText(str_off_name3);
+			        mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+		        } else {
+			        mButtonOn3.setText(str_on_name3);
+			        mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+		        }
+	        }
         });
 
         mButtonOn3.setOnLongClickListener(new OnLongClickListener() {
@@ -843,28 +838,27 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         mSendButton = (Button) findViewById(R.id.buttonSend);
         mSendButton.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                //				if (mIsTimerRunning) {
-                //					Toast.makeText(EToCMainActivity.this,
-                //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
-                //							.show();
-                //				} else {
-                //					sendMessage();
-                //				}
+	        @Override
+	        public void onClick(View v) {
+		        //				if (mIsTimerRunning) {
+		        //					Toast.makeText(EToCMainActivity.this,
+		        //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
+		        //							.show();
+		        //				} else {
+		        //					sendMessage();
+		        //				}
 
-                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-		                false));
-                sendMessage();
-				mHandler.postDelayed(new Runnable() {
+		        startService(PullStateManagingService.intentForService(EToCMainActivity.this, false));
+		        sendMessage();
+		        mHandler.postDelayed(new Runnable() {
 
-					@Override
-					public void run() {
-						startService(PullStateManagingService.intentForService(EToCMainActivity
-                                .this, true));
-					}
-				}, 1000);
-            }
+			        @Override
+			        public void run() {
+				        startService(PullStateManagingService.intentForService(EToCMainActivity
+						        .this, true));
+			        }
+		        }, 1000);
+	        }
         });
 
         mAdvancedEditText.setOnEditorActionListener(new OnEditorActionListener() {
@@ -1000,494 +994,483 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         mButtonMeasure.setOnClickListener(new OnClickListener() {
 
-            EditText editDelay, editDuration, editKnownPpm, editVolume, editUserComment,
-                    commandsEditText1, commandsEditText2, commandsEditText3;
+	        EditText editDelay, editDuration, editKnownPpm, editVolume, editUserComment, commandsEditText1, commandsEditText2, commandsEditText3;
 
-            CheckBox chkAutoManual, chkKnownPpm;
+	        CheckBox chkAutoManual, chkKnownPpm;
 
-            LinearLayout llkppm, ll_user_comment;
+	        LinearLayout llkppm, ll_user_comment;
 
-            RadioGroup mRadioGroup;
+	        RadioGroup mRadioGroup;
 
-            RadioButton mRadio1, mRadio2, mRadio3;
+	        RadioButton mRadio1, mRadio2, mRadio3;
 
-            @Override
-            public void onClick(View v) {
+	        @Override
+	        public void onClick(View v) {
                 /*if (mAdvancedEditText.getText().toString().isEmpty()) {
                     Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
                 }*/
 
-                if (mIsTimerRunning) {
-                    Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
-                            .LENGTH_SHORT).show();
-                    return;
-                }
+		        if (mIsTimerRunning) {
+			        Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
+					        .LENGTH_SHORT).show();
+			        return;
+		        }
 
-                if (mRenderer != null) {
-                    XYSeries[] arrSeries = mGraphSeriesDataset.getSeries();
+		        if (mRenderer != null) {
+			        XYSeries[] arrSeries = mGraphSeriesDataset.getSeries();
 
-                    int i = 0;
-                    boolean isChart1Clear = true;
-                    boolean isChart2Clear = true;
-                    boolean isChart3Clear = true;
+			        int i = 0;
+			        boolean isChart1Clear = true;
+			        boolean isChart2Clear = true;
+			        boolean isChart3Clear = true;
 
-                    for (XYSeries series : arrSeries) {
-                        if (series.getItemCount() > 0) {
-                            switch (i) {
-                                case 0:
-                                    isChart1Clear = false;
-                                    break;
-                                case 1:
-                                    isChart2Clear = false;
-                                    break;
-                                case 2:
-                                    isChart3Clear = false;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        i++;
-                    }
+			        for (XYSeries series : arrSeries) {
+				        if (series.getItemCount() > 0) {
+					        switch (i) {
+						        case 0:
+							        isChart1Clear = false;
+							        break;
+						        case 1:
+							        isChart2Clear = false;
+							        break;
+						        case 2:
+							        isChart3Clear = false;
+							        break;
+						        default:
+							        break;
+					        }
+				        }
+				        i++;
+			        }
 
-                    if ((!isChart1Clear) && (!isChart2Clear) && (!isChart3Clear)) {
-                        Toast.makeText(EToCMainActivity.this, "No chart available. Please clear " +
-                                "one of " + "the charts", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
+			        if ((!isChart1Clear) && (!isChart2Clear) && (!isChart3Clear)) {
+				        Toast.makeText(EToCMainActivity.this, "No chart available. Please clear " +
+						        "one of " + "the charts", Toast.LENGTH_SHORT).show();
+				        return;
+			        }
+		        }
 
-                AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
-                        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
+		        AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
+				        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
 
-                            @Override
-                            public void onInitLayout(View contentView) {
-                                editDelay = (EditText) contentView.findViewById(R.id.editDelay);
-                                editDuration = (EditText) contentView.findViewById(R.id
-                                        .editDuration);
-                                editKnownPpm = (EditText) contentView.findViewById(R.id
-                                        .editKnownPpm);
-                                editVolume = (EditText) contentView.findViewById(R.id.editVolume);
-                                editUserComment = (EditText) contentView.findViewById(R.id
-                                        .editUserComment);
+			        @Override
+			        public void onInitLayout(View contentView) {
+				        editDelay = (EditText) contentView.findViewById(R.id.editDelay);
+				        editDuration = (EditText) contentView.findViewById(R.id.editDuration);
+				        editKnownPpm = (EditText) contentView.findViewById(R.id.editKnownPpm);
+				        editVolume = (EditText) contentView.findViewById(R.id.editVolume);
+				        editUserComment = (EditText) contentView.findViewById(R.id
+						        .editUserComment);
 
-                                //chkAutoManual
-                                chkAutoManual = (CheckBox) contentView.findViewById(R.id
-                                        .chkAutoManual);
-                                chkKnownPpm = (CheckBox) contentView.findViewById(R.id.chkKnownPpm);
-                                llkppm = (LinearLayout) contentView.findViewById(R.id.llkppm);
-                                ll_user_comment = (LinearLayout) contentView.findViewById(R.id
-                                        .ll_user_comment);
+				        //chkAutoManual
+				        chkAutoManual = (CheckBox) contentView.findViewById(R.id.chkAutoManual);
+				        chkKnownPpm = (CheckBox) contentView.findViewById(R.id.chkKnownPpm);
+				        llkppm = (LinearLayout) contentView.findViewById(R.id.llkppm);
+				        ll_user_comment = (LinearLayout) contentView.findViewById(R.id
+						        .ll_user_comment);
 
-                                commandsEditText1 = (EditText) contentView.findViewById(R.id
-                                        .commandsEditText1);
+				        commandsEditText1 = (EditText) contentView.findViewById(R.id
+						        .commandsEditText1);
 
-                                commandsEditText2 = (EditText) contentView.findViewById(R.id
-                                        .commandsEditText2);
+				        commandsEditText2 = (EditText) contentView.findViewById(R.id
+						        .commandsEditText2);
 
-                                commandsEditText3 = (EditText) contentView.findViewById(R.id
-                                        .commandsEditText3);
+				        commandsEditText3 = (EditText) contentView.findViewById(R.id
+						        .commandsEditText3);
 
-                                mRadio1 = (RadioButton) contentView.findViewById(R.id.radio1);
-                                mRadio2 = (RadioButton) contentView.findViewById(R.id.radio2);
-                                mRadio3 = (RadioButton) contentView.findViewById(R.id.radio3);
+				        mRadio1 = (RadioButton) contentView.findViewById(R.id.radio1);
+				        mRadio2 = (RadioButton) contentView.findViewById(R.id.radio2);
+				        mRadio3 = (RadioButton) contentView.findViewById(R.id.radio3);
 
-                                mRadioGroup = (RadioGroup) contentView.findViewById(R.id
-                                        .radio_group);
+				        mRadioGroup = (RadioGroup) contentView.findViewById(R.id.radio_group);
 
-                                int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants
-                                        .DELAY_DEFAULT);
-                                int duration_v = mPrefs.getInt(PrefConstants.DURATION,
-                                        PrefConstants.DURATION_DEFAULT);
-                                int volume = mPrefs.getInt(PrefConstants.VOLUME, PrefConstants
-                                        .VOLUME_DEFAULT);
-                                int kppm = mPrefs.getInt(PrefConstants.KPPM, -1);
-                                String user_comment = mPrefs.getString(PrefConstants
-                                        .USER_COMMENT, "");
+				        int delay_v = mPrefs.getInt(PrefConstants.DELAY, PrefConstants
+						        .DELAY_DEFAULT);
+				        int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants
+						        .DURATION_DEFAULT);
+				        int volume = mPrefs.getInt(PrefConstants.VOLUME, PrefConstants
+						        .VOLUME_DEFAULT);
+				        int kppm = mPrefs.getInt(PrefConstants.KPPM, -1);
+				        String user_comment = mPrefs.getString(PrefConstants.USER_COMMENT, "");
 
-                                editDelay.setText("" + delay_v);
-                                editDuration.setText("" + duration_v);
-                                editVolume.setText("" + volume);
-                                editUserComment.setText(user_comment);
+				        editDelay.setText("" + delay_v);
+				        editDuration.setText("" + duration_v);
+				        editVolume.setText("" + volume);
+				        editUserComment.setText(user_comment);
 
-                                commandsEditText1.setText(mPrefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME1, PrefConstants
-                                        .MEASURE_FILE_NAME1_DEFAULT));
-                                commandsEditText2.setText(mPrefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME2, PrefConstants
-                                        .MEASURE_FILE_NAME2_DEFAULT));
-                                commandsEditText3.setText(mPrefs.getString(PrefConstants
-                                        .MEASURE_FILE_NAME3, PrefConstants
-                                        .MEASURE_FILE_NAME3_DEFAULT));
+				        commandsEditText1.setText(mPrefs.getString(PrefConstants
+						        .MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT));
+				        commandsEditText2.setText(mPrefs.getString(PrefConstants
+						        .MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT));
+				        commandsEditText3.setText(mPrefs.getString(PrefConstants
+						        .MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT));
 
-                                if (kppm != -1) {
-                                    editKnownPpm.setText("" + kppm);
-                                }
+				        if (kppm != -1) {
+					        editKnownPpm.setText("" + kppm);
+				        }
 
-                                boolean isauto = mPrefs.getBoolean(PrefConstants.IS_AUTO, false);
-                                if (isauto) {
-                                    chkAutoManual.setChecked(true);
-                                } else {
-                                    chkAutoManual.setChecked(false);
-                                }
+				        boolean isauto = mPrefs.getBoolean(PrefConstants.IS_AUTO, false);
+				        if (isauto) {
+					        chkAutoManual.setChecked(true);
+				        } else {
+					        chkAutoManual.setChecked(false);
+				        }
 
-                                chkKnownPpm.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				        chkKnownPpm.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
-                                    @Override
-                                    public void onCheckedChanged(CompoundButton buttonView, boolean
-                                            isChecked) {
-                                        if (isChecked) {
-                                            editKnownPpm.setEnabled(true);
-                                            llkppm.setVisibility(View.VISIBLE);
-                                        } else {
-                                            editKnownPpm.setEnabled(false);
-                                            llkppm.setVisibility(View.GONE);
-                                        }
-                                    }
-                                });
-                            }
-                        };
+					        @Override
+					        public void onCheckedChanged(CompoundButton buttonView, boolean
+							        isChecked) {
+						        if (isChecked) {
+							        editKnownPpm.setEnabled(true);
+							        llkppm.setVisibility(View.VISIBLE);
+						        } else {
+							        editKnownPpm.setEnabled(false);
+							        llkppm.setVisibility(View.GONE);
+						        }
+					        }
+				        });
+			        }
+		        };
 
-                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
-                        () {
+		        DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
+				        () {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        InputMethodManager inputManager = (InputMethodManager) getSystemService
-                                (Context.INPUT_METHOD_SERVICE);
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				        InputMethodManager inputManager = (InputMethodManager) getSystemService
+						        (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
-                                .getCurrentFocus().getWindowToken(), 0);
+				        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+						        .getCurrentFocus().getWindowToken(), 0);
 
-                        String strDelay = editDelay.getText().toString();
-                        String strDuration = editDuration.getText().toString();
+				        String strDelay = editDelay.getText().toString();
+				        String strDuration = editDuration.getText().toString();
 
-                        if (strDelay.equals("") || strDuration.equals("")) {
-                            Toast.makeText(EToCMainActivity.this, "Please enter all values", Toast
-                                    .LENGTH_LONG).show();
-                            return;
-                        }
+				        if (strDelay.equals("") || strDuration.equals("")) {
+					        Toast.makeText(EToCMainActivity.this, "Please enter all values", Toast
+							        .LENGTH_LONG).show();
+					        return;
+				        }
 
-                        if (chkKnownPpm.isChecked()) {
-                            String strkPPM = editKnownPpm.getText().toString();
-                            if (strkPPM.equals("")) {
-                                Toast.makeText(EToCMainActivity.this, "Please enter ppm " +
-                                        "values", Toast.LENGTH_LONG).show();
-                                return;
-                            } else {
-                                int kppm = Integer.parseInt(strkPPM);
-                                Editor edit = mPrefs.edit();
-                                edit.putInt(PrefConstants.KPPM, kppm);
-                                edit.apply();
-                            }
-                        } else {
-                            Editor edit = mPrefs.edit();
-                            edit.remove(PrefConstants.KPPM);
-                            edit.apply();
-                        }
+				        if (chkKnownPpm.isChecked()) {
+					        String strkPPM = editKnownPpm.getText().toString();
+					        if (strkPPM.equals("")) {
+						        Toast.makeText(EToCMainActivity.this, "Please enter ppm " +
+								        "values", Toast.LENGTH_LONG).show();
+						        return;
+					        } else {
+						        int kppm = Integer.parseInt(strkPPM);
+						        Editor edit = mPrefs.edit();
+						        edit.putInt(PrefConstants.KPPM, kppm);
+						        edit.apply();
+					        }
+				        } else {
+					        Editor edit = mPrefs.edit();
+					        edit.remove(PrefConstants.KPPM);
+					        edit.apply();
+				        }
 
-                        //else
+				        //else
 
-                        {
-                            String str_uc = editUserComment.getText().toString();
-                            if (str_uc.equals("")) {
-                                Toast.makeText(EToCMainActivity.this, "Please enter comments",
-                                        Toast.LENGTH_LONG).show();
-                                return;
-                            } else {
-                                Editor edit = mPrefs.edit();
-                                edit.putString(PrefConstants.USER_COMMENT, str_uc);
-                                edit.apply();
-                            }
-                        }
+				        {
+					        String str_uc = editUserComment.getText().toString();
+					        if (str_uc.equals("")) {
+						        Toast.makeText(EToCMainActivity.this, "Please enter comments",
+								        Toast.LENGTH_LONG).show();
+						        return;
+					        } else {
+						        Editor edit = mPrefs.edit();
+						        edit.putString(PrefConstants.USER_COMMENT, str_uc);
+						        edit.apply();
+					        }
+				        }
 
-                        String strVolume = editVolume.getText().toString();
-                        if (strVolume.equals("")) {
-                            Toast.makeText(EToCMainActivity.this, "Please enter volume values",
-                                    Toast.LENGTH_LONG).show();
-                            return;
-                        } else {
-                            int volume = Integer.parseInt(strVolume);
-                            Editor edit = mPrefs.edit();
-                            edit.putInt(PrefConstants.VOLUME, volume);
-                            edit.apply();
-                        }
+				        String strVolume = editVolume.getText().toString();
+				        if (strVolume.equals("")) {
+					        Toast.makeText(EToCMainActivity.this, "Please enter volume values",
+							        Toast.LENGTH_LONG).show();
+					        return;
+				        } else {
+					        int volume = Integer.parseInt(strVolume);
+					        Editor edit = mPrefs.edit();
+					        edit.putInt(PrefConstants.VOLUME, volume);
+					        edit.apply();
+				        }
 
-                        boolean b = chkAutoManual.isChecked();
-                        Editor edit = mPrefs.edit();
-                        edit.putBoolean(PrefConstants.IS_AUTO, b);
-                        edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, chkKnownPpm.isChecked());
-                        edit.apply();
+				        boolean b = chkAutoManual.isChecked();
+				        Editor edit = mPrefs.edit();
+				        edit.putBoolean(PrefConstants.IS_AUTO, b);
+				        edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, chkKnownPpm.isChecked
+						        ());
+				        edit.apply();
 
-                        int delay = Integer.parseInt(strDelay);
-                        int duration = Integer.parseInt(strDuration);
+				        int delay = Integer.parseInt(strDelay);
+				        int duration = Integer.parseInt(strDuration);
 
-                        if ((delay == 0) || (duration == 0)) {
-                            Toast.makeText(EToCMainActivity.this, "zero is not allowed", Toast
-                                    .LENGTH_LONG).show();
-                            return;
-                        } else {
+				        if ((delay == 0) || (duration == 0)) {
+					        Toast.makeText(EToCMainActivity.this, "zero is not allowed", Toast
+							        .LENGTH_LONG).show();
+					        return;
+				        } else {
 
-                            // resest so user can set new delay or
-                            // duration
-                            // if(countMeasures == 4){
-                            // oldCountMeasures=0;
-                            // countMeasures=0;
-                            // }
+					        // resest so user can set new delay or
+					        // duration
+					        // if(countMeasures == 4){
+					        // oldCountMeasures=0;
+					        // countMeasures=0;
+					        // }
 
-                            if (countMeasures == 0) {
-                                GraphData graphData = GraphPopulatorUtils.createXYChart(duration,
-                                        delay, EToCMainActivity.this);
-                                mRenderer = graphData.renderer;
-                                mGraphSeriesDataset = graphData.seriesDataset;
-                                mCurrentSeries = graphData.xySeries;
-                                Intent intent = graphData.intent;
+					        if (countMeasures == 0) {
+						        GraphData graphData = GraphPopulatorUtils.createXYChart(duration,
+								        delay, EToCMainActivity.this);
+						        mRenderer = graphData.renderer;
+						        mGraphSeriesDataset = graphData.seriesDataset;
+						        mCurrentSeries = graphData.xySeries;
+						        Intent intent = graphData.intent;
 
-                                mChartView = GraphPopulatorUtils.attachXYChartIntoLayout
-                                        (EToCMainActivity
-                                                .this, (AbstractChart) intent.getExtras().get
-                                                ("chart"));
-                            }
+						        mChartView = GraphPopulatorUtils.attachXYChartIntoLayout
+								        (EToCMainActivity
+								        .this, (AbstractChart) intent.getExtras().get("chart"));
+					        }
 
-                            countMeasures++;
+					        countMeasures++;
 
-                            edit = mPrefs.edit();
-                            edit.putInt(PrefConstants.DELAY, delay);
-                            edit.putInt(PrefConstants.DURATION, duration);
-                            edit.apply();
+					        edit = mPrefs.edit();
+					        edit.putInt(PrefConstants.DELAY, delay);
+					        edit.putInt(PrefConstants.DURATION, duration);
+					        edit.apply();
 
-                            long future = duration * 60 * 1000;
-                            long delay_timer = delay * 1000;
+					        long future = duration * 60 * 1000;
+					        long delay_timer = delay * 1000;
 
-                            if (mGraphSeriesDataset.getSeriesAt(0).getItemCount() == 0) {
-                                mChartIndex = 1;
-                                mReadingCount = 0;
-                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(0);
-                            } else if (mGraphSeriesDataset.getSeriesAt(1).getItemCount() == 0) {
-                                mChartIndex = 2;
-                                mReadingCount = (duration * 60) / delay;
-                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(1);
-                            } else if (mGraphSeriesDataset.getSeriesAt(2).getItemCount() == 0) {
-                                mChartIndex = 3;
-                                mReadingCount = duration * 60;
-                                mCurrentSeries = mGraphSeriesDataset.getSeriesAt(2);
-                            }
+					        if (mGraphSeriesDataset.getSeriesAt(0).getItemCount() == 0) {
+						        mChartIndex = 1;
+						        mReadingCount = 0;
+						        mCurrentSeries = mGraphSeriesDataset.getSeriesAt(0);
+					        } else if (mGraphSeriesDataset.getSeriesAt(1).getItemCount() == 0) {
+						        mChartIndex = 2;
+						        mReadingCount = (duration * 60) / delay;
+						        mCurrentSeries = mGraphSeriesDataset.getSeriesAt(1);
+					        } else if (mGraphSeriesDataset.getSeriesAt(2).getItemCount() == 0) {
+						        mChartIndex = 3;
+						        mReadingCount = duration * 60;
+						        mCurrentSeries = mGraphSeriesDataset.getSeriesAt(2);
+					        }
 
-                            int checkedId = mRadioGroup.getCheckedRadioButtonId();
+					        int checkedId = mRadioGroup.getCheckedRadioButtonId();
 
-                            if (mAdvancedEditText.getText().toString().equals("") && checkedId ==
-                                    -1) {
-                                Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
-                                        .LENGTH_SHORT).show();
-                                return;
-                            }
+					        if (mAdvancedEditText.getText().toString().equals("") && checkedId ==
+							        -1) {
+						        Toast.makeText(EToCMainActivity.this, "Please enter command",
+								        Toast.LENGTH_SHORT).show();
+						        return;
+					        }
 
-                            final String contentForUpload;
-                            final boolean success;
+					        final String contentForUpload;
+					        final boolean success;
 
-                            if (checkedId != -1) {
-                                if (mRadio1.getId() == checkedId) {
-                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
-                                            (Environment.getExternalStorageDirectory(), AppData
-                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText1
-                                            .getText().toString()));
-                                    success = true;
-                                } else if (mRadio2.getId() == checkedId) {
-                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
-                                            (Environment.getExternalStorageDirectory(), AppData
-                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText2
-                                            .getText().toString()));
-                                    success = true;
-                                } else if (mRadio3.getId() == checkedId) {
-                                    contentForUpload = TextFileUtils.readTextFile(new File(new File
-                                            (Environment.getExternalStorageDirectory(), AppData
-                                                    .SYSTEM_SETTINGS_FOLDER_NAME), commandsEditText3
-                                            .getText().toString()));
-                                    success = true;
-                                } else {
-                                    contentForUpload = null;
-                                    success = false;
-                                }
-                            } else {
-                                contentForUpload = mAdvancedEditText.getText().toString();
-                                success = true;
-                            }
+					        if (checkedId != -1) {
+						        if (mRadio1.getId() == checkedId) {
+							        contentForUpload = TextFileUtils.readTextFile(new File(new
+									        File(Environment.getExternalStorageDirectory(),
+									        AppData.SYSTEM_SETTINGS_FOLDER_NAME),
+									        commandsEditText1.getText().toString()));
+							        success = true;
+						        } else if (mRadio2.getId() == checkedId) {
+							        contentForUpload = TextFileUtils.readTextFile(new File(new
+									        File(Environment.getExternalStorageDirectory(),
+									        AppData.SYSTEM_SETTINGS_FOLDER_NAME),
+									        commandsEditText2.getText().toString()));
+							        success = true;
+						        } else if (mRadio3.getId() == checkedId) {
+							        contentForUpload = TextFileUtils.readTextFile(new File(new
+									        File(Environment.getExternalStorageDirectory(),
+									        AppData.SYSTEM_SETTINGS_FOLDER_NAME),
+									        commandsEditText3.getText().toString()));
+							        success = true;
+						        } else {
+							        contentForUpload = null;
+							        success = false;
+						        }
+					        } else {
+						        contentForUpload = mAdvancedEditText.getText().toString();
+						        success = true;
+					        }
 
-                            Editor editor = getPrefs().edit();
-                            editor.putString(PrefConstants.MEASURE_FILE_NAME1, commandsEditText1
-                                    .getText().toString());
-                            editor.putString(PrefConstants.MEASURE_FILE_NAME2, commandsEditText2
-                                    .getText().toString());
-                            editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
-                                    .getText().toString());
-                            editor.apply();
+					        Editor editor = getPrefs().edit();
+					        editor.putString(PrefConstants.MEASURE_FILE_NAME1, commandsEditText1
+							        .getText().toString());
+					        editor.putString(PrefConstants.MEASURE_FILE_NAME2, commandsEditText2
+							        .getText().toString());
+					        editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
+							        .getText().toString());
+					        editor.apply();
 
-                            // collect commands
-                            if (contentForUpload != null && !contentForUpload.isEmpty()) {
-                                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-                                        false));
+					        // collect commands
+					        if (contentForUpload != null && !contentForUpload.isEmpty()) {
+						        startService(PullStateManagingService.intentForService
+								        (EToCMainActivity.this, false));
 
-                                String multiLines = contentForUpload;
-                                String[] commands;
-                                String delimiter = "\n";
+						        String multiLines = contentForUpload;
+						        String[] commands;
+						        String delimiter = "\n";
 
-                                commands = multiLines.split(delimiter);
+						        commands = multiLines.split(delimiter);
 
-                                List<String> simpleCommands = new ArrayList<>();
-                                List<String> loopCommands = new ArrayList<>();
-                                boolean isLoop = false;
-                                int loopcmd1Idx = -1, loopcmd2Idx = -1;
+						        List<String> simpleCommands = new ArrayList<>();
+						        List<String> loopCommands = new ArrayList<>();
+						        boolean isLoop = false;
+						        int loopcmd1Idx = -1, loopcmd2Idx = -1;
 
-                                boolean autoPpm = false;
+						        boolean autoPpm = false;
 
-                                for (int i = 0; i < commands.length; i++) {
-                                    String command = commands[i];
-                                    //Log.d("command", command);
-                                    if ((command != null) && (!command.equals("")) &&
-                                            (!command.equals("\n"))) {
-                                        if (command.contains("loop")) {
-                                            isLoop = true;
-                                            String lineNos = command.replace("loop", "");
-                                            lineNos = lineNos.replace("\n", "");
-                                            lineNos = lineNos.replace("\r", "");
-                                            lineNos = lineNos.trim();
+						        for (int i = 0; i < commands.length; i++) {
+							        String command = commands[i];
+							        //Log.d("command", command);
+							        if ((command != null) && (!command.equals("")) &&
+									        (!command.equals("\n"))) {
+								        if (command.contains("loop")) {
+									        isLoop = true;
+									        String lineNos = command.replace("loop", "");
+									        lineNos = lineNos.replace("\n", "");
+									        lineNos = lineNos.replace("\r", "");
+									        lineNos = lineNos.trim();
 
-                                            String line1 = lineNos.substring(0, (lineNos.length()
-                                                    / 2));
-                                            String line2 = lineNos.substring(lineNos.length() / 2,
-                                                    lineNos.length());
+									        String line1 = lineNos.substring(0, (lineNos.length()
+											        / 2));
+									        String line2 = lineNos.substring(lineNos.length() / 2,
+											        lineNos.length());
 
-                                            loopcmd1Idx = Integer.parseInt(line1) - 1;
-                                            loopcmd2Idx = Integer.parseInt(line2) - 1;
-                                        } else if (command.equals("autoppm")) {
-                                            autoPpm = true;
-                                        } else if (isLoop) {
-                                            if (i == loopcmd1Idx) {
-                                                loopCommands.add(command);
-                                            } else if (i == loopcmd2Idx) {
-                                                loopCommands.add(command);
-                                                isLoop = false;
-                                            }
-                                        } else {
-                                            simpleCommands.add(command);
-                                        }
-                                    }
-                                }
+									        loopcmd1Idx = Integer.parseInt(line1) - 1;
+									        loopcmd2Idx = Integer.parseInt(line2) - 1;
+								        } else if (command.equals("autoppm")) {
+									        autoPpm = true;
+								        } else if (isLoop) {
+									        if (i == loopcmd1Idx) {
+										        loopCommands.add(command);
+									        } else if (i == loopcmd2Idx) {
+										        loopCommands.add(command);
+										        isLoop = false;
+									        }
+								        } else {
+									        simpleCommands.add(command);
+								        }
+							        }
+						        }
 
-                                if (mSendDataToUsbTask != null && mSendDataToUsbTask.getStatus()
-                                        == AsyncTask.Status.RUNNING) {
-                                    mSendDataToUsbTask.cancel(true);
-                                }
-                                mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
-                                        loopCommands, autoPpm, EToCMainActivity.this);
+						        if (mSendDataToUsbTask != null && mSendDataToUsbTask.getStatus()
+								        == AsyncTask.Status.RUNNING) {
+							        mSendDataToUsbTask.cancel(true);
+						        }
+						        mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
+								        loopCommands, autoPpm, EToCMainActivity.this);
 
-                                mSendDataToUsbTask.execute(future, delay_timer);
-                            } else if (success) {
-                                Toast.makeText(EToCMainActivity.this, "File not found", Toast
-                                        .LENGTH_LONG).show();
-                                return;
-                            } else {
-                                Toast.makeText(EToCMainActivity.this, "Unexpected error", Toast
-                                        .LENGTH_LONG).show();
-                                return;
-                            }
+						        mSendDataToUsbTask.execute(future, delay_timer);
+					        } else if (success) {
+						        Toast.makeText(EToCMainActivity.this, "File not found", Toast
+								        .LENGTH_LONG).show();
+						        return;
+					        } else {
+						        Toast.makeText(EToCMainActivity.this, "Unexpected error", Toast
+								        .LENGTH_LONG).show();
+						        return;
+					        }
 
-                            // end collect commands
+					        // end collect commands
 
 
-                            //									ctimer = new
-                            // CountDownTimer(future,
-                            //											delay_timer) {
-                            //
-                            //										@Override
-                            //										public void onTick(
-                            //												long
-                            // millisUntilFinished) {
-                            //											// TODO
-                            // Auto-generated method stub
-                            //											mReadingCount =
-                            // mReadingCount + 1;
-                            //											sendMessage();
-                            //
-                            ////											byte [] arr =
-                            // new byte[]{(byte) 0xFE,0x44,0x11,
-                            // 0x22,0x33,0x44,0x55};
-                            ////											Message msg =
-                            // new Message();
-                            ////											msg.what = 0;
-                            ////											msg.obj = arr;
-                            ////											EToCMainActivity
-                            // .sHandler.sendMessage(msg);
-                            //										}
-                            //
-                            //										@Override
-                            //										public void onFinish
-                            // () {
-                            //											// TODO
-                            // Auto-generated method stub
-                            //											mReadingCount =
-                            // mReadingCount + 1;
-                            //											sendMessage();
-                            //
-                            ////											byte [] arr =
-                            // new byte[]{(byte) 0xFE,0x44,0x11,
-                            // 0x22,0x33,0x44,0x55};
-                            ////											Message msg =
-                            // new Message();
-                            ////											msg.what = 0;
-                            ////											msg.obj = arr;
-                            ////											EToCMainActivity
-                            // .sHandler.sendMessage(msg);
-                            //
-                            //											mIsTimerRunning =
-                            // false;
-                            //											Toast.makeText
-                            // (EToCMainActivity.this,
-                            //													"Timer
-                            // Finish",
-                            //													Toast
-                            // .LENGTH_LONG).show();
-                            //										}
-                            //									};
-                            //
-                            //									Toast.makeText(EToCMainActivity
-                            // .this,
-                            //											"Timer Started",
-                            // Toast.LENGTH_LONG)
-                            //											.show();
-                            //									mIsTimerRunning = true;
-                            //									ctimer.start();
+					        //									ctimer = new
+					        // CountDownTimer(future,
+					        //											delay_timer) {
+					        //
+					        //										@Override
+					        //										public void onTick(
+					        //												long
+					        // millisUntilFinished) {
+					        //											// TODO
+					        // Auto-generated method stub
+					        //											mReadingCount =
+					        // mReadingCount + 1;
+					        //											sendMessage();
+					        //
+					        ////											byte [] arr =
+					        // new byte[]{(byte) 0xFE,0x44,0x11,
+					        // 0x22,0x33,0x44,0x55};
+					        ////											Message msg =
+					        // new Message();
+					        ////											msg.what = 0;
+					        ////											msg.obj = arr;
+					        ////											EToCMainActivity
+					        // .sHandler.sendMessage(msg);
+					        //										}
+					        //
+					        //										@Override
+					        //										public void onFinish
+					        // () {
+					        //											// TODO
+					        // Auto-generated method stub
+					        //											mReadingCount =
+					        // mReadingCount + 1;
+					        //											sendMessage();
+					        //
+					        ////											byte [] arr =
+					        // new byte[]{(byte) 0xFE,0x44,0x11,
+					        // 0x22,0x33,0x44,0x55};
+					        ////											Message msg =
+					        // new Message();
+					        ////											msg.what = 0;
+					        ////											msg.obj = arr;
+					        ////											EToCMainActivity
+					        // .sHandler.sendMessage(msg);
+					        //
+					        //											mIsTimerRunning =
+					        // false;
+					        //											Toast.makeText
+					        // (EToCMainActivity.this,
+					        //													"Timer
+					        // Finish",
+					        //													Toast
+					        // .LENGTH_LONG).show();
+					        //										}
+					        //									};
+					        //
+					        //									Toast.makeText(EToCMainActivity
+					        // .this,
+					        //											"Timer Started",
+					        // Toast.LENGTH_LONG)
+					        //											.show();
+					        //									mIsTimerRunning = true;
+					        //									ctimer.start();
 
-                        }
-                        dialog.cancel();
-                    }
-                };
+				        }
+				        dialog.cancel();
+			        }
+		        };
 
-                DialogInterface.OnClickListener cancelListener = new DialogInterface
-                        .OnClickListener() {
+		        DialogInterface.OnClickListener cancelListener = new DialogInterface
+				        .OnClickListener() {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        InputMethodManager inputManager = (InputMethodManager) getSystemService
-                                (Context.INPUT_METHOD_SERVICE);
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				        InputMethodManager inputManager = (InputMethodManager) getSystemService
+						        (Context.INPUT_METHOD_SERVICE);
 
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
-                                .getCurrentFocus().getWindowToken(), 0);
-                        dialog.cancel();
-                    }
-                };
+				        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+						        .getCurrentFocus().getWindowToken(), 0);
+				        dialog.cancel();
+			        }
+		        };
 
-                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(EToCMainActivity.this, R
-                                .layout.layout_dialog_measure, "Start Measure", okListener,
-                        cancelListener, initLayoutListener).create().show();
-            }
+		        AlertDialogTwoButtonsCreator.createTwoButtonsAlert(EToCMainActivity.this, R.layout
+				        .layout_dialog_measure, "Start Measure", okListener, cancelListener,
+				        initLayoutListener).create().show();
+	        }
         });
 
         setFilters();
-
-        startService(PullStateManagingService.intentForService(this, true));
 
         mServiceConnection = new ServiceConnection() {
 
@@ -1546,6 +1529,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         //GraphPopulatorUtils.attachTimeChartIntoLayout(this, (AbstractChart)timeIntent.getExtras
         //		 ().get("chart"));
     }
+
+
 
     private void loadPreferencesFromLocalData() {
         File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
@@ -1949,6 +1934,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
         updateTitle();
         mAdvancedEditText.updateFromSettings();
+
+	    startService(PullStateManagingService.intentForService(this, true));
     }
 
     /**
@@ -1965,6 +1952,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             else if (Settings.AUTO_SAVE_OVERWRITE)
                 doSaveFile(mCurrentFilePath);
         }
+
+	    startService(PullStateManagingService.intentForService(this, false));
     }
 
     /**
