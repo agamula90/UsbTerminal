@@ -15,9 +15,6 @@ import com.ismet.usbterminal.utils.Utils;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class EToCMainHandler extends Handler {
 
@@ -34,8 +31,6 @@ public class EToCMainHandler extends Handler {
     public static final int MESSAGE_OPEN_CHART = 2;
 
 	public static final int MESSAGE_RESUME_AUTO_PULLING = 3;
-
-    public static final int MESSAGE_UN_SCHEDULING = 4;
 
     private final WeakReference<EToCMainActivity> weakActivity;
 
@@ -229,7 +224,7 @@ public class EToCMainHandler extends Handler {
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            if(pullState != PullState.NONE && !application.isUnScheduling()) {
+                            if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                            mTempState = PullState.TEMPERATURE;
 	                            application.setPullState(PullState.NONE);
 	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
@@ -251,7 +246,7 @@ public class EToCMainHandler extends Handler {
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
 
-                        if(pullState != PullState.NONE && !application.isUnScheduling()) {
+                        if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                        mTempState = PullState.CO2;
 	                        application.setPullState(PullState.NONE);
 	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
@@ -298,14 +293,11 @@ public class EToCMainHandler extends Handler {
 		            application.setPullState(mTempState);
 		            mTempState = PullState.NONE;
 
-                    if(!application.isUnScheduling()) {
-                        activity.startService(PullStateManagingService.intentForData(activity));
+                    if(!application.isPullingStopped()) {
+                        activity.startService(PullStateManagingService.intentForService(activity,
+                         true));
                     }
 		            break;
-                case MESSAGE_UN_SCHEDULING:
-                    application.setUnScheduling(false);
-                    application.setMeasureStarted(false);
-                    break;
             }
         }
     }

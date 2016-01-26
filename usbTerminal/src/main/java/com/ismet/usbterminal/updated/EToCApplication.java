@@ -20,9 +20,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private volatile @PullState int mPullState;
 
-    private boolean mUnScheduling;
-
-    private boolean isMeasureStarted;
+    private boolean mStopPulling;
 
     private final PullData pullData = new PullData();
 
@@ -141,19 +139,11 @@ public class EToCApplication extends InterpolationCalculatorApp {
         return mCurrentTemperatureRequest;
     }
 
-    public void setUnScheduling(boolean mUnScheduling) {
-        this.mUnScheduling = mUnScheduling;
+    public void setStopPulling(boolean stopPulling) {
+        this.mStopPulling = stopPulling;
     }
 
-    public boolean isUnScheduling() {
-        return mUnScheduling;
-    }
-
-    public void setMeasureStarted(boolean measureStarted) {
-        isMeasureStarted = measureStarted;
-    }
-
-    public boolean isMeasureStarted() {
-        return isMeasureStarted;
+    public boolean isPullingStopped() {
+        return mStopPulling;
     }
 }

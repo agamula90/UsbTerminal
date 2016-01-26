@@ -7,7 +7,6 @@ import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PrefConstants;
-import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
 
@@ -56,8 +55,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
             }
 
             EToCApplication application = EToCApplication.getInstance();
-            application.setUnScheduling(false);
-            application.setMeasureStarted(false);
+            application.setStopPulling(false);
             weakActivity.get().startService(PullStateManagingService.intentForService
                     (weakActivity.get(), true));
         }

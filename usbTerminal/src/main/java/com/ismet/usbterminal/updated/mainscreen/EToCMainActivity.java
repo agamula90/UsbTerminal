@@ -1326,7 +1326,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                             // collect commands
                             if (contentForUpload != null && !contentForUpload.isEmpty()) {
-                                EToCApplication.getInstance().setMeasureStarted(true);
                                 startService(PullStateManagingService.intentForService(EToCMainActivity.this,
                                         false));
 
@@ -2902,11 +2901,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         message.obj = dataForSend;
         message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
         message.sendToTarget();
-    }
-
-    public void sendUnSchedulingMessage() {
-        Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_UN_SCHEDULING);
-        mHandler.sendMessageDelayed(message, PullStateManagingService.DELAY_ON_CHANGE_REQUEST);
     }
 
     public void disconnectFromService() {

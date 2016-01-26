@@ -10,7 +10,6 @@ import android.support.annotation.Nullable;
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
-import com.ismet.usbterminal.updated.mainscreen.EToCMainHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,30 +46,28 @@ public class PullStateManagingService extends Service {
         mPullDataService = eToCApplication.getPullDataService();
     }
 
-    public static Intent intentForData(Context context) {
-        Intent intent = intentForService(context, true);
-        return intent;
-    }
-
     public static Intent intentForService(Context context, boolean isAutoPull) {
         EToCApplication application = EToCApplication.getInstance();
         Intent intent = new Intent(application, PullStateManagingService.class);
         intent.putExtra(IS_AUTO_PULL_ON, isAutoPull);
+        if (isAutoPull) {
+            EToCApplication.getInstance().setStopPulling(false);
+        }
         return intent;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Bundle extras = intent.getExtras();
-        if (extras != null && !eToCApplication.isUnScheduling()) {
+        if (extras != null && !eToCApplication.isPullingStopped()) {
             boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
             if (isPull) {
                 mIsAutoHandling.set(true);
-                if(eToCApplication.getPullState() == PullState.NONE) {
+                if (eToCApplication.getPullState() == PullState.NONE) {
                     eToCApplication.setPullState(PullState.TEMPERATURE);
                 }
 
-                if(mPullDataService == null) {
+                if (mPullDataService == null) {
                     mPullDataService = Executors.newSingleThreadScheduledExecutor();
                     eToCApplication.initPullDataService(mPullDataService);
                 } else {
@@ -81,7 +78,7 @@ public class PullStateManagingService extends Service {
                     @Override
                     public void run() {
                         int pullState = eToCApplication.getPullState();
-                        if(pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                        if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
                             return;
                         }
 
@@ -105,7 +102,7 @@ public class PullStateManagingService extends Service {
                     public void run() {
                         int pullState = eToCApplication.getPullState();
 
-                        if(pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                        if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
                             return;
                         }
 
@@ -142,9 +139,7 @@ public class PullStateManagingService extends Service {
             } else {
                 mIsAutoHandling.set(false);
                 eToCApplication.unScheduleTasks();
-                if(eToCApplication.isMeasureStarted()) {
-                    eToCApplication.setUnScheduling(true);
-                }
+                eToCApplication.setStopPulling(true);
             }
         }
         return START_STICKY;
