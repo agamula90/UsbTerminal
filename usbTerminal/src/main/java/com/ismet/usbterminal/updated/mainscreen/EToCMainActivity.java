@@ -22,7 +22,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Process;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -88,7 +87,6 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -246,7 +244,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private int mTemperatureShift;
 
-	private @PowerState int mPowerState;
+	private
+	@PowerState
+	int mPowerState;
 
 	private long mLastTimePressed;
 
@@ -329,7 +329,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					mPower.setTag(PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase());
 					powerOn = true;
 					command = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
-							 .POWER_ON_COMMAND_DEFAULT);
+							.POWER_ON_COMMAND_DEFAULT);
 				} else {
 					mPower.setText(powerOnName);
 					mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
@@ -482,38 +482,38 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
 		mButtonOn1.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
-            private String command;
+			private String command;
 
-            @Override
-            public void onPrePullStopped() {
-                String str_on_name1t = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name1t = mPrefs.getString(PrefConstants.OFF_NAME1, PrefConstants
-                        .OFF_NAME_DEFAULT);
+			@Override
+			public void onPrePullStopped() {
+				String str_on_name1t = mPrefs.getString(PrefConstants.ON_NAME1, PrefConstants
+						.ON_NAME_DEFAULT);
+				String str_off_name1t = mPrefs.getString(PrefConstants.OFF_NAME1, PrefConstants
+						.OFF_NAME_DEFAULT);
 
-                String s = mButtonOn1.getTag().toString();
-                command = "";//"/5H1000R";
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    command = mPrefs.getString(PrefConstants.ON1, "");
-                    mButtonOn1.setText(str_off_name1t);
-                    mButtonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-                } else {
-                    command = mPrefs.getString(PrefConstants.OFF1, "");
-                    mButtonOn1.setText(str_on_name1t);
-                    mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-                }
-            }
+				String s = mButtonOn1.getTag().toString();
+				command = "";//"/5H1000R";
+				if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+					command = mPrefs.getString(PrefConstants.ON1, "");
+					mButtonOn1.setText(str_off_name1t);
+					mButtonOn1.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+				} else {
+					command = mPrefs.getString(PrefConstants.OFF1, "");
+					mButtonOn1.setText(str_on_name1t);
+					mButtonOn1.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+				}
+			}
 
-            @Override
-            public void onPostPullStopped() {
-                sendCommand(command);
-            }
+			@Override
+			public void onPostPullStopped() {
+				sendCommand(command);
+			}
 
-            @Override
-            public void onPostPullStarted() {
+			@Override
+			public void onPostPullStarted() {
 
-            }
-        }));
+			}
+		}));
 
 		mButtonOn1.setOnLongClickListener(new OnLongClickListener() {
 
@@ -530,6 +530,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						editOff = (EditText) contentView.findViewById(R.id.editOff);
 						editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
 						editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
+
+						changeTextsForButtons(contentView);
 
 						String str_on = mPrefs.getString(PrefConstants.ON1, "");
 						String str_off = mPrefs.getString(PrefConstants.OFF1, "");
@@ -619,49 +621,49 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		mButtonOn2.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
-            private String command;
+			private String command;
 
-            @Override
-            public void onPrePullStopped() {
-                String str_on_name2t = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name2t = mPrefs.getString(PrefConstants.OFF_NAME2, PrefConstants
-                        .OFF_NAME_DEFAULT);
+			@Override
+			public void onPrePullStopped() {
+				String str_on_name2t = mPrefs.getString(PrefConstants.ON_NAME2, PrefConstants
+						.ON_NAME_DEFAULT);
+				String str_off_name2t = mPrefs.getString(PrefConstants.OFF_NAME2, PrefConstants
+						.OFF_NAME_DEFAULT);
 
-                String s = mButtonOn2.getTag().toString();
-                command = "";//"/5H1000R";
+				String s = mButtonOn2.getTag().toString();
+				command = "";//"/5H1000R";
 
-                final String defaultValue;
-                final String prefName;
+				final String defaultValue;
+				final String prefName;
 
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    prefName = PrefConstants.OFF2;
-                    defaultValue = "/5H0000R";
-                    command = mPrefs.getString(PrefConstants.ON2, "");
-                    mButtonOn2.setText(str_off_name2t);
-                    mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-                } else {
-                    prefName = PrefConstants.ON2;
-                    defaultValue = "/5H750R";
-                    command = mPrefs.getString(PrefConstants.OFF2, "");
-                    mButtonOn2.setText(str_on_name2t);
-                    mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-                }
+				if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+					prefName = PrefConstants.OFF2;
+					defaultValue = "/5H0000R";
+					command = mPrefs.getString(PrefConstants.ON2, "");
+					mButtonOn2.setText(str_off_name2t);
+					mButtonOn2.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+				} else {
+					prefName = PrefConstants.ON2;
+					defaultValue = "/5H750R";
+					command = mPrefs.getString(PrefConstants.OFF2, "");
+					mButtonOn2.setText(str_on_name2t);
+					mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+				}
 
-                EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
-                        (prefName, defaultValue));
-            }
+				EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
+						(prefName, defaultValue));
+			}
 
-            @Override
-            public void onPostPullStopped() {
-                sendCommand(command);
-            }
+			@Override
+			public void onPostPullStopped() {
+				sendCommand(command);
+			}
 
-            @Override
-            public void onPostPullStarted() {
+			@Override
+			public void onPostPullStarted() {
 
-            }
-        }));
+			}
+		}));
 
 		mButtonOn2.setOnLongClickListener(new OnLongClickListener() {
 
@@ -679,11 +681,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
 						editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
+						changeTextsForButtons(contentView);
+
 						String str_on_name = mPrefs.getString(PrefConstants.ON_NAME2,
 								PrefConstants.ON_NAME_DEFAULT);
 						String str_off_name = mPrefs.getString(PrefConstants.OFF_NAME2,
 								PrefConstants.OFF_NAME_DEFAULT);
-
 
 						String str_on = mPrefs.getString(PrefConstants.ON2, "");
 						String str_off = mPrefs.getString(PrefConstants.OFF2, "");
@@ -778,36 +781,36 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 			private String command;
 
-            @Override
-            public void onPrePullStopped() {
-                String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
-                        .ON_NAME_DEFAULT);
-                String str_off_name3 = mPrefs.getString(PrefConstants.OFF_NAME3, PrefConstants
-                        .OFF_NAME_DEFAULT);
+			@Override
+			public void onPrePullStopped() {
+				String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
+						.ON_NAME_DEFAULT);
+				String str_off_name3 = mPrefs.getString(PrefConstants.OFF_NAME3, PrefConstants
+						.OFF_NAME_DEFAULT);
 
-                String s = mButtonOn3.getTag().toString();
+				String s = mButtonOn3.getTag().toString();
 
-                if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-                    mButtonOn3.setText(str_off_name3);
-                    mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
-	                command = mPrefs.getString(PrefConstants.ON3, "");
-                } else {
-                    mButtonOn3.setText(str_on_name3);
-                    mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
-	                command = mPrefs.getString(PrefConstants.OFF3, "");
-                }
-            }
+				if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+					mButtonOn3.setText(str_off_name3);
+					mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+					command = mPrefs.getString(PrefConstants.ON3, "");
+				} else {
+					mButtonOn3.setText(str_on_name3);
+					mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+					command = mPrefs.getString(PrefConstants.OFF3, "");
+				}
+			}
 
-            @Override
-            public void onPostPullStopped() {
-	            sendCommand(command);
-            }
+			@Override
+			public void onPostPullStopped() {
+				sendCommand(command);
+			}
 
-            @Override
-            public void onPostPullStarted() {
+			@Override
+			public void onPostPullStarted() {
 
-            }
-        }));
+			}
+		}));
 
 		mButtonOn3.setOnLongClickListener(new OnLongClickListener() {
 
@@ -825,11 +828,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
 						editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
 
+						changeTextsForButtons(contentView);
+
 						String str_on_name = mPrefs.getString(PrefConstants.ON_NAME3,
 								PrefConstants.ON_NAME_DEFAULT);
 						String str_off_name = mPrefs.getString(PrefConstants.OFF_NAME3,
 								PrefConstants.OFF_NAME_DEFAULT);
-
 
 						String str_on = mPrefs.getString(PrefConstants.ON3, "");
 						String str_off = mPrefs.getString(PrefConstants.OFF3, "");
@@ -905,30 +909,31 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		});
 
 		mSendButton = (Button) findViewById(R.id.buttonSend);
-		mSendButton.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
+		mSendButton.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback
+				() {
 
 
-            @Override
-            public void onPrePullStopped() {
-                //				if (mIsTimerRunning) {
-                //					Toast.makeText(EToCMainActivity.this,
-                //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
-                //							.show();
-                //				} else {
-                //					sendMessage();
-                //				}
-            }
+			@Override
+			public void onPrePullStopped() {
+				//				if (mIsTimerRunning) {
+				//					Toast.makeText(EToCMainActivity.this,
+				//							"Timer is running. Please wait", Toast.LENGTH_SHORT)
+				//							.show();
+				//				} else {
+				//					sendMessage();
+				//				}
+			}
 
-            @Override
-            public void onPostPullStopped() {
-                sendMessage();
-            }
+			@Override
+			public void onPostPullStopped() {
+				sendMessage();
+			}
 
-            @Override
-            public void onPostPullStarted() {
+			@Override
+			public void onPostPullStarted() {
 
-            }
-        }));
+			}
+		}));
 
 		mAdvancedEditText.setOnEditorActionListener(new OnEditorActionListener() {
 
@@ -1076,7 +1081,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 			@Override
 			public void onClick(View v) {
-	            /*if (mAdvancedEditText.getText().toString().isEmpty()) {
+		        /*if (mAdvancedEditText.getText().toString().isEmpty()) {
                     Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
@@ -1431,21 +1436,23 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 									}
 								}
 
-                                final boolean autoPpmCalculate = autoPpm;
+								final boolean autoPpmCalculate = autoPpm;
 
-                                mHandler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (mSendDataToUsbTask != null && mSendDataToUsbTask.getStatus()
-                                                == AsyncTask.Status.RUNNING) {
-                                            mSendDataToUsbTask.cancel(true);
-                                        }
-                                        mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
-                                                loopCommands, autoPpmCalculate, EToCMainActivity.this);
+								mHandler.postDelayed(new Runnable() {
 
-                                        mSendDataToUsbTask.execute(future, delay_timer);
-                                    }
-                                }, 300);
+									@Override
+									public void run() {
+										if (mSendDataToUsbTask != null && mSendDataToUsbTask
+												.getStatus() == AsyncTask.Status.RUNNING) {
+											mSendDataToUsbTask.cancel(true);
+										}
+										mSendDataToUsbTask = new SendDataToUsbTask(simpleCommands,
+												loopCommands, autoPpmCalculate, EToCMainActivity
+												.this);
+
+										mSendDataToUsbTask.execute(future, delay_timer);
+									}
+								}, 300);
 							} else if (success) {
 								Toast.makeText(EToCMainActivity.this, "File not found", Toast
 										.LENGTH_LONG).show();
@@ -1607,47 +1614,18 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		//		 ().get("chart"));
 	}
 
-    private class AutoPullResolverListener implements OnClickListener {
-        private final AutoPullResolverCallback mAutoPullResolverCallback;
-
-        private AutoPullResolverListener(AutoPullResolverCallback autoPullResolverCallback) {
-            this.mAutoPullResolverCallback = autoPullResolverCallback;
-        }
-
-        @Override
-        public void onClick(View v) {
-            mAutoPullResolverCallback.onPrePullStopped();
-
-            long nowTime = SystemClock.uptimeMillis();
-            boolean timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, mLastTimePressed);
-
-            if(timeElapsed) {
-                mLastTimePressed = nowTime;
-                startService(PullStateManagingService.intentForService(EToCMainActivity.this,
-                        false));
-            }
-
-            mAutoPullResolverCallback.onPostPullStopped();
-
-            if(timeElapsed) {
-                mHandler.postDelayed(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        startService(PullStateManagingService.intentForService(EToCMainActivity
-                                .this, true));
-                        mAutoPullResolverCallback.onPostPullStarted();
-                    }
-                }, 1000);
-            }
-        }
-    }
-
-    public interface AutoPullResolverCallback {
-        void onPrePullStopped();
-        void onPostPullStopped();
-        void onPostPullStarted();
-    }
+	private void changeTextsForButtons(View contentView) {
+		StringBuilder addTextBuilder = new StringBuilder();
+		for (int i = 0; i < 9; i++) {
+			addTextBuilder.append(' ');
+		}
+		((TextView) contentView.findViewById(R.id.txtOn)).setText(addTextBuilder.toString() +
+				"Command 1: ");
+		((TextView) contentView.findViewById(R.id.txtOn1)).setText("Button State1 " + "Name: ");
+		((TextView) contentView.findViewById(R.id.txtOff)).setText(addTextBuilder.toString() +
+				"Command 2: ");
+		((TextView) contentView.findViewById(R.id.txtOff1)).setText("Button State2" + " Name: ");
+	}
 
 	private void loadPreferencesFromLocalData() {
 		File settingsFolder = new File(Environment.getExternalStorageDirectory(), AppData
@@ -2050,7 +2028,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		boolean isServiceRunning = getPrefs().getBoolean(IS_SERVICE_RUNNING, false);
 
 		if (!isServiceRunning) {
-           EToCApplication.getInstance().setPullState(PullState.NONE);
+			EToCApplication.getInstance().setPullState(PullState.NONE);
 			startService(PullStateManagingService.intentForService(this, true));
 		}
 	}
@@ -3161,7 +3139,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						//changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
 
 						mTemperature.setText("" + (mTemperatureData.getTemperature1() +
-								mTemperatureShift));
+								mTemperatureShift) + "C");
 					}
 				};
 				//mTemperature.post(updateRunnable);
@@ -3170,7 +3148,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mTemperature.setText("" + mTemperatureData.getWrongPosition());
 			}
 		} else {
-			mCo2.setText(text);
+			mCo2.setText(text + " " + "ppm");
 		}
 	}
 
@@ -3198,8 +3176,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		repaintChartView();
 	}
 
-	//TODO implement this for handle report changes
-
 	@Override
 	public Date currentDate() {
 		return mReportDate;
@@ -3211,6 +3187,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		return FORMATTER.format(mReportDate);
 	}
+
+	//TODO implement this for handle report changes
 
 	@Override
 	public String sampleId() {
@@ -3258,5 +3236,51 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	public String reportFolders() {
 		return new File(Environment.getExternalStorageDirectory(), AppData.REPORT_FOLDER_NAME)
 				.getAbsolutePath();
+	}
+
+	public interface AutoPullResolverCallback {
+
+		void onPrePullStopped();
+
+		void onPostPullStopped();
+
+		void onPostPullStarted();
+	}
+
+	private class AutoPullResolverListener implements OnClickListener {
+
+		private final AutoPullResolverCallback mAutoPullResolverCallback;
+
+		private AutoPullResolverListener(AutoPullResolverCallback autoPullResolverCallback) {
+			this.mAutoPullResolverCallback = autoPullResolverCallback;
+		}
+
+		@Override
+		public void onClick(View v) {
+			mAutoPullResolverCallback.onPrePullStopped();
+
+			long nowTime = SystemClock.uptimeMillis();
+			boolean timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, mLastTimePressed);
+
+			if (timeElapsed) {
+				mLastTimePressed = nowTime;
+				startService(PullStateManagingService.intentForService(EToCMainActivity.this,
+						false));
+			}
+
+			mAutoPullResolverCallback.onPostPullStopped();
+
+			if (timeElapsed) {
+				mHandler.postDelayed(new Runnable() {
+
+					@Override
+					public void run() {
+						startService(PullStateManagingService.intentForService(EToCMainActivity
+								.this, true));
+						mAutoPullResolverCallback.onPostPullStarted();
+					}
+				}, 1000);
+			}
+		}
 	}
 }
