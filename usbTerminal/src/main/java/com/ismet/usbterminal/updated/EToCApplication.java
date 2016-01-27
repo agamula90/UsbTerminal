@@ -4,12 +4,12 @@ import android.util.Log;
 
 import com.ismet.usbterminal.updated.data.PullData;
 import com.ismet.usbterminal.updated.data.PullState;
+import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public class EToCApplication extends InterpolationCalculatorApp {
 
@@ -21,7 +21,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private volatile @PullState int mPullState;
 
-    private boolean mStopPulling;
+    private volatile boolean mStopPulling;
 
     private final PullData pullData = new PullData();
 
@@ -165,16 +165,12 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 		boolean isRefreshed = false;
 
-		if(timeElapsed(mRenewTime, mTimeOfRecreating)) {
+		if(Utils.elapsedTimeForCacheFill(mRenewTime, mTimeOfRecreating)) {
 			refreshTimeOfRecreating();
 			isRefreshed = true;
 		}
 
 		return isRefreshed;
-	}
-
-	public boolean timeElapsed(long firstTime, long secondTime) {
-		return firstTime - secondTime >= TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 	}
 
 	public long getRenewTime() {

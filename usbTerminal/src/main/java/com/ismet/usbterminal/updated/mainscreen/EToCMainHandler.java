@@ -61,9 +61,9 @@ public class EToCMainHandler extends Handler {
                         if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
                                 .format("%02X", usbReadBytes[1]).equals("44"))) {
 
-                            if(pullState != PullState.NONE) {
+                            /*if(pullState != PullState.NONE) {
                                 application.unScheduleTasks();
-                            }
+                            }*/
 
                             // SENSOR Response
                             String strHex = "";
@@ -224,13 +224,13 @@ public class EToCMainHandler extends Handler {
 
                             activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            if(pullState != PullState.NONE && !application.isPullingStopped()) {
+                            /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                            mTempState = PullState.TEMPERATURE;
 	                            application.setPullState(PullState.NONE);
 	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
                                 sendMessageDelayed(message, PullStateManagingService
                                          .DELAY_ON_CHANGE_REQUEST);
-                            }
+                            }*/
                         } else {
                             data = new String(usbReadBytes);
                             data = data.replace("\r", "");
@@ -238,21 +238,21 @@ public class EToCMainHandler extends Handler {
                             data = "tmp:" + data;
                         }
                     } else {
-                        if(pullState != PullState.NONE) {
+                        /*if(pullState != PullState.NONE) {
                             application.unScheduleTasks();
-                        }
+                        }*/
                         data = new String(usbReadBytes);
                         data = data.replace("\r", "");
                         data = data.replace("\n", "");
                         activity.refreshTextAccordToSensor(true, data);
 
-                        if(pullState != PullState.NONE && !application.isPullingStopped()) {
+                        /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                        mTempState = PullState.CO2;
 	                        application.setPullState(PullState.NONE);
 	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
                             sendMessageDelayed(message, PullStateManagingService
                                      .DELAY_ON_CHANGE_REQUEST);
-                        }
+                        }*/
                     }
 
 	                //if(pullState == PullState.NONE) {

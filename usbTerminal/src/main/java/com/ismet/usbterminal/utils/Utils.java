@@ -20,6 +20,7 @@ import com.ismet.usbterminal.updated.data.PullState;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Utils {
 	private Utils() {
@@ -168,11 +169,18 @@ public class Utils {
                         currentLineStartPosition + length, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
             }
 
-
             spannable.setSpan(new AbsoluteSizeSpan(reportData.getFontSize()), currentLineStartPosition,
                     currentLineStartPosition + length, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
             currentLineStartPosition += length + (reportData.isAutoAddBreak() ? 1 : 0);
         }
         return spannable;
+    }
+
+	public static boolean elapsedTimeForCacheFill(long nowTime, long cachedTime) {
+		return nowTime - cachedTime >= TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+	}
+
+    public static boolean elapsedTimeForSendRequest(long nowTime, long cachedTime) {
+        return nowTime - cachedTime >= TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
     }
 }
