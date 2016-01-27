@@ -1,5 +1,6 @@
 package com.ismet.usbterminal.updated.mainscreen;
 
+import android.os.Binder;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;

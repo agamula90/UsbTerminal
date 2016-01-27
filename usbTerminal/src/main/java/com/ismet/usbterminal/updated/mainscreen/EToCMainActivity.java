@@ -88,6 +88,7 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -2025,7 +2026,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		boolean isServiceRunning = getPrefs().getBoolean(IS_SERVICE_RUNNING, false);
 
 		if (!isServiceRunning) {
-            EToCApplication.getInstance().setPullState(PullState.NONE);
+           EToCApplication.getInstance().setPullState(PullState.NONE);
 			startService(PullStateManagingService.intentForService(this, true));
 		}
 	}
