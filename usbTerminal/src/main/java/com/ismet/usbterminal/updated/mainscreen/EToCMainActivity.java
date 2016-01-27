@@ -307,10 +307,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				.POWER_ON_NAME_DEFAULT));
 		mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
 
-		mPower.setOnClickListener(new OnClickListener() {
+		mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
+
+			private String command;
 
 			@Override
-			public void onClick(View v) {
+			public void onPrePullStopped() {
 				String powerOnName = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
 						.POWER_ON_NAME_DEFAULT);
 				String powerOffName = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
@@ -320,19 +322,35 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 				boolean powerOn;
 
+				command = "";
+
 				if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
 					mPower.setText(powerOffName);
 					mPower.setTag(PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase());
 					powerOn = true;
+					command = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
+							 .POWER_ON_COMMAND_DEFAULT);
 				} else {
 					mPower.setText(powerOnName);
 					mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
 					powerOn = false;
+					command = mPrefs.getString(PrefConstants.POWER_OFF, PrefConstants
+							.POWER_OFF_NAME_DEFAULT);
 				}
 
 				mPowerState = powerOn ? PowerState.ON : PowerState.OFF;
 			}
-		});
+
+			@Override
+			public void onPostPullStopped() {
+				sendCommand(command);
+			}
+
+			@Override
+			public void onPostPullStarted() {
+
+			}
+		}));
 
 		mPower.setOnLongClickListener(new OnLongClickListener() {
 
@@ -757,6 +775,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				.ON_NAME_DEFAULT));
 		mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
 		mButtonOn3.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
+
+			private String command;
+
             @Override
             public void onPrePullStopped() {
                 String str_on_name3 = mPrefs.getString(PrefConstants.ON_NAME3, PrefConstants
@@ -765,18 +786,21 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                         .OFF_NAME_DEFAULT);
 
                 String s = mButtonOn3.getTag().toString();
+
                 if (s.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
                     mButtonOn3.setText(str_off_name3);
                     mButtonOn3.setTag(PrefConstants.OFF_NAME_DEFAULT.toLowerCase());
+	                command = mPrefs.getString(PrefConstants.ON3, "");
                 } else {
                     mButtonOn3.setText(str_on_name3);
                     mButtonOn3.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+	                command = mPrefs.getString(PrefConstants.OFF3, "");
                 }
             }
 
             @Override
             public void onPostPullStopped() {
-
+	            sendCommand(command);
             }
 
             @Override
