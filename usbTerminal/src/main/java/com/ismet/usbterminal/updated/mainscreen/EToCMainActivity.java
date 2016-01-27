@@ -3139,7 +3139,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						//changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
 
 						mTemperature.setText("" + (mTemperatureData.getTemperature1() +
-								mTemperatureShift) + "C");
+								mTemperatureShift) + " C");
 					}
 				};
 				//mTemperature.post(updateRunnable);

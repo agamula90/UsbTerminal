@@ -18,12 +18,10 @@
 
             <TextView
                 android:id="@+id/txtOn"
-                android:layout_width="wrap_content"
+                android:layout_width="140dp"
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:text="On Command : "
-                android:maxLength="20"
-                android:typeface="monospace"
                 android:textSize="12sp"/>
 
             <EditText
@@ -51,12 +49,10 @@
 
             <TextView
                 android:id="@+id/txtOn1"
-                android:layout_width="wrap_content"
+                android:layout_width="140dp"
                 android:layout_height="wrap_content"
                 android:gravity="right"
-                android:maxLength="20"
                 android:text="On Button : "
-                android:typeface="monospace"
                 android:textSize="12sp"/>
 
             <EditText
@@ -85,12 +81,10 @@
 
             <TextView
                 android:id="@+id/txtOff"
-                android:layout_width="wrap_content"
+                android:layout_width="140dp"
                 android:layout_height="wrap_content"
-                android:maxLength="20"
                 android:gravity="right"
                 android:text="Off Command : "
-                android:typeface="monospace"
                 android:textSize="12sp"/>
 
             <EditText
@@ -120,12 +114,10 @@
 
             <TextView
                 android:id="@+id/txtOff1"
-                android:layout_width="wrap_content"
+                android:layout_width="140dp"
                 android:layout_height="wrap_content"
-                android:maxLength="20"
                 android:gravity="right"
                 android:text="Off Button : "
-                android:typeface="monospace"
                 android:textSize="12sp"/>
 
             <EditText

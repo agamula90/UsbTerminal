@@ -60,8 +60,10 @@
                                 android:layout_width="0dp"
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
+                                android:gravity="center"
                                 android:layout_weight="1"
                                 android:textSize="18sp"
+                                android:textAllCaps="false"
                                 android:text="" />
                                 <!--android:enabled="false" /> -->
 
@@ -82,8 +84,9 @@
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
+                                android:gravity="center"
                                 android:textSize="18sp"
-                                android:text="" />
+                                android:textAllCaps="false" />
                                 <!--android:enabled="false"/> -->
                         </LinearLayout>
 
