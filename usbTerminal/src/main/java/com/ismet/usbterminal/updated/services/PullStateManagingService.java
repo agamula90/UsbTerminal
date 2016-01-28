@@ -22,10 +22,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PullStateManagingService extends Service {
 
+    public static final String WAIT_FOR_COOLING_ACTION = "wait_for_cooling";
+
     public static final String IS_AUTO_PULL_ON = "is_auto_pull_on";
     public static final String IS_RECREATING = "is_recreating";
 
-    private static final String CO2_REQUEST = "(FE-44-00-08-02-9F-25)";
+    public static final String CO2_REQUEST = "(FE-44-00-08-02-9F-25)";
     private static final int MAX_WAIT_TIME_FOR_CANCEL_EXECUTOR = 100;
     public static final int DELAY_ON_CHANGE_REQUEST = 1000;
 

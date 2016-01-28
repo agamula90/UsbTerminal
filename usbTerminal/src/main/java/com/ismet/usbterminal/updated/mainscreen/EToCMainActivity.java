@@ -2,7 +2,6 @@ package com.ismet.usbterminal.updated.mainscreen;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.IntentService;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -302,11 +301,34 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		mScrollView = (ScrollView) findViewById(R.id.mScrollView);
 
 		mPower = (Button) findViewById(R.id.power);
-		mPower.setText(mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
-				.POWER_ON_NAME_DEFAULT));
-		mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
 
-		mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
+        mPowerState = PowerState.OFF;
+
+        initPowerAccordToItState();
+
+        mPower.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                switch (mPowerState) {
+                    case PowerState.OFF:
+                        v.setEnabled(false);
+                        startService(PullStateManagingService.intentForService(EToCMainActivity
+                                .this, false));
+                        powerOn();
+                        break;
+                    case PowerState.ON:
+                        v.setEnabled(false);
+                        startService(PullStateManagingService.intentForService(EToCMainActivity
+                                .this, false));
+                        powerOff();
+                        break;
+                }
+
+                return true;
+            }
+        });
+
+		/*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
 			private String command;
 
@@ -448,6 +470,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				return true;
 			}
 		});
+*/
+
+        mPower.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+
+                return true;
+            }
+        });
 
 		mTemperature = (Button) findViewById(R.id.temperature);
 
@@ -1613,7 +1645,32 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		//		 ().get("chart"));
 	}
 
-	private void changeTextsForButtons(View contentView) {
+    private void initPowerAccordToItState() {
+        final String powerText;
+        final String powerTag;
+
+        switch (mPowerState) {
+            case PowerState.OFF:
+                powerText = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
+                        .POWER_OFF_NAME_DEFAULT);
+                powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase();
+                break;
+            case PowerState.ON:
+                powerText = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+                        .POWER_ON_NAME_DEFAULT);
+                powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase();
+                break;
+            default:
+                powerText = powerTag = null;
+        }
+
+        if(powerTag != null && powerText != null) {
+            mPower.setText(powerText);
+            mPower.setTag(powerTag);
+        }
+    }
+
+    private void changeTextsForButtons(View contentView) {
 		StringBuilder addTextBuilder = new StringBuilder();
 		for (int i = 0; i < 9; i++) {
 			addTextBuilder.append(' ');
@@ -1821,18 +1878,173 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
     //TODO
     //make power on
+    //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+    // 0.5 second wait -> repeat
+    // "/5J4R" "respond as ->" "@5J4"
+    // 1 second wait ->
+    // "(FE............)" "respond as ->" "lala"
+    // 2 second wait ->
+    // "/1ZR" "respond as ->" "blasad" -> power on
     void powerOn() {
-        //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
-        // 0.5 second wait -> repeat
-        // "/5J4R" "respond as ->" "@5J4"
-        // 1 second wait ->
-        // "(FE............)" "respond as ->" "lala"
-        // 2 second wait ->
-        // "/1ZR" "respond as ->" "blasad" -> power on
+        mPowerState = PowerState.ON_STAGE1;
+
 
     }
 
-	@Override
+    public void sendRequest() {
+        boolean handled = false;
+
+        switch (mPowerState) {
+            case PowerState.ON_STAGE1:
+            case PowerState.ON_STAGE1_REPEAT:
+                sendCommand("/5H0000R");
+                handled = true;
+                break;
+            case PowerState.ON_STAGE2:
+                sendCommand("/5J4R");
+                handled = true;
+                break;
+            case PowerState.ON_STAGE3:
+                sendCommand(PullStateManagingService.CO2_REQUEST);
+                handled = true;
+                break;
+            case PowerState.ON_STAGE4:
+                sendCommand("/1ZR");
+                handled = true;
+                break;
+            case PowerState.OFF_STAGE1:
+                sendCommand("/5H0000R");
+                handled = true;
+                break;
+            case PowerState.OFF_FINISHING:
+                sendCommand("/5J5R");
+                handled = true;
+                break;
+            case PowerState.OFF_WAIT_FOR_COOLING:
+                Intent i = PullStateManagingService.intentForService(this, true);
+                i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
+                startService(i);
+                handled = true;
+                break;
+        }
+
+        if(!handled) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    //TODO
+    //make power off
+    //interrupt all activities by software (mean measure process etc)
+    // 1 second wait ->
+    // "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+    // around 75C -> "/5J5R" -> "@5J5" -> then power off
+    // bigger, then
+    //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
+    void powerOff() {
+
+    }
+
+    public void handleResponse(String stringResponse) {
+        boolean handled = false;
+
+        switch (mPowerState) {
+            case PowerState.ON_STAGE1:
+            case PowerState.ON_STAGE1_REPEAT:
+                handleStage1Response(stringResponse);
+                handled = true;
+                break;
+            case PowerState.ON_STAGE2:
+                handleStage2Response(stringResponse);
+                handled = true;
+                break;
+            case PowerState.ON_STAGE3:
+                handleStage3Response(stringResponse);
+                handled = true;
+                break;
+            case PowerState.ON_STAGE4:
+                handleStage4Response(stringResponse);
+                handled = true;
+                break;
+            case PowerState.OFF_STAGE1:
+                handleOffStage1Response(stringResponse);
+                handled = true;
+                break;
+            case PowerState.OFF_FINISHING:
+                handleOffFinishing(stringResponse);
+                handled = true;
+                break;
+        }
+
+        if(!handled) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private void handleStage1Response(String response) {
+        //TODO implement that
+    }
+
+    private void handleStage2Response(String response) {
+        //TODO implement that
+    }
+
+    private void handleStage3Response(String response) {
+        //TODO implement that
+    }
+
+    private void handleStage4Response(String response) {
+        //TODO implement that
+    }
+
+    private void handleOffStage1Response(String response) {
+        //TODO implement that
+    }
+
+    private void handleOffFinishing(String response) {
+        //TODO implement that
+    }
+
+    public void movePowerStateToNext() {
+
+        switch (mPowerState) {
+            case PowerState.ON_STAGE1:
+                mPowerState = PowerState.ON_STAGE1_REPEAT;
+                break;
+            case PowerState.ON_STAGE1_REPEAT:
+                mPowerState = PowerState.ON_STAGE2;
+                break;
+            case PowerState.ON_STAGE2:
+                mPowerState = PowerState.ON_STAGE3;
+                break;
+            case PowerState.ON_STAGE3:
+                mPowerState = PowerState.ON_STAGE4;
+                break;
+            case PowerState.ON_STAGE4:
+                mPowerState = PowerState.ON;
+                break;
+            case PowerState.ON:
+                mPowerState = PowerState.OFF_INTERRUPTING;
+                break;
+            case PowerState.OFF_INTERRUPTING:
+                mPowerState = PowerState.OFF_STAGE1;
+                break;
+            case PowerState.OFF_STAGE1:
+                mPowerState = PowerState.OFF_WAIT_FOR_COOLING;
+                break;
+            case PowerState.OFF_WAIT_FOR_COOLING:
+                mPowerState = PowerState.OFF_FINISHING;
+                break;
+            case PowerState.OFF_FINISHING:
+                mPowerState = PowerState.OFF;
+                break;
+            case PowerState.OFF:
+                mPowerState = PowerState.ON_STAGE1;
+                break;
+        }
+    }
+
+    @Override
 	public int getFragmentContainerId() {
 		return R.id.fragment_container;
 	}
