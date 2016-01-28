@@ -315,13 +315,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				switch (mPowerState) {
 					case PowerState.OFF:
 						v.setEnabled(false);
-						//powerOn();
-						simulateClick2();
+						powerOn();
+						//simulateClick2();
 						break;
 					case PowerState.ON:
 						v.setEnabled(false);
-						//powerOff();
-						simulateClick1();
+						powerOff();
+						//simulateClick1();
 						break;
 				}
 
@@ -329,7 +329,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			}
 		});
 
-		mPower.setOnClickListener(new OnClickListener() {
+		/*mPower.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -346,7 +346,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						break;
 				}
 			}
-		});
+		});*/
 
 		/*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
@@ -491,16 +491,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			}
 		});
 */
-
-		mPower.setOnLongClickListener(new OnLongClickListener() {
-
-			@Override
-			public boolean onLongClick(View v) {
-
-
-				return true;
-			}
-		});
 
 		mTemperature = (Button) findViewById(R.id.temperature);
 
