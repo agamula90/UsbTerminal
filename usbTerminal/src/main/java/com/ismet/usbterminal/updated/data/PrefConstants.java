@@ -4,8 +4,8 @@ public class PrefConstants {
     private PrefConstants() {
     }
 
-    public static final String ON_NAME_DEFAULT = "On";
-    public static final String OFF_NAME_DEFAULT = "Off";
+    public static final String ON_NAME_DEFAULT = "Command1";
+    public static final String OFF_NAME_DEFAULT = "Command2";
 
     public static final String ON_NAME1 = "on_name1";
     public static final String OFF_NAME1 = "off_name1";
