@@ -8,6 +8,7 @@ import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
@@ -26,6 +27,10 @@ public class EToCApplication extends InterpolationCalculatorApp {
     private final PullData pullData = new PullData();
 
 	private ScheduledExecutorService mPullDataService;
+
+	private ScheduledExecutorService mWaitPullService;
+
+	private ScheduledFuture mWaitPullFuture;
 
 	private List<ScheduledFuture> mScheduledFutures;
 
@@ -114,6 +119,20 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	public void initPullDataService(ScheduledExecutorService mPullTemperatureService) {
 		this.mPullDataService = mPullTemperatureService;
+	}
+
+	public ScheduledExecutorService getWaitPullService() {
+		return mWaitPullService;
+	}
+
+	public void initWaitPullService(ScheduledExecutorService scheduledExecutorService,
+			ScheduledFuture scheduledFuture) {
+		mWaitPullService = scheduledExecutorService;
+		mWaitPullFuture = scheduledFuture;
+	}
+
+	public ScheduledFuture getWaitPullFuture() {
+		return mWaitPullFuture;
 	}
 
 	public void clearPullDataService() {

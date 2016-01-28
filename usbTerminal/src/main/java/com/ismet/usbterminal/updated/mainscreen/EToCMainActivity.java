@@ -252,6 +252,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Date mReportDate;
 
+	private boolean mPowerPressed;
+
 	public static void sendBroadCastWithData(Context context, String data) {
 		Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
 		intent.putExtra(EToCMainHandler.DATA_EXTRA, data);
@@ -302,31 +304,49 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		mPower = (Button) findViewById(R.id.power);
 
-        mPowerState = PowerState.OFF;
+		mPowerState = PowerState.OFF;
 
-        initPowerAccordToItState();
+		initPowerAccordToItState();
 
-        mPower.setOnLongClickListener(new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                switch (mPowerState) {
-                    case PowerState.OFF:
-                        v.setEnabled(false);
-                        startService(PullStateManagingService.intentForService(EToCMainActivity
-                                .this, false));
-                        powerOn();
-                        break;
-                    case PowerState.ON:
-                        v.setEnabled(false);
-                        startService(PullStateManagingService.intentForService(EToCMainActivity
-                                .this, false));
-                        powerOff();
-                        break;
-                }
+		mPower.setOnLongClickListener(new OnLongClickListener() {
 
-                return true;
-            }
-        });
+			@Override
+			public boolean onLongClick(View v) {
+				switch (mPowerState) {
+					case PowerState.OFF:
+						v.setEnabled(false);
+						//powerOn();
+						simulateClick2();
+						break;
+					case PowerState.ON:
+						v.setEnabled(false);
+						//powerOff();
+						simulateClick1();
+						break;
+				}
+
+				return true;
+			}
+		});
+
+		mPower.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				switch (mPowerState) {
+					case PowerState.OFF:
+						v.setEnabled(false);
+						//powerOn();
+						simulateClick2();
+						break;
+					case PowerState.ON:
+						v.setEnabled(false);
+						//powerOff();
+						simulateClick1();
+						break;
+				}
+			}
+		});
 
 		/*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
@@ -472,14 +492,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		});
 */
 
-        mPower.setOnLongClickListener(new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
+		mPower.setOnLongClickListener(new OnLongClickListener() {
+
+			@Override
+			public boolean onLongClick(View v) {
 
 
-                return true;
-            }
-        });
+				return true;
+			}
+		});
 
 		mTemperature = (Button) findViewById(R.id.temperature);
 
@@ -1112,7 +1133,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 			@Override
 			public void onClick(View v) {
-		        /*if (mAdvancedEditText.getText().toString().isEmpty()) {
+			    /*if (mAdvancedEditText.getText().toString().isEmpty()) {
                     Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
@@ -1645,32 +1666,41 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		//		 ().get("chart"));
 	}
 
-    private void initPowerAccordToItState() {
-        final String powerText;
-        final String powerTag;
+	public void initPowerAccordToItState() {
+		final String powerText;
+		final String powerTag;
 
-        switch (mPowerState) {
-            case PowerState.OFF:
-                powerText = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
-                        .POWER_OFF_NAME_DEFAULT);
-                powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase();
-                break;
-            case PowerState.ON:
-                powerText = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
-                        .POWER_ON_NAME_DEFAULT);
-                powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase();
-                break;
-            default:
-                powerText = powerTag = null;
-        }
+		switch (mPowerState) {
+			case PowerState.OFF:
+				powerText = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
+						.POWER_OFF_NAME_DEFAULT);
+				powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase();
+				break;
+			case PowerState.ON:
+				powerText = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+						.POWER_ON_NAME_DEFAULT);
+				powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase();
+				break;
+			default:
+				powerText = powerTag = null;
+		}
 
-        if(powerTag != null && powerText != null) {
-            mPower.setText(powerText);
-            mPower.setTag(powerTag);
-        }
-    }
+		if (powerTag != null && powerText != null) {
+			mPower.setText(powerText);
+			mPower.setTag(powerTag);
+		}
+	}
 
-    private void changeTextsForButtons(View contentView) {
+	public void reInitPowerPressedValue() {
+		mPowerPressed = false;
+		mPower.setEnabled(true);
+	}
+
+	public boolean isPowerPressed() {
+		return mPowerPressed;
+	}
+
+	private void changeTextsForButtons(View contentView) {
 		StringBuilder addTextBuilder = new StringBuilder();
 		for (int i = 0; i < 9; i++) {
 			addTextBuilder.append(' ');
@@ -1876,175 +1906,182 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				measureDefaultFilesBuilder.toString());
 	}
 
-    //TODO
-    //make power on
-    //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
-    // 0.5 second wait -> repeat
-    // "/5J4R" "respond as ->" "@5J4"
-    // 1 second wait ->
-    // "(FE............)" "respond as ->" "lala"
-    // 2 second wait ->
-    // "/1ZR" "respond as ->" "blasad" -> power on
-    void powerOn() {
-        mPowerState = PowerState.ON_STAGE1;
+	//TODO
+	//make power on
+	//"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+	// 0.5 second wait -> repeat
+	// "/5J4R" "respond as ->" "@5J4"
+	// 1 second wait ->
+	// "(FE............)" "respond as ->" "lala"
+	// 2 second wait ->
+	// "/1ZR" "respond as ->" "blasad" -> power on
+	void powerOn() {
+		if (mPowerState == PowerState.OFF) {
+			mPowerPressed = true;
+			movePowerStateToNext();
+			sendRequest();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
 
+	public void sendRequest() {
+		boolean handled = false;
 
-    }
+		switch (mPowerState) {
+			case PowerState.ON_STAGE1:
+			case PowerState.ON_STAGE1_REPEAT:
+				sendCommand("/5H0000R");
+				handled = true;
+				break;
+			case PowerState.ON_STAGE2:
+				sendCommand("/5J4R");
+				handled = true;
+				break;
+			case PowerState.ON_STAGE3:
+				sendCommand(PullStateManagingService.CO2_REQUEST);
+				handled = true;
+				break;
+			case PowerState.ON_STAGE4:
+				sendCommand("/1ZR");
+				handled = true;
+				break;
+			case PowerState.OFF_INTERRUPTING:
+				sendMessageInterruptingCalculations();
+				handled = true;
+				break;
+			case PowerState.OFF_STAGE1:
+				sendCommand("/5H0000R");
+				handled = true;
+				break;
+			case PowerState.OFF_FINISHING:
+				sendCommand("/5J1R");
+				handled = true;
+				break;
+			case PowerState.OFF_WAIT_FOR_COOLING:
+				Intent i = PullStateManagingService.intentForService(this, true);
+				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
+				startService(i);
+				handled = true;
+				break;
+		}
 
-    public void sendRequest() {
-        boolean handled = false;
+		if (!handled) {
+			throw new IllegalArgumentException();
+		}
+	}
 
-        switch (mPowerState) {
-            case PowerState.ON_STAGE1:
-            case PowerState.ON_STAGE1_REPEAT:
-                sendCommand("/5H0000R");
-                handled = true;
-                break;
-            case PowerState.ON_STAGE2:
-                sendCommand("/5J4R");
-                handled = true;
-                break;
-            case PowerState.ON_STAGE3:
-                sendCommand(PullStateManagingService.CO2_REQUEST);
-                handled = true;
-                break;
-            case PowerState.ON_STAGE4:
-                sendCommand("/1ZR");
-                handled = true;
-                break;
-            case PowerState.OFF_STAGE1:
-                sendCommand("/5H0000R");
-                handled = true;
-                break;
-            case PowerState.OFF_FINISHING:
-                sendCommand("/5J5R");
-                handled = true;
-                break;
-            case PowerState.OFF_WAIT_FOR_COOLING:
-                Intent i = PullStateManagingService.intentForService(this, true);
-                i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
-                startService(i);
-                handled = true;
-                break;
-        }
+	private void simulateClick1() {
+		powerOff();
+		String temperatureData = "@5,0(0,0,0,0),25,750,25,25,25";
 
-        if(!handled) {
-            throw new IllegalArgumentException();
-        }
-    }
+		Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = temperatureData;
+		//TODO temperature out of range
+		mHandler.sendMessageDelayed(message, 3800);
 
-    //TODO
-    //make power off
-    //interrupt all activities by software (mean measure process etc)
-    // 1 second wait ->
-    // "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
-    // around 75C -> "/5J5R" -> "@5J5" -> then power off
-    // bigger, then
-    //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
-    void powerOff() {
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = temperatureData;
+		//TODO temperature out of range
+		mHandler.sendMessageDelayed(message, 5000);
 
-    }
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		temperatureData = "@5,0(0,0,0,0),25,74,25,25,25";
+		message.obj = temperatureData;
+		//TODO temperature in of range
+		mHandler.sendMessageDelayed(message, 20000);
 
-    public void handleResponse(String stringResponse) {
-        boolean handled = false;
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		mHandler.sendMessageDelayed(message, 24000);
+	}
 
-        switch (mPowerState) {
-            case PowerState.ON_STAGE1:
-            case PowerState.ON_STAGE1_REPEAT:
-                handleStage1Response(stringResponse);
-                handled = true;
-                break;
-            case PowerState.ON_STAGE2:
-                handleStage2Response(stringResponse);
-                handled = true;
-                break;
-            case PowerState.ON_STAGE3:
-                handleStage3Response(stringResponse);
-                handled = true;
-                break;
-            case PowerState.ON_STAGE4:
-                handleStage4Response(stringResponse);
-                handled = true;
-                break;
-            case PowerState.OFF_STAGE1:
-                handleOffStage1Response(stringResponse);
-                handled = true;
-                break;
-            case PowerState.OFF_FINISHING:
-                handleOffFinishing(stringResponse);
-                handled = true;
-                break;
-        }
+	private void simulateClick2() {
+		powerOn();
 
-        if(!handled) {
-            throw new IllegalArgumentException();
-        }
-    }
+		String temperatureData = "@5,0(0,0,0,0),750,25,25,25,25";
 
-    private void handleStage1Response(String response) {
-        //TODO implement that
-    }
+		Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = temperatureData;
+		mHandler.sendMessageDelayed(message, 1000);
 
-    private void handleStage2Response(String response) {
-        //TODO implement that
-    }
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = temperatureData;
+		mHandler.sendMessageDelayed(message, 1700);
 
-    private void handleStage3Response(String response) {
-        //TODO implement that
-    }
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = "@5J4";
+		mHandler.sendMessageDelayed(message, 2500);
 
-    private void handleStage4Response(String response) {
-        //TODO implement that
-    }
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		message.obj = "255";
+		mHandler.sendMessageDelayed(message, 3800);
 
-    private void handleOffStage1Response(String response) {
-        //TODO implement that
-    }
+		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+		mHandler.sendMessageDelayed(message, 6000);
+	}
 
-    private void handleOffFinishing(String response) {
-        //TODO implement that
-    }
+	public int getPowerState() {
+		return mPowerState;
+	}
 
-    public void movePowerStateToNext() {
+	//TODO
+	//make power off
+	//interrupt all activities by software (mean measure process etc)
+	// 1 second wait ->
+	// "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+	// around 75C -> "/5J5R" -> "@5J5" -> then power off
+	// bigger, then
+	//You can do 1/2 second for the temperature and 1/2 second for the power and then co2
+	void powerOff() {
+		if (mPowerState == PowerState.ON) {
+			mPowerPressed = true;
+			movePowerStateToNext();
+			sendRequest();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
 
-        switch (mPowerState) {
-            case PowerState.ON_STAGE1:
-                mPowerState = PowerState.ON_STAGE1_REPEAT;
-                break;
-            case PowerState.ON_STAGE1_REPEAT:
-                mPowerState = PowerState.ON_STAGE2;
-                break;
-            case PowerState.ON_STAGE2:
-                mPowerState = PowerState.ON_STAGE3;
-                break;
-            case PowerState.ON_STAGE3:
-                mPowerState = PowerState.ON_STAGE4;
-                break;
-            case PowerState.ON_STAGE4:
-                mPowerState = PowerState.ON;
-                break;
-            case PowerState.ON:
-                mPowerState = PowerState.OFF_INTERRUPTING;
-                break;
-            case PowerState.OFF_INTERRUPTING:
-                mPowerState = PowerState.OFF_STAGE1;
-                break;
-            case PowerState.OFF_STAGE1:
-                mPowerState = PowerState.OFF_WAIT_FOR_COOLING;
-                break;
-            case PowerState.OFF_WAIT_FOR_COOLING:
-                mPowerState = PowerState.OFF_FINISHING;
-                break;
-            case PowerState.OFF_FINISHING:
-                mPowerState = PowerState.OFF;
-                break;
-            case PowerState.OFF:
-                mPowerState = PowerState.ON_STAGE1;
-                break;
-        }
-    }
+	public void movePowerStateToNext() {
 
-    @Override
+		switch (mPowerState) {
+			case PowerState.ON_STAGE1:
+				mPowerState = PowerState.ON_STAGE1_REPEAT;
+				break;
+			case PowerState.ON_STAGE1_REPEAT:
+				mPowerState = PowerState.ON_STAGE2;
+				break;
+			case PowerState.ON_STAGE2:
+				mPowerState = PowerState.ON_STAGE3;
+				break;
+			case PowerState.ON_STAGE3:
+				mPowerState = PowerState.ON_STAGE4;
+				break;
+			case PowerState.ON_STAGE4:
+				mPowerState = PowerState.ON;
+				break;
+			case PowerState.ON:
+				mPowerState = PowerState.OFF_INTERRUPTING;
+				break;
+			case PowerState.OFF_INTERRUPTING:
+				mPowerState = PowerState.OFF_STAGE1;
+				break;
+			case PowerState.OFF_STAGE1:
+				mPowerState = PowerState.OFF_WAIT_FOR_COOLING;
+				break;
+			case PowerState.OFF_WAIT_FOR_COOLING:
+				mPowerState = PowerState.OFF_FINISHING;
+				break;
+			case PowerState.OFF_FINISHING:
+				mPowerState = PowerState.OFF;
+				break;
+			case PowerState.OFF:
+				mPowerState = PowerState.ON_STAGE1;
+				break;
+		}
+	}
+
+	@Override
 	public int getFragmentContainerId() {
 		return R.id.fragment_container;
 	}
@@ -2253,7 +2290,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		if (!isServiceRunning) {
 			EToCApplication.getInstance().setPullState(PullState.NONE);
-			startService(PullStateManagingService.intentForService(this, true));
+			//startService(PullStateManagingService.intentForService(this, true));
 		}
 	}
 
@@ -3209,6 +3246,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		message.obj = dataForSend;
 		message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
 		message.sendToTarget();
+	}
+
+	public void sendMessageInterruptingCalculations() {
+		Message message = mHandler.obtainMessage();
+		message.what = EToCMainHandler.MESSAGE_INTERRUPT_ACTIONS;
+		message.sendToTarget();
+	}
+
+	public void interruptActionsIfAny() {
+		//TODO interrupt actions
 	}
 
 	public void disconnectFromService() {
