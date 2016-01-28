@@ -2,6 +2,7 @@ package com.ismet.usbterminal.updated.mainscreen;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.IntentService;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -249,8 +250,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	private @PowerState int mPowerState;
 
 	private long mLastTimePressed;
-
-	private boolean isClicked = false;
 
 	private Date mReportDate;
 
@@ -1817,6 +1816,19 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		TextFileUtils.writeTextFile(measureDefaultFilesFile.getAbsolutePath(),
 				measureDefaultFilesBuilder.toString());
 	}
+
+    //TODO
+    //make power on
+    void powerOn() {
+        //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+        // 0.5 second wait -> repeat
+        // "/5J4R" "respond as ->" "@5J4"
+        // 1 second wait ->
+        // "(FE............)" "respond as ->" "lala"
+        // 2 second wait ->
+        // "/1ZR" "respond as ->" "blasad" -> power on
+
+    }
 
 	@Override
 	public int getFragmentContainerId() {
