@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 
 import com.ismet.usbterminal.updated.EToCApplication;
+import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.utils.Utils;
@@ -78,19 +79,38 @@ public class PullStateManagingService extends Service {
 		        if (isPull) {
 			        mWaitPullService = Executors.newSingleThreadScheduledExecutor();
 
+                    final List<PowerCommand> commands = eToCApplication.getCommands();
+
+                    final long delay;
+
+                    if(!commands.isEmpty()) {
+                        delay = commands.get(6).getDelay();
+                    } else {
+                        delay = 1000;
+                    }
+
 			        eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService.scheduleWithFixedDelay(new Runnable() {
 
 				        @Override
 				        public void run() {
+
+							final String message;
+
+							if(eToCApplication.getCommands().isEmpty()) {
+								message = "/5H0000R";
+							} else {
+								message = commands.get(6).getCommand();
+							}
+
 					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
-							        "/5H0000R");
+							        message);
 					        try {
-						        Thread.sleep(300);
+						        Thread.sleep((int)(0.3 * delay));
 					        } catch (InterruptedException e) {
 						        e.printStackTrace();
 					        }
 				        }
-			        }, 0, 1, TimeUnit.SECONDS));
+			        }, 0, delay, TimeUnit.MILLISECONDS));
 		        } else {
 			        eToCApplication.getWaitPullFuture().cancel(true);
 

@@ -65,6 +65,7 @@ import com.ismet.usbterminal.updated.TedSaveAsActivity;
 import com.ismet.usbterminal.updated.TedSettingsActivity;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.data.AppData;
+import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.data.PullState;
@@ -256,7 +257,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Date mReportDate;
 
+    private AlertDialog mAlertDialog;
+
 	private boolean mPowerPressed;
+
+    private List<PowerCommand> commands;
 
 	public static void sendBroadCastWithData(Context context, String data) {
 		Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
@@ -312,7 +317,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		initPowerAccordToItState();
 
-		mPower.setOnLongClickListener(new OnLongClickListener() {
+		/*mPower.setOnLongClickListener(new OnLongClickListener() {
 
 			@Override
 			public boolean onLongClick(View v) {
@@ -331,26 +336,26 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 				return true;
 			}
-		});
+		});*/
 
-		/*mPower.setOnClickListener(new OnClickListener() {
+		mPower.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
 				switch (mPowerState) {
 					case PowerState.OFF:
 						v.setEnabled(false);
-						//powerOn();
-						simulateClick2();
+						powerOn();
+						//simulateClick2();
 						break;
 					case PowerState.ON:
 						v.setEnabled(false);
-						//powerOff();
-						simulateClick1();
+						powerOff();
+						//simulateClick1();
 						break;
 				}
 			}
-		});*/
+		});
 
 		/*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
 
@@ -1606,9 +1611,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					}
 				};
 
-				AlertDialogTwoButtonsCreator.createTwoButtonsAlert(EToCMainActivity.this, R.layout
+				AlertDialog alertDialog = AlertDialogTwoButtonsCreator.createTwoButtonsAlert
+                        (EToCMainActivity
+                        .this, R
+                        .layout
 						.layout_dialog_measure, "Start Measure", okListener, cancelListener,
-						initLayoutListener).create().show();
+						initLayoutListener).create();
+                alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        v.setEnabled(true);
+                    }
+                });
+
+                alertDialog.show();
 			}
 		});
 
@@ -1782,15 +1798,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		if (buttonPowerDataFile.exists()) {
 			String powerData = TextFileUtils.readTextFile(buttonPowerDataFile);
 			if (!powerData.isEmpty()) {
-				String values[] = powerData.split(AppData.SPLIT_STRING);
-				if (values.length == 4) {
-					SharedPreferences.Editor editor = getPrefs().edit();
-					editor.putString(PrefConstants.POWER_ON_NAME, values[0]);
-					editor.putString(PrefConstants.POWER_OFF_NAME, values[1]);
-					editor.putString(PrefConstants.POWER_ON, values[2]);
-					editor.putString(PrefConstants.POWER_OFF, values[3]);
-					editor.apply();
-				}
+				EToCApplication.getInstance().loadCommands(powerData);
+                commands = EToCApplication.getInstance().getCommands();
 			}
 		}
 
@@ -1882,7 +1891,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		TextFileUtils.writeTextFile(button3DataFile.getAbsolutePath(), button3DataBuilder.toString
 				());
 
-		File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
+		/*File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
 		buttonPowerDataFile.createNewFile();
 		StringBuilder buttonPowerDataBuilder = new StringBuilder();
 		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME,
@@ -1898,7 +1907,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				.POWER_OFF_COMMAND_DEFAULT));
 
 		TextFileUtils.writeTextFile(buttonPowerDataFile.getAbsolutePath(), buttonPowerDataBuilder
-				.toString());
+				.toString());*/
 
 		File measureDefaultFilesFile = new File(settingsFolder, AppData.MEASURE_DEFAULT_FILES);
 		measureDefaultFilesFile.createNewFile();
@@ -1942,19 +1951,39 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		switch (mPowerState) {
 			case PowerState.ON_STAGE1:
 			case PowerState.ON_STAGE1_REPEAT:
-				sendCommand("/5H0000R");
+                if(!commands.isEmpty()) {
+                    if(mPowerState == PowerState.ON_STAGE1) {
+                        sendCommand(commands.get(0).getCommand());
+                    } else {
+                        sendCommand(commands.get(1).getCommand());
+                    }
+                } else {
+                    sendCommand("/5H0000R");
+                }
 				handled = true;
 				break;
 			case PowerState.ON_STAGE2:
-				sendCommand("/5J5R");
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(2).getCommand());
+                } else {
+                    sendCommand("/5J5R");
+                }
 				handled = true;
 				break;
 			case PowerState.ON_STAGE3:
-				sendCommand(PullStateManagingService.CO2_REQUEST);
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(3).getCommand());
+                } else {
+                    sendCommand(PullStateManagingService.CO2_REQUEST);
+                }
 				handled = true;
 				break;
 			case PowerState.ON_STAGE4:
-				sendCommand("/1ZR");
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(4).getCommand());
+                } else {
+                    sendCommand("/1ZR");
+                }
 				handled = true;
 				break;
 			case PowerState.OFF_INTERRUPTING:
@@ -1962,17 +1991,27 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				handled = true;
 				break;
 			case PowerState.OFF_STAGE1:
-				sendCommand("/5H0000R");
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(5).getCommand());
+                } else {
+                    sendCommand("/5H0000R");
+                }
 				handled = true;
 				break;
 			case PowerState.OFF_FINISHING:
-				sendCommand("/5J1R");
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(7).getCommand());
+                } else {
+                    sendCommand("/5J1R");
+                }
 				handled = true;
 				break;
 			case PowerState.OFF_WAIT_FOR_COOLING:
 				Intent i = PullStateManagingService.intentForService(this, true);
 				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 				startService(i);
+                mAlertDialog = new AlertDialog.Builder(this).setMessage("Cooling Down. Please " +
+                        "Wait... ").show();
 				handled = true;
 				break;
 		}
@@ -1981,6 +2020,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			throw new IllegalArgumentException();
 		}
 	}
+
+    public void hideCoolingDownDialog() {
+        if(mAlertDialog != null) {
+            mAlertDialog.dismiss();
+            mAlertDialog = null;
+        }
+    }
 
 	private void simulateClick1() {
 		powerOff();
@@ -2020,7 +2066,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		mHandler.sendMessageDelayed(message, 1700);
 
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
-		message.obj = "@5J4";
+		message.obj = "@5J101 ";
 		mHandler.sendMessageDelayed(message, 2500);
 
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
@@ -2194,6 +2240,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			}
 		}
 	}
+
+    public List<PowerCommand> getCommands() {
+        return commands;
+    }
 
 	private void sendMessage() {
 		if (!mAdvancedEditText.getText().toString().equals("")) {

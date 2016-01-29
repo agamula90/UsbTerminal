@@ -332,6 +332,7 @@ public class EToCMainHandler extends Handler {
 					Intent i = PullStateManagingService.intentForService(activity, false);
 					i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 					activity.startService(i);
+                    activity.hideCoolingDownDialog();
 					break;
 				case MESSAGE_SIMULATE_RESPONSE:
 					String sVal = "";
@@ -358,6 +359,14 @@ public class EToCMainHandler extends Handler {
 					if (temperatureData.isCorrect()) {
 						activity.movePowerStateToNext();
 
+                        final long delay;
+
+                        if(!activity.getCommands().isEmpty()) {
+                            delay = activity.getCommands().get(0).getDelay();
+                        } else {
+                            delay = 500;
+                        }
+
 						postDelayed(new Runnable() {
 
 							@Override
@@ -366,7 +375,7 @@ public class EToCMainHandler extends Handler {
 									activityWeakReference.get().sendRequest();
 								}
 							}
-						}, 500);
+						}, delay);
 
 						correctResponse = true;
 					}
@@ -376,6 +385,14 @@ public class EToCMainHandler extends Handler {
 					if (temperatureData.isCorrect()) {
 						activity.movePowerStateToNext();
 
+                        final long delay;
+
+                        if(!activity.getCommands().isEmpty()) {
+                            delay = activity.getCommands().get(1).getDelay();
+                        } else {
+                            delay = 500;
+                        }
+
 						postDelayed(new Runnable() {
 
 							@Override
@@ -384,16 +401,24 @@ public class EToCMainHandler extends Handler {
 									activityWeakReference.get().sendRequest();
 								}
 							}
-						}, 500);
+						}, delay);
 
 						correctResponse = true;
 					}
 					break;
 				case PowerState.ON_STAGE2:
-					if (response.charAt(0) == '@') {
+					if (response.length() > 0 && response.charAt(0) == '@') {
 						if (response.substring(1).equals("5J101 ")) {
 							correctResponse = true;
 							activity.movePowerStateToNext();
+
+                            final long delay;
+
+                            if(!activity.getCommands().isEmpty()) {
+                                delay = activity.getCommands().get(2).getDelay();
+                            } else {
+                                delay = 1000;
+                            }
 
 							postDelayed(new Runnable() {
 
@@ -403,10 +428,10 @@ public class EToCMainHandler extends Handler {
 										activityWeakReference.get().sendRequest();
 									}
 								}
-							}, 1000);
+							}, delay);
 						} else {
                             Toast.makeText(activity, "Wrong response: Got - \"" + response + "\""
-                                    + ".Expected - \"" + "@5J101\""
+                                    + ".Expected - \"" + "@5J101 \""
                                     , Toast.LENGTH_LONG).show();
                             return;
                         }
@@ -418,6 +443,14 @@ public class EToCMainHandler extends Handler {
 						Integer.parseInt(response);
 						correctResponse = true;
 
+                        final long delay;
+
+                        if(!activity.getCommands().isEmpty()) {
+                            delay = activity.getCommands().get(3).getDelay();
+                        } else {
+                            delay = 2000;
+                        }
+
 						postDelayed(new Runnable() {
 
 							@Override
@@ -426,7 +459,7 @@ public class EToCMainHandler extends Handler {
 									activityWeakReference.get().sendRequest();
 								}
 							}
-						}, 2000);
+						}, delay);
 					} catch (NumberFormatException e) {
 						e.printStackTrace();
 					}
@@ -434,19 +467,46 @@ public class EToCMainHandler extends Handler {
 				case PowerState.ON_STAGE4:
 					//TODO parse response
 					activity.movePowerStateToNext();
-					activity.initPowerAccordToItState();
-					activity.reInitPowerPressedValue();
-					sendMessage(Message.obtain(this, MESSAGE_RESUME_AUTO_PULLING));
+
+                    final long delayAfterOnHappened;
+
+                    if(!activity.getCommands().isEmpty()) {
+                        delayAfterOnHappened = activity.getCommands().get(4).getDelay();
+                    } else {
+                        delayAfterOnHappened = 1000;
+                    }
+
+                    postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(weakActivity.get() != null) {
+                                weakActivity.get().initPowerAccordToItState();
+                                weakActivity.get().reInitPowerPressedValue();
+                                sendMessage(Message.obtain(EToCMainHandler.this,
+                                        MESSAGE_RESUME_AUTO_PULLING));
+                            }
+                        }
+                    }, delayAfterOnHappened);
+
 					correctResponse = true;
 					break;
 				case PowerState.OFF_INTERRUPTING:
 					sendMessage(Message.obtain(this, MESSAGE_PAUSE_AUTO_PULLING));
 					activity.movePowerStateToNext();
 
+                    final long delayForPausing;
+
+                    if(!activity.getCommands().isEmpty()) {
+                        delayForPausing = 0;
+                    } else {
+                        delayForPausing = 1000;
+                    }
+
 					postDelayed(new Runnable() {
 
 						@Override
 						public void run() {
+
 							if (activityWeakReference.get() != null) {
 								activityWeakReference.get().interruptActionsIfAny();
 
@@ -458,7 +518,7 @@ public class EToCMainHandler extends Handler {
 											activityWeakReference.get().sendRequest();
 										}
 									}
-								}, 1000);
+								}, delayForPausing);
 							}
 						}
 					}, 1000);
@@ -475,6 +535,14 @@ public class EToCMainHandler extends Handler {
 						}
 						activity.movePowerStateToNext();
 
+                        final long delay;
+
+                        if(!activity.getCommands().isEmpty()) {
+                            delay = activity.getCommands().get(5).getDelay();
+                        } else {
+                            delay = 1000;
+                        }
+
 						postDelayed(new Runnable() {
 
 							@Override
@@ -483,7 +551,7 @@ public class EToCMainHandler extends Handler {
 									activityWeakReference.get().sendRequest();
 								}
 							}
-						}, 1000);
+						}, delay);
 						correctResponse = true;
 					}
 					break;
@@ -495,6 +563,15 @@ public class EToCMainHandler extends Handler {
 						if (curTemperature <= 80) {
 							sendMessage(Message.obtain(this, MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
 							activity.movePowerStateToNext();
+
+                            final long delay;
+
+                            if(!activity.getCommands().isEmpty()) {
+                                delay = activity.getCommands().get(6).getDelay();
+                            } else {
+                                delay = 1000;
+                            }
+
 							postDelayed(new Runnable() {
 
 								@Override
@@ -503,7 +580,7 @@ public class EToCMainHandler extends Handler {
 										activityWeakReference.get().sendRequest();
 									}
 								}
-							}, 1000);
+							}, delay);
 						}
 						correctResponse = true;
 					}
@@ -511,8 +588,24 @@ public class EToCMainHandler extends Handler {
 				case PowerState.OFF_FINISHING:
 					//TODO parse response
 					activity.movePowerStateToNext();
-					activity.initPowerAccordToItState();
-					activity.reInitPowerPressedValue();
+
+                    final long delay;
+
+                    if(!activity.getCommands().isEmpty()) {
+                        delay = activity.getCommands().get(7).getDelay();
+                    } else {
+                        delay = 1000;
+                    }
+
+                    postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(weakActivity.get() != null) {
+                                weakActivity.get().initPowerAccordToItState();
+                                weakActivity.get().reInitPowerPressedValue();
+                            }
+                        }
+                    }, delay);
 					correctResponse = true;
 					break;
 			}

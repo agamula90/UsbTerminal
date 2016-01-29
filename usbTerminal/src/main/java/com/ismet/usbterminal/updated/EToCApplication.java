@@ -2,11 +2,13 @@ package com.ismet.usbterminal.updated;
 
 import android.util.Log;
 
-import com.ismet.usbterminal.updated.data.PullData;
+import com.ismet.usbterminal.updated.data.AppData;
+import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,8 +26,6 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
     private volatile boolean mStopPulling;
 
-    private final PullData pullData = new PullData();
-
 	private ScheduledExecutorService mPullDataService;
 
 	private ScheduledExecutorService mWaitPullService;
@@ -39,6 +39,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	private long mTimeOfRecreating;
 
 	private long mRenewTime;
+
+	private List<PowerCommand> commands = new ArrayList<>();
 
 	@Override
 	public void onCreate() {
@@ -111,10 +113,6 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
     public @PullState int getPullState() {
         return mPullState;
-    }
-
-    public PullData getPullData() {
-        return pullData;
     }
 
 	public void initPullDataService(ScheduledExecutorService mPullTemperatureService) {
@@ -195,4 +193,26 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	public long getRenewTime() {
 		return mRenewTime;
 	}
+
+    public void loadCommands(String text) {
+        commands.clear();
+        text = text.replace("\n", "");
+        text = text.replace("\r", "");
+        String values[] = text.split(AppData.SPLIT_STRING);
+        if(values.length == 16) {
+            for (int i = 0; i < 8; i++) {
+                try {
+                    commands.add(new PowerCommand(values[2 * i], Long.parseLong(values[2 * i + 1])));
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    commands.clear();
+                    return;
+                }
+            }
+        }
+    }
+
+    public List<PowerCommand> getCommands() {
+        return commands;
+    }
 }
