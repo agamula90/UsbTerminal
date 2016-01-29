@@ -29,8 +29,8 @@ public class PrefConstants {
 
     public static final String POWER_ON_COMMAND_DEFAULT = "/5J3R";
     public static final String POWER_OFF_COMMAND_DEFAULT = "/5J0R";
-    public static final String POWER_ON_NAME_DEFAULT = "POWER ON";
-    public static final String POWER_OFF_NAME_DEFAULT = "POWER OFF";
+    public static final String POWER_ON_NAME_DEFAULT = "POWER IS ON";
+    public static final String POWER_OFF_NAME_DEFAULT = "POWER IS OFF";
 
     public static final String DELAY = "delay";
 

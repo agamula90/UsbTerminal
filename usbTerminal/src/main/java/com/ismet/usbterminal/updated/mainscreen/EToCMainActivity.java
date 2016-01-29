@@ -236,7 +236,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Button mSendButton, mButtonClear, mButtonMeasure;
 
-	private Button mPower, mTemperature, mCo2;
+	private Button mPower;
+
+    private TextView mTemperature, mCo2;
+
+    private View mTemperatureBackground, mCo2Background;
 
 	private LinearLayout mExportLayout, mMarginLayout;
 
@@ -492,13 +496,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		});
 */
 
-		mTemperature = (Button) findViewById(R.id.temperature);
+		mTemperature = (TextView) findViewById(R.id.temperature);
 
-		changeBackground(mTemperature, false);
+        mTemperatureBackground = findViewById(R.id.temperature_background);
 
-		mCo2 = (Button) findViewById(R.id.co2);
+		changeBackground(mTemperatureBackground, false);
 
-		changeBackground(mCo2, false);
+		mCo2 = (TextView) findViewById(R.id.co2);
+
+        mCo2Background = findViewById(R.id.co2_background);
+
+		changeBackground(mCo2Background, false);
 
 		// Timer mTimer = new Timer();
 		// mTimer.scheduleAtFixedRate(new TimerTask() {
@@ -1122,12 +1130,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			RadioButton mRadio1, mRadio2, mRadio3;
 
 			@Override
-			public void onClick(View v) {
+			public void onClick(final View v) {
 			    /*if (mAdvancedEditText.getText().toString().isEmpty()) {
                     Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
                 }*/
+                if(mPowerState != PowerState.ON) {
+                    return;
+                }
+
+                v.setEnabled(false);
 
 				if (mIsTimerRunning) {
 					Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait", Toast
@@ -1257,6 +1270,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+                        v.setEnabled(true);
+
 						InputMethodManager inputManager = (InputMethodManager) getSystemService
 								(Context.INPUT_METHOD_SERVICE);
 
@@ -1587,6 +1602,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
 								.getCurrentFocus().getWindowToken(), 0);
 						dialog.cancel();
+                        v.setEnabled(true);
 					}
 				};
 
@@ -1659,25 +1675,30 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	public void initPowerAccordToItState() {
 		final String powerText;
 		final String powerTag;
+        final int drawableResource;
 
 		switch (mPowerState) {
 			case PowerState.OFF:
 				powerText = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
 						.POWER_OFF_NAME_DEFAULT);
 				powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase();
+                drawableResource = R.drawable.power_off_drawable;
 				break;
 			case PowerState.ON:
 				powerText = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
 						.POWER_ON_NAME_DEFAULT);
 				powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase();
+                drawableResource = R.drawable.power_on_drawable;
 				break;
 			default:
 				powerText = powerTag = null;
+                drawableResource = 0;
 		}
 
 		if (powerTag != null && powerText != null) {
 			mPower.setText(powerText);
 			mPower.setTag(powerTag);
+            mPower.setBackgroundResource(drawableResource);
 		}
 	}
 
@@ -1900,7 +1921,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	//make power on
 	//"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
 	// 0.5 second wait -> repeat
-	// "/5J4R" "respond as ->" "@5J4"
+	// "/5J5R" "respond as ->" "@5J4"
 	// 1 second wait ->
 	// "(FE............)" "respond as ->" "lala"
 	// 2 second wait ->
@@ -1925,7 +1946,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				handled = true;
 				break;
 			case PowerState.ON_STAGE2:
-				sendCommand("/5J4R");
+				sendCommand("/5J5R");
 				handled = true;
 				break;
 			case PowerState.ON_STAGE3:
@@ -3369,23 +3390,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
         isClicked = !isClicked;*/
 	}
 
-	private void changeBackground(Button button, boolean isPressed) {
+	private void changeBackground(View button, boolean isPressed) {
 		if (isPressed) {
-			if (Build.VERSION.SDK_INT >= 16) {
-				button.setBackground(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_pressed));
-			} else {
-				button.setBackgroundDrawable(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_pressed));
-			}
+			button.setBackgroundResource(R.drawable
+						.temperature_button_drawable_pressed);
 		} else {
-			if (Build.VERSION.SDK_INT >= 16) {
-				button.setBackground(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_unpressed));
-			} else {
-				button.setBackgroundDrawable(getResources().getDrawable(R.drawable
-						.temperature_button_drawable_unpressed));
-			}
+				button.setBackgroundResource(R.drawable
+						.temperature_button_drawable_unpressed);
 		}
 	}
 
@@ -3400,7 +3411,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						//changeBackground(mTemperature, mTemperatureData.getHeaterOn() == 1);
 
 						mTemperature.setText("" + (mTemperatureData.getTemperature1() +
-								mTemperatureShift) + " C");
+								mTemperatureShift));
 					}
 				};
 				//mTemperature.post(updateRunnable);
@@ -3409,7 +3420,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mTemperature.setText("" + mTemperatureData.getWrongPosition());
 			}
 		} else {
-			mCo2.setText(text + " " + "ppm");
+			mCo2.setText(text);
 		}
 	}
 
@@ -3518,6 +3529,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		@Override
 		public void onClick(View v) {
+			if(mPowerState != PowerState.ON) {
+                return;
+            }
 			mAutoPullResolverCallback.onPrePullStopped();
 
 			long nowTime = SystemClock.uptimeMillis();

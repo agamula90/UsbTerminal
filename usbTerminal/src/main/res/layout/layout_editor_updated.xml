@@ -54,17 +54,38 @@
                                 android:textColor="@android:color/black"
                                 android:text="power on"/>
 
-                            <Button
-                                android:id="@+id/temperature"
-                                style="@style/ButtonDefaultStyle"
+                            <android.support.v4.widget.Space
+                                android:layout_width="@dimen/text_margin_default"
+                                android:layout_height="@dimen/text_margin_default"/>
+
+                            <FrameLayout
                                 android:layout_width="0dp"
-                                android:layout_gravity="center_vertical"
-                                android:layout_marginLeft="2dp"
-                                android:gravity="center"
                                 android:layout_weight="1"
-                                android:textSize="18sp"
-                                android:textAllCaps="false"
-                                android:text="" />
+                                android:layout_height="@dimen/button_height_default"
+                                android:layout_marginLeft="2dp"
+                                android:layout_gravity="center_vertical"
+                                android:id="@+id/temperature_background">
+
+                                <TextView
+                                    android:id="@+id/temperature"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="match_parent"
+                                    android:gravity="center"
+                                    android:textSize="18sp"
+                                    android:textColor="@android:color/black"
+                                    android:text=""/>
+
+                                <TextView
+                                    android:id="@+id/temperature_c"
+                                    android:layout_height="wrap_content"
+                                    android:layout_width="wrap_content"
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black"
+                                    android:layout_gravity="end|center_vertical"
+                                    android:layout_marginEnd="10dp"
+                                    android:layout_marginRight="10dp"
+                                    android:text="C" />
+                            </FrameLayout>
                                 <!--android:enabled="false" /> -->
 
                             <!-- <Button
@@ -77,17 +98,47 @@
                                 android:text="Off"
                                 android:layout_gravity="center_vertical"/> -->
 
-                            <Button
-                                android:id="@+id/co2"
-                                style="@style/ButtonDefaultStyle"
+                            <android.support.v4.widget.Space
+                                android:layout_width="@dimen/text_margin_default"
+                                android:layout_height="@dimen/text_margin_default"/>
+
+                            <android.support.v4.widget.Space
+                                android:layout_width="@dimen/text_margin_default"
+                                android:layout_height="@dimen/text_margin_default"/>
+
+                            <FrameLayout
                                 android:layout_width="0dp"
-                                android:layout_gravity="center_vertical"
-                                android:layout_marginLeft="2dp"
                                 android:layout_weight="1"
-                                android:gravity="center"
-                                android:textSize="18sp"
-                                android:textAllCaps="false" />
-                                <!--android:enabled="false"/> -->
+                                android:layout_height="@dimen/button_height_default"
+                                android:layout_marginLeft="2dp"
+                                android:layout_gravity="center_vertical"
+                                android:id="@+id/co2_background">
+
+                                <TextView
+                                    android:id="@+id/co2"
+                                    android:layout_height="match_parent"
+                                    android:layout_width="match_parent"
+                                    android:gravity="center"
+                                    android:textSize="18sp"
+                                    android:textColor="@android:color/black"
+                                    android:text=""/>
+
+                                <TextView
+                                    android:id="@+id/co2_ppm"
+                                    android:layout_height="wrap_content"
+                                    android:layout_width="wrap_content"
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black"
+                                    android:layout_gravity="end|center_vertical"
+                                    android:layout_marginEnd="10dp"
+                                    android:layout_marginRight="10dp"
+                                    android:text="ppm" />
+                            </FrameLayout>
+
+                            <android.support.v4.widget.Space
+                                android:layout_width="@dimen/text_margin_default"
+                                android:layout_height="@dimen/text_margin_default"/>
+
                         </LinearLayout>
 
                         <LinearLayout

@@ -73,6 +73,7 @@ public class EToCMainHandler extends Handler {
 
 					byte[] usbReadBytes = (byte[]) msg.obj;
 					String data = "";
+                    final String responseForChecking;
 					if (usbReadBytes.length == 7) {
 						if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
 								.format("%02X", usbReadBytes[1]).equals("44"))) {
@@ -240,6 +241,8 @@ public class EToCMainHandler extends Handler {
 
 							activity.refreshTextAccordToSensor(false, co2 + "");
 
+                            responseForChecking = co2 + "";
+
                             /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                            mTempState = PullState.TEMPERATURE;
 	                            application.setPullState(PullState.NONE);
@@ -251,6 +254,7 @@ public class EToCMainHandler extends Handler {
 							data = new String(usbReadBytes);
 							data = data.replace("\r", "");
 							data = data.replace("\n", "");
+                            responseForChecking = new String(data);
 						}
 					} else {
 					    /*if(pullState != PullState.NONE) {
@@ -261,7 +265,7 @@ public class EToCMainHandler extends Handler {
 						data = data.replace("\n", "");
 						activity.refreshTextAccordToSensor(true, data);
 
-
+                        responseForChecking = new String(data);
 
                         /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                        mTempState = PullState.CO2;
@@ -277,7 +281,7 @@ public class EToCMainHandler extends Handler {
 					activity.getScrollView().smoothScrollTo(0, 0);
 
 					if(activity.isPowerPressed()) {
-						handleResponse(weakActivity, data);
+						handleResponse(weakActivity, responseForChecking);
 					}
 					//}
 
@@ -387,7 +391,7 @@ public class EToCMainHandler extends Handler {
 					break;
 				case PowerState.ON_STAGE2:
 					if (response.charAt(0) == '@') {
-						if (response.substring(1).equals("5J4")) {
+						if (response.substring(1).equals("5J101 ")) {
 							correctResponse = true;
 							activity.movePowerStateToNext();
 
@@ -400,7 +404,12 @@ public class EToCMainHandler extends Handler {
 									}
 								}
 							}, 1000);
-						}
+						} else {
+                            Toast.makeText(activity, "Wrong response: Got - \"" + response + "\""
+                                    + ".Expected - \"" + "@5J101\""
+                                    , Toast.LENGTH_LONG).show();
+                            return;
+                        }
 					}
 					break;
 				case PowerState.ON_STAGE3:
