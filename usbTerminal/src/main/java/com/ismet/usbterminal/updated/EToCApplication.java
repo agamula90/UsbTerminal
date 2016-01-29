@@ -10,7 +10,6 @@ import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
@@ -39,6 +38,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	private long mTimeOfRecreating;
 
 	private long mRenewTime;
+
+    private int mBorderCoolingTemperature = 80;
 
 	private List<PowerCommand> commands = new ArrayList<>();
 
@@ -199,10 +200,18 @@ public class EToCApplication extends InterpolationCalculatorApp {
         text = text.replace("\n", "");
         text = text.replace("\r", "");
         String values[] = text.split(AppData.SPLIT_STRING);
-        if(values.length == 16) {
+        if(values.length == 17) {
+            try {
+                mBorderCoolingTemperature = Integer.parseInt(values[0]);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                mBorderCoolingTemperature = 80;
+                commands.clear();
+            }
             for (int i = 0; i < 8; i++) {
                 try {
-                    commands.add(new PowerCommand(values[2 * i], Long.parseLong(values[2 * i + 1])));
+                    commands.add(new PowerCommand(values[2 * i + 1], Long.parseLong(values[2 * i +
+                            2])));
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                     commands.clear();
@@ -210,6 +219,10 @@ public class EToCApplication extends InterpolationCalculatorApp {
                 }
             }
         }
+    }
+
+    public int getBorderCoolingTemperature() {
+        return mBorderCoolingTemperature;
     }
 
     public List<PowerCommand> getCommands() {

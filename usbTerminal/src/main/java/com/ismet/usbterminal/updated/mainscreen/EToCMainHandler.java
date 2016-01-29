@@ -530,7 +530,7 @@ public class EToCMainHandler extends Handler {
 					if (temperatureData.isCorrect()) {
 						int curTemperature = temperatureData.getTemperature1();
 
-						if (curTemperature <= 80) {
+						if (curTemperature <= EToCApplication.getInstance().getBorderCoolingTemperature()) {
 							activity.movePowerStateToNext();
 						}
 						activity.movePowerStateToNext();
@@ -560,7 +560,7 @@ public class EToCMainHandler extends Handler {
 					if (temperatureData.isCorrect()) {
 						int curTemperature = temperatureData.getTemperature1();
 
-						if (curTemperature <= 80) {
+						if (curTemperature <= EToCApplication.getInstance().getBorderCoolingTemperature()) {
 							sendMessage(Message.obtain(this, MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
 							activity.movePowerStateToNext();
 
@@ -611,9 +611,9 @@ public class EToCMainHandler extends Handler {
 			}
 		}
 
-		if (!correctResponse && activityWeakReference.get() != null) {
+		/*if (!correctResponse && activityWeakReference.get() != null) {
 			Toast.makeText(activityWeakReference.get(), "Wrong response parsing. Message:[" +
 							response + "]", Toast.LENGTH_LONG).show();
-		}
+		}*/
 	}
 }

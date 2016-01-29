@@ -1720,6 +1720,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	public void reInitPowerPressedValue() {
 		mPowerPressed = false;
+        mPower.setAlpha(1f);
 		mPower.setEnabled(true);
 	}
 
@@ -1938,6 +1939,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	void powerOn() {
 		if (mPowerState == PowerState.OFF) {
 			mPowerPressed = true;
+            mPower.setAlpha(0.6f);
 			movePowerStateToNext();
 			sendRequest();
 		} else {
@@ -2092,8 +2094,22 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	void powerOff() {
 		if (mPowerState == PowerState.ON) {
 			mPowerPressed = true;
-			movePowerStateToNext();
-			sendRequest();
+            mPower.setAlpha(0.6f);
+
+            if(!mButtonOn2.getTag().toString().equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase
+                     ())) {
+                mButtonOn2.performClick();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        movePowerStateToNext();
+                        sendRequest();
+                    }
+                }, 1200);
+            } else {
+                movePowerStateToNext();
+                sendRequest();
+            }
 		} else {
 			throw new IllegalStateException();
 		}
