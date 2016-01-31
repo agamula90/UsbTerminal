@@ -345,13 +345,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				switch (mPowerState) {
 					case PowerState.OFF:
 						v.setEnabled(false);
-						powerOn();
-						//simulateClick2();
+						//powerOn();
+						simulateClick2();
 						break;
 					case PowerState.ON:
 						v.setEnabled(false);
-						powerOff();
-						//simulateClick1();
+						//powerOff();
+						simulateClick1();
 						break;
 				}
 			}
@@ -703,6 +703,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					command = mPrefs.getString(PrefConstants.OFF2, "");
 					mButtonOn2.setText(str_on_name2t);
 					mButtonOn2.setTag(PrefConstants.ON_NAME_DEFAULT.toLowerCase());
+					mButtonOn2.setAlpha(0.6f);
 				}
 
 				EToCApplication.getInstance().setCurrentTemperatureRequest(getPrefs().getString
@@ -716,7 +717,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 			@Override
 			public void onPostPullStarted() {
+				String tag = mButtonOn2.getTag().toString();
 
+				if(tag.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+					mButtonOn2.setAlpha(1f);
+					mButtonOn2.setBackgroundResource(R.drawable.button_drawable);
+				} else {
+					mButtonOn2.setBackgroundResource(R.drawable.green_button_drawable);
+				}
 			}
 		}));
 
@@ -1036,7 +1044,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						mItemsChecked.put(which, isChecked);
 					}
 				});
-				alert.setPositiveButton("Clear", new DialogInterface.OnClickListener() {
+				alert.setPositiveButton("Select/Clear", new DialogInterface.OnClickListener() {
 
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -3616,8 +3624,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 					@Override
 					public void run() {
-						startService(PullStateManagingService.intentForService(EToCMainActivity
-								.this, true));
+						if(mPowerState == PowerState.ON) {
+							startService(PullStateManagingService.intentForService(EToCMainActivity
+									.this, true));
+						}
 						mAutoPullResolverCallback.onPostPullStarted();
 					}
 				}, 1000);

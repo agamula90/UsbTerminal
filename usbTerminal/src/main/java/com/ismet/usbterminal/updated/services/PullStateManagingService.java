@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PowerCommand;
@@ -22,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PullStateManagingService extends Service {
+
+	private static final String TAG = PullStateManagingService.class.getSimpleName();
 
     public static final String WAIT_FOR_COOLING_ACTION = "wait_for_cooling";
 
@@ -89,6 +92,8 @@ public class PullStateManagingService extends Service {
                         delay = 1000;
                     }
 
+			        Log.e(TAG, "Service 1 started");
+
 			        eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService.scheduleWithFixedDelay(new Runnable() {
 
 				        @Override
@@ -112,12 +117,15 @@ public class PullStateManagingService extends Service {
 				        }
 			        }, 0, delay, TimeUnit.MILLISECONDS));
 		        } else {
+			        Log.e(TAG, "Service 1 stopped");
 			        eToCApplication.getWaitPullFuture().cancel(true);
 
 			        eToCApplication.initWaitPullService(null, null);
 		        }
 	        } else {
 		        if(isPull) {
+			        Log.e(TAG, "Service 0 started");
+
 			        mIsAutoHandling.set(true);
 			        if (eToCApplication.getPullState() == PullState.NONE) {
 				        eToCApplication.setPullState(PullState.TEMPERATURE);
@@ -183,6 +191,8 @@ public class PullStateManagingService extends Service {
 
 			        eToCApplication.setScheduledFutures(scheduledFutures);
 		        } else {
+			        Log.e(TAG, "Service 0 stopped");
+
 			        mIsAutoHandling.set(false);
 			        eToCApplication.unScheduleTasks();
 			        eToCApplication.setStopPulling(true);

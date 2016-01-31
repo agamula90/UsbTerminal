@@ -432,13 +432,22 @@ public class BottomFragment extends Fragment {
                 }
                 float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
                 float value;
+
+	            boolean isExpanded = false;
+
                 try {
                     List<Float> ppmPoints = new ArrayList<>();
                     List<Float> avgSquarePoints = new ArrayList<>();
                     ppmPoints.addAll(BottomFragment.this.ppmPoints);
                     avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
-                    value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints,
-                            avgSquarePoints);
+
+	                if(avgSquarePoints.get(avgSquarePoints.size() - 1) < avgValueY) {
+		                value = calculatePpmExpanded(ppmPoints, avgSquarePoints, avgValueY);
+		                isExpanded = true;
+	                } else {
+		                value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints, avgSquarePoints);
+		                isExpanded = false;
+	                }
                 } catch (Exception e) {
                     value = -1;
                 }
@@ -448,7 +457,13 @@ public class BottomFragment extends Fragment {
                     Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
                             .LENGTH_LONG).show();
                 } else {
-                    resultPpmLoaded.setText(FloatFormatter.format(value));
+	                if(isExpanded) {
+		                Toast.makeText(getActivity(), "Dilute Sample " + avgSquarePoints.get
+				                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
+				                "different cal curve", Toast.LENGTH_LONG).show();
+	                } else {
+		                resultPpmLoaded.setText(FloatFormatter.format(value));
+	                }
                 }
             }
         });
@@ -491,13 +506,22 @@ public class BottomFragment extends Fragment {
 
                 float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
                 float value;
+
+	            boolean isExpanded = false;
+
                 try {
                     List<Float> ppmPoints = new ArrayList<>();
                     List<Float> avgSquarePoints = new ArrayList<>();
                     ppmPoints.addAll(BottomFragment.this.ppmPoints);
                     avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
-                    value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints,
-                            avgSquarePoints);
+
+	                if(avgSquarePoints.get(avgSquarePoints.size() - 1) < avgValueY) {
+		                value = calculatePpmExpanded(ppmPoints, avgSquarePoints, avgValueY);
+		                isExpanded = true;
+	                } else {
+		                isExpanded = false;
+		                value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints, avgSquarePoints);
+	                }
                 } catch (Exception e) {
                     value = -1;
                 }
@@ -507,7 +531,13 @@ public class BottomFragment extends Fragment {
                     Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
                             .LENGTH_LONG).show();
                 } else {
-                    resultPpmLoaded.setText(FloatFormatter.format(value));
+	                if(isExpanded) {
+		                Toast.makeText(getActivity(), "Dilute Sample " + avgSquarePoints.get
+						                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
+				                "different cal curve", Toast.LENGTH_LONG).show();
+	                } else {
+		                resultPpmLoaded.setText(FloatFormatter.format(value));
+	                }
                 }
             }
         };
@@ -541,6 +571,17 @@ public class BottomFragment extends Fragment {
 
         fillAvgPointsLayout();
     }
+
+	private float calculatePpmExpanded(List<Float> ppmPoints, List<Float> avgSquarePoints, float
+			avgValueY) {
+		float avgSquare = avgValueY;
+		int lastIndex = ppmPoints.size() - 1;
+		int prevIndex = ppmPoints.size() - 2;
+		return (ppmPoints.get(lastIndex) - ppmPoints.get(prevIndex)) /
+				(avgSquarePoints.get(lastIndex) - avgSquarePoints.get(prevIndex))
+				* (avgSquare - avgSquarePoints.get(prevIndex)) + ppmPoints.get
+				(prevIndex);
+	}
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
