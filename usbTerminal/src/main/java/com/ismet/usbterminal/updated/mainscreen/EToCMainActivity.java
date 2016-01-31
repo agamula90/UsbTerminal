@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -78,6 +79,7 @@ import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
 import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
+import com.itextpdf.text.pdf.parser.Line;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
 
 import org.achartengine.GraphicalView;
@@ -723,7 +725,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					mButtonOn2.setAlpha(1f);
 					mButtonOn2.setBackgroundResource(R.drawable.button_drawable);
 				} else {
-					mButtonOn2.setBackgroundResource(R.drawable.green_button_drawable);
+					mButtonOn2.setBackgroundResource(R.drawable.power_on_drawable);
 				}
 			}
 		}));
@@ -2021,7 +2023,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 				startService(i);
                 mAlertDialog = new AlertDialog.Builder(this).setMessage("Cooling Down. Please " +
-                        "Wait... ").show();
+                        "Wait. Don't turn off!!!").create();
+				mAlertDialog.show();
+				((TextView)mAlertDialog.findViewById(android.R.id.message)).setGravity(Gravity
+						.CENTER);
 				handled = true;
 				break;
 		}
