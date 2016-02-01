@@ -3,6 +3,7 @@ package com.proggroup.areasquarecalculator.fragments;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -83,8 +84,10 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
 		CreateCalibrationCurveForAutoTask.detachProgress(mProgressBar);
 		if (res == null) {
 			if (activityWeak.get() != null) {
-				Toast.makeText(activityWeak.get(), "You select wrong file", Toast.LENGTH_LONG)
-						.show();
+				Toast toast = Toast.makeText(activityWeak.get(), "You select wrong file", Toast
+						.LENGTH_LONG);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+						toast.show();
 			}
 			return;
 		}

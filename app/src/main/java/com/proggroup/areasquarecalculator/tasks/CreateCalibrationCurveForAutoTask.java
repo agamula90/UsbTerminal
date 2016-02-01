@@ -322,7 +322,9 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 				task.execute();
 			}
 		} else {
-			Toast.makeText(context, "There is no curve values", Toast.LENGTH_LONG).show();
+			Toast toast = Toast.makeText(context, "There is no curve values", Toast.LENGTH_LONG);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
 		}
 	}
 

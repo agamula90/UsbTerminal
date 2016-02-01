@@ -3,6 +3,7 @@ package com.proggroup.areasquarecalculator.utils;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Pair;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
@@ -56,7 +57,9 @@ public class CalculatePpmUtils {
 			reader.close();
 		} catch (Exception e) {
 			e.printStackTrace();
-			Toast.makeText(context, "Write " + "failed", Toast.LENGTH_LONG).show();
+			Toast toast = Toast.makeText(context, "Write " + "failed", Toast.LENGTH_LONG);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
 		}
 		return new Pair<>(ppmValues, avgSquareValues);
 	}

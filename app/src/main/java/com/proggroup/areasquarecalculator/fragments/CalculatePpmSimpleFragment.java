@@ -14,6 +14,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.util.Pair;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -278,8 +279,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						transaction.commit();
 					}
 				} else {
-					Toast.makeText(getActivity(), getString(R.string.input_ppm_first), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(getActivity(), getString(R.string.input_ppm_first), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 				}
 			}
 		});
@@ -352,8 +355,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						(), true).execute(calFolder);
 			}
 		} else {
-			Toast.makeText(getActivity(), "Please make CAL directory to find ppm", Toast
-					.LENGTH_SHORT).show();
+			Toast toast = Toast.makeText(getActivity(), "Please make CAL directory to find ppm", Toast
+					.LENGTH_SHORT);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
 		}
 
 		TextView tv = new TextView(getActivity());
@@ -381,8 +386,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 			public void onClick(View v) {
 				if (avgValueLoaded.getText().toString().isEmpty()) {
 					Activity activity = getActivity();
-					Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 					return;
 				}
 				float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
@@ -401,8 +408,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 
 				if (value == -1) {
 					Activity activity = getActivity();
-					Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 				} else {
 					resultPpmLoaded.setText(FloatFormatter.format(value));
 				}
@@ -416,8 +425,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 			@Override
 			public void onClick(View v) {
 				if (mAutoAvgPoint == null) {
-					Toast.makeText(getActivity(), "Average point not filled", Toast.LENGTH_LONG)
-							.show();
+					Toast toast = Toast.makeText(getActivity(), "Average point not filled", Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+							toast.show();
 					return;
 				} else {
 					avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
@@ -441,8 +452,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 
 				if (value == -1) {
 					Activity activity = getActivity();
-					Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 				} else {
 					resultPpmLoaded.setText(FloatFormatter.format(value));
 				}
@@ -456,8 +469,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 			public void onClick(View v) {
 				if (avgValue.getText().toString().isEmpty()) {
 					Activity activity = getActivity();
-					Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 					return;
 				}
 				float avgValueY = Float.parseFloat(avgValue.getText().toString());
@@ -485,8 +500,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 
 				if (value == -1) {
 					Activity activity = getActivity();
-					Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
-							.LENGTH_LONG).show();
+					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
+							.LENGTH_LONG);
+					toast.setGravity(Gravity.CENTER, 0, 0);
+					toast.show();
 				} else {
 					resultPpm.setText(FloatFormatter.format(value));
 				}
@@ -884,11 +901,15 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 										@Override
 										protected void onPostExecute(Boolean res) {
 											if (res) {
-												Toast.makeText(getActivity(), "Save success as " +
-														fileName, Toast.LENGTH_LONG).show();
+												Toast toast = Toast.makeText(getActivity(), "Save success as " +
+														fileName, Toast.LENGTH_LONG);
+												toast.setGravity(Gravity.CENTER, 0, 0);
+												toast.show();
 											} else {
-												Toast.makeText(getActivity(), "Write " + "failed",
-														Toast.LENGTH_LONG).show();
+												Toast toast = Toast.makeText(getActivity(), "Write " + "failed",
+														Toast.LENGTH_LONG);
+												toast.setGravity(Gravity.CENTER, 0, 0);
+												toast.show();
 											}
 											dialog.dismiss();
 										}
@@ -927,8 +948,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						protected void onPostExecute(Boolean aVoid) {
 							getActivity().getCurrentFocus().clearFocus();
 							if (!aVoid) {
-								Toast.makeText(getActivity(), "You select wrong " + "file", Toast
-										.LENGTH_LONG).show();
+								Toast toast = Toast.makeText(getActivity(), "You select wrong " + "file", Toast
+										.LENGTH_LONG);
+								toast.setGravity(Gravity.CENTER, 0, 0);
+								toast.show();
 							} else {
 								adapter.checkAvgValues();
 								adapter.calculateAvg(row);
@@ -1038,7 +1061,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 		@Override
 		protected void onPostExecute(Boolean aVoid) {
 			if (!aVoid) {
-				Toast.makeText(getActivity(), "You select wrong file", Toast.LENGTH_LONG).show();
+				Toast toast = Toast.makeText(getActivity(), "You select wrong file", Toast
+						.LENGTH_LONG);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
 				return;
 			}
 
@@ -1073,8 +1099,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 							isCorrectFilesSelected = handleCsvFileMesSelected(mMesFolderFile);
 						}
 						if (!isCorrectFilesSelected) {
-							Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-									.LENGTH_LONG).show();
+							Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
+									.LENGTH_LONG);
+							toast.setGravity(Gravity.CENTER, 0, 0);
+							toast.show();
 						}
 						return;
 					}
@@ -1084,8 +1112,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					if (mesFiles == null && mesFile.getParentFile() != null) {
 						mesFiles = mesFile.getParentFile().listFiles();
 					} else if (mesFiles == null) {
-						Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-								.LENGTH_LONG).show();
+                        Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
+								.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
 						return;
 					}
 					File newestCalFile1 = null, newestCalFile2 = null, newestCalFile3 = null;
@@ -1129,8 +1159,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					if (newestCalFile1 != null) {
 						float square1 = CalculateUtils.calculateSquare(newestCalFile1);
 						if (square1 == -1) {
-							Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-									.LENGTH_LONG).show();
+                            Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
+									.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
 							return;
 						} else {
 							if (newestCalFile2 == null) {
@@ -1141,8 +1173,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 							}
 							float square2 = CalculateUtils.calculateSquare(newestCalFile2);
 							if (square2 == -1) {
-								Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-										.LENGTH_LONG).show();
+                                Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
+										.LENGTH_LONG);
+                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                toast.show();
 								return;
 							} else {
 								if (newestCalFile3 == null) {
@@ -1154,8 +1188,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 								}
 								float square3 = CalculateUtils.calculateSquare(newestCalFile3);
 								if (square3 == -1) {
-									Toast.makeText(getActivity(), "Wrong files for calculating",
-											Toast.LENGTH_LONG).show();
+                                    Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating",
+											Toast.LENGTH_LONG);
+                                    toast.setGravity(Gravity.CENTER, 0, 0);
+                                    toast.show();
 									return;
 								} else {
 									mAutoAvgPoint = new AvgPoint(Arrays.asList(new
@@ -1167,8 +1203,10 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						}
 					}
 				} else {
-					Toast.makeText(getActivity(), "Please make MES directory to find ppm", Toast
-							.LENGTH_LONG).show();
+                    Toast toast = Toast.makeText(getActivity(), "Please make MES directory to find ppm", Toast
+							.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
 				}
 				mCalculatePpmAvg = false;
 			}

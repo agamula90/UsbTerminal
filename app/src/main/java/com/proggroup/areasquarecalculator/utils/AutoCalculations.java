@@ -2,6 +2,7 @@ package com.proggroup.areasquarecalculator.utils;
 
 import android.content.Context;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -37,8 +38,10 @@ public class AutoCalculations {
 			new CreateCalibrationCurveForAutoTask(new LoadPpmAvgValuesTask(null, frameLayout,
 					context, editText), context, is0Connect).execute(calFolder);
 		} else {
-			Toast.makeText(frameLayout.getContext(), "Please make CAL directory to find ppm",
-					Toast.LENGTH_SHORT).show();
+			Toast toast = Toast.makeText(frameLayout.getContext(), "Please make CAL directory to find ppm",
+					Toast.LENGTH_SHORT);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
 		}
 	}
 
@@ -101,7 +104,10 @@ public class AutoCalculations {
 		@Override
 		protected void onPostExecute(Boolean aVoid) {
 			if (!aVoid) {
-				Toast.makeText(context, "You select wrong file", Toast.LENGTH_LONG).show();
+				Toast toast = Toast.makeText(context, "You select wrong file", Toast.LENGTH_LONG)
+						;
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
 				return;
 			}
 
@@ -153,20 +159,26 @@ public class AutoCalculations {
 				if (newestCalFile1 != null && newestCalFile2 != null && newestCalFile3 != null) {
 					float square1 = CalculateUtils.calculateSquare(newestCalFile1);
 					if (square1 == -1) {
-						Toast.makeText(context, "Wrong files for calculating", Toast.LENGTH_LONG)
-								.show();
+						Toast toast = Toast.makeText(context, "Wrong files for calculating",
+								Toast.LENGTH_LONG);
+						toast.setGravity(Gravity.CENTER, 0, 0);
+								toast.show();
 						return;
 					} else {
 						float square2 = CalculateUtils.calculateSquare(newestCalFile2);
 						if (square2 == -1) {
-							Toast.makeText(context, "Wrong files for calculating", Toast
-									.LENGTH_LONG).show();
+							Toast toast = Toast.makeText(context, "Wrong files for calculating", Toast
+									.LENGTH_LONG);
+							toast.setGravity(Gravity.CENTER, 0, 0);
+							toast.show();
 							return;
 						} else {
 							float square3 = CalculateUtils.calculateSquare(newestCalFile3);
 							if (square3 == -1) {
-								Toast.makeText(context, "Wrong files for calculating", Toast
-										.LENGTH_LONG).show();
+								Toast toast = Toast.makeText(context, "Wrong files for calculating", Toast
+										.LENGTH_LONG);
+								toast.setGravity(Gravity.CENTER, 0, 0);
+								toast.show();
 								return;
 							} else {
 								AvgPoint mAutoAvgPoint = new AvgPoint(Arrays.asList(new
@@ -183,8 +195,10 @@ public class AutoCalculations {
 
 								if (value == -1) {
 									Context activity = frameLayout.getContext();
-									Toast.makeText(activity, activity.getString(R.string
-											.wrong_data), Toast.LENGTH_LONG).show();
+									Toast toast = Toast.makeText(activity, activity.getString(R.string
+											.wrong_data), Toast.LENGTH_LONG);
+									toast.setGravity(Gravity.CENTER, 0, 0);
+									toast.show();
 								} else {
 									editText.setText(FloatFormatter.format(value));
 								}
@@ -193,8 +207,10 @@ public class AutoCalculations {
 					}
 				}
 			} else {
-				Toast.makeText(context, "Please make MES directory to find ppm", Toast
-						.LENGTH_LONG).show();
+				Toast toast = Toast.makeText(context, "Please make MES directory to find ppm", Toast
+						.LENGTH_LONG);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
 			}
 		}
 	}

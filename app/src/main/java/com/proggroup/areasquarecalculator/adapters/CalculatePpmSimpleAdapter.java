@@ -351,8 +351,11 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 						if (ppmValues.get(row) == 0) {
 							Activity activity = fragment.getActivity();
-							Toast.makeText(activity, activity.getString(R.string.input_ppm_first),
-									Toast.LENGTH_LONG).show();
+							Toast toast = Toast.makeText(activity, activity.getString(R.string
+									.input_ppm_first),
+									Toast.LENGTH_LONG);
+							toast.setGravity(Gravity.CENTER, 0, 0);
+							toast.show();
 							return;
 						}
 
@@ -397,8 +400,12 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 						if (view != parentGrid && gridContainsFocus(activity, view, parentGrid) &&
 								manager.isActive()) {
-							Toast.makeText(parent.getContext(), "Cann't delete row when " + "grid " +
-									"has focus", Toast.LENGTH_LONG).show();
+							Toast toast = Toast.makeText(parent.getContext(), "Cann't delete row " +
+                                    "when " +
+                                    "grid " +
+									"has focus", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
 						} else {
 							new AsyncTask() {
 
