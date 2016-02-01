@@ -5,6 +5,7 @@ import android.view.Gravity;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -89,7 +90,7 @@ public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 		if(weakActivity.get() != null) {
 			Toast toast = Toast.makeText(weakActivity.get(), "File reading done", Toast
 					.LENGTH_SHORT);
-			toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
 			toast.show();
 		}
 	}

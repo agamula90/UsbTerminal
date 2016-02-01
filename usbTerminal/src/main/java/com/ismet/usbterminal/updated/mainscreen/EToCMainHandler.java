@@ -15,6 +15,7 @@ import com.ismet.usbterminal.updated.data.TemperatureData;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
@@ -235,7 +236,7 @@ public class EToCMainHandler extends Handler {
 								if (co2 == 10000) {
 									Toast toast = Toast.makeText(activity, "Dilute sample", Toast
 											.LENGTH_LONG);
-									toast.setGravity(Gravity.CENTER, 0, 0);
+                                    ToastUtils.wrap(toast);
 									toast.show();
 								}
 							}
@@ -437,7 +438,7 @@ public class EToCMainHandler extends Handler {
                                     response + "\""
                                     + ".Expected - \"" + "@5J101 \""
                                     , Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
                             return;
                         }

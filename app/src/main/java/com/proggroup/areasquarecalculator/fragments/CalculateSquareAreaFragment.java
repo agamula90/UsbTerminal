@@ -18,6 +18,7 @@ import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -74,7 +75,7 @@ public class CalculateSquareAreaFragment extends Fragment {
 				} else {
 					Toast toast = Toast.makeText(getActivity(), getString(R.string.select_csv_data_file), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 				}
 			}

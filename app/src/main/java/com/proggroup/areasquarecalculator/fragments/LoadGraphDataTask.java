@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTask;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -86,7 +87,7 @@ public class LoadGraphDataTask extends AsyncTask<Void, Void, Pair<List<Float>, L
 			if (activityWeak.get() != null) {
 				Toast toast = Toast.makeText(activityWeak.get(), "You select wrong file", Toast
 						.LENGTH_LONG);
-				toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
 						toast.show();
 			}
 			return;

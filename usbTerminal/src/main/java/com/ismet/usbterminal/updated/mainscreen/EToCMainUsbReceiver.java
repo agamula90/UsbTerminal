@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.services.UsbService;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;
 
@@ -107,7 +108,7 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
 
                 if (toastMessage != null) {
                     Toast customToast = Toast.makeText(activity, toastMessage, Toast.LENGTH_LONG);
-                    customToast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(customToast);
                     customToast.show();
                 }
 

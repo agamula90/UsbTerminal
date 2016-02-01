@@ -83,6 +83,7 @@ import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
 import com.itextpdf.text.pdf.parser.Line;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.AbstractChart;
@@ -629,7 +630,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             View view = toast.getView();
 
                                     view.setBackgroundResource(R.drawable.toast_drawable);
-							toast.setGravity(Gravity.CENTER, 0, 0);
+							ToastUtils.wrap(toast);
 
 							toast.show();
 							return;
@@ -792,7 +793,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
                                     " values", Toast
 									.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						}
@@ -942,7 +943,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
                                     " values", Toast
 									.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						}
@@ -1039,7 +1040,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please" +
                             " wait", Toast
 							.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
 					return;
 				}
@@ -1178,7 +1179,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please" +
                             " wait", Toast
 							.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
 					return;
 				}
@@ -1215,7 +1216,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 "Please clear " +
 								"one of " + "the charts", Toast.LENGTH_SHORT);
 
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
 						return;
 					}
@@ -1325,7 +1326,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                     " values", Toast
 									.LENGTH_LONG);
 
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						}
@@ -1336,7 +1337,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
                                         " ppm " +
 										"values", Toast.LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							} else {
@@ -1359,7 +1360,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
                                         " comments",
 										Toast.LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							} else {
@@ -1374,7 +1375,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter " +
                                     "volume values",
 									Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						} else {
@@ -1398,7 +1399,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                             Toast toast = Toast.makeText(EToCMainActivity.this, "zero is not " +
                                     "allowed", Toast
 									.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						} else {
@@ -1454,7 +1455,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
                                         " command",
 										Toast.LENGTH_SHORT);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							}
@@ -1572,14 +1573,14 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                                 Toast toast = Toast.makeText(EToCMainActivity.this, "File not " +
                                         "found", Toast
 										.LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							} else {
                                 Toast toast = Toast.makeText(EToCMainActivity.this, "Unexpected " +
                                         "error", Toast
 										.LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							}
@@ -2325,7 +2326,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found",
                         Toast.LENGTH_LONG);
 
-                toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
                 toast.show();
 			}
 		}
@@ -2357,7 +2358,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found",
                         Toast.LENGTH_LONG);
 
-                toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
                 toast.show();
 			}
 
@@ -2512,7 +2513,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				} else {
                     Toast toast = Toast.makeText(EToCMainActivity.this, "Invalid File", Toast
                             .LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 							toast.show();
 				}
 
@@ -3137,7 +3138,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait",
                     Toast
 					.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
             toast.show();
 			return;
 		}
@@ -3148,7 +3149,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             Toast toast = Toast.makeText(EToCMainActivity.this, "Logs diretory is not available",
                     Toast
 					.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER, 0 ,0);
+            ToastUtils.wrap(toast);
             toast.show();
 			return;
 		}
@@ -3158,7 +3159,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
             Toast toast = Toast.makeText(EToCMainActivity.this, "Logs not available. Logs " +
                     "directory is empty",
 					Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
             toast.show();
 			return;
 		}
@@ -3196,7 +3197,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                     Toast toast = Toast.makeText(EToCMainActivity.this, "Required Log files not " +
                             "available",
 							Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
 					dialog.cancel();
 					return;
@@ -3297,7 +3298,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		} catch (Exception e) {
 			e.printStackTrace();
             Toast toast = Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
-            toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
             toast.show();
 		}
 

@@ -47,6 +47,7 @@ import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTas
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -281,7 +282,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 				} else {
 					Toast toast = Toast.makeText(getActivity(), getString(R.string.input_ppm_first), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 				}
 			}
@@ -357,7 +358,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 		} else {
 			Toast toast = Toast.makeText(getActivity(), "Please make CAL directory to find ppm", Toast
 					.LENGTH_SHORT);
-			toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
 			toast.show();
 		}
 
@@ -388,7 +389,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					Activity activity = getActivity();
 					Toast toast = Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 					return;
 				}
@@ -410,7 +411,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					Activity activity = getActivity();
 					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 				} else {
 					resultPpmLoaded.setText(FloatFormatter.format(value));
@@ -427,7 +428,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 				if (mAutoAvgPoint == null) {
 					Toast toast = Toast.makeText(getActivity(), "Average point not filled", Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 							toast.show();
 					return;
 				} else {
@@ -454,7 +455,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					Activity activity = getActivity();
 					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 				} else {
 					resultPpmLoaded.setText(FloatFormatter.format(value));
@@ -471,7 +472,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					Activity activity = getActivity();
 					Toast toast = Toast.makeText(activity, activity.getString(R.string.input_avg_value), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 					return;
 				}
@@ -502,7 +503,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					Activity activity = getActivity();
 					Toast toast = Toast.makeText(activity, activity.getString(R.string.wrong_data), Toast
 							.LENGTH_LONG);
-					toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
 					toast.show();
 				} else {
 					resultPpm.setText(FloatFormatter.format(value));
@@ -903,12 +904,12 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 											if (res) {
 												Toast toast = Toast.makeText(getActivity(), "Save success as " +
 														fileName, Toast.LENGTH_LONG);
-												toast.setGravity(Gravity.CENTER, 0, 0);
+                                                ToastUtils.wrap(toast);
 												toast.show();
 											} else {
 												Toast toast = Toast.makeText(getActivity(), "Write " + "failed",
 														Toast.LENGTH_LONG);
-												toast.setGravity(Gravity.CENTER, 0, 0);
+                                                ToastUtils.wrap(toast);
 												toast.show();
 											}
 											dialog.dismiss();
@@ -950,7 +951,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 							if (!aVoid) {
 								Toast toast = Toast.makeText(getActivity(), "You select wrong " + "file", Toast
 										.LENGTH_LONG);
-								toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
 								toast.show();
 							} else {
 								adapter.checkAvgValues();
@@ -1063,7 +1064,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 			if (!aVoid) {
 				Toast toast = Toast.makeText(getActivity(), "You select wrong file", Toast
 						.LENGTH_LONG);
-				toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
 				toast.show();
 				return;
 			}
@@ -1101,7 +1102,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						if (!isCorrectFilesSelected) {
 							Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 									.LENGTH_LONG);
-							toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
 							toast.show();
 						}
 						return;
@@ -1114,7 +1115,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					} else if (mesFiles == null) {
                         Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 								.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
 						return;
 					}
@@ -1161,7 +1162,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						if (square1 == -1) {
                             Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 									.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 							return;
 						} else {
@@ -1175,7 +1176,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 							if (square2 == -1) {
                                 Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 										.LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
 								return;
 							} else {
@@ -1190,7 +1191,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 								if (square3 == -1) {
                                     Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating",
 											Toast.LENGTH_LONG);
-                                    toast.setGravity(Gravity.CENTER, 0, 0);
+                                    ToastUtils.wrap(toast);
                                     toast.show();
 									return;
 								} else {
@@ -1205,7 +1206,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 				} else {
                     Toast toast = Toast.makeText(getActivity(), "Please make MES directory to find ppm", Toast
 							.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
 				}
 				mCalculatePpmAvg = false;

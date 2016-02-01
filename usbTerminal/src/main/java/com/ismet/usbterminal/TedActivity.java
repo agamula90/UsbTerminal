@@ -55,6 +55,7 @@ import android.widget.Toast;
 import com.ismet.usbterminal.threads.FileWriterThread;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -195,7 +196,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB Ready", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 			} else if (arg1.getAction().equals(UsbService.ACTION_USB_PERMISSION_NOT_GRANTED)) //
 			// USB
@@ -211,7 +212,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB Permission not granted", Toast
 						.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 
 				finish();
@@ -226,7 +227,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				// Toast.LENGTH_SHORT).show();
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "No USB connected", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 			} else if (arg1.getAction().equals(UsbService.ACTION_USB_DISCONNECTED)) // USB
 			// DISCONNECTED
@@ -238,7 +239,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				// Toast.LENGTH_SHORT).show();
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB disconnected", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 				if (UsbService.mHandlerStop != null) {
 					UsbService.mHandlerStop.sendEmptyMessage(0);
@@ -254,12 +255,12 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 				// Toast.LENGTH_SHORT).show();
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB device not supported", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 			} else if (arg1.getAction().equals(ACTION_USB_ATTACHED)) {
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB Device Attached", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 
 				startService(new Intent(TedActivity.this, UsbService.class));
@@ -270,7 +271,7 @@ public class TedActivity extends BaseAttachableActivity implements TextWatcher {
 
 				Toast customToast = new Toast(arg0);
 				customToast = Toast.makeText(arg0, "USB Device Detached", Toast.LENGTH_LONG);
-				customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				ToastUtils.wrap(customToast);
 				customToast.show();
 
 				if (UsbService.mHandlerStop != null) {

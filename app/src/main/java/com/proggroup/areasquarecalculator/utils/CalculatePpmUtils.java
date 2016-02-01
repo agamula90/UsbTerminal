@@ -58,7 +58,7 @@ public class CalculatePpmUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 			Toast toast = Toast.makeText(context, "Write " + "failed", Toast.LENGTH_LONG);
-			toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
 			toast.show();
 		}
 		return new Pair<>(ppmValues, avgSquareValues);

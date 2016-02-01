@@ -10,6 +10,7 @@ import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -172,7 +173,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
             activity.setTimerRunning(false);
 
             Toast toast = Toast.makeText(activity, "Timer Stopped", Toast.LENGTH_LONG);
-            toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
             toast.show();
         }
     }

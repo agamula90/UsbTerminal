@@ -17,6 +17,7 @@ import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -323,7 +324,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 			}
 		} else {
 			Toast toast = Toast.makeText(context, "There is no curve values", Toast.LENGTH_LONG);
-			toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
 			toast.show();
 		}
 	}

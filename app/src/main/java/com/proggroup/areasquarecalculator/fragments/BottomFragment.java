@@ -44,6 +44,7 @@ import com.proggroup.areasquarecalculator.tasks.CreateCalibrationCurveForAutoTas
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ReportCreator;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 
 import java.io.File;
@@ -147,7 +148,7 @@ public class BottomFragment extends Fragment {
                 if (resultPpmLoaded.getText().length() == 0 || mAvgFiles == null) {
                     Toast toast =  Toast.makeText(getActivity(), "Do auto calculations!", Toast
                             .LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                             toast.show();
                     return;
                 }
@@ -306,7 +307,7 @@ public class BottomFragment extends Fragment {
                 if (ppmPoints.isEmpty()) {
                     Toast toast =  Toast.makeText(getActivity(), "Please load CAL_Curve", Toast
                             .LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                             toast.show();
                     return;
                 }
@@ -348,7 +349,7 @@ public class BottomFragment extends Fragment {
                         Toast toast =  Toast.makeText(getActivity(), "Please load Correct " +
                                 "Calibration Curve!",
                                 Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
                         return;
                     }
@@ -436,7 +437,7 @@ public class BottomFragment extends Fragment {
                     Toast toast =  Toast.makeText(activity, activity.getString(R.string
                             .input_avg_value), Toast
                             .LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
                     return;
                 }
@@ -467,7 +468,7 @@ public class BottomFragment extends Fragment {
                     Toast toast =  Toast.makeText(activity, activity.getString(R.string
                             .wrong_data), Toast
                             .LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
                 } else {
 	                if(isExpanded) {
@@ -475,7 +476,7 @@ public class BottomFragment extends Fragment {
                                 avgSquarePoints.get
 				                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
 				                "different cal curve", Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
 	                } else {
 		                resultPpmLoaded.setText(FloatFormatter.format(value));
@@ -515,7 +516,7 @@ public class BottomFragment extends Fragment {
                 if (mAutoAvgPoint == null) {
                     Toast toast =  Toast.makeText(getActivity(), "Average point not filled",
                             Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
                     return;
                 } else {
@@ -549,7 +550,7 @@ public class BottomFragment extends Fragment {
                     Toast toast = Toast.makeText(activity, activity.getString(R.string
                             .wrong_data), Toast
                             .LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ToastUtils.wrap(toast);
                     toast.show();
                 } else {
 	                if(isExpanded) {
@@ -557,7 +558,7 @@ public class BottomFragment extends Fragment {
                                 avgSquarePoints.get
 						                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
 				                "different cal curve", Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
 	                } else {
 		                resultPpmLoaded.setText(FloatFormatter.format(value));
@@ -770,7 +771,7 @@ public class BottomFragment extends Fragment {
                     if (!isCorrectFilesSelected) {
                         Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
                                 .LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                                 toast.show();
                     }
 
@@ -802,7 +803,7 @@ public class BottomFragment extends Fragment {
                         } else if (mesFiles == null) {
                             Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
                                     .LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
                             return;
                         }
@@ -849,7 +850,7 @@ public class BottomFragment extends Fragment {
                             if (square1 == -1) {
                                 Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
                                         .LENGTH_LONG);
-                                toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
                                 toast.show();
                                 return;
                             } else {
@@ -867,7 +868,7 @@ public class BottomFragment extends Fragment {
                                 if (square2 == -1) {
                                     Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating",
                                             Toast.LENGTH_LONG);
-                                    toast.setGravity(Gravity.CENTER, 0, 0);
+                                    ToastUtils.wrap(toast);
                                     toast.show();
                                     return;
                                 } else {
@@ -885,7 +886,7 @@ public class BottomFragment extends Fragment {
                                     if (square3 == -1) {
                                         Toast toast = Toast.makeText(getActivity(), "Wrong files for " +
                                                 "calculating", Toast.LENGTH_LONG);
-                                        toast.setGravity(Gravity.CENTER, 0, 0);
+                                        ToastUtils.wrap(toast);
                                         toast.show();
                                         return;
                                     } else {
@@ -904,7 +905,7 @@ public class BottomFragment extends Fragment {
                     } else {
                         Toast toast = Toast.makeText(getActivity(), "Please make MES directory to find ppm",
                                 Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
                         toast.show();
                     }
                     mDoPostLoadingCalculations = false;

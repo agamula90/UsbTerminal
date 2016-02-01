@@ -40,7 +40,7 @@ public class AutoCalculations {
 		} else {
 			Toast toast = Toast.makeText(frameLayout.getContext(), "Please make CAL directory to find ppm",
 					Toast.LENGTH_SHORT);
-			toast.setGravity(Gravity.CENTER, 0, 0);
+            ToastUtils.wrap(toast);
 			toast.show();
 		}
 	}
@@ -106,7 +106,7 @@ public class AutoCalculations {
 			if (!aVoid) {
 				Toast toast = Toast.makeText(context, "You select wrong file", Toast.LENGTH_LONG)
 						;
-				toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
 				toast.show();
 				return;
 			}
@@ -161,7 +161,7 @@ public class AutoCalculations {
 					if (square1 == -1) {
 						Toast toast = Toast.makeText(context, "Wrong files for calculating",
 								Toast.LENGTH_LONG);
-						toast.setGravity(Gravity.CENTER, 0, 0);
+                        ToastUtils.wrap(toast);
 								toast.show();
 						return;
 					} else {
@@ -169,7 +169,7 @@ public class AutoCalculations {
 						if (square2 == -1) {
 							Toast toast = Toast.makeText(context, "Wrong files for calculating", Toast
 									.LENGTH_LONG);
-							toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
 							toast.show();
 							return;
 						} else {
@@ -177,7 +177,7 @@ public class AutoCalculations {
 							if (square3 == -1) {
 								Toast toast = Toast.makeText(context, "Wrong files for calculating", Toast
 										.LENGTH_LONG);
-								toast.setGravity(Gravity.CENTER, 0, 0);
+                                ToastUtils.wrap(toast);
 								toast.show();
 								return;
 							} else {
@@ -197,7 +197,7 @@ public class AutoCalculations {
 									Context activity = frameLayout.getContext();
 									Toast toast = Toast.makeText(activity, activity.getString(R.string
 											.wrong_data), Toast.LENGTH_LONG);
-									toast.setGravity(Gravity.CENTER, 0, 0);
+                                    ToastUtils.wrap(toast);
 									toast.show();
 								} else {
 									editText.setText(FloatFormatter.format(value));
@@ -209,7 +209,7 @@ public class AutoCalculations {
 			} else {
 				Toast toast = Toast.makeText(context, "Please make MES directory to find ppm", Toast
 						.LENGTH_LONG);
-				toast.setGravity(Gravity.CENTER, 0, 0);
+                ToastUtils.wrap(toast);
 				toast.show();
 			}
 		}

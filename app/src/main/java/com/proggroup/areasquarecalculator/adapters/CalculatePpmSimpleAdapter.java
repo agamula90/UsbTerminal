@@ -32,6 +32,7 @@ import com.proggroup.areasquarecalculator.db.PointHelper;
 import com.proggroup.areasquarecalculator.db.SquarePointHelper;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
+import com.proggroup.areasquarecalculator.utils.ToastUtils;
 import com.proggroup.squarecalculations.CalculateUtils;
 import com.proggroup.squarecalculations.DocParser;
 
@@ -354,7 +355,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 							Toast toast = Toast.makeText(activity, activity.getString(R.string
 									.input_ppm_first),
 									Toast.LENGTH_LONG);
-							toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
 							toast.show();
 							return;
 						}
@@ -404,7 +405,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
                                     "when " +
                                     "grid " +
 									"has focus", Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            ToastUtils.wrap(toast);
                             toast.show();
 						} else {
 							new AsyncTask() {
