@@ -6,7 +6,7 @@
     android:background="@drawable/toast_drawable">
 
     <TextView
-        android:layout_width="380dp"
+        android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:id="@+id/text"
         android:gravity="center"

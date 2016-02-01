@@ -2075,7 +2075,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
                 mAlertDialog = new Dialog(EToCMainActivity.this);
                 mAlertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                mAlertDialog.setContentView(R.layout.layout_cooling);// custom layour for dialog.
+                mAlertDialog.setContentView(R.layout.layout_cooling);
                 mAlertDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
                 ((TextView)mAlertDialog.findViewById(R.id.text)).setText("  Cooling down.  Do not " +
