@@ -2,6 +2,7 @@ package com.ismet.usbterminal.updated.mainscreen;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -39,6 +40,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -259,7 +261,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Date mReportDate;
 
-    private AlertDialog mAlertDialog;
+    private Dialog mAlertDialog;
 
 	private boolean mPowerPressed;
 
@@ -622,8 +624,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 						if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
 								strOff1.equals("")) {
-							Toast.makeText(EToCMainActivity.this, "Please enter all values", Toast
-									.LENGTH_LONG).show();
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
+									" values", Toast.LENGTH_LONG);
+
+                            View mTextView = toast.getView().findViewById(android.R.id.message);
+                            mTextView.setBackgroundColor(Color.YELLOW);
+
+							toast.setGravity(Gravity.CENTER, 0, 0);
+
+							toast.show();
 							return;
 						}
 
@@ -2022,11 +2031,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				Intent i = PullStateManagingService.intentForService(this, true);
 				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 				startService(i);
-                mAlertDialog = new AlertDialog.Builder(this).setMessage("Cooling Down. Please " +
-                        "Wait. Don't turn off!!!").create();
-				mAlertDialog.show();
-				((TextView)mAlertDialog.findViewById(android.R.id.message)).setGravity(Gravity
-						.CENTER);
+
+                mAlertDialog = new Dialog(EToCMainActivity.this);
+                mAlertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                mAlertDialog.setContentView(R.layout.layout_cooling);// custom layour for dialog.
+                mAlertDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+                ((TextView)mAlertDialog.findViewById(R.id.text)).setText("  Cooling down.  Do not " +
+                        "turn off the power.  Please wait . . . ! ! !    System will turn off " +
+                        "automaticaly.");
+
+                mAlertDialog.setCancelable(false);
+
+                mAlertDialog.show();
+
 				handled = true;
 				break;
 		}

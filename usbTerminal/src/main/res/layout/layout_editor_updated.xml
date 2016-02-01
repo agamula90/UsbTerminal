@@ -54,10 +54,6 @@
                                 android:textColor="@drawable/color_state_drawable"
                                 android:text="power on"/>
 
-                            <android.support.v4.widget.Space
-                                android:layout_width="@dimen/text_margin_default"
-                                android:layout_height="@dimen/text_margin_default"/>
-
                             <FrameLayout
                                 android:layout_width="0dp"
                                 android:layout_weight="1"
@@ -97,10 +93,6 @@
                                 android:background="@drawable/btn_red"
                                 android:text="Off"
                                 android:layout_gravity="center_vertical"/> -->
-
-                            <android.support.v4.widget.Space
-                                android:layout_width="@dimen/text_margin_default"
-                                android:layout_height="@dimen/text_margin_default"/>
 
                             <android.support.v4.widget.Space
                                 android:layout_width="@dimen/text_margin_default"
