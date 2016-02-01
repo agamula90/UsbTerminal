@@ -626,6 +626,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 								strOff1.equals("")) {
 							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
 									" values", Toast.LENGTH_LONG);
+                            View view = toast.getView();
+
+                                    view.setBackgroundResource(R.drawable.toast_drawable);
 							toast.setGravity(Gravity.CENTER, 0, 0);
 
 							toast.show();
@@ -2075,7 +2078,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 mAlertDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
                 ((TextView)mAlertDialog.findViewById(R.id.text)).setText("  Cooling down.  Do not " +
-                        "turn off the power.  Please wait . . . ! ! !    System will turn off " +
+                        "switch power off.  Please wait . . . ! ! !    System will turn off " +
                         "automaticaly.");
 
                 mAlertDialog.setCancelable(false);
