@@ -1,6 +1,7 @@
 package com.ismet.usbterminal.updated.mainscreen.tasks;
 
 import android.os.AsyncTask;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
@@ -86,7 +87,10 @@ public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 	protected void onPostExecute(String s) {
 		super.onPostExecute(s);
 		if(weakActivity.get() != null) {
-			Toast.makeText(weakActivity.get(), "File reading done", Toast.LENGTH_SHORT).show();
+			Toast toast = Toast.makeText(weakActivity.get(), "File reading done", Toast
+					.LENGTH_SHORT);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
 		}
 	}
 }

@@ -3,6 +3,7 @@ package com.ismet.usbterminal.updated.mainscreen;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
@@ -232,8 +233,10 @@ public class EToCMainHandler extends Handler {
 								}
 
 								if (co2 == 10000) {
-									Toast.makeText(activity, "Dilute sample", Toast.LENGTH_LONG)
-											.show();
+									Toast toast = Toast.makeText(activity, "Dilute sample", Toast
+											.LENGTH_LONG);
+									toast.setGravity(Gravity.CENTER, 0, 0);
+									toast.show();
 								}
 							}
 
@@ -430,9 +433,12 @@ public class EToCMainHandler extends Handler {
 								}
 							}, delay);
 						} else {
-                            Toast.makeText(activity, "Wrong response: Got - \"" + response + "\""
+                            Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
+                                    response + "\""
                                     + ".Expected - \"" + "@5J101 \""
-                                    , Toast.LENGTH_LONG).show();
+                                    , Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
                             return;
                         }
 					}

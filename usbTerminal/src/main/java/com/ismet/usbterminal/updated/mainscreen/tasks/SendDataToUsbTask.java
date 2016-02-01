@@ -3,6 +3,7 @@ package com.ismet.usbterminal.updated.mainscreen.tasks;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v4.util.Pair;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
@@ -170,7 +171,9 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 
             activity.setTimerRunning(false);
 
-            Toast.makeText(activity, "Timer Stopped", Toast.LENGTH_LONG).show();
+            Toast toast = Toast.makeText(activity, "Timer Stopped", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
         }
     }
 }

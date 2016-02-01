@@ -6,11 +6,12 @@
     android:background="@drawable/toast_drawable">
 
     <TextView
-        android:layout_width="350dp"
+        android:layout_width="380dp"
         android:layout_height="wrap_content"
         android:id="@+id/text"
         android:gravity="center"
         android:textColor="@android:color/white"
-        android:layout_margin="10dp"/>
+        android:layout_margin="10dp"
+        android:lineSpacingMultiplier="1.3"/>
 
 </LinearLayout>

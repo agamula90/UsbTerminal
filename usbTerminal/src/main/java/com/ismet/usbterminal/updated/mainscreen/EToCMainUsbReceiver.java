@@ -107,7 +107,7 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
 
                 if (toastMessage != null) {
                     Toast customToast = Toast.makeText(activity, toastMessage, Toast.LENGTH_LONG);
-                    customToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+                    customToast.setGravity(Gravity.CENTER, 0, 0);
                     customToast.show();
                 }
 
