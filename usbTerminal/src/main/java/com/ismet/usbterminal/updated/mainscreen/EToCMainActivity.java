@@ -624,15 +624,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 								strOff1.equals("")) {
 							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
 									" values", Toast.LENGTH_LONG);
-                            View view = toast.getView();
-
-                                    view.setBackgroundResource(R.drawable.toast_drawable);
 							ToastUtils.wrap(toast);
 
 							toast.show();
 							return;
 						}
-
 
 						Editor edit = mPrefs.edit();
 						edit.putString(PrefConstants.ON1, strOn);
@@ -2270,7 +2266,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mPowerState = PowerState.OFF;
 				break;
 			case PowerState.OFF:
-				mPowerState = PowerState.ON_STAGE1;
+				mPowerState = PowerState.ON_STAGE2;
 				break;
 		}
 	}
