@@ -2049,7 +2049,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 if(!commands.isEmpty()) {
                     sendCommand(commands.get(3).getCommand());
                 } else {
-                    sendCommand("/5J5R");
+                    sendCommand("/5J1R");
                 }
                 handled = true;
                 break;

@@ -19,7 +19,7 @@ public class ToastUtils {
 
 	    TextView textView = ((TextView) view.findViewById(android.R.id.message));
 	    textView.setTextColor(Color.BLACK);
-	    //textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+	    textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         view.setBackgroundResource(R.drawable.toast_drawable);
         toast.setGravity(Gravity.CENTER, 0, 0);
     }
