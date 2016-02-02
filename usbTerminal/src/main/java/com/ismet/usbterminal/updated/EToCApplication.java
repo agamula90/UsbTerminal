@@ -200,7 +200,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
         text = text.replace("\n", "");
         text = text.replace("\r", "");
         String values[] = text.split(AppData.SPLIT_STRING);
-        if(values.length == 17) {
+        if(values.length == 21) {
             try {
                 mBorderCoolingTemperature = Integer.parseInt(values[0]);
             } catch (NumberFormatException e) {
@@ -208,7 +208,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
                 mBorderCoolingTemperature = 80;
                 commands.clear();
             }
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 10; i++) {
                 try {
                     commands.add(new PowerCommand(values[2 * i + 1], Long.parseLong(values[2 * i +
                             2])));

@@ -17,7 +17,6 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -33,7 +32,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseBooleanArray;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -81,7 +79,6 @@ import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator;
 import com.ismet.usbterminal.utils.GraphData;
 import com.ismet.usbterminal.utils.GraphPopulatorUtils;
 import com.ismet.usbterminal.utils.Utils;
-import com.itextpdf.text.pdf.parser.Line;
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
@@ -2007,6 +2004,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		}
 	}
 
+    public void sendOnStage2aRequest() {
+        Message message = mHandler.obtainMessage();
+        message.what = EToCMainHandler.MESSAGE_FIRST_CHECK_HAPPENED;
+        message.sendToTarget();
+    }
+
 	public void sendRequest() {
 		boolean handled = false;
 
@@ -2024,9 +2027,39 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
                 }
 				handled = true;
 				break;
-			case PowerState.ON_STAGE2:
+			case PowerState.ON_STAGE2A:
+                final long delay;
+
                 if(!commands.isEmpty()) {
                     sendCommand(commands.get(2).getCommand());
+                    delay = commands.get(2).getDelay();
+                } else {
+                    sendCommand("/5J1R");
+                    delay = 1000;
+                }
+
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(mPowerState == PowerState.ON_STAGE2A) {
+                            movePowerStateToNext();
+                            sendOnStage2aRequest();
+                        }
+                    }
+                }, delay);
+				handled = true;
+				break;
+            case PowerState.ON_STAGE2B:
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(3).getCommand());
+                } else {
+                    sendCommand("/5J5R");
+                }
+                handled = true;
+                break;
+			case PowerState.ON_STAGE2:
+                if(!commands.isEmpty()) {
+                    sendCommand(commands.get(4).getCommand());
                 } else {
                     sendCommand("/5J5R");
                 }
@@ -2034,7 +2067,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				break;
 			case PowerState.ON_STAGE3:
                 if(!commands.isEmpty()) {
-                    sendCommand(commands.get(3).getCommand());
+                    sendCommand(commands.get(5).getCommand());
                 } else {
                     sendCommand(PullStateManagingService.CO2_REQUEST);
                 }
@@ -2042,7 +2075,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				break;
 			case PowerState.ON_STAGE4:
                 if(!commands.isEmpty()) {
-                    sendCommand(commands.get(4).getCommand());
+                    sendCommand(commands.get(6).getCommand());
                 } else {
                     sendCommand("/1ZR");
                 }
@@ -2054,7 +2087,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				break;
 			case PowerState.OFF_STAGE1:
                 if(!commands.isEmpty()) {
-                    sendCommand(commands.get(5).getCommand());
+                    sendCommand(commands.get(7).getCommand());
                 } else {
                     sendCommand("/5H0000R");
                 }
@@ -2062,7 +2095,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				break;
 			case PowerState.OFF_FINISHING:
                 if(!commands.isEmpty()) {
-                    sendCommand(commands.get(7).getCommand());
+                    sendCommand(commands.get(9).getCommand());
                 } else {
                     sendCommand("/5J1R");
                 }
@@ -2089,6 +2122,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				handled = true;
 				break;
 		}
+
+        Log.e(TAG, "sendRequest: " + mPowerState);
 
 		if (!handled) {
 			throw new IllegalArgumentException();
@@ -2139,16 +2174,24 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		message.obj = temperatureData;
 		mHandler.sendMessageDelayed(message, 1700);
 
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+        message.obj = temperatureData;
+        mHandler.sendMessageDelayed(message, 2500);
+
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+        message.obj = "@5J001 ";
+        mHandler.sendMessageDelayed(message, 3600);
+
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
 		message.obj = "@5J101 ";
-		mHandler.sendMessageDelayed(message, 2500);
+		mHandler.sendMessageDelayed(message, 5000);
 
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
 		message.obj = "255";
-		mHandler.sendMessageDelayed(message, 3800);
+		mHandler.sendMessageDelayed(message, 6300);
 
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
-		mHandler.sendMessageDelayed(message, 6000);
+		mHandler.sendMessageDelayed(message, 8500);
 	}
 
 	public int getPowerState() {
@@ -2194,6 +2237,12 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mPowerState = PowerState.ON_STAGE1_REPEAT;
 				break;
 			case PowerState.ON_STAGE1_REPEAT:
+				mPowerState = PowerState.ON_STAGE2A;
+				break;
+			case PowerState.ON_STAGE2A:
+				mPowerState = PowerState.ON_STAGE2B;
+				break;
+			case PowerState.ON_STAGE2B:
 				mPowerState = PowerState.ON_STAGE2;
 				break;
 			case PowerState.ON_STAGE2:

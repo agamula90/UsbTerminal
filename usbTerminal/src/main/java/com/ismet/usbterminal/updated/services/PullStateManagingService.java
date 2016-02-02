@@ -87,7 +87,7 @@ public class PullStateManagingService extends Service {
                     final long delay;
 
                     if(!commands.isEmpty()) {
-                        delay = commands.get(6).getDelay();
+                        delay = commands.get(8).getDelay();
                     } else {
                         delay = 1000;
                     }
@@ -104,7 +104,7 @@ public class PullStateManagingService extends Service {
 							if(eToCApplication.getCommands().isEmpty()) {
 								message = "/5H0000R";
 							} else {
-								message = commands.get(6).getCommand();
+								message = commands.get(8).getCommand();
 							}
 
 					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,

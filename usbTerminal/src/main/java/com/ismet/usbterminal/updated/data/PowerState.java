@@ -7,11 +7,13 @@ import java.lang.annotation.RetentionPolicy;
 import static com.ismet.usbterminal.updated.data.PowerState.*;
 
 @Retention(RetentionPolicy.SOURCE)
-@IntDef({ON_STAGE1, ON_STAGE1_REPEAT, ON_STAGE2, ON_STAGE3, ON_STAGE4, ON, OFF_INTERRUPTING,
-        OFF_STAGE1, OFF_WAIT_FOR_COOLING, OFF_FINISHING, OFF})
+@IntDef({ON_STAGE1, ON_STAGE1_REPEAT, ON_STAGE2, ON_STAGE2A, ON_STAGE2B, ON_STAGE3, ON_STAGE4,
+        ON, OFF_INTERRUPTING, OFF_STAGE1, OFF_WAIT_FOR_COOLING, OFF_FINISHING, OFF})
 public @interface PowerState {
     int ON_STAGE1 = 1;
     int ON_STAGE1_REPEAT = 2;
+    int ON_STAGE2A = 12;
+    int ON_STAGE2B = 13;
     int ON_STAGE2 = 3;
     int ON_STAGE3 = 4;
     int ON_STAGE4 = 5;

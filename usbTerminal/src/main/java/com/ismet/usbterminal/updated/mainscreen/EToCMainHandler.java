@@ -47,6 +47,8 @@ public class EToCMainHandler extends Handler {
 
 	public static final int MESSAGE_SIMULATE_RESPONSE = 8;
 
+	public static final int MESSAGE_FIRST_CHECK_HAPPENED = 9;
+
 	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -345,6 +347,10 @@ public class EToCMainHandler extends Handler {
 					}
 					handleResponse(weakActivity, sVal);
 					break;
+
+                case MESSAGE_FIRST_CHECK_HAPPENED:
+                    weakActivity.get().sendRequest();
+                    break;
 			}
 		}
 	}
@@ -410,6 +416,46 @@ public class EToCMainHandler extends Handler {
 						correctResponse = true;
 					}
 					break;
+                case PowerState.ON_STAGE2A:
+                    activity.movePowerStateToNext();
+                    sendMessage(obtainMessage(MESSAGE_FIRST_CHECK_HAPPENED));
+                    break;
+                case PowerState.ON_STAGE2B:
+                    if (response.length() > 0 && response.charAt(0) == '@') {
+                        String removeFirst = response.substring(1);
+                        if (removeFirst.equals("5J101 ") || removeFirst.equals("5J001 ")) {
+                            correctResponse = true;
+                            activity.movePowerStateToNext();
+
+                            final long delay;
+
+                            if(!activity.getCommands().isEmpty()) {
+                                delay = activity.getCommands().get(3).getDelay();
+                            } else {
+                                delay = 1000;
+                            }
+
+                            postDelayed(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    if (activityWeakReference.get() != null) {
+                                        activityWeakReference.get().sendRequest();
+                                    }
+                                }
+                            }, delay);
+                        } else {
+                            Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
+                                            response + "\""
+                                            + ".Expected - \"" + "@5J101 \" or \"@5J001\""
+                                    , Toast.LENGTH_LONG);
+                            ToastUtils.wrap(toast);
+                            toast.show();
+                            return;
+                        }
+                    }
+                    break;
+
 				case PowerState.ON_STAGE2:
 					if (response.length() > 0 && response.charAt(0) == '@') {
 						if (response.substring(1).equals("5J101 ")) {
@@ -419,7 +465,7 @@ public class EToCMainHandler extends Handler {
                             final long delay;
 
                             if(!activity.getCommands().isEmpty()) {
-                                delay = activity.getCommands().get(2).getDelay();
+                                delay = activity.getCommands().get(4).getDelay();
                             } else {
                                 delay = 1000;
                             }
@@ -453,7 +499,7 @@ public class EToCMainHandler extends Handler {
                         final long delay;
 
                         if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(3).getDelay();
+                            delay = activity.getCommands().get(5).getDelay();
                         } else {
                             delay = 2000;
                         }
@@ -478,7 +524,7 @@ public class EToCMainHandler extends Handler {
                     final long delayAfterOnHappened;
 
                     if(!activity.getCommands().isEmpty()) {
-                        delayAfterOnHappened = activity.getCommands().get(4).getDelay();
+                        delayAfterOnHappened = activity.getCommands().get(6).getDelay();
                     } else {
                         delayAfterOnHappened = 1000;
                     }
@@ -545,7 +591,7 @@ public class EToCMainHandler extends Handler {
                         final long delay;
 
                         if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(5).getDelay();
+                            delay = activity.getCommands().get(7).getDelay();
                         } else {
                             delay = 1000;
                         }
@@ -574,7 +620,7 @@ public class EToCMainHandler extends Handler {
                             final long delay;
 
                             if(!activity.getCommands().isEmpty()) {
-                                delay = activity.getCommands().get(6).getDelay();
+                                delay = activity.getCommands().get(8).getDelay();
                             } else {
                                 delay = 1000;
                             }
@@ -599,7 +645,7 @@ public class EToCMainHandler extends Handler {
                     final long delay;
 
                     if(!activity.getCommands().isEmpty()) {
-                        delay = activity.getCommands().get(7).getDelay();
+                        delay = activity.getCommands().get(9).getDelay();
                     } else {
                         delay = 1000;
                     }
