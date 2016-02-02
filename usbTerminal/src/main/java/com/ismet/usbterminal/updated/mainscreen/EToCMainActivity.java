@@ -2266,7 +2266,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mPowerState = PowerState.OFF;
 				break;
 			case PowerState.OFF:
-				mPowerState = PowerState.ON_STAGE2;
+				mPowerState = PowerState.ON_STAGE2A;
 				break;
 		}
 	}
