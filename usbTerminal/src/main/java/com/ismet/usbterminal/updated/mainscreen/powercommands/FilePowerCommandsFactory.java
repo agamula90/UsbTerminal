@@ -1,5 +1,6 @@
 package com.ismet.usbterminal.updated.mainscreen.powercommands;
 
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.ismet.usbterminal.updated.data.PowerCommand;
@@ -11,13 +12,17 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 
 	public static final String INTERRUPT_SOFTWARE_ACTIONS = "InterruptActions";
 
+	private final SparseArray<PowerCommand> mOnCommands, mOffCommands;
+
 	private
 	@PowerState
 	int mPowerState;
 
 	private int mIndexInRunning;
 
-	private final SparseArray<PowerCommand> mOnCommands, mOffCommands;
+	public int getIndexInRunning() {
+		return mIndexInRunning;
+	}
 
 	public FilePowerCommandsFactory(@PowerState int powerState, SparseArray<PowerCommand>
 			onCommands, SparseArray<PowerCommand> offCommands) {
@@ -33,7 +38,7 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 		switch (mPowerState) {
 			case PowerState.ON:
 				mIndexInRunning = 0;
-				PowerCommand powerCommand = currentCommand();
+				PowerCommand powerCommand = mOffCommands.valueAt(0);
 				if (powerCommand.getCommand().equals(START_COOLING)) {
 					mPowerState = PowerState.OFF_WAIT_FOR_COOLING;
 				} else if (powerCommand.getCommand().equals(INTERRUPT_SOFTWARE_ACTIONS)) {
@@ -99,10 +104,15 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 		@PowerState int curState = currentPowerState();
 		moveStateToNext();
 		@PowerState int newState = currentPowerState();
-		if(newState == PowerState.OFF || newState == PowerState.ON) {
-			mIndexInRunning = 0;
+		if (newState == PowerState.OFF) {
+			mIndexInRunning = mOffCommands.size() - 1;
+		} else if (newState == PowerState.ON) {
+			mIndexInRunning = mOnCommands.size() - 1;
 		} else {
 			mIndexInRunning--;
+			if(mIndexInRunning == -1) {
+				mIndexInRunning = 0;
+			}
 		}
 		mPowerState = curState;
 		return newState;
@@ -112,6 +122,7 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 	public PowerCommand currentCommand() {
 		switch (mPowerState) {
 			case PowerState.ON_RUNNING:
+			case PowerState.ON:
 				return mOnCommands.valueAt(mIndexInRunning);
 			case PowerState.OFF_INTERRUPTING:
 			case PowerState.OFF_RUNNING:

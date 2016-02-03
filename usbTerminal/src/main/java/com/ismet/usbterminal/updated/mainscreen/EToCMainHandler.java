@@ -264,7 +264,7 @@ public class EToCMainHandler extends Handler {
 						}
 					} else {
 					    /*if(pullState != PullState.NONE) {
-		                    application.unScheduleTasks();
+			                application.unScheduleTasks();
                         }*/
 						data = new String(usbReadBytes);
 						data = data.replace("\r", "");
@@ -356,10 +356,13 @@ public class EToCMainHandler extends Handler {
 
 		boolean correctResponse = false;
 
+		int curPowerState = 0;
+
 		if (activityWeakReference.get() != null) {
 			final EToCMainActivity activity = activityWeakReference.get();
 			PowerCommandsFactory powerCommandsFactory = activity.getPowerCommandsFactory();
-			int powerState = powerCommandsFactory.currentPowerState();
+			final int powerState = powerCommandsFactory.currentPowerState();
+			curPowerState = powerState;
 			switch (powerState) {
 				case PowerState.ON_STAGE1:
 				case PowerState.ON_STAGE1_REPEAT:
@@ -369,8 +372,6 @@ public class EToCMainHandler extends Handler {
 				case PowerState.ON_STAGE3:
 				case PowerState.ON_STAGE4:
 				case PowerState.ON_RUNNING:
-					Log.e("TED", "retrieve response. " + powerCommandsFactory.currentPowerState()
-							+ "time: " + System.currentTimeMillis());
 
 					PowerCommand currentCommand = powerCommandsFactory.currentCommand();
 					powerCommandsFactory.moveStateToNext();
@@ -383,13 +384,19 @@ public class EToCMainHandler extends Handler {
 
 									@Override
 									public void run() {
-										Log.e("TED", "request from handler");
 										if (activityWeakReference.get() != null) {
-											activityWeakReference.get().getPowerCommandsFactory()
-													.sendRequest(activityWeakReference.get(),
-															EToCMainHandler.this,
-															activityWeakReference.get());
+											PowerCommandsFactory powerCommandsFactory =
+													activityWeakReference.get()
+															.getPowerCommandsFactory();
 
+											if (powerCommandsFactory.currentPowerState() !=
+													PowerState.ON) {
+												powerCommandsFactory.sendRequest
+														(activityWeakReference.get(),
+																EToCMainHandler.this,
+																activityWeakReference.get());
+
+											}
 										}
 									}
 								}, currentCommand.getDelay());
@@ -405,14 +412,13 @@ public class EToCMainHandler extends Handler {
 									.length());
 
 							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-									response + "\"" + ".Expected - " + responseBuilder.toString(),
-									Toast.LENGTH_LONG);
+											response + "\"" + ".Expected - " + responseBuilder
+									.toString(), Toast.LENGTH_LONG);
 							ToastUtils.wrap(toast);
 							toast.show();
 							return;
 						}
 					} else {
-						Log.e("TED", "request from handler");
 						powerCommandsFactory.sendRequest(activity, this, activity);
 					}
 
@@ -422,6 +428,7 @@ public class EToCMainHandler extends Handler {
 						sendMessage(Message.obtain(this, MESSAGE_RESUME_AUTO_PULLING));
 						return;
 					}
+					correctResponse = true;
 					break;
 				case PowerState.OFF_INTERRUPTING:
 					sendMessage(Message.obtain(this, MESSAGE_PAUSE_AUTO_PULLING));
@@ -441,10 +448,18 @@ public class EToCMainHandler extends Handler {
 									@Override
 									public void run() {
 										if (activityWeakReference.get() != null) {
-											activityWeakReference.get().getPowerCommandsFactory()
-													.sendRequest(activityWeakReference.get(),
-															EToCMainHandler.this,
-															activityWeakReference.get());
+											PowerCommandsFactory powerCommandsFactory =
+													activityWeakReference.get()
+															.getPowerCommandsFactory();
+
+											if (powerCommandsFactory.currentPowerState() !=
+													PowerState.OFF) {
+												powerCommandsFactory.sendRequest
+														(activityWeakReference.get(),
+																EToCMainHandler.this,
+																activityWeakReference.get());
+
+											}
 										}
 									}
 								}, delayForPausing);
@@ -470,10 +485,16 @@ public class EToCMainHandler extends Handler {
 							@Override
 							public void run() {
 								if (activityWeakReference.get() != null) {
-									activityWeakReference.get().getPowerCommandsFactory()
-											.sendRequest(activityWeakReference.get(),
-													EToCMainHandler.this, activityWeakReference
-															.get());
+									PowerCommandsFactory powerCommandsFactory =
+											activityWeakReference.get().getPowerCommandsFactory();
+
+									if (powerCommandsFactory.currentPowerState() != PowerState
+											.OFF) {
+										powerCommandsFactory.sendRequest(activityWeakReference.get
+												(), EToCMainHandler.this, activityWeakReference
+												.get());
+
+									}
 								}
 							}
 						}, powerCommandsFactory.currentCommand().getDelay());
@@ -496,10 +517,16 @@ public class EToCMainHandler extends Handler {
 								@Override
 								public void run() {
 									if (activityWeakReference.get() != null) {
-										activityWeakReference.get().getPowerCommandsFactory()
-												.sendRequest(activityWeakReference.get(),
-														EToCMainHandler.this,
-														activityWeakReference.get());
+										PowerCommandsFactory powerCommandsFactory =
+												activityWeakReference.get()
+														.getPowerCommandsFactory();
+
+										if (powerCommandsFactory.currentPowerState() != PowerState
+												.OFF) {
+											powerCommandsFactory.sendRequest(activityWeakReference
+													.get(), EToCMainHandler.this,
+													activityWeakReference.get());
+										}
 									}
 								}
 							}, powerCommandsFactory.currentCommand().getDelay());
@@ -525,10 +552,16 @@ public class EToCMainHandler extends Handler {
 								@Override
 								public void run() {
 									if (activityWeakReference.get() != null) {
-										activityWeakReference.get().getPowerCommandsFactory()
-												.sendRequest(activityWeakReference.get(),
-														EToCMainHandler.this,
-														activityWeakReference.get());
+										PowerCommandsFactory powerCommandsFactory =
+												activityWeakReference.get()
+														.getPowerCommandsFactory();
+										if (powerCommandsFactory.currentPowerState() != PowerState
+												.OFF) {
+											powerCommandsFactory.sendRequest(activityWeakReference
+													.get(), EToCMainHandler.this,
+													activityWeakReference.get());
+
+										}
 									}
 								}
 							}, powerCommandsFactory.currentCommand().getDelay());
@@ -544,8 +577,8 @@ public class EToCMainHandler extends Handler {
 
 
 							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-									response + "\"" + ".Expected - " + responseBuilder.toString(),
-									Toast.LENGTH_LONG);
+											response + "\"" + ".Expected - " + responseBuilder
+									.toString(), Toast.LENGTH_LONG);
 							ToastUtils.wrap(toast);
 							toast.show();
 							return;
@@ -555,9 +588,9 @@ public class EToCMainHandler extends Handler {
 			}
 		}
 
-		/*if (!correctResponse && activityWeakReference.get() != null) {
+		if (!correctResponse && activityWeakReference.get() != null) {
 			Toast.makeText(activityWeakReference.get(), "Wrong response parsing. Message:[" +
-							response + "]", Toast.LENGTH_LONG).show();
-		}*/
+							response + "]. PowerState - " + curPowerState, Toast.LENGTH_LONG).show();
+		}
 	}
 }

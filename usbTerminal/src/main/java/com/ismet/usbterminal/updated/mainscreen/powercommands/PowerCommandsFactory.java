@@ -78,17 +78,22 @@ public abstract class PowerCommandsFactory {
 					if (!currentCommand.hasSelectableResponses()) {
 						int powerState = nextPowerState();
 
-						Log.e(TAG, "nextState:" + powerState);
-
 						if (powerState != PowerState.OFF && powerState != PowerState.ON) {
 							mHandler.postDelayed(new Runnable() {
 
 								@Override
 								public void run() {
 									PowerCommand currentCommandNew = currentCommand();
-									if (currentCommand.equals(currentCommandNew)) {
-										moveStateToNext();
-										sendRequest(context, mHandler, commandsDeliverer);
+									int currentState = currentPowerState();
+									if(currentState != PowerState.OFF && currentState !=
+											PowerState.ON) {
+										if (currentCommand.equals(currentCommandNew)) {
+											moveStateToNext();
+											currentState = currentPowerState();
+											if (currentState != PowerState.OFF && currentState != PowerState.ON) {
+												sendRequest(context, mHandler, commandsDeliverer);
+											}
+										}
 									}
 								}
 							}, currentCommand.getDelay());
@@ -99,8 +104,6 @@ public abstract class PowerCommandsFactory {
 					handled = true;
 				}
 		}
-		Log.e(TAG, "request from factory: " + currentCommand().getCommand());
-		Log.e(TAG, "sendRequest: " + mPowerState + ", time: " + System.currentTimeMillis());
 
 		if (!handled) {
 			throw new IllegalArgumentException();
