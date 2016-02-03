@@ -3,15 +3,17 @@ package com.ismet.usbterminal.updated.mainscreen;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.view.Gravity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.AppData;
+import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.data.TemperatureData;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
@@ -47,8 +49,6 @@ public class EToCMainHandler extends Handler {
 
 	public static final int MESSAGE_SIMULATE_RESPONSE = 8;
 
-	public static final int MESSAGE_FIRST_CHECK_HAPPENED = 9;
-
 	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -77,7 +77,7 @@ public class EToCMainHandler extends Handler {
 
 					byte[] usbReadBytes = (byte[]) msg.obj;
 					String data = "";
-                    final String responseForChecking;
+					final String responseForChecking;
 					if (usbReadBytes.length == 7) {
 						if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
 								.format("%02X", usbReadBytes[1]).equals("44"))) {
@@ -238,7 +238,7 @@ public class EToCMainHandler extends Handler {
 								if (co2 == 10000) {
 									Toast toast = Toast.makeText(activity, "Dilute sample", Toast
 											.LENGTH_LONG);
-                                    ToastUtils.wrap(toast);
+									ToastUtils.wrap(toast);
 									toast.show();
 								}
 							}
@@ -247,7 +247,7 @@ public class EToCMainHandler extends Handler {
 
 							activity.refreshTextAccordToSensor(false, co2 + "");
 
-                            responseForChecking = co2 + "";
+							responseForChecking = co2 + "";
 
                             /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                            mTempState = PullState.TEMPERATURE;
@@ -260,18 +260,18 @@ public class EToCMainHandler extends Handler {
 							data = new String(usbReadBytes);
 							data = data.replace("\r", "");
 							data = data.replace("\n", "");
-                            responseForChecking = new String(data);
+							responseForChecking = new String(data);
 						}
 					} else {
 					    /*if(pullState != PullState.NONE) {
-	                        application.unScheduleTasks();
+		                    application.unScheduleTasks();
                         }*/
 						data = new String(usbReadBytes);
 						data = data.replace("\r", "");
 						data = data.replace("\n", "");
 						activity.refreshTextAccordToSensor(true, data);
 
-                        responseForChecking = new String(data);
+						responseForChecking = new String(data);
 
                         /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
 	                        mTempState = PullState.CO2;
@@ -286,7 +286,7 @@ public class EToCMainHandler extends Handler {
 					Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
 					activity.getScrollView().smoothScrollTo(0, 0);
 
-					if(activity.isPowerPressed()) {
+					if (activity.isPowerPressed()) {
 						handleResponse(weakActivity, responseForChecking);
 					}
 					//}
@@ -338,19 +338,15 @@ public class EToCMainHandler extends Handler {
 					Intent i = PullStateManagingService.intentForService(activity, false);
 					i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 					activity.startService(i);
-                    activity.hideCoolingDownDialog();
+					activity.getPowerCommandsFactory().getCoolingDialog().dismiss();
 					break;
 				case MESSAGE_SIMULATE_RESPONSE:
 					String sVal = "";
-					if(msg.obj != null) {
+					if (msg.obj != null) {
 						sVal = msg.obj.toString();
 					}
 					handleResponse(weakActivity, sVal);
 					break;
-
-                case MESSAGE_FIRST_CHECK_HAPPENED:
-                    weakActivity.get().sendRequest();
-                    break;
 			}
 		}
 	}
@@ -361,205 +357,82 @@ public class EToCMainHandler extends Handler {
 		boolean correctResponse = false;
 
 		if (activityWeakReference.get() != null) {
-			EToCMainActivity activity = activityWeakReference.get();
-			int powerState = activity.getPowerState();
+			final EToCMainActivity activity = activityWeakReference.get();
+			PowerCommandsFactory powerCommandsFactory = activity.getPowerCommandsFactory();
+			int powerState = powerCommandsFactory.currentPowerState();
 			switch (powerState) {
 				case PowerState.ON_STAGE1:
-					TemperatureData temperatureData = TemperatureData.parse(response);
-					if (temperatureData.isCorrect()) {
-						activity.movePowerStateToNext();
-
-                        final long delay;
-
-                        if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(0).getDelay();
-                        } else {
-                            delay = 500;
-                        }
-
-						postDelayed(new Runnable() {
-
-							@Override
-							public void run() {
-								if (activityWeakReference.get() != null) {
-									activityWeakReference.get().sendRequest();
-								}
-							}
-						}, delay);
-
-						correctResponse = true;
-					}
-					break;
 				case PowerState.ON_STAGE1_REPEAT:
-					temperatureData = TemperatureData.parse(response);
-					if (temperatureData.isCorrect()) {
-						activity.movePowerStateToNext();
-
-                        final long delay;
-
-                        if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(1).getDelay();
-                        } else {
-                            delay = 500;
-                        }
-
-						postDelayed(new Runnable() {
-
-							@Override
-							public void run() {
-								if (activityWeakReference.get() != null) {
-									activityWeakReference.get().sendRequest();
-								}
-							}
-						}, delay);
-
-						correctResponse = true;
-					}
-					break;
-                case PowerState.ON_STAGE2A:
-                    activity.movePowerStateToNext();
-                    sendMessage(obtainMessage(MESSAGE_FIRST_CHECK_HAPPENED));
-                    break;
-                case PowerState.ON_STAGE2B:
-                    if (response.length() > 0 && response.charAt(0) == '@') {
-                        String removeFirst = response.substring(1);
-                        if (removeFirst.equals("5J101 ") || removeFirst.equals("5J001 ")) {
-                            correctResponse = true;
-                            activity.movePowerStateToNext();
-
-                            final long delay;
-
-                            if(!activity.getCommands().isEmpty()) {
-                                delay = activity.getCommands().get(3).getDelay();
-                            } else {
-                                delay = 1000;
-                            }
-
-                            postDelayed(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    if (activityWeakReference.get() != null) {
-                                        activityWeakReference.get().sendRequest();
-                                    }
-                                }
-                            }, delay);
-                        } else {
-                            Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-                                            response + "\""
-                                            + ".Expected - \"" + "@5J101 \" or \"@5J001\""
-                                    , Toast.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
-                            return;
-                        }
-                    }
-                    break;
-
+				case PowerState.ON_STAGE2A:
+				case PowerState.ON_STAGE2B:
 				case PowerState.ON_STAGE2:
-					if (response.length() > 0 && response.charAt(0) == '@') {
-						if (response.substring(1).equals("5J101 ")) {
-							correctResponse = true;
-							activity.movePowerStateToNext();
-
-                            final long delay;
-
-                            if(!activity.getCommands().isEmpty()) {
-                                delay = activity.getCommands().get(4).getDelay();
-                            } else {
-                                delay = 1000;
-                            }
-
-							postDelayed(new Runnable() {
-
-								@Override
-								public void run() {
-									if (activityWeakReference.get() != null) {
-										activityWeakReference.get().sendRequest();
-									}
-								}
-							}, delay);
-						} else {
-                            Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-                                    response + "\""
-                                    + ".Expected - \"" + "@5J101 \""
-                                    , Toast.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
-                            return;
-                        }
-					}
-					break;
 				case PowerState.ON_STAGE3:
-					try {
-						activity.movePowerStateToNext();
-						Integer.parseInt(response);
-						correctResponse = true;
-
-                        final long delay;
-
-                        if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(5).getDelay();
-                        } else {
-                            delay = 2000;
-                        }
-
-						postDelayed(new Runnable() {
-
-							@Override
-							public void run() {
-								if (activityWeakReference.get() != null) {
-									activityWeakReference.get().sendRequest();
-								}
-							}
-						}, delay);
-					} catch (NumberFormatException e) {
-						e.printStackTrace();
-					}
-					break;
 				case PowerState.ON_STAGE4:
-					//TODO parse response
-					activity.movePowerStateToNext();
+				case PowerState.ON_RUNNING:
+					Log.e("TED", "retrieve response. " + powerCommandsFactory.currentPowerState()
+							+ "time: " + System.currentTimeMillis());
 
-                    final long delayAfterOnHappened;
+					PowerCommand currentCommand = powerCommandsFactory.currentCommand();
+					powerCommandsFactory.moveStateToNext();
 
-                    if(!activity.getCommands().isEmpty()) {
-                        delayAfterOnHappened = activity.getCommands().get(6).getDelay();
-                    } else {
-                        delayAfterOnHappened = 1000;
-                    }
+					if (currentCommand.hasSelectableResponses()) {
+						if (currentCommand.isResponseCorrect(response)) {
 
-                    postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(weakActivity.get() != null) {
-                                weakActivity.get().initPowerAccordToItState();
-                                weakActivity.get().reInitPowerPressedValue();
-                                sendMessage(Message.obtain(EToCMainHandler.this,
-                                        MESSAGE_RESUME_AUTO_PULLING));
-                            }
-                        }
-                    }, delayAfterOnHappened);
+							if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+								postDelayed(new Runnable() {
 
-					correctResponse = true;
+									@Override
+									public void run() {
+										Log.e("TED", "request from handler");
+										if (activityWeakReference.get() != null) {
+											activityWeakReference.get().getPowerCommandsFactory()
+													.sendRequest(activityWeakReference.get(),
+															EToCMainHandler.this,
+															activityWeakReference.get());
+
+										}
+									}
+								}, currentCommand.getDelay());
+							}
+
+							correctResponse = true;
+						} else {
+							StringBuilder responseBuilder = new StringBuilder();
+							for (String possibleResponse : currentCommand.getPossibleResponses()) {
+								responseBuilder.append("\"" + possibleResponse + "\" or ");
+							}
+							responseBuilder.delete(responseBuilder.length() - 4, responseBuilder
+									.length());
+
+							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
+									response + "\"" + ".Expected - " + responseBuilder.toString(),
+									Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
+							return;
+						}
+					} else {
+						Log.e("TED", "request from handler");
+						powerCommandsFactory.sendRequest(activity, this, activity);
+					}
+
+					if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+						activity.initPowerAccordToItState();
+						activity.reInitPowerPressedValue();
+						sendMessage(Message.obtain(this, MESSAGE_RESUME_AUTO_PULLING));
+						return;
+					}
 					break;
 				case PowerState.OFF_INTERRUPTING:
 					sendMessage(Message.obtain(this, MESSAGE_PAUSE_AUTO_PULLING));
-					activity.movePowerStateToNext();
+					powerCommandsFactory.moveStateToNext();
 
-                    final long delayForPausing;
-
-                    if(!activity.getCommands().isEmpty()) {
-                        delayForPausing = 0;
-                    } else {
-                        delayForPausing = 1000;
-                    }
+					final long delayForPausing = powerCommandsFactory.currentCommand().getDelay();
 
 					postDelayed(new Runnable() {
 
 						@Override
 						public void run() {
-
 							if (activityWeakReference.get() != null) {
 								activityWeakReference.get().interruptActionsIfAny();
 
@@ -568,43 +441,42 @@ public class EToCMainHandler extends Handler {
 									@Override
 									public void run() {
 										if (activityWeakReference.get() != null) {
-											activityWeakReference.get().sendRequest();
+											activityWeakReference.get().getPowerCommandsFactory()
+													.sendRequest(activityWeakReference.get(),
+															EToCMainHandler.this,
+															activityWeakReference.get());
 										}
 									}
 								}, delayForPausing);
 							}
 						}
-					}, 1000);
+					}, delayForPausing);
 
 					correctResponse = true;
 					break;
 				case PowerState.OFF_STAGE1:
-					temperatureData = TemperatureData.parse(response);
+					TemperatureData temperatureData = TemperatureData.parse(response);
 					if (temperatureData.isCorrect()) {
 						int curTemperature = temperatureData.getTemperature1();
 
-						if (curTemperature <= EToCApplication.getInstance().getBorderCoolingTemperature()) {
-							activity.movePowerStateToNext();
+						if (curTemperature <= EToCApplication.getInstance()
+								.getBorderCoolingTemperature()) {
+							powerCommandsFactory.moveStateToNext();
 						}
-						activity.movePowerStateToNext();
-
-                        final long delay;
-
-                        if(!activity.getCommands().isEmpty()) {
-                            delay = activity.getCommands().get(7).getDelay();
-                        } else {
-                            delay = 1000;
-                        }
+						powerCommandsFactory.moveStateToNext();
 
 						postDelayed(new Runnable() {
 
 							@Override
 							public void run() {
 								if (activityWeakReference.get() != null) {
-									activityWeakReference.get().sendRequest();
+									activityWeakReference.get().getPowerCommandsFactory()
+											.sendRequest(activityWeakReference.get(),
+													EToCMainHandler.this, activityWeakReference
+															.get());
 								}
 							}
-						}, delay);
+						}, powerCommandsFactory.currentCommand().getDelay());
 						correctResponse = true;
 					}
 					break;
@@ -613,53 +485,72 @@ public class EToCMainHandler extends Handler {
 					if (temperatureData.isCorrect()) {
 						int curTemperature = temperatureData.getTemperature1();
 
-						if (curTemperature <= EToCApplication.getInstance().getBorderCoolingTemperature()) {
-							sendMessage(Message.obtain(this, MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
-							activity.movePowerStateToNext();
-
-                            final long delay;
-
-                            if(!activity.getCommands().isEmpty()) {
-                                delay = activity.getCommands().get(8).getDelay();
-                            } else {
-                                delay = 1000;
-                            }
+						if (curTemperature <= EToCApplication.getInstance()
+								.getBorderCoolingTemperature()) {
+							sendMessage(Message.obtain(this,
+									MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							powerCommandsFactory.moveStateToNext();
 
 							postDelayed(new Runnable() {
 
 								@Override
 								public void run() {
 									if (activityWeakReference.get() != null) {
-										activityWeakReference.get().sendRequest();
+										activityWeakReference.get().getPowerCommandsFactory()
+												.sendRequest(activityWeakReference.get(),
+														EToCMainHandler.this,
+														activityWeakReference.get());
 									}
 								}
-							}, delay);
+							}, powerCommandsFactory.currentCommand().getDelay());
 						}
 						correctResponse = true;
 					}
 					break;
+				case PowerState.OFF_RUNNING:
 				case PowerState.OFF_FINISHING:
-					//TODO parse response
-					activity.movePowerStateToNext();
+					powerCommandsFactory.moveStateToNext();
+					if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+						activity.initPowerAccordToItState();
+						activity.reInitPowerPressedValue();
+						return;
+					}
 
-                    final long delay;
+					currentCommand = powerCommandsFactory.currentCommand();
 
-                    if(!activity.getCommands().isEmpty()) {
-                        delay = activity.getCommands().get(9).getDelay();
-                    } else {
-                        delay = 1000;
-                    }
+					if (currentCommand.hasSelectableResponses()) {
+						if (currentCommand.isResponseCorrect(response)) {
+							postDelayed(new Runnable() {
 
-                    postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(weakActivity.get() != null) {
-                                weakActivity.get().initPowerAccordToItState();
-                                weakActivity.get().reInitPowerPressedValue();
-                            }
-                        }
-                    }, delay);
-					correctResponse = true;
+								@Override
+								public void run() {
+									if (activityWeakReference.get() != null) {
+										activityWeakReference.get().getPowerCommandsFactory()
+												.sendRequest(activityWeakReference.get(),
+														EToCMainHandler.this,
+														activityWeakReference.get());
+									}
+								}
+							}, powerCommandsFactory.currentCommand().getDelay());
+
+							correctResponse = true;
+						} else {
+							StringBuilder responseBuilder = new StringBuilder();
+							for (String possibleResponse : currentCommand.getPossibleResponses()) {
+								responseBuilder.append("\"" + possibleResponse + "\" or ");
+							}
+							responseBuilder.delete(responseBuilder.length() - 4, responseBuilder
+									.length());
+
+
+							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
+									response + "\"" + ".Expected - " + responseBuilder.toString(),
+									Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
+							return;
+						}
+					}
 					break;
 			}
 		}

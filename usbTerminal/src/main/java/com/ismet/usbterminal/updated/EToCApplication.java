@@ -1,14 +1,22 @@
 package com.ismet.usbterminal.updated;
 
+import android.content.Intent;
+import android.support.v4.util.Pair;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.ismet.usbterminal.updated.data.AppData;
 import com.ismet.usbterminal.updated.data.PowerCommand;
+import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PullState;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.DefaultPowerCommandsFactory;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.FilePowerCommandsFactory;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -17,13 +25,11 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private static EToCApplication instance;
 
-	public static EToCApplication getInstance() {
-		return instance;
-	}
+	private volatile
+	@PullState
+	int mPullState;
 
-	private volatile @PullState int mPullState;
-
-    private volatile boolean mStopPulling;
+	private volatile boolean mStopPulling;
 
 	private ScheduledExecutorService mPullDataService;
 
@@ -33,15 +39,19 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private List<ScheduledFuture> mScheduledFutures;
 
-    private String mCurrentTemperatureRequest;
+	private String mCurrentTemperatureRequest;
 
 	private long mTimeOfRecreating;
 
 	private long mRenewTime;
 
-    private int mBorderCoolingTemperature = 80;
+	private int mBorderCoolingTemperature = 80;
 
-	private List<PowerCommand> commands = new ArrayList<>();
+	private PowerCommandsFactory powerCommandsFactory;
+
+	public static EToCApplication getInstance() {
+		return instance;
+	}
 
 	@Override
 	public void onCreate() {
@@ -108,13 +118,15 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		});*/
 	}
 
-    public void setPullState(@PullState int pullState) {
-        this.mPullState = pullState;
-    }
+	public
+	@PullState
+	int getPullState() {
+		return mPullState;
+	}
 
-    public @PullState int getPullState() {
-        return mPullState;
-    }
+	public void setPullState(@PullState int pullState) {
+		this.mPullState = pullState;
+	}
 
 	public void initPullDataService(ScheduledExecutorService mPullTemperatureService) {
 		this.mPullDataService = mPullTemperatureService;
@@ -142,33 +154,33 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		return mPullDataService;
 	}
 
-    public void unScheduleTasks() {
-        if(mScheduledFutures != null) {
-            for (ScheduledFuture future : mScheduledFutures) {
-                future.cancel(true);
-            }
-        }
-    }
+	public void unScheduleTasks() {
+		if (mScheduledFutures != null) {
+			for (ScheduledFuture future : mScheduledFutures) {
+				future.cancel(true);
+			}
+		}
+	}
 
-    public void setScheduledFutures(List<ScheduledFuture> scheduledFutures) {
-        this.mScheduledFutures = scheduledFutures;
-    }
+	public void setScheduledFutures(List<ScheduledFuture> scheduledFutures) {
+		this.mScheduledFutures = scheduledFutures;
+	}
 
-    public void setCurrentTemperatureRequest(String mCurrentTemperatureRequest) {
-        this.mCurrentTemperatureRequest = mCurrentTemperatureRequest;
-    }
+	public String getCurrentTemperatureRequest() {
+		return mCurrentTemperatureRequest;
+	}
 
-    public String getCurrentTemperatureRequest() {
-        return mCurrentTemperatureRequest;
-    }
+	public void setCurrentTemperatureRequest(String mCurrentTemperatureRequest) {
+		this.mCurrentTemperatureRequest = mCurrentTemperatureRequest;
+	}
 
-    public void setStopPulling(boolean stopPulling) {
-        this.mStopPulling = stopPulling;
-    }
+	public void setStopPulling(boolean stopPulling) {
+		this.mStopPulling = stopPulling;
+	}
 
-    public boolean isPullingStopped() {
-        return mStopPulling;
-    }
+	public boolean isPullingStopped() {
+		return mStopPulling;
+	}
 
 	public void refreshTimeOfRecreating() {
 		mTimeOfRecreating = System.currentTimeMillis();
@@ -183,7 +195,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 		boolean isRefreshed = false;
 
-		if(Utils.elapsedTimeForCacheFill(mRenewTime, mTimeOfRecreating)) {
+		if (Utils.elapsedTimeForCacheFill(mRenewTime, mTimeOfRecreating)) {
 			refreshTimeOfRecreating();
 			isRefreshed = true;
 		}
@@ -195,37 +207,120 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		return mRenewTime;
 	}
 
-    public void loadCommands(String text) {
-        commands.clear();
-        text = text.replace("\n", "");
-        text = text.replace("\r", "");
-        String values[] = text.split(AppData.SPLIT_STRING);
-        if(values.length == 21) {
-            try {
-                mBorderCoolingTemperature = Integer.parseInt(values[0]);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-                mBorderCoolingTemperature = 80;
-                commands.clear();
-            }
-            for (int i = 0; i < 10; i++) {
-                try {
-                    commands.add(new PowerCommand(values[2 * i + 1], Long.parseLong(values[2 * i +
-                            2])));
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                    commands.clear();
-                    return;
-                }
-            }
-        }
-    }
+	public PowerCommandsFactory parseCommands(String text) {
+		text = text.replace("\r", "");
+		String rows[] = text.split("\n");
+		final String borderTemperatureString = "borderTemperature:";
+		final String onString = "on:";
+		final String offString = "off:";
 
-    public int getBorderCoolingTemperature() {
-        return mBorderCoolingTemperature;
-    }
+		List<String> borderTemperatures = new ArrayList<>();
+		List<String> onCommands = new ArrayList<>();
+		List<String> offCommands = new ArrayList<>();
 
-    public List<PowerCommand> getCommands() {
-        return commands;
-    }
+		List<String> delimitedValues = new ArrayList<String>() {
+			{
+				add(borderTemperatureString);
+				add(onString);
+				add(offString);
+			}
+		};
+
+		List<String> currentList = null;
+
+		for (String row : rows) {
+			int index = delimitedValues.indexOf(row);
+			if(index >= 0) {
+				switch (index) {
+					case 0:
+						currentList = borderTemperatures;
+						break;
+					case 1:
+						currentList = onCommands;
+						break;
+					case 2:
+						currentList = offCommands;
+						break;
+					default:
+						currentList = null;
+				}
+			} else {
+				if(currentList != null) {
+					currentList.add(row);
+				}
+			}
+		}
+
+		powerCommandsFactory = new DefaultPowerCommandsFactory(PowerState.OFF);
+
+		if(borderTemperatures.size() != 1) {
+			return powerCommandsFactory;
+		} else {
+			try {
+				mBorderCoolingTemperature = Integer.parseInt(borderTemperatures.get(0));
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+				return powerCommandsFactory;
+			}
+
+			SparseArray<PowerCommand> onCommandsArr = new SparseArray<>();
+			for (String onCommand : onCommands) {
+				Pair<Integer, PowerCommand> parsedRow = parseCommand(onCommand);
+				if(parsedRow != null) {
+					onCommandsArr.put(parsedRow.first, parsedRow.second);
+				} else {
+					return powerCommandsFactory;
+				}
+			}
+
+			SparseArray<PowerCommand> offCommandsArr = new SparseArray<>();
+			for (String offCommand : offCommands) {
+				Pair<Integer, PowerCommand> parsedRow = parseCommand(offCommand);
+
+				if(parsedRow != null) {
+					offCommandsArr.put(parsedRow.first, parsedRow.second);
+				} else {
+					return powerCommandsFactory;
+				}
+			}
+
+			powerCommandsFactory = new FilePowerCommandsFactory(PowerState.OFF, onCommandsArr, offCommandsArr);
+		}
+		return powerCommandsFactory;
+	}
+
+	public PowerCommandsFactory getPowerCommandsFactory() {
+		return powerCommandsFactory;
+	}
+
+	private static Pair<Integer, PowerCommand> parseCommand(String text) {
+		String splitArr[] = text.split(";");
+
+		int indexOfCommand = -1;
+
+		try {
+			indexOfCommand = Integer.parseInt(splitArr[0]);
+			long delay = Long.parseLong(splitArr[1]);
+			String command = splitArr[2];
+			if(splitArr.length > 3) {
+				List<String> possibleResponses = Arrays.asList(splitArr);
+				possibleResponses = possibleResponses.subList(3, possibleResponses.size());
+				String responses[] = new String[possibleResponses.size()];
+				possibleResponses.toArray(responses);
+				return new Pair<>(indexOfCommand, new PowerCommand(command, delay, responses));
+			} else {
+				return new Pair<>(indexOfCommand, new PowerCommand(command, delay));
+			}
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+			return null;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public int getBorderCoolingTemperature() {
+		return mBorderCoolingTemperature;
+	}
 }

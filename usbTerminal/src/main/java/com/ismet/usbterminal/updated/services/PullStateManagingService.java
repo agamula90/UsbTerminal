@@ -82,15 +82,8 @@ public class PullStateManagingService extends Service {
 		        if (isPull) {
 			        mWaitPullService = Executors.newSingleThreadScheduledExecutor();
 
-                    final List<PowerCommand> commands = eToCApplication.getCommands();
-
-                    final long delay;
-
-                    if(!commands.isEmpty()) {
-                        delay = commands.get(8).getDelay();
-                    } else {
-                        delay = 1000;
-                    }
+			        final PowerCommand command = eToCApplication.getPowerCommandsFactory()
+					        .currentCommand();
 
 			        Log.e(TAG, "Service 1 started");
 
@@ -99,23 +92,17 @@ public class PullStateManagingService extends Service {
 				        @Override
 				        public void run() {
 
-							final String message;
-
-							if(eToCApplication.getCommands().isEmpty()) {
-								message = "/5H0000R";
-							} else {
-								message = commands.get(8).getCommand();
-							}
+							final String message = "/5H0000R";
 
 					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
 							        message);
 					        try {
-						        Thread.sleep((int)(0.3 * delay));
+						        Thread.sleep((int)(0.3 * command.getDelay()));
 					        } catch (InterruptedException e) {
 						        e.printStackTrace();
 					        }
 				        }
-			        }, 0, delay, TimeUnit.MILLISECONDS));
+			        }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
 		        } else {
 			        Log.e(TAG, "Service 1 stopped");
 			        eToCApplication.getWaitPullFuture().cancel(true);
