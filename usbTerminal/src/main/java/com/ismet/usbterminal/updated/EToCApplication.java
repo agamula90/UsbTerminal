@@ -49,6 +49,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 
 	private PowerCommandsFactory powerCommandsFactory;
 
+	private boolean isPreLooping;
+
 	public static EToCApplication getInstance() {
 		return instance;
 	}
@@ -162,6 +164,14 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		}
 	}
 
+	public boolean isPreLooping() {
+		return isPreLooping;
+	}
+
+	public void setPreLooping(boolean isPreLooping) {
+		this.isPreLooping = isPreLooping;
+	}
+
 	public void setScheduledFutures(List<ScheduledFuture> scheduledFutures) {
 		this.mScheduledFutures = scheduledFutures;
 	}
@@ -251,7 +261,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 			}
 		}
 
-		powerCommandsFactory = new DefaultPowerCommandsFactory(PowerState.OFF);
+		powerCommandsFactory = new DefaultPowerCommandsFactory(PowerState.PRE_LOOPING);
 
 		if(borderTemperatures.size() != 1) {
 			return powerCommandsFactory;
@@ -284,7 +294,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 				}
 			}
 
-			powerCommandsFactory = new FilePowerCommandsFactory(PowerState.OFF, onCommandsArr, offCommandsArr);
+			powerCommandsFactory = new FilePowerCommandsFactory(PowerState.PRE_LOOPING, onCommandsArr,
+					offCommandsArr);
 		}
 		return powerCommandsFactory;
 	}

@@ -9,7 +9,7 @@ import static com.ismet.usbterminal.updated.data.PowerState.*;
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({ON_STAGE1, ON_STAGE1_REPEAT, ON_STAGE2, ON_STAGE2A, ON_STAGE2B, ON_STAGE3, ON_STAGE4,
         ON, OFF_INTERRUPTING, OFF_STAGE1, OFF_WAIT_FOR_COOLING, OFF_FINISHING, OFF, ON_RUNNING,
-		OFF_RUNNING})
+		OFF_RUNNING, PRE_LOOPING})
 public @interface PowerState {
     int ON_STAGE1 = 1;
     int ON_STAGE1_REPEAT = 2;
@@ -25,5 +25,6 @@ public @interface PowerState {
     int OFF_WAIT_FOR_COOLING = 9;
     int OFF_FINISHING = 10;
 	int OFF_RUNNING = 15;
+	int PRE_LOOPING = 16;
     int OFF = 11;
 }

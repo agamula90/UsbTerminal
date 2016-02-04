@@ -338,7 +338,9 @@ public class EToCMainHandler extends Handler {
 					Intent i = PullStateManagingService.intentForService(activity, false);
 					i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 					activity.startService(i);
-					activity.getPowerCommandsFactory().getCoolingDialog().dismiss();
+					if(activity.getPowerCommandsFactory().getCoolingDialog() != null) {
+						activity.getPowerCommandsFactory().getCoolingDialog().dismiss();
+					}
 					break;
 				case MESSAGE_SIMULATE_RESPONSE:
 					String sVal = "";
@@ -364,6 +366,12 @@ public class EToCMainHandler extends Handler {
 			final int powerState = powerCommandsFactory.currentPowerState();
 			curPowerState = powerState;
 			switch (powerState) {
+				case PowerState.PRE_LOOPING:
+					EToCApplication.getInstance().setPreLooping(false);
+					sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+					powerCommandsFactory.moveStateToNext();
+					correctResponse = true;
+					break;
 				case PowerState.ON_STAGE1:
 				case PowerState.ON_STAGE1_REPEAT:
 				case PowerState.ON_STAGE2A:

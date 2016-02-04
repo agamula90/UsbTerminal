@@ -98,6 +98,10 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 					isFinalState = false;
 				}
 				break;
+			case PowerState.PRE_LOOPING:
+				mPowerState = PowerState.OFF;
+				isFinalState = false;
+				break;
 			default:
 				isFinalState = false;
 		}
@@ -106,6 +110,9 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 
 	@Override
 	public int nextPowerState() {
+		if(currentPowerState() == PowerState.PRE_LOOPING) {
+			return PowerState.OFF;
+		}
 		@PowerState int curState = currentPowerState();
 		moveStateToNext();
 		@PowerState int newState = currentPowerState();

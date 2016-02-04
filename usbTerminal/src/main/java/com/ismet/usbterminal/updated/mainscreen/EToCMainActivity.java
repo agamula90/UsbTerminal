@@ -1704,6 +1704,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
 		SharedPreferences preferences = getPrefs();
 
+		if(mPowerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
+			EToCApplication.getInstance().setPreLooping(true);
+			Intent i = PullStateManagingService.intentForService(this, true);
+			i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
+			startService(i);
+
+			Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+			message.obj = "";
+			mHandler.sendMessageDelayed(message, 10800);
+		}
+
 		if (!preferences.contains(PrefConstants.DELAY)) {
 			SharedPreferences.Editor editor = getPrefs().edit();
 			editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT);

@@ -90,6 +90,10 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 				isFinalState = false;
 				mPowerState = PowerState.ON_STAGE2A;
 				break;
+			case PowerState.PRE_LOOPING:
+				mPowerState = PowerState.OFF;
+				isFinalState = false;
+				break;
 			default:
 				isFinalState = false;
 		}
@@ -98,6 +102,10 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 
 	@Override
 	public int nextPowerState() {
+		if(currentPowerState() == PowerState.PRE_LOOPING) {
+			return PowerState.OFF;
+		}
+
 		@PowerState int curState = currentPowerState();
 		moveStateToNext();
 		@PowerState int newState = currentPowerState();

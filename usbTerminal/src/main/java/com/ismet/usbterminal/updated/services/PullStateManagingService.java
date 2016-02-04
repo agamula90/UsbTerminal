@@ -86,7 +86,13 @@ public class PullStateManagingService extends Service {
 			        PowerCommandsFactory commandsFactory = eToCApplication
 					        .getPowerCommandsFactory();
 
-			        final PowerCommand command = commandsFactory.currentCommand();
+			        final PowerCommand command;
+
+			        if(eToCApplication.isPreLooping()) {
+				        command = new PowerCommand("/5J1R", 1000);
+			        } else {
+				        command = commandsFactory.currentCommand();
+			        }
 
 			        Log.e(TAG, "Service 1 started");
 
@@ -94,8 +100,13 @@ public class PullStateManagingService extends Service {
 
 				        @Override
 				        public void run() {
+							final String message;
 
-							final String message = "/5H0000R";
+					        if(eToCApplication.isPreLooping()) {
+						        message = command.getCommand();
+					        } else {
+						        message = "/5H0000R";
+					        }
 
 					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
 							        message);
@@ -136,15 +147,6 @@ public class PullStateManagingService extends Service {
 					        eToCApplication.initPullDataService(mPullDataService);
 				        }
 			        }
-
-			        mPullDataService.schedule(new Runnable() {
-
-				        @Override
-				        public void run() {
-					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
-							        CO2_REQUEST);
-				        }
-			        }, 1, TimeUnit.MINUTES);
 
 			        List<ScheduledFuture> scheduledFutures = new ArrayList<>(1);
 
