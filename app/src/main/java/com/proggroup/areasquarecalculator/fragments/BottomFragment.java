@@ -36,6 +36,7 @@ import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
+import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.data.ReportData;
@@ -54,7 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BottomFragment extends Fragment {
+public class BottomFragment extends Fragment implements OnProgressDismissable{
 
     /**
      * Request code for start load ppm curve file dialog.
@@ -109,6 +110,8 @@ public class BottomFragment extends Fragment {
     private LoadGraphDataTask.OnGraphDataLoadedCallback onGraphDataLoadedCallback;
 
     private View.OnClickListener mRealCalculationsCalculateAutoListener;
+
+	private CreateCalibrationCurveForAutoTask createAutoTask;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -495,15 +498,21 @@ public class BottomFragment extends Fragment {
                 Activity activity = getActivity();
                 FrameLayout frameLayout = null;
 
+	            LibraryContentAttachable libraryContentAttachable = null;
+
                 if (activity instanceof LibraryContentAttachable) {
+	                libraryContentAttachable = (LibraryContentAttachable) activity;
                     frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
                 }
 
-                CreateCalibrationCurveForAutoTask task = new CreateCalibrationCurveForAutoTask(new
+                createAutoTask = new CreateCalibrationCurveForAutoTask(new
                         LoadGraphDataTask(activity, frameLayout, null, onGraphDataLoadedCallback),
                         getActivity(), true);
+	            if(libraryContentAttachable != null) {
+		            createAutoTask.setOnProgressDismissable(libraryContentAttachable);
+	            }
                 //task.setIgnoreExistingCurves(true);
-                task.execute(calFolder);
+	            createAutoTask.execute(calFolder);
             }
         });
 
@@ -1015,4 +1024,14 @@ public class BottomFragment extends Fragment {
             }
         }
     }
+
+	@Override
+	public void onProgressDismissed(View progress) {
+
+	}
+
+	@Override
+	public void dismissProgress() {
+		createAutoTask.dismiss();
+	}
 }

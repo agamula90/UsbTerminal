@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.proggroup.areasquarecalculator.R;
+import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
 import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
@@ -37,16 +38,30 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	private SparseArray<List<File>> mCurveFiles;
 
 	private View progressLayout;
+	private View progressBar;
 
 	private boolean mIsIgnoreExistingCurves;
 
 	private CalibrationCurveCreatedListener mCalibrationCurveCreatedListener;
+	private OnProgressDismissable onProgressDismissable;
 
 	public CreateCalibrationCurveForAutoTask(UrlChangeable task, Context context, boolean
 			is0Connect) {
 		this.task = task;
 		this.context = context;
 		this.is0Connect = is0Connect;
+	}
+
+	public void setOnProgressDismissable(OnProgressDismissable onProgressDismissable) {
+		this.onProgressDismissable = onProgressDismissable;
+	}
+
+	public void dismiss() {
+		if(onProgressDismissable != null && progressBar != null) {
+			onProgressDismissable.onProgressDismissed(progressBar);
+			detachProgress(progressBar);
+			progressBar = null;
+		}
 	}
 
 	public static void detachProgress(View progressBar) {
@@ -117,7 +132,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 
 	@Override
 	protected void onProgressUpdate(Integer... values) {
-		if (progressLayout != null) {
+		if (progressLayout != null && progressBar != null) {
 			((ProgressBar) progressLayout.findViewById(android.R.id.progress)).setProgress
 					(values[0]);
 		}
@@ -312,7 +327,9 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 		if (file != null) {
 
 			if (mCalibrationCurveCreatedListener != null) {
-				detachProgress(progressLayout);
+				if(progressBar != null) {
+					detachProgress(progressLayout);
+				}
 				mCalibrationCurveCreatedListener.onCalibrationCurveCreated(file);
 			} else {
 				if (progressLayout != null) {

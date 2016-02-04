@@ -38,7 +38,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -66,7 +65,6 @@ import com.ismet.usbterminal.updated.TedSaveAsActivity;
 import com.ismet.usbterminal.updated.TedSettingsActivity;
 import com.ismet.usbterminal.updated.UsbServiceWritable;
 import com.ismet.usbterminal.updated.data.AppData;
-import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.data.PullState;
@@ -136,7 +134,7 @@ import static fr.xgouchet.texteditor.common.Constants.REQUEST_SAVE_AS;
 import static fr.xgouchet.texteditor.common.Constants.TAG;
 
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher,
-		 CommandsDeliverer {
+		CommandsDeliverer {
 
 	private static final String IS_SERVICE_RUNNING = "is_service_reunning";
 
@@ -244,9 +242,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Button mPower;
 
-    private TextView mTemperature, mCo2;
+	private TextView mTemperature, mCo2;
 
-    private View mTemperatureBackground, mCo2Background;
+	private View mTemperatureBackground, mCo2Background;
 
 	private LinearLayout mExportLayout, mMarginLayout;
 
@@ -258,11 +256,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private Date mReportDate;
 
-    private Dialog mAlertDialog;
+	private Dialog mAlertDialog;
 
 	private boolean mPowerPressed;
 
-    private PowerCommandsFactory mPowerCommandsFactory;
+	private PowerCommandsFactory mPowerCommandsFactory;
 
 	public static void sendBroadCastWithData(Context context, String data) {
 		Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
@@ -502,13 +500,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		mTemperature = (TextView) findViewById(R.id.temperature);
 
-        mTemperatureBackground = findViewById(R.id.temperature_background);
+		mTemperatureBackground = findViewById(R.id.temperature_background);
 
 		changeBackground(mTemperatureBackground, false);
 
 		mCo2 = (TextView) findViewById(R.id.co2);
 
-        mCo2Background = findViewById(R.id.co2_background);
+		mCo2Background = findViewById(R.id.co2_background);
 
 		changeBackground(mCo2Background, false);
 
@@ -619,8 +617,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 						if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
 								strOff1.equals("")) {
-							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
-									" values", Toast.LENGTH_LONG);
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all"
+									+ " values", Toast.LENGTH_LONG);
 							ToastUtils.wrap(toast);
 
 							toast.show();
@@ -720,7 +718,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			public void onPostPullStarted() {
 				String tag = mButtonOn2.getTag().toString();
 
-				if(tag.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+				if (tag.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
 					mButtonOn2.setAlpha(1f);
 					mButtonOn2.setBackgroundResource(R.drawable.button_drawable);
 				} else {
@@ -780,11 +778,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 						if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
 								strOff1.equals("")) {
-                            Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
-                                    " values", Toast
-									.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all"
+									+ " values", Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
 							return;
 						}
 
@@ -930,11 +927,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 						if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
 								strOff1.equals("")) {
-                            Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
-                                    " values", Toast
-									.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all"
+									+ " values", Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
 							return;
 						}
 
@@ -1027,11 +1023,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			@Override
 			public void onClick(View v) {
 				if (mIsTimerRunning) {
-                    Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please" +
-                            " wait", Toast
-							.LENGTH_SHORT);
-                    ToastUtils.wrap(toast);
-                    toast.show();
+					Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please"
+							+ " wait", Toast.LENGTH_SHORT);
+					ToastUtils.wrap(toast);
+					toast.show();
 					return;
 				}
 
@@ -1155,22 +1150,21 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			@Override
 			public void onClick(final View v) {
 			    /*if (mAdvancedEditText.getText().toString().isEmpty()) {
-                    Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
+	                Toast.makeText(EToCMainActivity.this, "Please enter command", Toast
                             .LENGTH_SHORT).show();
                     return;
                 }*/
-                if(mPowerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    return;
-                }
+				if (mPowerCommandsFactory.currentPowerState() != PowerState.ON) {
+					return;
+				}
 
-                v.setEnabled(false);
+				v.setEnabled(false);
 
 				if (mIsTimerRunning) {
-                    Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please" +
-                            " wait", Toast
-							.LENGTH_SHORT);
-                    ToastUtils.wrap(toast);
-                    toast.show();
+					Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please"
+							+ " wait", Toast.LENGTH_SHORT);
+					ToastUtils.wrap(toast);
+					toast.show();
 					return;
 				}
 
@@ -1202,12 +1196,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					}
 
 					if ((!isChart1Clear) && (!isChart2Clear) && (!isChart3Clear)) {
-                        Toast toast = Toast.makeText(EToCMainActivity.this, "No chart available. " +
-                                "Please clear " +
+						Toast toast = Toast.makeText(EToCMainActivity.this, "No chart available." +
+								" " +
+								"Please clear " +
 								"one of " + "the charts", Toast.LENGTH_SHORT);
 
-                        ToastUtils.wrap(toast);
-                        toast.show();
+						ToastUtils.wrap(toast);
+						toast.show();
 						return;
 					}
 				}
@@ -1300,7 +1295,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-                        v.setEnabled(true);
+						v.setEnabled(true);
 
 						InputMethodManager inputManager = (InputMethodManager) getSystemService
 								(Context.INPUT_METHOD_SERVICE);
@@ -1312,23 +1307,23 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						String strDuration = editDuration.getText().toString();
 
 						if (strDelay.equals("") || strDuration.equals("")) {
-                            Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all" +
-                                    " values", Toast
-									.LENGTH_LONG);
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter all"
+									+ " values", Toast.LENGTH_LONG);
 
-                            ToastUtils.wrap(toast);
-                            toast.show();
+							ToastUtils.wrap(toast);
+							toast.show();
 							return;
 						}
 
 						if (chkKnownPpm.isChecked()) {
 							String strkPPM = editKnownPpm.getText().toString();
 							if (strkPPM.equals("")) {
-                                Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
-                                        " ppm " +
+								Toast toast = Toast.makeText(EToCMainActivity.this, "Please " +
+										"enter" +
+										" ppm " +
 										"values", Toast.LENGTH_LONG);
-                                ToastUtils.wrap(toast);
-                                toast.show();
+								ToastUtils.wrap(toast);
+								toast.show();
 								return;
 							} else {
 								int kppm = Integer.parseInt(strkPPM);
@@ -1347,11 +1342,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						{
 							String str_uc = editUserComment.getText().toString();
 							if (str_uc.equals("")) {
-                                Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
-                                        " comments",
-										Toast.LENGTH_LONG);
-                                ToastUtils.wrap(toast);
-                                toast.show();
+								Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter"
+										+ " comments", Toast.LENGTH_LONG);
+								ToastUtils.wrap(toast);
+								toast.show();
 								return;
 							} else {
 								Editor edit = mPrefs.edit();
@@ -1362,11 +1356,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 						String strVolume = editVolume.getText().toString();
 						if (strVolume.equals("")) {
-                            Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter " +
-                                    "volume values",
-									Toast.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
+							Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter " +
+									"volume values", Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
 							return;
 						} else {
 							int volume = Integer.parseInt(strVolume);
@@ -1386,11 +1379,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						int duration = Integer.parseInt(strDuration);
 
 						if ((delay == 0) || (duration == 0)) {
-                            Toast toast = Toast.makeText(EToCMainActivity.this, "zero is not " +
-                                    "allowed", Toast
-									.LENGTH_LONG);
-                            ToastUtils.wrap(toast);
-                            toast.show();
+							Toast toast = Toast.makeText(EToCMainActivity.this, "zero is not " +
+									"allowed", Toast.LENGTH_LONG);
+							ToastUtils.wrap(toast);
+							toast.show();
 							return;
 						} else {
 
@@ -1442,11 +1434,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 							if (mAdvancedEditText.getText().toString().equals("") && checkedId ==
 									-1) {
-                                Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter" +
-                                        " command",
-										Toast.LENGTH_SHORT);
-                                ToastUtils.wrap(toast);
-                                toast.show();
+								Toast toast = Toast.makeText(EToCMainActivity.this, "Please enter"
+										+ " command", Toast.LENGTH_SHORT);
+								ToastUtils.wrap(toast);
+								toast.show();
 								return;
 							}
 
@@ -1560,18 +1551,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 									}
 								}, 300);
 							} else if (success) {
-                                Toast toast = Toast.makeText(EToCMainActivity.this, "File not " +
-                                        "found", Toast
-										.LENGTH_LONG);
-                                ToastUtils.wrap(toast);
-                                toast.show();
+								Toast toast = Toast.makeText(EToCMainActivity.this, "File not " +
+										"found", Toast.LENGTH_LONG);
+								ToastUtils.wrap(toast);
+								toast.show();
 								return;
 							} else {
-                                Toast toast = Toast.makeText(EToCMainActivity.this, "Unexpected " +
-                                        "error", Toast
-										.LENGTH_LONG);
-                                ToastUtils.wrap(toast);
-                                toast.show();
+								Toast toast = Toast.makeText(EToCMainActivity.this, "Unexpected "
+										+ "error", Toast.LENGTH_LONG);
+								ToastUtils.wrap(toast);
+								toast.show();
 								return;
 							}
 
@@ -1657,24 +1646,23 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
 								.getCurrentFocus().getWindowToken(), 0);
 						dialog.cancel();
-                        v.setEnabled(true);
+						v.setEnabled(true);
 					}
 				};
 
 				AlertDialog alertDialog = AlertDialogTwoButtonsCreator.createTwoButtonsAlert
-                        (EToCMainActivity
-                        .this, R
-                        .layout
-						.layout_dialog_measure, "Start Measure", okListener, cancelListener,
-						initLayoutListener).create();
-                alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        v.setEnabled(true);
-                    }
-                });
+						(EToCMainActivity
+								.this, R.layout.layout_dialog_measure, "Start Measure",
+								okListener, cancelListener, initLayoutListener).create();
+				alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
 
-                alertDialog.show();
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						v.setEnabled(true);
+					}
+				});
+
+				alertDialog.show();
 			}
 		});
 
@@ -1706,7 +1694,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		int duration_v = mPrefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT);
 		SharedPreferences preferences = getPrefs();
 
-		if(mPowerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
+		if (mPowerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
 			EToCApplication.getInstance().setPreLooping(true);
 			Intent i = PullStateManagingService.intentForService(this, true);
 			i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
@@ -1753,36 +1741,37 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	public void initPowerAccordToItState() {
 		final String powerText;
 		final String powerTag;
-        final int drawableResource;
+		final int drawableResource;
 
 		switch (mPowerCommandsFactory.currentPowerState()) {
 			case PowerState.OFF:
+			case PowerState.PRE_LOOPING:
 				powerText = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
 						.POWER_OFF_NAME_DEFAULT);
 				powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase();
-                drawableResource = R.drawable.power_off_drawable;
+				drawableResource = R.drawable.power_off_drawable;
 				break;
 			case PowerState.ON:
 				powerText = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
 						.POWER_ON_NAME_DEFAULT);
 				powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase();
-                drawableResource = R.drawable.power_on_drawable;
+				drawableResource = R.drawable.power_on_drawable;
 				break;
 			default:
 				powerText = powerTag = null;
-                drawableResource = 0;
+				drawableResource = 0;
 		}
 
 		if (powerTag != null && powerText != null) {
 			mPower.setText(powerText);
 			mPower.setTag(powerTag);
-            mPower.setBackgroundResource(drawableResource);
+			mPower.setBackgroundResource(drawableResource);
 		}
 	}
 
 	public void reInitPowerPressedValue() {
 		mPowerPressed = false;
-        mPower.setAlpha(1f);
+		mPower.setAlpha(1f);
 		mPower.setEnabled(true);
 	}
 
@@ -2007,7 +1996,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	void powerOn() {
 		if (mPowerCommandsFactory.currentPowerState() == PowerState.OFF) {
 			mPowerPressed = true;
-            mPower.setAlpha(0.6f);
+			mPower.setAlpha(0.6f);
 			mPowerCommandsFactory.moveStateToNext();
 			mPowerCommandsFactory.sendRequest(this, mHandler, this);
 		} else {
@@ -2045,7 +2034,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		String temperatureData = "@5,0(0,0,0,0),750,25,25,25,25";
 
 		Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
-        mHandler.sendMessageDelayed(message, 800);
+		mHandler.sendMessageDelayed(message, 800);
 
 		message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
 		message.obj = "@5J001 ";
@@ -2075,27 +2064,29 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	void powerOff() {
 		if (mPowerCommandsFactory.currentPowerState() == PowerState.ON) {
 			mPowerPressed = true;
-            mPower.setAlpha(0.6f);
+			mPower.setAlpha(0.6f);
 
-            if(!mButtonOn2.getTag().toString().equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase
-                     ())) {
-                mButtonOn2.performClick();
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-	                    mPowerCommandsFactory.moveStateToNext();
-	                    mPowerCommandsFactory.sendRequest(EToCMainActivity.this, mHandler,
-			                    EToCMainActivity.this);
-                    }
-                }, 1200);
-            } else {
-	            mPowerCommandsFactory.moveStateToNext();
-	            mPowerCommandsFactory.sendRequest(this, mHandler, this);
-            }
+			if (!mButtonOn2.getTag().toString().equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase()
+			)) {
+				mButtonOn2.performClick();
+				mHandler.postDelayed(new Runnable() {
+
+					@Override
+					public void run() {
+						mPowerCommandsFactory.moveStateToNext();
+						mPowerCommandsFactory.sendRequest(EToCMainActivity.this, mHandler,
+								EToCMainActivity.this);
+					}
+				}, 1200);
+			} else {
+				mPowerCommandsFactory.moveStateToNext();
+				mPowerCommandsFactory.sendRequest(this, mHandler, this);
+			}
 		} else {
 			throw new IllegalStateException();
 		}
 	}
+
 	@Override
 	public int getFragmentContainerId() {
 		return R.id.fragment_container;
@@ -2193,11 +2184,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				mScrollView.smoothScrollTo(0, 0);
 				//}
 			} else {
-                Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found",
-                        Toast.LENGTH_LONG);
+				Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found", Toast
+						.LENGTH_LONG);
 
-                ToastUtils.wrap(toast);
-                toast.show();
+				ToastUtils.wrap(toast);
+				toast.show();
 			}
 		}
 	}
@@ -2221,11 +2212,11 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				// Send data
 				mUsbServiceWritable.writeToUsb("\r".getBytes());
 			} else {
-                Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found",
-                        Toast.LENGTH_LONG);
+				Toast toast = Toast.makeText(EToCMainActivity.this, "serial port not found", Toast
+						.LENGTH_LONG);
 
-                ToastUtils.wrap(toast);
-                toast.show();
+				ToastUtils.wrap(toast);
+				toast.show();
 			}
 
 			// mTxtOutput.append("Tx: " + data + "\n");
@@ -2377,10 +2368,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				} else if (extras.getString("path").endsWith(".csv")) {
 					openchart1(extras.getString("path"));
 				} else {
-                    Toast toast = Toast.makeText(EToCMainActivity.this, "Invalid File", Toast
-                            .LENGTH_SHORT);
-                    ToastUtils.wrap(toast);
-							toast.show();
+					Toast toast = Toast.makeText(EToCMainActivity.this, "Invalid File", Toast
+							.LENGTH_SHORT);
+					ToastUtils.wrap(toast);
+					toast.show();
 				}
 
 				break;
@@ -3001,32 +2992,29 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	 */
 	private void openChart() {
 		if (mIsTimerRunning) {
-            Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait",
-                    Toast
-					.LENGTH_SHORT);
-            ToastUtils.wrap(toast);
-            toast.show();
+			Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please wait",
+					Toast.LENGTH_SHORT);
+			ToastUtils.wrap(toast);
+			toast.show();
 			return;
 		}
 
 		File dir = new File(Environment.getExternalStorageDirectory() + "/AEToCLogs_MES");
 
 		if (!dir.exists()) {
-            Toast toast = Toast.makeText(EToCMainActivity.this, "Logs diretory is not available",
-                    Toast
-					.LENGTH_SHORT);
-            ToastUtils.wrap(toast);
-            toast.show();
+			Toast toast = Toast.makeText(EToCMainActivity.this, "Logs diretory is not available",
+					Toast.LENGTH_SHORT);
+			ToastUtils.wrap(toast);
+			toast.show();
 			return;
 		}
 
 		String[] filenameArry = dir.list();
 		if (filenameArry == null) {
-            Toast toast = Toast.makeText(EToCMainActivity.this, "Logs not available. Logs " +
-                    "directory is empty",
-					Toast.LENGTH_SHORT);
-            ToastUtils.wrap(toast);
-            toast.show();
+			Toast toast = Toast.makeText(EToCMainActivity.this, "Logs not available. Logs " +
+					"directory is empty", Toast.LENGTH_SHORT);
+			ToastUtils.wrap(toast);
+			toast.show();
 			return;
 		}
 
@@ -3060,11 +3048,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				}
 
 				if (!isLogsExist) {
-                    Toast toast = Toast.makeText(EToCMainActivity.this, "Required Log files not " +
-                            "available",
-							Toast.LENGTH_SHORT);
-                    ToastUtils.wrap(toast);
-                    toast.show();
+					Toast toast = Toast.makeText(EToCMainActivity.this, "Required Log files not "
+							+ "available", Toast.LENGTH_SHORT);
+					ToastUtils.wrap(toast);
+					toast.show();
 					dialog.cancel();
 					return;
 				}
@@ -3163,9 +3150,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			savePreferencesToLocalData();
 		} catch (Exception e) {
 			e.printStackTrace();
-            Toast toast = Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
-            ToastUtils.wrap(toast);
-            toast.show();
+			Toast toast = Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
+			ToastUtils.wrap(toast);
+			toast.show();
 		}
 
 		super.finish();
@@ -3418,11 +3405,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private void changeBackground(View button, boolean isPressed) {
 		if (isPressed) {
-			button.setBackgroundResource(R.drawable
-						.temperature_button_drawable_pressed);
+			button.setBackgroundResource(R.drawable.temperature_button_drawable_pressed);
 		} else {
-				button.setBackgroundResource(R.drawable
-						.temperature_button_drawable_unpressed);
+			button.setBackgroundResource(R.drawable.temperature_button_drawable_unpressed);
 		}
 	}
 
@@ -3560,9 +3545,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		@Override
 		public void onClick(View v) {
-			if(mPowerCommandsFactory.currentPowerState() != PowerState.ON) {
-                return;
-            }
+			if (mPowerCommandsFactory.currentPowerState() != PowerState.ON) {
+				return;
+			}
 			mAutoPullResolverCallback.onPrePullStopped();
 
 			long nowTime = SystemClock.uptimeMillis();
@@ -3581,7 +3566,7 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 					@Override
 					public void run() {
-						if(mPowerCommandsFactory.currentPowerState() == PowerState.ON) {
+						if (mPowerCommandsFactory.currentPowerState() == PowerState.ON) {
 							startService(PullStateManagingService.intentForService(EToCMainActivity
 									.this, true));
 						}

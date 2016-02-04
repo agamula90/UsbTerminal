@@ -14,6 +14,7 @@ import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainHandler;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 
 import static fr.xgouchet.texteditor.common.Constants.TAG;
 
@@ -50,6 +51,10 @@ public abstract class PowerCommandsFactory {
 				Intent i = PullStateManagingService.intentForService(context, true);
 				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 				context.startService(i);
+
+				if(context instanceof LibraryContentAttachable) {
+					((LibraryContentAttachable) context).dismissProgress();
+				}
 
 				mAlertDialog = new Dialog(context);
 				mAlertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);

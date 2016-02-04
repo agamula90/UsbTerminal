@@ -18,6 +18,9 @@ import android.widget.TextView;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
+import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
+
+import java.util.List;
 
 public abstract class BaseAttachableActivity extends AppCompatActivity implements
 		LibraryContentAttachable {
@@ -76,7 +79,29 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
         }
     }
 
-    public abstract int getLayoutId();
+	@Override
+	public final void dismissProgress() {
+		FragmentManager manager = getSupportFragmentManager();
+		List<Fragment> fragmentList = manager.getFragments();
+		for (Fragment fragment : fragmentList) {
+			if(fragment.isAdded() && fragment instanceof OnProgressDismissable) {
+				((OnProgressDismissable) fragment).dismissProgress();
+			}
+		}
+	}
+
+	@Override
+	public void onProgressDismissed(View progress) {
+		FragmentManager manager = getSupportFragmentManager();
+		List<Fragment> fragmentList = manager.getFragments();
+		for (Fragment fragment : fragmentList) {
+			if(fragment.isAdded() && fragment instanceof OnProgressDismissable) {
+				((OnProgressDismissable) fragment).onProgressDismissed(progress);
+			}
+		}
+	}
+
+	public abstract int getLayoutId();
 
 	public abstract Fragment getFirstFragment();
 
