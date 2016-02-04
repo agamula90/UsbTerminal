@@ -611,7 +611,7 @@ public class BottomFragment extends Fragment {
 		}
 
 		return "Dilute Sample 1 : " +
-				(intRatio > 0 ? ("" + intRatio) : (ratio + "")) +
+				(intRatio > 0 ? ("" + intRatio) : FloatFormatter.formatWith2(ratio)) +
 				" or use different cal curve";
 	}
 
