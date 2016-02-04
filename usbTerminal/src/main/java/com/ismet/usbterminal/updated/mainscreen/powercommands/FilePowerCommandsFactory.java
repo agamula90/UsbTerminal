@@ -57,18 +57,23 @@ public class FilePowerCommandsFactory extends PowerCommandsFactory {
 			case PowerState.OFF_INTERRUPTING:
 			case PowerState.OFF_WAIT_FOR_COOLING:
 				mIndexInRunning++;
+
+				if (mIndexInRunning == mOffCommands.size()) {
+					isFinalState = true;
+					mIndexInRunning = 0;
+					mPowerState = PowerState.OFF;
+					return isFinalState;
+				} else {
+					isFinalState = false;
+				}
+
 				powerCommand = currentCommand();
 				if (powerCommand.getCommand().equals(START_COOLING)) {
 					mPowerState = PowerState.OFF_WAIT_FOR_COOLING;
 				} else if (powerCommand.getCommand().equals(INTERRUPT_SOFTWARE_ACTIONS)) {
 					mPowerState = PowerState.OFF_INTERRUPTING;
-				}
-				if (mIndexInRunning == mOffCommands.size()) {
-					isFinalState = true;
-					mIndexInRunning = 0;
-					mPowerState = PowerState.OFF;
 				} else {
-					isFinalState = false;
+					mPowerState = PowerState.OFF_RUNNING;
 				}
 				break;
 			case PowerState.OFF:

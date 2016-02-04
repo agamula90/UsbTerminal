@@ -12,6 +12,7 @@ import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PowerCommand;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.utils.Utils;
 
 import java.util.ArrayList;
@@ -82,8 +83,10 @@ public class PullStateManagingService extends Service {
 		        if (isPull) {
 			        mWaitPullService = Executors.newSingleThreadScheduledExecutor();
 
-			        final PowerCommand command = eToCApplication.getPowerCommandsFactory()
-					        .currentCommand();
+			        PowerCommandsFactory commandsFactory = eToCApplication
+					        .getPowerCommandsFactory();
+
+			        final PowerCommand command = commandsFactory.currentCommand();
 
 			        Log.e(TAG, "Service 1 started");
 
@@ -109,6 +112,7 @@ public class PullStateManagingService extends Service {
 
 			        eToCApplication.initWaitPullService(null, null);
 		        }
+		        intent.setAction(null);
 	        } else {
 		        if(isPull) {
 			        Log.e(TAG, "Service 0 started");
