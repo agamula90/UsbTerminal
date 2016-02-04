@@ -3,7 +3,6 @@ package com.ismet.usbterminal.updated.mainscreen;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.updated.EToCApplication;
@@ -264,7 +263,7 @@ public class EToCMainHandler extends Handler {
 						}
 					} else {
 					    /*if(pullState != PullState.NONE) {
-			                application.unScheduleTasks();
+				            application.unScheduleTasks();
                         }*/
 						data = new String(usbReadBytes);
 						data = data.replace("\r", "");
@@ -288,6 +287,15 @@ public class EToCMainHandler extends Handler {
 
 					if (activity.isPowerPressed()) {
 						handleResponse(weakActivity, responseForChecking);
+					} else {
+						PowerCommandsFactory powerCommandsFactory = activity
+								.getPowerCommandsFactory();
+						final int powerState = powerCommandsFactory.currentPowerState();
+						if (powerState == PowerState.PRE_LOOPING) {
+							EToCApplication.getInstance().setPreLooping(false);
+							sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							powerCommandsFactory.moveStateToNext();
+						}
 					}
 					//}
 
@@ -338,7 +346,7 @@ public class EToCMainHandler extends Handler {
 					Intent i = PullStateManagingService.intentForService(activity, false);
 					i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 					activity.startService(i);
-					if(activity.getPowerCommandsFactory().getCoolingDialog() != null) {
+					if (activity.getPowerCommandsFactory().getCoolingDialog() != null) {
 						activity.getPowerCommandsFactory().getCoolingDialog().dismiss();
 					}
 					break;
@@ -366,12 +374,6 @@ public class EToCMainHandler extends Handler {
 			final int powerState = powerCommandsFactory.currentPowerState();
 			curPowerState = powerState;
 			switch (powerState) {
-				case PowerState.PRE_LOOPING:
-					EToCApplication.getInstance().setPreLooping(false);
-					sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
-					powerCommandsFactory.moveStateToNext();
-					correctResponse = true;
-					break;
 				case PowerState.ON_STAGE1:
 				case PowerState.ON_STAGE1_REPEAT:
 				case PowerState.ON_STAGE2A:
@@ -420,8 +422,8 @@ public class EToCMainHandler extends Handler {
 									.length());
 
 							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-											response + "\"" + ".Expected - " + responseBuilder
-									.toString(), Toast.LENGTH_LONG);
+									response + "\"" + ".Expected - " + responseBuilder.toString(),
+									Toast.LENGTH_LONG);
 							ToastUtils.wrap(toast);
 							toast.show();
 							return;
@@ -585,8 +587,8 @@ public class EToCMainHandler extends Handler {
 
 
 							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
-											response + "\"" + ".Expected - " + responseBuilder
-									.toString(), Toast.LENGTH_LONG);
+									response + "\"" + ".Expected - " + responseBuilder.toString(),
+									Toast.LENGTH_LONG);
 							ToastUtils.wrap(toast);
 							toast.show();
 							return;
@@ -598,7 +600,7 @@ public class EToCMainHandler extends Handler {
 
 		if (!correctResponse && activityWeakReference.get() != null) {
 			Toast.makeText(activityWeakReference.get(), "Wrong response parsing. Message:[" +
-							response + "]. PowerState - " + curPowerState, Toast.LENGTH_LONG).show();
+					response + "]. PowerState - " + curPowerState, Toast.LENGTH_LONG).show();
 		}
 	}
 }

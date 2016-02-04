@@ -472,10 +472,8 @@ public class BottomFragment extends Fragment {
                     toast.show();
                 } else {
 	                if(isExpanded) {
-                        Toast toast =  Toast.makeText(getActivity(), "Dilute Sample " +
-                                avgSquarePoints.get
-				                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
-				                "different cal curve", Toast.LENGTH_LONG);
+                        Toast toast =  Toast.makeText(getActivity(), createRatioString(avgSquarePoints.get
+		                        (avgSquarePoints.size() - 1), value), Toast.LENGTH_LONG);
                         ToastUtils.wrap(toast);
                         toast.show();
 	                } else {
@@ -554,10 +552,8 @@ public class BottomFragment extends Fragment {
                     toast.show();
                 } else {
 	                if(isExpanded) {
-                        Toast toast = Toast.makeText(getActivity(), "Dilute Sample " +
-                                avgSquarePoints.get
-						                (avgSquarePoints.size() - 1) + " : " + value + " or use " +
-				                "different cal curve", Toast.LENGTH_LONG);
+                        Toast toast = Toast.makeText(getActivity(), createRatioString(avgSquarePoints.get
+		                        (avgSquarePoints.size() - 1), value), Toast.LENGTH_LONG);
                         ToastUtils.wrap(toast);
                         toast.show();
 	                } else {
@@ -596,6 +592,28 @@ public class BottomFragment extends Fragment {
 
         fillAvgPointsLayout();
     }
+
+	private String createRatioString(float firstValue, float lastValue) {
+		float ratio = lastValue / firstValue;
+
+		int intRatio = 0;
+
+		if(ratio >= 2) {
+			intRatio = (int) ratio;
+		} else {
+			if(ratio <= 1.25f) {
+				ratio = 1.25f;
+			} else if(ratio <= 1.5f) {
+				ratio = 1.5f;
+			} else {
+				ratio = 1.75f;
+			}
+		}
+
+		return "Dilute Sample 1 : " +
+				(intRatio > 0 ? ("" + intRatio) : (ratio + "")) +
+				" or use different cal curve";
+	}
 
 	private float calculatePpmExpanded(List<Float> ppmPoints, List<Float> avgSquarePoints, float
 			avgValueY) {
