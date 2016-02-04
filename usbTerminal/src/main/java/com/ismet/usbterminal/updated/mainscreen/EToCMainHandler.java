@@ -355,7 +355,19 @@ public class EToCMainHandler extends Handler {
 					if (msg.obj != null) {
 						sVal = msg.obj.toString();
 					}
-					handleResponse(weakActivity, sVal);
+
+					if (activity.isPowerPressed()) {
+						handleResponse(weakActivity, sVal);
+					} else {
+						PowerCommandsFactory powerCommandsFactory = activity
+								.getPowerCommandsFactory();
+						final int powerState = powerCommandsFactory.currentPowerState();
+						if (powerState == PowerState.PRE_LOOPING) {
+							EToCApplication.getInstance().setPreLooping(false);
+							sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							powerCommandsFactory.moveStateToNext();
+						}
+					}
 					break;
 			}
 		}

@@ -1032,6 +1032,8 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
 
 	@Override
 	public void dismissProgress() {
-		createAutoTask.dismiss();
+		if(createAutoTask != null) {
+			createAutoTask.dismiss();
+		}
 	}
 }
