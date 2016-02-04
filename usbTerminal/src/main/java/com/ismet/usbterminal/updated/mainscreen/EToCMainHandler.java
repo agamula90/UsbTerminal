@@ -610,9 +610,9 @@ public class EToCMainHandler extends Handler {
 			}
 		}
 
-		if (!correctResponse && activityWeakReference.get() != null) {
+		/*if (!correctResponse && activityWeakReference.get() != null) {
 			Toast.makeText(activityWeakReference.get(), "Wrong response parsing. Message:[" +
 					response + "]. PowerState - " + curPowerState, Toast.LENGTH_LONG).show();
-		}
+		}*/
 	}
 }
