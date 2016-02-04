@@ -342,13 +342,15 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				switch (mPowerCommandsFactory.currentPowerState()) {
 					case PowerState.OFF:
 						v.setEnabled(false);
-						//powerOn();
-						simulateClick2();
+						powerOn();
+						//TODO uncomment for simulating
+						//simulateClick2();
 						break;
 					case PowerState.ON:
 						v.setEnabled(false);
-						//powerOff();
-						simulateClick1();
+						powerOff();
+						//TODO uncomment for simulating
+						//simulateClick1();
 						break;
 				}
 			}
@@ -1710,9 +1712,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 			i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
 			startService(i);
 
-			Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+			//TODO uncomment for simulating
+			/*Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
 			message.obj = "";
-			mHandler.sendMessageDelayed(message, 10800);
+			mHandler.sendMessageDelayed(message, 10800);*/
 		}
 
 		if (!preferences.contains(PrefConstants.DELAY)) {
