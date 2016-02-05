@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.Window;
 import android.widget.TextView;
 
@@ -15,8 +14,6 @@ import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainHandler;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
-
-import static fr.xgouchet.texteditor.common.Constants.TAG;
 
 public abstract class PowerCommandsFactory {
 

@@ -454,7 +454,6 @@ public class EToCMainHandler extends Handler {
 
 					if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
 						activity.initPowerAccordToItState();
-						activity.reInitPowerPressedValue();
 						sendMessage(Message.obtain(this, MESSAGE_RESUME_AUTO_PULLING));
 						return;
 					}
@@ -569,7 +568,6 @@ public class EToCMainHandler extends Handler {
 					powerCommandsFactory.moveStateToNext();
 					if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
 						activity.initPowerAccordToItState();
-						activity.reInitPowerPressedValue();
 						return;
 					}
 

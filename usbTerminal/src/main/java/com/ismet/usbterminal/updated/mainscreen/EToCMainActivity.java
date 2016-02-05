@@ -724,14 +724,20 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 			@Override
 			public void onPostPullStarted() {
-				String tag = mButtonOn2.getTag().toString();
+				final String tag = mButtonOn2.getTag().toString();
 
-				if (tag.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
-					mButtonOn2.setAlpha(1f);
-					mButtonOn2.setBackgroundResource(R.drawable.button_drawable);
-				} else {
-					mButtonOn2.setBackgroundResource(R.drawable.power_on_drawable);
-				}
+                mButtonOn2.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (tag.equals(PrefConstants.ON_NAME_DEFAULT.toLowerCase())) {
+                            mButtonOn2.setAlpha(1f);
+                            mButtonOn2.setBackgroundResource(R.drawable.button_drawable);
+                        } else {
+                            mButtonOn2.setAlpha(1f);
+                            mButtonOn2.setBackgroundResource(R.drawable.power_on_drawable);
+                        }
+                    }
+                });
 			}
 		}));
 
@@ -1770,17 +1776,21 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 				drawableResource = 0;
 		}
 
+        mPowerPressed = false;
+        mPower.setEnabled(true);
+
 		if (powerTag != null && powerText != null) {
 			mPower.setText(powerText);
 			mPower.setTag(powerTag);
-			mPower.setBackgroundResource(drawableResource);
-		}
-	}
 
-	public void reInitPowerPressedValue() {
-		mPowerPressed = false;
-		mPower.setAlpha(1f);
-		mPower.setEnabled(true);
+            mPower.post(new Runnable() {
+                @Override
+                public void run() {
+                    mPower.setAlpha(1f);
+                    mPower.setBackgroundResource(drawableResource);
+                }
+            });
+		}
 	}
 
 	public boolean isPowerPressed() {

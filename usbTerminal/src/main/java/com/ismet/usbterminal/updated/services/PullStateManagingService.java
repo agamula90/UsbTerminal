@@ -14,7 +14,6 @@ import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
-import com.ismet.usbterminal.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

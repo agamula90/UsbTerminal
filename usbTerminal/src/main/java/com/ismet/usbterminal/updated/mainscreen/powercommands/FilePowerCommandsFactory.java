@@ -1,6 +1,5 @@
 package com.ismet.usbterminal.updated.mainscreen.powercommands;
 
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.ismet.usbterminal.updated.data.PowerCommand;

@@ -5,7 +5,6 @@ import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.services.PullStateManagingService;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
