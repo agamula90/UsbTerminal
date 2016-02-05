@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.ismet.usbterminal.updated.EToCApplication;
 import com.ismet.usbterminal.updated.data.PowerCommand;
+import com.ismet.usbterminal.updated.data.PowerState;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PullStateManagingService extends Service {
 
-	private static final String TAG = PullStateManagingService.class.getSimpleName();
+    private static final String TAG = PullStateManagingService.class.getSimpleName();
 
     public static final String WAIT_FOR_COOLING_ACTION = "wait_for_cooling";
 
@@ -37,7 +38,7 @@ public class PullStateManagingService extends Service {
     public static final int DELAY_ON_CHANGE_REQUEST = 1000;
 
     private ScheduledExecutorService mPullDataService;
-	private ScheduledExecutorService mWaitPullService;
+    private ScheduledExecutorService mWaitPullService;
 
     private EToCApplication eToCApplication;
 
@@ -55,7 +56,7 @@ public class PullStateManagingService extends Service {
         eToCApplication = EToCApplication.getInstance();
 
         mPullDataService = eToCApplication.getPullDataService();
-	    mWaitPullService = eToCApplication.getWaitPullService();
+        mWaitPullService = eToCApplication.getWaitPullService();
     }
 
     public static Intent intentForService(Context context, boolean isAutoPull) {
@@ -70,126 +71,135 @@ public class PullStateManagingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-	    if(intent == null) {
-		    return START_STICKY;
-	    }
+        if (intent == null) {
+            return START_STICKY;
+        }
         Bundle extras = intent.getExtras();
         if (extras != null && !eToCApplication.isPullingStopped()) {
-	        String action = intent.getAction();
+            String action = intent.getAction();
 
-	        boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
+            boolean isPull = extras.getBoolean(IS_AUTO_PULL_ON, true);
 
-	        if(action != null && action.equals(WAIT_FOR_COOLING_ACTION)) {
-		        if (isPull) {
-			        mWaitPullService = Executors.newSingleThreadScheduledExecutor();
+            if (action != null && action.equals(WAIT_FOR_COOLING_ACTION)) {
+                if (isPull) {
+                    mWaitPullService = Executors.newSingleThreadScheduledExecutor();
 
-			        PowerCommandsFactory commandsFactory = eToCApplication
-					        .getPowerCommandsFactory();
+                    final PowerCommandsFactory commandsFactory = eToCApplication
+                            .getPowerCommandsFactory();
 
-			        final PowerCommand command;
+                    final PowerCommand command;
 
-			        if(eToCApplication.isPreLooping()) {
-				        command = new PowerCommand("/5J1R", 1000);
-			        } else {
-				        command = commandsFactory.currentCommand();
-			        }
+                    if (eToCApplication.isPreLooping()) {
+                        command = new PowerCommand("/5J1R", 1000);
+                    } else {
+                        command = commandsFactory.currentCommand();
+                    }
 
-			        Log.e(TAG, "Service 1 started");
+                    Log.e(TAG, "Service 1 started");
 
-			        eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService.scheduleWithFixedDelay(new Runnable() {
+                    eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService
+                            .scheduleWithFixedDelay(new Runnable() {
 
-				        @Override
-				        public void run() {
-							final String message;
+                        @Override
+                        public void run() {
+                            final String message;
 
-					        if(eToCApplication.isPreLooping()) {
-						        message = command.getCommand();
-					        } else {
-						        message = "/5H0000R";
-					        }
+                            if (eToCApplication.isPreLooping()) {
+                                message = command.getCommand();
+                            } else {
+                                message = "/5H0000R";
+                            }
 
-					        EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
-							        message);
-					        try {
-						        Thread.sleep((int)(0.3 * command.getDelay()));
-					        } catch (InterruptedException e) {
-						        e.printStackTrace();
-					        }
-				        }
-			        }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
-		        } else {
-			        Log.e(TAG, "Service 1 stopped");
-			        eToCApplication.getWaitPullFuture().cancel(true);
+                            int state = commandsFactory.currentPowerState();
 
-			        eToCApplication.initWaitPullService(null, null);
-		        }
-		        intent.setAction(null);
-	        } else {
-		        if(isPull) {
-			        Log.e(TAG, "Service 0 started");
+                            if (state != PowerState.OFF) {
+                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                        .this, message);
+                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                        .this, state);
+                            }
 
-			        mIsAutoHandling.set(true);
-			        if (eToCApplication.getPullState() == PullState.NONE) {
-				        eToCApplication.setPullState(PullState.TEMPERATURE);
-			        }
+                            try {
+                                Thread.sleep((int) (0.3 * command.getDelay()));
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
+                } else {
+                    Log.e(TAG, "Service 1 stopped");
+                    eToCApplication.getWaitPullFuture().cancel(true);
 
-			        if (mPullDataService == null) {
-				        mPullDataService = Executors.newSingleThreadScheduledExecutor();
-				        eToCApplication.initPullDataService(mPullDataService);
-				        eToCApplication.refreshTimeOfRecreating();
-				        eToCApplication.reNewTimeOfRecreating();
-			        } else {
-				        eToCApplication.unScheduleTasks();
-				        boolean isRenew = eToCApplication.reNewTimeOfRecreating();
-				        if (isRenew) {
-					        mPullDataService = Executors.newSingleThreadScheduledExecutor();
-					        eToCApplication.clearPullDataService();
-					        eToCApplication.initPullDataService(mPullDataService);
-				        }
-			        }
+                    eToCApplication.initWaitPullService(null, null);
+                }
+                intent.setAction(null);
+            } else {
+                if (isPull) {
+                    Log.e(TAG, "Service 0 started");
 
-			        List<ScheduledFuture> scheduledFutures = new ArrayList<>(1);
+                    mIsAutoHandling.set(true);
+                    if (eToCApplication.getPullState() == PullState.NONE) {
+                        eToCApplication.setPullState(PullState.TEMPERATURE);
+                    }
 
-			        Runnable autoChangeRunnable = new Runnable() {
+                    if (mPullDataService == null) {
+                        mPullDataService = Executors.newSingleThreadScheduledExecutor();
+                        eToCApplication.initPullDataService(mPullDataService);
+                        eToCApplication.refreshTimeOfRecreating();
+                        eToCApplication.reNewTimeOfRecreating();
+                    } else {
+                        eToCApplication.unScheduleTasks();
+                        boolean isRenew = eToCApplication.reNewTimeOfRecreating();
+                        if (isRenew) {
+                            mPullDataService = Executors.newSingleThreadScheduledExecutor();
+                            eToCApplication.clearPullDataService();
+                            eToCApplication.initPullDataService(mPullDataService);
+                        }
+                    }
 
-				        @Override
-				        public void run() {
-					        int pullState = eToCApplication.getPullState();
+                    List<ScheduledFuture> scheduledFutures = new ArrayList<>(1);
 
-					        if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
-						        return;
-					        }
+                    Runnable autoChangeRunnable = new Runnable() {
 
-					        switch (pullState) {
-						        case PullState.TEMPERATURE:
-							        pullState = PullState.CO2;
-							        break;
-						        case PullState.CO2:
-							        pullState = PullState.TEMPERATURE;
-							        break;
-					        }
+                        @Override
+                        public void run() {
+                            int pullState = eToCApplication.getPullState();
 
-					        eToCApplication.setPullState(pullState);
+                            if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                                return;
+                            }
 
-					        boolean isTemperature = pullState == PullState.TEMPERATURE;
-					        if (isTemperature) {
-						        initAutoPullTemperatureRunnable().run();
-					        } else {
-						        initAutoPullCo2Runnable().run();
-					        }
-				        }
-			        };
+                            switch (pullState) {
+                                case PullState.TEMPERATURE:
+                                    pullState = PullState.CO2;
+                                    break;
+                                case PullState.CO2:
+                                    pullState = PullState.TEMPERATURE;
+                                    break;
+                            }
 
-			        scheduledFutures.add(mPullDataService.scheduleWithFixedDelay(autoChangeRunnable, 0, 1, TimeUnit.SECONDS));
+                            eToCApplication.setPullState(pullState);
 
-			        eToCApplication.setScheduledFutures(scheduledFutures);
-		        } else {
-			        Log.e(TAG, "Service 0 stopped");
+                            boolean isTemperature = pullState == PullState.TEMPERATURE;
+                            if (isTemperature) {
+                                initAutoPullTemperatureRunnable().run();
+                            } else {
+                                initAutoPullCo2Runnable().run();
+                            }
+                        }
+                    };
 
-			        mIsAutoHandling.set(false);
-			        eToCApplication.unScheduleTasks();
-			        eToCApplication.setStopPulling(true);
-		        }
+                    scheduledFutures.add(mPullDataService.scheduleWithFixedDelay
+                            (autoChangeRunnable, 0, 1, TimeUnit.SECONDS));
+
+                    eToCApplication.setScheduledFutures(scheduledFutures);
+                } else {
+                    Log.e(TAG, "Service 0 stopped");
+
+                    mIsAutoHandling.set(false);
+                    eToCApplication.unScheduleTasks();
+                    eToCApplication.setStopPulling(true);
+                }
             }
         }
         return START_STICKY;
@@ -215,6 +225,15 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                        "/5J5R");
+
+                try {
+                    Thread.sleep(350);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         eToCApplication.getCurrentTemperatureRequest());
             }

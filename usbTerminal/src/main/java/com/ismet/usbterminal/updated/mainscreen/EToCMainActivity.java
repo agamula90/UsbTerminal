@@ -70,6 +70,7 @@ import com.ismet.usbterminal.updated.data.PrefConstants;
 import com.ismet.usbterminal.updated.data.PullState;
 import com.ismet.usbterminal.updated.data.TemperatureData;
 import com.ismet.usbterminal.updated.mainscreen.powercommands.CommandsDeliverer;
+import com.ismet.usbterminal.updated.mainscreen.powercommands.FilePowerCommandsFactory;
 import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.updated.mainscreen.tasks.EToCOpenChartTask;
 import com.ismet.usbterminal.updated.mainscreen.tasks.SendDataToUsbTask;
@@ -267,6 +268,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		intent.putExtra(EToCMainHandler.DATA_EXTRA, data);
 		context.sendBroadcast(intent);
 	}
+
+    public static void sendBroadCastWithData(Context context, int data) {
+        Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
+        intent.putExtra(EToCMainHandler.DATA_EXTRA, data + "");
+        intent.putExtra(EToCMainHandler.IS_TOAST, true);
+        context.sendBroadcast(intent);
+    }
 
 	/**
 	 * @see android.app.Activity#onCreate(Bundle)
@@ -1806,6 +1814,16 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		mPowerCommandsFactory = EToCApplication.getInstance().parseCommands(powerData);
 
+        final String commandFactory;
+
+		if(mPowerCommandsFactory instanceof FilePowerCommandsFactory) {
+            commandFactory = "FilePowerCommand";
+        } else {
+            commandFactory = "DefaultPowerCommand";
+        }
+
+        Toast.makeText(this, commandFactory, Toast.LENGTH_LONG).show();
+
 		if (!settingsFolder.exists()) {
 			return;
 		}
@@ -2153,6 +2171,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 	public String toolbarTitle() {
 		return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME);
 	}
+
+    private Toast toast;
+
+    public void showToastMessage(String message) {
+        /*if(toast != null) {
+            toast.cancel();
+        }
+        toast = Toast.makeText(this, message, Toast.LENGTH_LONG);
+        ToastUtils.wrap(toast);
+        toast.show();*/
+    }
 
 	public void sendCommand(String command) {
 		if ((command != null) && (!command.equals("")) && (!command.equals("\n"))) {
@@ -3271,6 +3300,13 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		message.what = EToCMainHandler.MESSAGE_USB_DATA_READY;
 		message.sendToTarget();
 	}
+
+    public void sendMessageForToast(String dataForSend) {
+        Message message = mHandler.obtainMessage();
+        message.obj = dataForSend;
+        message.what = EToCMainHandler.MESSAGE_SHOW_TOAST;
+        message.sendToTarget();
+    }
 
 	public void sendMessageInterruptingCalculations() {
 		Message message = mHandler.obtainMessage();

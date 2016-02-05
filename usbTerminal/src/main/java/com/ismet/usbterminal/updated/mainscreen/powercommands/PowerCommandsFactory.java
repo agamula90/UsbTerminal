@@ -64,7 +64,7 @@ public abstract class PowerCommandsFactory {
 
 				((TextView) mAlertDialog.findViewById(R.id.text)).setText("  Cooling down.  Do not" +
 						" " +
-						"switch power off.  Please wait . . . ! ! !    System will turn off " +
+						"switch power off.  Please wait . . . ! ! !    \nSystem will turn off " +
 						"automaticaly.");
 
 				mAlertDialog.setCancelable(false);

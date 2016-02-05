@@ -34,8 +34,15 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
         } else if(action.equals(EToCMainHandler.USB_DATA_READY)) {
             if (weakActivity.get() != null) {
                 EToCMainActivity activity = weakActivity.get();
-                activity.sendMessageWithUsbDataReady(intent.getStringExtra(EToCMainHandler
-                        .DATA_EXTRA));
+                boolean isToast = intent.getBooleanExtra(EToCMainHandler.IS_TOAST, false);
+
+                String data = intent.getStringExtra(EToCMainHandler.DATA_EXTRA);
+
+                if(isToast) {
+                    activity.sendMessageForToast(data);
+                } else {
+                    activity.sendMessageWithUsbDataReady(data);
+                }
             }
             return;
         }

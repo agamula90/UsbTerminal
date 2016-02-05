@@ -19,12 +19,15 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 		mOnCommands = new HashMap<>();
 		mOffCommands = new HashMap<>();
 
-		mOnCommands.put(PowerState.ON_STAGE1, new PowerCommand("/5H0000R", 500));
-		mOnCommands.put(PowerState.ON_STAGE1_REPEAT, new PowerCommand("/5H0000R", 500));
-		mOnCommands.put(PowerState.ON_STAGE2A, new PowerCommand("/5J1R", 1000));
+		mOnCommands.put(PowerState.ON_STAGE1, new PowerCommand("/5J1R", 1000));
+		mOnCommands.put(PowerState.ON_STAGE1_REPEAT, new PowerCommand("/5J1R", 1000));
 		mOnCommands.put(PowerState.ON_STAGE2B, new PowerCommand("/5J1R", 1000, "@5J101 ",
 				"@5J001 "));
 		mOnCommands.put(PowerState.ON_STAGE2, new PowerCommand("/5J5R", 1000, "@5J101 "));
+
+        mOnCommands.put(PowerState.ON_STAGE3A, new PowerCommand("/5H0000R", 500));
+        mOnCommands.put(PowerState.ON_STAGE3B, new PowerCommand("/5H0000R", 500));
+
 		mOnCommands.put(PowerState.ON_STAGE3, new PowerCommand(PullStateManagingService
 				 .CO2_REQUEST, 2000));
 		mOnCommands.put(PowerState.ON_STAGE4, new PowerCommand("/1ZR", 0));
@@ -44,10 +47,6 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 				break;
 			case PowerState.ON_STAGE1_REPEAT:
 				isFinalState = false;
-				mPowerState = PowerState.ON_STAGE2A;
-				break;
-			case PowerState.ON_STAGE2A:
-				isFinalState = false;
 				mPowerState = PowerState.ON_STAGE2B;
 				break;
 			case PowerState.ON_STAGE2B:
@@ -56,8 +55,16 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 				break;
 			case PowerState.ON_STAGE2:
 				isFinalState = false;
-				mPowerState = PowerState.ON_STAGE3;
+				mPowerState = PowerState.ON_STAGE3A;
 				break;
+            case PowerState.ON_STAGE3A:
+                isFinalState = false;
+                mPowerState = PowerState.ON_STAGE3B;
+                break;
+            case PowerState.ON_STAGE3B:
+                isFinalState = false;
+                mPowerState = PowerState.ON_STAGE3;
+                break;
 			case PowerState.ON_STAGE3:
 				isFinalState = false;
 				mPowerState = PowerState.ON_STAGE4;
@@ -88,7 +95,7 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
 				break;
 			case PowerState.OFF:
 				isFinalState = false;
-				mPowerState = PowerState.ON_STAGE2A;
+				mPowerState = PowerState.ON_STAGE1;
 				break;
 			case PowerState.PRE_LOOPING:
 				mPowerState = PowerState.OFF;

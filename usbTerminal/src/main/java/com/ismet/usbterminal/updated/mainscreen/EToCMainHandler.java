@@ -30,6 +30,8 @@ public class EToCMainHandler extends Handler {
 
 	public static final String DATA_EXTRA = "data_extra";
 
+    public static final String IS_TOAST = "is_toast";
+
 	public static final int MESSAGE_USB_DATA_RECEIVED = 0;
 
 	public static final int MESSAGE_USB_DATA_READY = 1;
@@ -47,6 +49,8 @@ public class EToCMainHandler extends Handler {
 	public static final int MESSAGE_CHECK_TEMPERATURE = 7;
 
 	public static final int MESSAGE_SIMULATE_RESPONSE = 8;
+
+	public static final int MESSAGE_SHOW_TOAST = 9;
 
 	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
 
@@ -304,6 +308,9 @@ public class EToCMainHandler extends Handler {
 					String command = (String) msg.obj;
 					activity.sendCommand(command);
 					break;
+                case MESSAGE_SHOW_TOAST:
+                    activity.showToastMessage(msg.obj.toString());
+                    break;
 				case MESSAGE_OPEN_CHART:
 					String strMsg = (String) msg.obj;
 					String[] arr = strMsg.split(",");
@@ -388,7 +395,8 @@ public class EToCMainHandler extends Handler {
 			switch (powerState) {
 				case PowerState.ON_STAGE1:
 				case PowerState.ON_STAGE1_REPEAT:
-				case PowerState.ON_STAGE2A:
+				case PowerState.ON_STAGE3A:
+                case PowerState.ON_STAGE3B:
 				case PowerState.ON_STAGE2B:
 				case PowerState.ON_STAGE2:
 				case PowerState.ON_STAGE3:
@@ -440,7 +448,7 @@ public class EToCMainHandler extends Handler {
 							toast.show();
 							return;
 						}
-					} else {
+					} else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
 						powerCommandsFactory.sendRequest(activity, this, activity);
 					}
 
@@ -596,7 +604,6 @@ public class EToCMainHandler extends Handler {
 							}
 							responseBuilder.delete(responseBuilder.length() - 4, responseBuilder
 									.length());
-
 
 							Toast toast = Toast.makeText(activity, "Wrong response: Got - \"" +
 									response + "\"" + ".Expected - " + responseBuilder.toString(),
