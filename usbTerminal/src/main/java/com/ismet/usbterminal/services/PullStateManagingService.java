@@ -224,14 +224,14 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
-                /*EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         "/5J5R");
 
                 try {
                     Thread.sleep(350);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }*/
+                }
 
                 EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         eToCApplication.getCurrentTemperatureRequest());
