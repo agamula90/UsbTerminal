@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated.data;
+package com.ismet.usbterminal.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;

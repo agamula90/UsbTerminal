@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import com.ismet.usbterminal.R;
-import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils;
 
 import org.achartengine.ChartFactory;

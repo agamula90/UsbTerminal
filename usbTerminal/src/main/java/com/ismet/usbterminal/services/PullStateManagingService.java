@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated.services;
+package com.ismet.usbterminal.services;
 
 import android.app.Service;
 import android.content.Context;
@@ -8,12 +8,12 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.ismet.usbterminal.updated.EToCApplication;
-import com.ismet.usbterminal.updated.data.PowerCommand;
-import com.ismet.usbterminal.updated.data.PowerState;
-import com.ismet.usbterminal.updated.data.PullState;
-import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
-import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
+import com.ismet.usbterminal.EToCApplication;
+import com.ismet.usbterminal.data.PowerCommand;
+import com.ismet.usbterminal.data.PowerState;
+import com.ismet.usbterminal.data.PullState;
+import com.ismet.usbterminal.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated.data;
+package com.ismet.usbterminal.data;
 
 public class AppData {
     public static final String CAL_FOLDER_NAME = "AEToC_CAL_Files";

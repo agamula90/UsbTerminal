@@ -9,12 +9,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import com.ismet.usbterminal.R;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,11 +47,9 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	protected ArrayList<String> mList;
 
 	/**
-	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 * @see Activity#onCreate(Bundle)
 	 */
 	protected void onCreate(Bundle savedInstanceState) {
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
-				.LayoutParams.FLAG_FULLSCREEN);
 		super.onCreate(savedInstanceState);
 
 		// Setup content view
@@ -66,7 +65,7 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * @see android.app.Activity#onResume()
+	 * @see Activity#onResume()
 	 */
 	protected void onResume() {
 		super.onResume();
@@ -75,8 +74,8 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu,
-	 * android.view.View, android.view.ContextMenu.ContextMenuInfo)
+	 * @see Activity#onCreateContextMenu(ContextMenu,
+	 * View, ContextMenuInfo)
 	 */
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
@@ -88,7 +87,7 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 * @see Activity#onContextItemSelected(MenuItem)
 	 */
 	public boolean onContextItemSelected(MenuItem item) {
 
@@ -102,7 +101,7 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * @see android.view.View.OnClickListener#onClick(android.view.View)
+	 * @see OnClickListener#onClick(View)
 	 */
 	public void onClick(View v) {
 		switch (v.getId()) {
@@ -114,8 +113,8 @@ public class TedOpenRecentActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
-	 * android.view.View, int, long)
+	 * @see OnItemClickListener#onItemClick(AdapterView,
+	 * View, int, long)
 	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		String path;

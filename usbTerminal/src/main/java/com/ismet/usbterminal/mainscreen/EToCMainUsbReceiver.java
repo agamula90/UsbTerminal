@@ -1,13 +1,12 @@
-package com.ismet.usbterminal.updated.mainscreen;
+package com.ismet.usbterminal.mainscreen;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbManager;
-import android.view.Gravity;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.updated.services.UsbService;
+import com.ismet.usbterminal.services.UsbService;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;

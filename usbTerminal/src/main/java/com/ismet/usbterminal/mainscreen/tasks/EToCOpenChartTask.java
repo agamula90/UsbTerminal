@@ -1,10 +1,9 @@
-package com.ismet.usbterminal.updated.mainscreen.tasks;
+package com.ismet.usbterminal.mainscreen.tasks;
 
 import android.os.AsyncTask;
-import android.view.Gravity;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.io.BufferedReader;

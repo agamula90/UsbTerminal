@@ -1,10 +1,10 @@
-package com.ismet.usbterminal.updated.data;
+package com.ismet.usbterminal.data;
 
 import android.support.annotation.IntDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import static com.ismet.usbterminal.updated.data.PowerState.*;
+import static com.ismet.usbterminal.data.PowerState.*;
 
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({ON_STAGE1, ON_STAGE1_REPEAT, ON_STAGE2, ON_STAGE3A, ON_STAGE3B, ON_STAGE2B, ON_STAGE3,

@@ -3,19 +3,16 @@ package com.ismet.usbterminal.utils;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Environment;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
-import android.util.Pair;
 import android.widget.TextView;
 
-import com.ismet.usbterminal.updated.EToCApplication;
-import com.ismet.usbterminal.updated.data.PullState;
+import com.ismet.usbterminal.EToCApplication;
+import com.ismet.usbterminal.data.PullState;
 
 import java.io.File;
 import java.util.ArrayList;

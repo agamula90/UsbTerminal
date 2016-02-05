@@ -1,10 +1,10 @@
-package com.ismet.usbterminal.updated.data;
+package com.ismet.usbterminal.data;
 
 import android.support.annotation.IntDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import static com.ismet.usbterminal.updated.data.PullState.*;
+import static com.ismet.usbterminal.data.PullState.*;
 
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({NONE, TEMPERATURE, CO2})

@@ -12,7 +12,6 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.util.Log;
-import android.view.WindowManager;
 
 import java.io.File;
 
@@ -45,12 +44,10 @@ public class TedSettingsActivity extends PreferenceActivity implements
 	protected boolean mPreviousHP;
 
 	/**
-	 * @see android.preference.PreferenceActivity#onCreate(android.os.Bundle)
+	 * @see PreferenceActivity#onCreate(Bundle)
 	 */
 
 	protected void onCreate(Bundle icicle) {
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
-				.LayoutParams.FLAG_FULLSCREEN);
 		super.onCreate(icicle);
 
 		getPreferenceManager().setSharedPreferencesName(PREFERENCES_NAME);
@@ -89,7 +86,7 @@ public class TedSettingsActivity extends PreferenceActivity implements
 	}
 
 	/**
-	 * @see android.content.SharedPreferences
+	 * @see SharedPreferences
 	 * .OnSharedPreferenceChangeListener#onSharedPreferenceChanged(android.content
 	 * .SharedPreferences,
 	 * java.lang.String)
@@ -118,8 +115,8 @@ public class TedSettingsActivity extends PreferenceActivity implements
 	}
 
 	/**
-	 * @see android.preference.PreferenceActivity#onActivityResult(int, int,
-	 * android.content.Intent)
+	 * @see PreferenceActivity#onActivityResult(int, int,
+	 * Intent)
 	 */
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Bundle extras;

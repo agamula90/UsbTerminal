@@ -1,17 +1,15 @@
-package com.ismet.usbterminal.updated;
+package com.ismet.usbterminal;
 
-import android.content.Intent;
 import android.support.v4.util.Pair;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.ismet.usbterminal.updated.data.AppData;
-import com.ismet.usbterminal.updated.data.PowerCommand;
-import com.ismet.usbterminal.updated.data.PowerState;
-import com.ismet.usbterminal.updated.data.PullState;
-import com.ismet.usbterminal.updated.mainscreen.powercommands.DefaultPowerCommandsFactory;
-import com.ismet.usbterminal.updated.mainscreen.powercommands.FilePowerCommandsFactory;
-import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
+import com.ismet.usbterminal.data.PowerCommand;
+import com.ismet.usbterminal.data.PowerState;
+import com.ismet.usbterminal.data.PullState;
+import com.ismet.usbterminal.mainscreen.powercommands.DefaultPowerCommandsFactory;
+import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory;
+import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 

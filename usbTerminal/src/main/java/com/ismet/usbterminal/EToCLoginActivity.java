@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated;
+package com.ismet.usbterminal;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -27,9 +27,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.ismet.usbterminal.R;
-import com.ismet.usbterminal.TedActivity;
-import com.ismet.usbterminal.updated.mainscreen.EToCMainActivity;
+import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 
 import java.util.ArrayList;
 import java.util.List;

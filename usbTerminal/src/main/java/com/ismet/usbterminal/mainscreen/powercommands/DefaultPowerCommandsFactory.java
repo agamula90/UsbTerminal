@@ -1,8 +1,8 @@
-package com.ismet.usbterminal.updated.mainscreen.powercommands;
+package com.ismet.usbterminal.mainscreen.powercommands;
 
-import com.ismet.usbterminal.updated.data.PowerCommand;
-import com.ismet.usbterminal.updated.data.PowerState;
-import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.ismet.usbterminal.data.PowerCommand;
+import com.ismet.usbterminal.data.PowerState;
+import com.ismet.usbterminal.services.PullStateManagingService;
 
 import java.util.HashMap;
 import java.util.Map;

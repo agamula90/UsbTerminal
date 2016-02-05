@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated;
+package com.ismet.usbterminal;
 
 import android.hardware.usb.UsbDevice;
 

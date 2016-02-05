@@ -1,19 +1,19 @@
-package com.ismet.usbterminal.updated.mainscreen;
+package com.ismet.usbterminal.mainscreen;
 
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.updated.EToCApplication;
-import com.ismet.usbterminal.updated.data.AppData;
-import com.ismet.usbterminal.updated.data.PowerCommand;
-import com.ismet.usbterminal.updated.data.PowerState;
-import com.ismet.usbterminal.updated.data.PrefConstants;
-import com.ismet.usbterminal.updated.data.PullState;
-import com.ismet.usbterminal.updated.data.TemperatureData;
-import com.ismet.usbterminal.updated.mainscreen.powercommands.PowerCommandsFactory;
-import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.ismet.usbterminal.EToCApplication;
+import com.ismet.usbterminal.data.AppData;
+import com.ismet.usbterminal.data.PowerCommand;
+import com.ismet.usbterminal.data.PowerState;
+import com.ismet.usbterminal.data.PrefConstants;
+import com.ismet.usbterminal.data.PullState;
+import com.ismet.usbterminal.data.TemperatureData;
+import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
+import com.ismet.usbterminal.services.PullStateManagingService;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;

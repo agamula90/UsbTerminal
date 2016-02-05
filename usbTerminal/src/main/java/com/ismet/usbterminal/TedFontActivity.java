@@ -7,8 +7,8 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 
+import com.ismet.usbterminal.R;
 import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 
 import java.io.File;
@@ -22,11 +22,9 @@ import fr.xgouchet.texteditor.ui.adapter.FontListAdapter;
 public class TedFontActivity extends AbstractBrowsingActivity implements OnClickListener {
 
 	/**
-	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 * @see Activity#onCreate(Bundle)
 	 */
 	protected void onCreate(Bundle savedInstanceState) {
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager
-				.LayoutParams.FLAG_FULLSCREEN);
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.layout_open);
@@ -42,7 +40,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFileClick(java.io.File)
+	 * @see AbstractBrowsingActivity#onFileClick(File)
 	 */
 	protected void onFileClick(File file) {
 		if (setOpenResult(file))
@@ -50,7 +48,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderClick(java.io.File)
+	 * @see AbstractBrowsingActivity#onFolderClick(File)
 	 */
 	protected boolean onFolderClick(File folder) {
 		RootDirectoryHandleUtils.handleEnvironmentStorageDirectory(this, folder, false);
@@ -58,7 +56,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see fr.xgouchet.androidlib.ui.activity.AbstractBrowsingActivity#onFolderViewFilled()
+	 * @see AbstractBrowsingActivity#onFolderViewFilled()
 	 */
 	protected void onFolderViewFilled() {
 
@@ -84,7 +82,7 @@ public class TedFontActivity extends AbstractBrowsingActivity implements OnClick
 	}
 
 	/**
-	 * @see android.view.View.OnClickListener#onClick(android.view.View)
+	 * @see OnClickListener#onClick(View)
 	 */
 	public void onClick(View v) {
 		if (v.getId() == R.id.buttonCancel) {

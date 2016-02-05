@@ -1,4 +1,4 @@
-package com.ismet.usbterminal.updated.mainscreen.powercommands;
+package com.ismet.usbterminal.mainscreen.powercommands;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -9,10 +9,10 @@ import android.view.Window;
 import android.widget.TextView;
 
 import com.ismet.usbterminal.R;
-import com.ismet.usbterminal.updated.data.PowerCommand;
-import com.ismet.usbterminal.updated.data.PowerState;
-import com.ismet.usbterminal.updated.mainscreen.EToCMainHandler;
-import com.ismet.usbterminal.updated.services.PullStateManagingService;
+import com.ismet.usbterminal.data.PowerCommand;
+import com.ismet.usbterminal.data.PowerState;
+import com.ismet.usbterminal.mainscreen.EToCMainHandler;
+import com.ismet.usbterminal.services.PullStateManagingService;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 
 public abstract class PowerCommandsFactory {
