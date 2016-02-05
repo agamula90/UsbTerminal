@@ -48,6 +48,7 @@
                             <Button
                                 android:id="@+id/power"
                                 style="@style/ButtonDefaultStyle"
+                                android:layout_height="43dp"
                                 android:layout_width="0dp"
                                 android:layout_gravity="center_vertical"
                                 android:layout_weight="1"
@@ -57,7 +58,7 @@
                             <FrameLayout
                                 android:layout_width="0dp"
                                 android:layout_weight="1"
-                                android:layout_height="@dimen/button_height_default"
+                                android:layout_height="43dp"
                                 android:layout_marginLeft="2dp"
                                 android:layout_gravity="center_vertical"
                                 android:id="@+id/temperature_background">
@@ -101,7 +102,7 @@
                             <FrameLayout
                                 android:layout_width="0dp"
                                 android:layout_weight="1"
-                                android:layout_height="@dimen/button_height_default"
+                                android:layout_height="43dp"
                                 android:layout_marginLeft="2dp"
                                 android:layout_gravity="center_vertical"
                                 android:id="@+id/co2_background">
