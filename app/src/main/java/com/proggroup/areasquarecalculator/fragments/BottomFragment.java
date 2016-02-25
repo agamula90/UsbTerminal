@@ -190,8 +190,6 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                     reportData.setMeasurementFiles(measurementFiles);
 
                     List<Float> measurementValues = new ArrayList<>(mAutoAvgPoint.getValues());
-                    measurementValues.set(measurementValues.size() - 1, measurementValues.get
-                            (measurementValues.size() - 1) / 10f);
                     reportData.setMeasurementAverages(measurementValues);
 
                     reportData.setCalibrationCurveFolder(mCurveFile.getName());
