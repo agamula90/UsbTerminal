@@ -1172,8 +1172,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 					return;
 				}
 
-				v.setEnabled(false);
-
 				if (mIsTimerRunning) {
 					Toast toast = Toast.makeText(EToCMainActivity.this, "Timer is running. Please"
 							+ " wait", Toast.LENGTH_SHORT);
@@ -1220,6 +1218,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 						return;
 					}
 				}
+
+				v.setEnabled(false);
 
 				AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
 						AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
