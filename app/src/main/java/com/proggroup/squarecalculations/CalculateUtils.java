@@ -405,9 +405,11 @@ public class CalculateUtils {
 
 		int startIndex = findStartIndex(points);
 
-		float yCached = points.get(startIndex).y;
+		float yCached;
 
 		if (startIndex != -1) {
+			yCached = points.get(startIndex).y;
+
 			int endIndex = findEndIndex(points, yCached);
 
 			if(endIndex < startIndex) {
