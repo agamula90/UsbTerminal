@@ -6,6 +6,7 @@ public class Command {
 
     public Command(int commandType, String command) {
         this.command = command;
+
         this.commandType = commandType;
     }
 
