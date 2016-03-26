@@ -159,9 +159,10 @@ public class CalculateUtils {
 
 		int startIndex = findStartIndex(points);
 
-		float yCached = points.get(startIndex).y;
+		float yCached;
 
 		if (startIndex != -1) {
+			yCached = points.get(startIndex).y;
 			int endIndex = findEndIndex(points, points.get(startIndex).y);
 
 			points = new ArrayList<>(points.subList(startIndex, endIndex + 1));
