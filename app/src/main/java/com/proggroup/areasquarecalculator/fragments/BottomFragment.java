@@ -873,8 +873,8 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                         if (newestCalFile1 != null) {
                             float square1 = CalculateUtils.calculateSquare(newestCalFile1);
                             if (square1 == -1) {
-                                Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
-                                        .LENGTH_LONG);
+	                            Toast toast = Toast.makeText(getActivity(), "Chart #1 can not be " +
+			                            "calculated. Please rerecord it.", Toast.LENGTH_LONG);
                                 ToastUtils.wrap(toast);
                                 toast.show();
                                 return;
@@ -891,8 +891,9 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                                 }
                                 float square2 = CalculateUtils.calculateSquare(newestCalFile2);
                                 if (square2 == -1) {
-                                    Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating",
-                                            Toast.LENGTH_LONG);
+	                                Toast toast = Toast.makeText(getActivity(), "Chart #2 can " +
+			                                "not be calculated. Please rerecord it.", Toast
+			                                .LENGTH_LONG);
                                     ToastUtils.wrap(toast);
                                     toast.show();
                                     return;
@@ -909,8 +910,9 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                                     }
                                     float square3 = CalculateUtils.calculateSquare(newestCalFile3);
                                     if (square3 == -1) {
-                                        Toast toast = Toast.makeText(getActivity(), "Wrong files for " +
-                                                "calculating", Toast.LENGTH_LONG);
+	                                    Toast toast = Toast.makeText(getActivity(), "Chart #3 can" +
+			                                    " not be calculated. Please rerecord it.", Toast
+			                                    .LENGTH_LONG);
                                         ToastUtils.wrap(toast);
                                         toast.show();
                                         return;

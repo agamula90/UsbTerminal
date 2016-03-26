@@ -45,6 +45,8 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	private CalibrationCurveCreatedListener mCalibrationCurveCreatedListener;
 	private OnProgressDismissable onProgressDismissable;
 
+	private int fileWrongIndex = -1;
+
 	public CreateCalibrationCurveForAutoTask(UrlChangeable task, Context context, boolean
 			is0Connect) {
 		this.task = task;
@@ -133,8 +135,16 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	@Override
 	protected void onProgressUpdate(Integer... values) {
 		if (progressLayout != null && progressBar != null) {
-			((ProgressBar) progressLayout.findViewById(android.R.id.progress)).setProgress
-					(values[0]);
+			((ProgressBar) progressLayout.findViewById(android.R.id.progress)).setProgress(values[0]);
+
+			if(fileWrongIndex != -1) {
+				Toast toast = Toast.makeText(progressBar.getContext(), "Creating calibration " +
+						"curve... Chart #" +
+						fileWrongIndex + " can not be calculated. Please rerecord it.", Toast
+						.LENGTH_LONG);
+				ToastUtils.wrap(toast);
+				toast.show();
+			}
 		}
 	}
 
@@ -222,6 +232,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 			for (File file : curveFiles) {
 				float square = CalculateUtils.calculateSquare(file);
 				if (square < 0f) {
+					fileWrongIndex = ppmValue;
 					publishProgress(100);
 					return null;
 				}
