@@ -263,6 +263,8 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	private PowerCommandsFactory mPowerCommandsFactory;
 
+	private boolean useRecentDirectory;
+
 	public static void sendBroadCastWithData(Context context, String data) {
 		Intent intent = new Intent(EToCMainHandler.USB_DATA_READY);
 		intent.putExtra(EToCMainHandler.DATA_EXTRA, data);
@@ -304,6 +306,17 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 		mExportLayout = getExportLayout();
 		mMarginLayout = (LinearLayout) findViewById(R.id.margin_layout);
+
+		CheckBox toggleButton = (CheckBox) findViewById(R.id.save_to_recent);
+		toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				useRecentDirectory = isChecked;
+				if (useRecentDirectory) {
+					mSubDirDate = null;
+				}
+			}
+		});
 
 		// editor
 		mAdvancedEditText = (AdvancedEditText) findViewById(R.id.editor);
@@ -3441,6 +3454,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 
 	public TextView getTxtOutput() {
 		return mTxtOutput;
+	}
+
+	public boolean isUseRecentDirectory() {
+		return useRecentDirectory;
 	}
 
 	public void simulateClick() {

@@ -1,6 +1,7 @@
 package com.ismet.usbterminal.mainscreen;
 
 import android.content.Intent;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
@@ -18,9 +19,12 @@ import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.StringTokenizer;
 
 public class EToCMainHandler extends Handler {
 
@@ -187,7 +191,35 @@ public class EToCMainHandler extends Handler {
 								}
 
 								if (activity.getSubDirDate() == null) {
-									activity.setSubDirDate(FORMATTER.format(currentDate));
+									String subdirDate = FORMATTER.format(currentDate);
+
+									if (activity.isUseRecentDirectory()) {
+
+                                        int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
+                                        //cal direcory
+                                        if (ppm != -1) {
+                                            File directory = new File(Environment.getExternalStorageDirectory(), AppData.CAL_FOLDER_NAME);
+                                            File directoriesInside[] = directory.listFiles(new FileFilter() {
+                                                @Override
+                                                public boolean accept(File pathname) {
+                                                    return pathname.isDirectory();
+                                                }
+                                            });
+                                            if (directoriesInside != null && directoriesInside.length > 0) {
+                                                File recentDir = null;
+                                                for (File dir : directoriesInside) {
+                                                    if (recentDir == null || dir.lastModified() > recentDir.lastModified()) {
+                                                        recentDir = dir;
+                                                    }
+                                                }
+                                                String name = recentDir.getName();
+                                                StringTokenizer tokenizer = new StringTokenizer(name, "_");
+                                                tokenizer.nextToken();
+                                                subdirDate = tokenizer.nextToken() + "_" + tokenizer.nextToken();
+                                            }
+                                        }
+                                    }
+									activity.setSubDirDate(subdirDate);
 								}
 
 								if (activity.isTimerRunning()) {
