@@ -345,27 +345,16 @@
 
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/scroll_below_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/scroll_below_text"
                     android:background="@android:color/black"
                     android:paddingTop="0dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ffffff"
-                        android:text="Save to recent directory"
-                        android:textSize="@dimen/edit_text_size_default"
-                        android:typeface="monospace"/>
-
-                    <CheckBox
-                        android:id="@+id/save_to_recent"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
+                    android:text=""
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/edit_text_size_default"
+                    android:typeface="monospace"/>
 
                 <fragment
                     android:id="@+id/bottom_fragment"

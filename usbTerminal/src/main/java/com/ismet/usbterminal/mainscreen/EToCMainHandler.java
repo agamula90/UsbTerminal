@@ -191,35 +191,7 @@ public class EToCMainHandler extends Handler {
 								}
 
 								if (activity.getSubDirDate() == null) {
-									String subdirDate = FORMATTER.format(currentDate);
-
-									if (activity.isUseRecentDirectory()) {
-
-                                        int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
-                                        //cal direcory
-                                        if (ppm != -1) {
-                                            File directory = new File(Environment.getExternalStorageDirectory(), AppData.CAL_FOLDER_NAME);
-                                            File directoriesInside[] = directory.listFiles(new FileFilter() {
-                                                @Override
-                                                public boolean accept(File pathname) {
-                                                    return pathname.isDirectory();
-                                                }
-                                            });
-                                            if (directoriesInside != null && directoriesInside.length > 0) {
-                                                File recentDir = null;
-                                                for (File dir : directoriesInside) {
-                                                    if (recentDir == null || dir.lastModified() > recentDir.lastModified()) {
-                                                        recentDir = dir;
-                                                    }
-                                                }
-                                                String name = recentDir.getName();
-                                                StringTokenizer tokenizer = new StringTokenizer(name, "_");
-                                                tokenizer.nextToken();
-                                                subdirDate = tokenizer.nextToken() + "_" + tokenizer.nextToken();
-                                            }
-                                        }
-                                    }
-									activity.setSubDirDate(subdirDate);
+									activity.setSubDirDate(FORMATTER.format(currentDate));
 								}
 
 								if (activity.isTimerRunning()) {

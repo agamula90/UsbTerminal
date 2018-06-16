@@ -2,16 +2,21 @@ package com.ismet.usbterminal.mainscreen.tasks;
 
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v4.util.Pair;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.data.AppData;
 import com.ismet.usbterminal.data.PrefConstants;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.services.PullStateManagingService;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, String> {
 
@@ -22,13 +27,47 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
     private final boolean autoPpm;
 
     private final WeakReference<EToCMainActivity> weakActivity;
+    private boolean useRecentDirectory;
 
     public SendDataToUsbTask(List<String> simpleCommands, List<String> loopCommands,
-                             boolean autoPpm, EToCMainActivity activity) {
+                             boolean autoPpm, EToCMainActivity activity, boolean useRecentDirectory) {
         this.simpleCommands = simpleCommands;
         this.loopCommands = loopCommands;
         this.autoPpm = autoPpm;
         this.weakActivity = new WeakReference<>(activity);
+        this.useRecentDirectory = useRecentDirectory;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        EToCMainActivity activity = weakActivity.get();
+        if (activity != null && useRecentDirectory) {
+
+            int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
+            //cal direcory
+            if (ppm != -1) {
+                File directory = new File(Environment.getExternalStorageDirectory(), AppData.CAL_FOLDER_NAME);
+                File directoriesInside[] = directory.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.isDirectory();
+                    }
+                });
+                if (directoriesInside != null && directoriesInside.length > 0) {
+                    File recentDir = null;
+                    for (File dir : directoriesInside) {
+                        if (recentDir == null || dir.lastModified() > recentDir.lastModified()) {
+                            recentDir = dir;
+                        }
+                    }
+                    String name = recentDir.getName();
+                    StringTokenizer tokenizer = new StringTokenizer(name, "_");
+                    tokenizer.nextToken();
+                    activity.setSubDirDate(tokenizer.nextToken() + "_" + tokenizer.nextToken());
+                }
+            }
+        }
     }
 
     @Override

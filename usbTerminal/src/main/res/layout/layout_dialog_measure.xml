@@ -246,6 +246,16 @@
             android:text="Save As Calibration file"
             android:textSize="12sp"/>
 
+        <CheckBox
+            android:id="@+id/chkUseRecentDirectory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginTop="10dip"
+            android:checked="false"
+            android:text="Save to recent directory"
+            android:textSize="12sp"/>
+
         <LinearLayout
             android:id="@+id/llkppm"
             android:layout_width="wrap_content"
