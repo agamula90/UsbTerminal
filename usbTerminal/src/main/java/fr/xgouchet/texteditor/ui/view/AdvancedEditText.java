@@ -18,7 +18,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Scroller;
 
-import com.ismet.usbterminal.R;
+import com.ismet.usbterminalnew.R;
 
 import fr.xgouchet.texteditor.common.Settings;
 import static fr.xgouchet.texteditor.common.Constants.*;

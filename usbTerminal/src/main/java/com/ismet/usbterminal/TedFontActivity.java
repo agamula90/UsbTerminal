@@ -8,7 +8,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.ismet.usbterminal.R;
+import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 
 import java.io.File;

@@ -3,7 +3,7 @@ package fr.xgouchet.texteditor.undo;
 import android.text.Editable;
 import android.util.Log;
 
-import com.ismet.usbterminal.BuildConfig;
+import com.ismet.usbterminalnew.BuildConfig;
 
 import static fr.xgouchet.texteditor.common.Constants.TAG;
 

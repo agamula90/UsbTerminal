@@ -15,7 +15,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.ismet.usbterminal.R;
+import com.ismet.usbterminalnew.R;
 
 import java.io.File;
 import java.util.ArrayList;

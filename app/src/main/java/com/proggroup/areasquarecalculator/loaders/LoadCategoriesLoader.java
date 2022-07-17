@@ -1,7 +1,7 @@
 package com.proggroup.areasquarecalculator.loaders;
 
 import android.content.res.Resources;
-import android.support.v4.content.AsyncTaskLoader;
+import androidx.loader.content.AsyncTaskLoader;
 
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;

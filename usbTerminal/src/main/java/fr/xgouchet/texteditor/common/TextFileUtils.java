@@ -15,7 +15,7 @@ import org.mozilla.universalchardet.UniversalDetector;
 import android.content.Context;
 import android.util.Log;
 
-import com.ismet.usbterminal.BuildConfig;
+import com.ismet.usbterminalnew.BuildConfig;
 import static fr.xgouchet.texteditor.common.Constants.*;
 
 /**

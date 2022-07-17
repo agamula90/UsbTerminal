@@ -7,7 +7,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
-import com.ismet.usbterminal.BuildConfig;
+import com.ismet.usbterminalnew.BuildConfig;
 import static fr.xgouchet.texteditor.common.Constants.*;
 
 /**

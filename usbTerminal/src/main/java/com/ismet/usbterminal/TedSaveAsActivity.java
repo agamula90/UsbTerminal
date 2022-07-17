@@ -9,7 +9,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.ismet.usbterminal.R;
+import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.utils.RootDirectoryHandleUtils;
 
 import java.io.File;

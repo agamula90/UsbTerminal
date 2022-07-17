@@ -3,7 +3,7 @@ package com.proggroup.areasquarecalculator.fragments;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
