@@ -49,12 +49,37 @@
         <!-- android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|fontScale|screenSize|smallestScreenSize"
              -->
 
+        <!--
         <activity
             android:name="com.ismet.usbterminal.mainscreen.EToCMainActivity"
             android:screenOrientation="landscape"
             android:theme="@style/AppThemeCompat"
             android:windowSoftInputMode="stateHidden|adjustResize" >
 
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!- -<action android:name="android.intent.action.VIEW" /> - ->
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <!- -<category android:name="android.intent.category.DEFAULT" /> - ->
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+        </activity> -->
+
+        <activity
+            android:name="com.ismet.usbterminal.MainActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppThemeCompat"
+            android:windowSoftInputMode="stateHidden|adjustResize"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

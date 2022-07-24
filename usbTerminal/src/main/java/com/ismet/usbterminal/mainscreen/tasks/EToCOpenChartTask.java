@@ -3,6 +3,7 @@ package com.ismet.usbterminal.mainscreen.tasks;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
@@ -14,11 +15,15 @@ import java.lang.ref.WeakReference;
 
 public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 
-	private final WeakReference<EToCMainActivity> weakActivity;
+	private final WeakReference<MainActivity> weakActivity;
 
 	public EToCOpenChartTask(EToCMainActivity activity) {
-		this.weakActivity = new WeakReference<>(activity);
+		this.weakActivity = new WeakReference<>(null);
 	}
+
+    public EToCOpenChartTask(MainActivity activity) {
+        this.weakActivity = new WeakReference<>(activity);
+    }
 
 	@Override
 	protected String doInBackground(String... params) {

@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils;
@@ -171,7 +172,114 @@ public class GraphPopulatorUtils {
 		return mChartView;
 	}
 
-	public static Intent createTimeChart(EToCMainActivity activity) {
+    public static GraphData createXYChart(int mins, int secs, MainActivity activity) {
+        String[] titles = new String[]{"ppm", "ppm", "ppm"};// ,"","" };//
+
+        double[] xvArray = new double[1];
+        double[] yvArray = new double[1];
+
+        List<double[]> x = new ArrayList<>();
+        for (int i = 0; i < titles.length; i++) {
+            x.add(xvArray);
+        }
+
+        List<double[]> values = new ArrayList<double[]>();
+
+        values.add(yvArray);
+
+        int[] colors = new int[]{Color.BLACK, Color.RED, Color.BLUE};
+        PointStyle[] styles = new PointStyle[]{PointStyle.CIRCLE, PointStyle.CIRCLE, PointStyle
+                .CIRCLE};
+        XYMultipleSeriesRenderer renderer = buildRenderer(colors, styles);
+        renderer.setPointSize(0f);
+        int length = renderer.getSeriesRendererCount();
+        for (int i = 0; i < length; i++) {
+            XYSeriesRenderer r = (XYSeriesRenderer) renderer.getSeriesRendererAt(i);
+            r.setLineWidth(1.5f);
+            r.setFillPoints(false);
+            r.setDisplayChartValues(false);
+        }
+
+        int[] xlables = new int[4];
+        int m = 0;
+        for (int i = 0; i < 4; i++) {
+            xlables[i] = m;
+            m = m + mins;
+        }
+
+        // String[] xlables={"0","5","10","15"};
+
+        int j = 0;
+        for (int i = 0; i < xlables.length; i++) {
+            if (xlables[i] == 0) {
+                renderer.addXTextLabel(j, "");
+            } else {
+                renderer.addXTextLabel(j, "" + xlables[i]);
+            }
+
+            j = j + ((mins * 60) / secs);
+        }
+
+        double maxX = 3 * ((mins * 60) / secs);
+
+        setChartSettings(renderer, "", "minutes", "ppm", 0, maxX, 0, 10, Color.LTGRAY, Color
+                .WHITE);
+
+        renderer = initRendererXYLabels(renderer);
+
+        XYMultipleSeriesDataset seriesDataset = buildDataSet(titles, x, values);
+
+        String[] types = new String[]{CubicLineChart.TYPE, CubicLineChart.TYPE, CubicLineChart
+                .TYPE};// };
+
+        Intent intent = ChartFactory.getCombinedXYChartIntent(activity, seriesDataset, renderer,
+                types, "Weather parameters");
+
+        renderer.setScale(1);
+
+        XYSeries currentSeries = seriesDataset.getSeriesAt(0);
+
+        //TODO set fields
+        // renderer - renderer
+        // seriesDataset - currentdataset
+        // xySeries - currentSeries
+
+        //TODO can get chart from intent
+        //AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
+
+        return new GraphData(renderer, seriesDataset, intent, currentSeries);
+    }
+
+    public static GraphicalView attachXYChartIntoLayout(MainActivity activity,
+                                                        AbstractChart mChart) {
+        final LinearLayout chartLayout = (LinearLayout) activity.findViewById(R.id.chart);
+        final LinearLayout allChartsLayout = (LinearLayout) activity.findViewById(R.id
+                .all_charts_layout);
+
+        LinearLayout topContainer = (LinearLayout) activity.findViewById(R.id.top_container);
+
+        int minHeight = topContainer.getMinimumHeight();
+
+        if (minHeight == 0) {
+            View textBelow = activity.findViewById(R.id.scroll_below_text);
+
+            AutoExpandKeyboardUtils.expand(activity, topContainer, activity.findViewById(R.id
+                    .bottom_fragment), activity.getToolbar() ,textBelow);
+            allChartsLayout.getLayoutParams().height = topContainer.getMinimumHeight();
+        }
+
+        GraphicalView mChartView = new GraphicalView(activity, mChart);
+        chartLayout.removeAllViews();
+        chartLayout.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
+                .MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+        mChartView.repaint();
+
+        // TODO set fields
+        // mChartView - mChartView
+        return mChartView;
+    }
+
+	public static Intent createTimeChart(MainActivity activity) {
 		final long HOUR = 3600 * 1000;
 
 		final long DAY = HOUR * 24;

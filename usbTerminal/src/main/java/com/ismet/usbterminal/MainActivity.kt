@@ -1,0 +1,3175 @@
+package com.ismet.usbterminal
+
+import android.annotation.TargetApi
+import android.app.AlertDialog
+import android.app.Dialog
+import android.content.*
+import android.content.res.Configuration
+import android.graphics.Color
+import android.hardware.usb.UsbManager
+import android.os.*
+import android.preference.PreferenceManager
+import android.text.Editable
+import android.text.TextUtils
+import android.text.TextWatcher
+import android.util.Log
+import android.util.SparseBooleanArray
+import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.View.OnLongClickListener
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.*
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.ismet.usbterminal.data.*
+import com.ismet.usbterminal.mainscreen.EToCMainHandler
+import com.ismet.usbterminal.mainscreen.EToCMainUsbReceiver
+import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
+import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
+import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
+import com.ismet.usbterminal.mainscreen.tasks.EToCOpenChartTask
+import com.ismet.usbterminal.mainscreen.tasks.SendDataToUsbTask
+import com.ismet.usbterminal.services.PullStateManagingService
+import com.ismet.usbterminal.services.UsbService
+import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
+import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
+import com.ismet.usbterminal.utils.GraphPopulatorUtils
+import com.ismet.usbterminal.utils.Utils
+import com.ismet.usbterminalnew.BuildConfig
+import com.ismet.usbterminalnew.R
+import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
+import com.proggroup.areasquarecalculator.utils.ToastUtils
+import de.neofonie.mobile.app.android.widget.crouton.Crouton
+import de.neofonie.mobile.app.android.widget.crouton.Style
+import fr.xgouchet.androidlib.data.FileUtils
+import fr.xgouchet.androidlib.ui.Toaster
+import fr.xgouchet.androidlib.ui.activity.ActivityDecorator
+import fr.xgouchet.texteditor.common.Constants
+import fr.xgouchet.texteditor.common.RecentFiles
+import fr.xgouchet.texteditor.common.Settings
+import fr.xgouchet.texteditor.common.TextFileUtils
+import fr.xgouchet.texteditor.ui.view.AdvancedEditText
+import fr.xgouchet.texteditor.undo.TextChangeWatcher
+import org.achartengine.GraphicalView
+import org.achartengine.chart.AbstractChart
+import org.achartengine.model.XYMultipleSeriesDataset
+import org.achartengine.model.XYSeries
+import org.achartengine.renderer.XYMultipleSeriesRenderer
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.net.URISyntaxException
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
+class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
+    /*
+	 * Notifications from UsbService will be received here.
+	 */
+    private val mUsbReceiver: BroadcastReceiver = EToCMainUsbReceiver(this)
+
+    /**
+     * the path of the file currently opened
+     */
+    private var mCurrentFilePath: String? = null
+
+    /**
+     * the name of the file currently opened
+     */
+    private var mCurrentFileName: String? = null
+
+    /**
+     * is dirty ?
+     */
+    private var mDirty = false
+
+    /**
+     * is read only
+     */
+    private var mReadOnly = false
+
+    /**
+     * Undo watcher
+     */
+    private var mWatcher: TextChangeWatcher? = null
+    private var mInUndo = false
+    private var mWarnedShouldQuit = false
+    private var mDoNotBackup = false
+
+    /**
+     * are we in a post activity result ?
+     */
+    private var mReadIntent = false
+
+    /**
+     * the text editor
+     */
+    private lateinit var mAdvancedEditText: AdvancedEditText
+    private lateinit var mHandler: Handler
+    private var mIsUsbConnected = false
+
+    //String chart_time = "";
+    // String filename = "";
+    var countMeasure = 0
+        private set
+    var oldCountMeasure = 0
+        private set
+    var isTimerRunning = false
+    var readingCount = 0
+        private set
+
+    // int idx_count = 0;
+    var chartIdx = 0
+    var chartDate = ""
+    var subDirDate: String? = null
+    private val mMapChartIndexToDate: MutableMap<Int, String> = HashMap()
+    lateinit var prefs: SharedPreferences
+    lateinit var currentSeries: XYSeries
+    lateinit var chartView: GraphicalView
+    private lateinit var mGraphSeriesDataset: XYMultipleSeriesDataset
+    lateinit var renderer: XYMultipleSeriesRenderer
+    var chartSeries: XYSeries? = null
+        private set
+    private lateinit var usbDeviceConnection: UsbDeviceConnection
+    private var usbDevice: UsbDevice? = null
+
+    //private CountDownTimer ctimer;
+    private lateinit var mExecutor: ExecutorService
+    private var mEToCOpenChartTask: EToCOpenChartTask? = null
+    private var mSendDataToUsbTask: SendDataToUsbTask? = null
+    private var mRunnable: Runnable? = null
+    lateinit var txtOutput: TextView
+    lateinit var scrollView: ScrollView
+    private lateinit var mButtonOn1: Button
+    private lateinit var mButtonOn2: Button
+    private lateinit var mButtonOn3: Button
+    private lateinit var mSendButton: Button
+    private lateinit var mButtonClear: Button
+    private lateinit var mButtonMeasure: Button
+    private lateinit var mPower: Button
+    private lateinit var mTemperature: TextView
+    private lateinit var mCo2: TextView
+    private lateinit var mTemperatureBackground: View
+    private lateinit var mCo2Background: View
+    private lateinit var mExportLayout: LinearLayout
+    private lateinit var mMarginLayout: LinearLayout
+    private var mTemperatureData: TemperatureData? = null
+    private var mTemperatureShift = 0
+    private var mLastTimePressed: Long = 0
+    private var mReportDate: Date? = null
+    private val mAlertDialog: Dialog? = null
+    var isPowerPressed = false
+        private set
+    lateinit var powerCommandsFactory: PowerCommandsFactory
+
+    /**
+     * @see android.app.Activity.onCreate
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        //        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState)
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onCreate")
+        mExecutor = Executors.newSingleThreadExecutor()
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        Settings.updateFromPreferences(
+            getSharedPreferences(
+                Constants.PREFERENCES_NAME,
+                MODE_PRIVATE
+            )
+        )
+        loadPreferencesFromLocalData()
+        mHandler = EToCMainHandler(this)
+
+        //
+        mReadIntent = true
+        mExportLayout = exportLayout
+        mMarginLayout = findViewById<View>(R.id.margin_layout) as LinearLayout
+
+        // editor
+        mAdvancedEditText = findViewById<View>(R.id.editor) as AdvancedEditText
+        mAdvancedEditText.addTextChangedListener(this)
+        mAdvancedEditText.updateFromSettings()
+        mWatcher = TextChangeWatcher()
+        mWarnedShouldQuit = false
+        mDoNotBackup = false
+        txtOutput = findViewById<View>(R.id.output) as TextView
+        scrollView = findViewById<View>(R.id.mScrollView) as ScrollView
+        mPower = findViewById<View>(R.id.power) as Button
+        initPowerAccordToItState()
+
+        /*mPower.setOnLongClickListener(new OnLongClickListener() {
+
+			@Override
+			public boolean onLongClick(View v) {
+				switch (mPowerState) {
+					case PowerState.OFF:
+						v.setEnabled(false);
+						powerOn();
+						//simulateClick2();
+						break;
+					case PowerState.ON:
+						v.setEnabled(false);
+						powerOff();
+						//simulateClick1();
+						break;
+				}
+
+				return true;
+			}
+		});*/mPower.setOnClickListener { v ->
+            when (powerCommandsFactory.currentPowerState()) {
+                PowerState.OFF -> {
+                    v.isEnabled = false
+                    powerOn()
+                }
+                PowerState.ON -> {
+                    v.isEnabled = false
+                    powerOff()
+                }
+            }
+        }
+
+        /*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
+
+            private String command;
+
+            @Override
+            public void onPrePullStopped() {
+                String powerOnName = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
+                        .POWER_ON_NAME_DEFAULT);
+                String powerOffName = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
+                        .POWER_OFF_NAME_DEFAULT);
+
+                String s = mPower.getTag().toString();
+
+                boolean powerOn;
+
+                command = "";
+
+                if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
+                    mPower.setText(powerOffName);
+                    mPower.setTag(PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase());
+                    powerOn = true;
+                    command = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
+                            .POWER_ON_COMMAND_DEFAULT);
+                } else {
+                    mPower.setText(powerOnName);
+                    mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
+                    powerOn = false;
+                    command = mPrefs.getString(PrefConstants.POWER_OFF, PrefConstants
+                            .POWER_OFF_NAME_DEFAULT);
+                }
+
+                mPowerState = powerOn ? PowerState.ON : PowerState.OFF;
+            }
+
+            @Override
+            public void onPostPullStopped() {
+                sendCommand(command);
+            }
+
+            @Override
+            public void onPostPullStarted() {
+
+            }
+        }));
+
+        mPower.setOnLongClickListener(new OnLongClickListener() {
+
+            private EditText editOn, editOff, editOn1, editOff1;
+
+            @Override
+            public boolean onLongClick(View v) {
+                AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
+                        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
+
+                    @Override
+                    public void onInitLayout(View contentView) {
+                        editOn = (EditText) contentView.findViewById(R.id.editOn);
+                        editOff = (EditText) contentView.findViewById(R.id.editOff);
+                        editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
+                        editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
+
+                        String str_on_name = mPrefs.getString(PrefConstants.POWER_ON_NAME,
+                                PrefConstants.POWER_ON_NAME_DEFAULT);
+                        String str_off_name = mPrefs.getString(PrefConstants.POWER_OFF_NAME,
+                                PrefConstants.POWER_OFF_NAME_DEFAULT);
+
+                        String str_on = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
+                                .POWER_ON_COMMAND_DEFAULT);
+                        String str_off = mPrefs.getString(PrefConstants.POWER_OFF, PrefConstants
+                                .POWER_OFF_COMMAND_DEFAULT);
+
+                        editOn.setText(str_on);
+                        editOff.setText(str_off);
+                        editOn1.setText(str_on_name);
+                        editOff1.setText(str_off_name);
+                    }
+                };
+
+                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
+                        () {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+
+                        String strOn = editOn.getText().toString();
+                        String strOff = editOff.getText().toString();
+                        String strOn1 = editOn1.getText().toString();
+                        String strOff1 = editOff1.getText().toString();
+
+                        if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
+                                strOff1.equals("")) {
+                            Toast.makeText(MainActivity.this, "Please enter all values", Toast
+                                    .LENGTH_LONG).show();
+                            return;
+                        }
+
+                        Editor edit = mPrefs.edit();
+                        edit.putString(PrefConstants.POWER_ON, strOn);
+                        edit.putString(PrefConstants.POWER_OFF, strOff);
+                        edit.putString(PrefConstants.POWER_ON_NAME, strOn1);
+                        edit.putString(PrefConstants.POWER_OFF_NAME, strOff1);
+                        edit.apply();
+
+                        String a = mPrefs.getString(PrefConstants.POWER_ON_NAME, "asd");
+
+                        String s = mPower.getTag().toString();
+                        if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
+                            mPower.setText(strOn1);
+                        } else {
+                            mPower.setText(strOff1);
+                        }
+
+                        dialog.cancel();
+                    }
+                };
+
+                DialogInterface.OnClickListener cancelListener = new DialogInterface
+                        .OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        InputMethodManager inputManager = (InputMethodManager) getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
+
+                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
+                                .getCurrentFocus().getWindowToken(), 0);
+                        dialog.cancel();
+                    }
+                };
+
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(MainActivity.this, R.layout
+                        .layout_dialog_on_off, "Set On/Off commands", okListener, cancelListener,
+                        initLayoutListener).create().show();
+
+                return true;
+            }
+        });
+*/mTemperature = findViewById<View>(R.id.temperature) as TextView
+        mTemperatureBackground = findViewById(R.id.temperature_background)
+        changeBackground(mTemperatureBackground, false)
+        mCo2 = findViewById<View>(R.id.co2) as TextView
+        mCo2Background = findViewById(R.id.co2_background)
+        changeBackground(mCo2Background, false)
+
+        // Timer mTimer = new Timer();
+        // mTimer.scheduleAtFixedRate(new TimerTask() {
+        //
+        // @Override
+        // public void run() {
+        // // TODO Auto-generated method stub
+        // runOnUiThread(new Runnable() {
+        //
+        // @Override
+        // public void run() {
+        // // TODO Auto-generated method stub
+        // mTxtOutput.append("asdf\n");
+        // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
+        // }
+        // });
+        // }
+        // }, 1000, 1000);
+        mButtonOn1 = findViewById<View>(R.id.buttonOn1) as Button
+        mButtonOn1.text = prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
+        mButtonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+        mButtonOn1.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
+            private var command: String? = null
+            override fun onPrePullStopped() {
+                val str_on_name1t =
+                    prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
+                val str_off_name1t =
+                    prefs.getString(PrefConstants.OFF_NAME1, PrefConstants.OFF_NAME_DEFAULT)
+                val s = mButtonOn1.tag.toString()
+                command = "" //"/5H1000R";
+                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                    command = prefs.getString(PrefConstants.ON1, "")
+                    mButtonOn1.text = str_off_name1t
+                    mButtonOn1.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
+                } else {
+                    command = prefs.getString(PrefConstants.OFF1, "")
+                    mButtonOn1.text = str_on_name1t
+                    mButtonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+                }
+            }
+
+            override fun onPostPullStopped() {
+                sendCommand(command)
+            }
+
+            override fun onPostPullStarted() {}
+        }))
+        mButtonOn1.setOnLongClickListener(object : OnLongClickListener {
+            private lateinit var editOn: EditText
+            private lateinit var editOff: EditText
+            private lateinit var editOn1: EditText
+            private lateinit var editOff1: EditText
+            override fun onLongClick(v: View): Boolean {
+                val initLayoutListener =
+                    OnInitLayoutListener { contentView ->
+                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
+                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
+                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
+                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
+                        changeTextsForButtons(contentView)
+                        val str_on = prefs.getString(PrefConstants.ON1, "")
+                        val str_off = prefs.getString(PrefConstants.OFF1, "")
+                        val str_on_name = prefs.getString(
+                            PrefConstants.ON_NAME1,
+                            PrefConstants.ON_NAME_DEFAULT
+                        )
+                        val str_off_name = prefs.getString(
+                            PrefConstants.OFF_NAME1,
+                            PrefConstants.OFF_NAME_DEFAULT
+                        )
+                        editOn.setText(str_on)
+                        editOff.setText(str_off)
+                        editOn1.setText(str_on_name)
+                        editOff1.setText(str_off_name)
+                    }
+                val okListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        val strOn = editOn.text.toString()
+                        val strOff = editOff.text.toString()
+                        val strOn1 = editOn1.text.toString()
+                        val strOff1 = editOff1.text.toString()
+                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
+                            val toast = Toast.makeText(
+                                this@MainActivity, "Please enter all"
+                                        + " values", Toast.LENGTH_LONG
+                            )
+                            ToastUtils.wrap(toast)
+                            toast.show()
+                            return@OnClickListener
+                        }
+                        val edit = prefs.edit()
+                        edit.putString(PrefConstants.ON1, strOn)
+                        edit.putString(PrefConstants.OFF1, strOff)
+                        edit.putString(PrefConstants.ON_NAME1, strOn1)
+                        edit.putString(PrefConstants.OFF_NAME1, strOff1)
+                        edit.apply()
+                        val s = mButtonOn1.tag.toString()
+                        if (s == "on") {
+                            mButtonOn1.text = strOn1
+                        } else {
+                            mButtonOn1.text = strOff1
+                        }
+                        dialog.cancel()
+                    }
+                val cancelListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        dialog.cancel()
+                    }
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
+                    this@MainActivity,
+                    R.layout.layout_dialog_on_off,
+                    "Set On/Off " + "commands",
+                    okListener,
+                    cancelListener,
+                    initLayoutListener
+                ).create().show()
+                return true
+            }
+        })
+        mButtonOn2 = findViewById<View>(R.id.buttonOn2) as Button
+        mButtonOn2.text = prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
+        mButtonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+        EToCApplication.getInstance().currentTemperatureRequest =
+            prefs.getString(PrefConstants.ON2, "/5H750R")
+        mButtonOn2.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
+            private var command: String? = null
+            override fun onPrePullStopped() {
+                val str_on_name2t =
+                    prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
+                val str_off_name2t =
+                    prefs.getString(PrefConstants.OFF_NAME2, PrefConstants.OFF_NAME_DEFAULT)
+                val s = mButtonOn2.tag.toString()
+                command = "" //"/5H1000R";
+                val defaultValue: String
+                val prefName: String
+                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                    prefName = PrefConstants.OFF2
+                    defaultValue = "/5H0000R"
+                    command = prefs.getString(PrefConstants.ON2, "")
+                    mButtonOn2.text = str_off_name2t
+                    mButtonOn2.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
+                } else {
+                    prefName = PrefConstants.ON2
+                    defaultValue = "/5H750R"
+                    command = prefs.getString(PrefConstants.OFF2, "")
+                    mButtonOn2.text = str_on_name2t
+                    mButtonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+                    mButtonOn2.alpha = 0.6f
+                }
+                EToCApplication.getInstance().currentTemperatureRequest =
+                    prefs.getString(prefName, defaultValue)
+            }
+
+            override fun onPostPullStopped() {
+                sendCommand(command)
+            }
+
+            override fun onPostPullStarted() {
+                val tag = mButtonOn2.tag.toString()
+                mButtonOn2.post {
+                    if (tag == PrefConstants.ON_NAME_DEFAULT.lowercase(
+                            Locale.getDefault()
+                        )
+                    ) {
+                        mButtonOn2.alpha = 1f
+                        mButtonOn2.setBackgroundResource(R.drawable.button_drawable)
+                    } else {
+                        mButtonOn2.alpha = 1f
+                        mButtonOn2.setBackgroundResource(R.drawable.power_on_drawable)
+                    }
+                }
+            }
+        }))
+        mButtonOn2.setOnLongClickListener(object : OnLongClickListener {
+            private lateinit var editOn: EditText
+            private lateinit var editOff: EditText
+            private lateinit var editOn1: EditText
+            private lateinit var editOff1: EditText
+            override fun onLongClick(v: View): Boolean {
+                val initLayoutListener =
+                    OnInitLayoutListener { contentView ->
+                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
+                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
+                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
+                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
+                        changeTextsForButtons(contentView)
+                        val str_on_name = prefs.getString(
+                            PrefConstants.ON_NAME2,
+                            PrefConstants.ON_NAME_DEFAULT
+                        )
+                        val str_off_name = prefs.getString(
+                            PrefConstants.OFF_NAME2,
+                            PrefConstants.OFF_NAME_DEFAULT
+                        )
+                        val str_on = prefs.getString(PrefConstants.ON2, "")
+                        val str_off = prefs.getString(PrefConstants.OFF2, "")
+                        editOn.setText(str_on)
+                        editOff.setText(str_off)
+                        editOn1.setText(str_on_name)
+                        editOff1.setText(str_off_name)
+                    }
+                val okListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        val strOn = editOn.text.toString()
+                        val strOff = editOff.text.toString()
+                        val strOn1 = editOn1.text.toString()
+                        val strOff1 = editOff1.text.toString()
+                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
+                            val toast = Toast.makeText(
+                                this@MainActivity, "Please enter all"
+                                        + " values", Toast.LENGTH_LONG
+                            )
+                            ToastUtils.wrap(toast)
+                            toast.show()
+                            return@OnClickListener
+                        }
+                        val edit = prefs.edit()
+                        edit.putString(PrefConstants.ON2, strOn)
+                        edit.putString(PrefConstants.OFF2, strOff)
+                        edit.putString(PrefConstants.ON_NAME2, strOn1)
+                        edit.putString(PrefConstants.OFF_NAME2, strOff1)
+                        edit.apply()
+                        val s = mButtonOn2.tag.toString()
+                        val defaultValue: String
+                        val prefName: String
+                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                            prefName = PrefConstants.ON2
+                            defaultValue = "/5H750R"
+                            mButtonOn2.text = strOn1
+                        } else {
+                            prefName = PrefConstants.OFF2
+                            defaultValue = "/5H0000R"
+                            mButtonOn2.text = strOff1
+                        }
+                        EToCApplication.getInstance().currentTemperatureRequest = prefs
+                            .getString(prefName, defaultValue)
+                        dialog.cancel()
+                    }
+                val cancelListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        dialog.cancel()
+                    }
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
+                    this@MainActivity,
+                    R.layout.layout_dialog_on_off,
+                    "Set On/Off commands",
+                    okListener,
+                    cancelListener,
+                    initLayoutListener
+                ).create().show()
+                return true
+            }
+        })
+        mButtonOn3 = findViewById<View>(R.id.buttonPpm) as Button
+        //final String str_off_name1 = mPrefs.getString("off_name1", "");
+        mButtonOn3.text = prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
+        mButtonOn3.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+        mButtonOn3.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
+            private var command: String? = null
+            override fun onPrePullStopped() {
+                val str_on_name3 =
+                    prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
+                val str_off_name3 =
+                    prefs.getString(PrefConstants.OFF_NAME3, PrefConstants.OFF_NAME_DEFAULT)
+                val s = mButtonOn3.tag.toString()
+                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                    mButtonOn3.text = str_off_name3
+                    mButtonOn3.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
+                    command = prefs.getString(PrefConstants.ON3, "")
+                } else {
+                    mButtonOn3.text = str_on_name3
+                    mButtonOn3.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+                    command = prefs.getString(PrefConstants.OFF3, "")
+                }
+            }
+
+            override fun onPostPullStopped() {
+                sendCommand(command)
+            }
+
+            override fun onPostPullStarted() {}
+        }))
+        mButtonOn3.setOnLongClickListener(object : OnLongClickListener {
+            private lateinit var editOn: EditText
+            private lateinit var editOff: EditText
+            private lateinit var editOn1: EditText
+            private lateinit var editOff1: EditText
+            override fun onLongClick(v: View): Boolean {
+                val initLayoutListener =
+                    OnInitLayoutListener { contentView ->
+                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
+                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
+                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
+                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
+                        changeTextsForButtons(contentView)
+                        val str_on_name = prefs.getString(
+                            PrefConstants.ON_NAME3,
+                            PrefConstants.ON_NAME_DEFAULT
+                        )
+                        val str_off_name = prefs.getString(
+                            PrefConstants.OFF_NAME3,
+                            PrefConstants.OFF_NAME_DEFAULT
+                        )
+                        val str_on = prefs.getString(PrefConstants.ON3, "")
+                        val str_off = prefs.getString(PrefConstants.OFF3, "")
+                        editOn.setText(str_on)
+                        editOff.setText(str_off)
+                        editOn1.setText(str_on_name)
+                        editOff1.setText(str_off_name)
+                    }
+                val okListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        val strOn = editOn.text.toString()
+                        val strOff = editOff.text.toString()
+                        val strOn1 = editOn1.text.toString()
+                        val strOff1 = editOff1.text.toString()
+                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
+                            val toast = Toast.makeText(
+                                this@MainActivity, "Please enter all"
+                                        + " values", Toast.LENGTH_LONG
+                            )
+                            ToastUtils.wrap(toast)
+                            toast.show()
+                            return@OnClickListener
+                        }
+                        val edit = prefs.edit()
+                        edit.putString(PrefConstants.ON3, strOn)
+                        edit.putString(PrefConstants.OFF3, strOff)
+                        edit.putString(PrefConstants.ON_NAME3, strOn1)
+                        edit.putString(PrefConstants.OFF_NAME3, strOff1)
+                        edit.apply()
+                        val s = mButtonOn3.tag.toString()
+                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                            mButtonOn3.text = strOn1
+                        } else {
+                            mButtonOn3.text = strOff1
+                        }
+                        dialog.cancel()
+                    }
+                val cancelListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        dialog.cancel()
+                    }
+                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
+                    this@MainActivity,
+                    R.layout.layout_dialog_on_off,
+                    "Set On/Off commands",
+                    okListener,
+                    cancelListener,
+                    initLayoutListener
+                ).create().show()
+                return true
+            }
+        })
+        mSendButton = findViewById<View>(R.id.buttonSend) as Button
+        mSendButton.setOnClickListener(AutoPullResolverListener(object :
+            AutoPullResolverCallback {
+            override fun onPrePullStopped() {
+                //				if (mIsTimerRunning) {
+                //					Toast.makeText(MainActivity.this,
+                //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
+                //							.show();
+                //				} else {
+                //					sendMessage();
+                //				}
+            }
+
+            override fun onPostPullStopped() {
+                sendMessage()
+            }
+
+            override fun onPostPullStarted() {}
+        }))
+        mAdvancedEditText.setOnEditorActionListener { v, actionId, event ->
+            var handled = false
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                // sendMessage();
+                handled = true
+            }
+            handled
+        }
+        mButtonClear = findViewById<View>(R.id.buttonClear) as Button
+        mButtonMeasure = findViewById<View>(R.id.buttonMeasure) as Button
+        mButtonClear.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View) {
+                if (isTimerRunning) {
+                    val toast = Toast.makeText(
+                        this@MainActivity, "Timer is running. Please"
+                                + " wait", Toast.LENGTH_SHORT
+                    )
+                    ToastUtils.wrap(toast)
+                    toast.show()
+                    return
+                }
+                val items = arrayOf<CharSequence>(
+                    "New Measure", "Tx", "LM", "Chart 1",
+                    "Chart 2", "Chart" + " 3"
+                )
+                val checkedItems = booleanArrayOf(false, false, false, false, false, false)
+                val mItemsChecked = SparseBooleanArray(checkedItems.size)
+                for (i in checkedItems.indices) {
+                    mItemsChecked.put(i, checkedItems[i])
+                }
+                val alert = AlertDialog.Builder(this@MainActivity)
+                alert.setTitle("Select items")
+                alert.setMultiChoiceItems(
+                    items, checkedItems
+                ) { dialog, which, isChecked -> mItemsChecked.put(which, isChecked) }
+                alert.setPositiveButton("Select/Clear", object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface, which: Int) {
+                        if (mItemsChecked[1]) {
+                            mAdvancedEditText.setText("")
+                        }
+                        if (mItemsChecked[2]) {
+                            txtOutput.text = ""
+                        }
+                        var isCleared = false
+                        if (mItemsChecked[3]) {
+                            // mTxtOutput.setText("");
+                            mGraphSeriesDataset.getSeriesAt(0).clear()
+                            //mChartView.repaint();
+                            isCleared = true
+                            if (mMapChartIndexToDate.containsKey(1)) {
+                                Utils.deleteFiles(mMapChartIndexToDate[1], "_R1")
+                            }
+                        }
+                        if (mItemsChecked[4]) {
+                            // mTxtOutput.setText("");
+                            mGraphSeriesDataset.getSeriesAt(1).clear()
+                            //mChartView.repaint();
+                            isCleared = true
+                            if (mMapChartIndexToDate.containsKey(2)) {
+                                Utils.deleteFiles(mMapChartIndexToDate[2], "_R2")
+                            }
+                        }
+                        if (mItemsChecked[5]) {
+                            // mTxtOutput.setText("");
+                            mGraphSeriesDataset.getSeriesAt(2).clear()
+                            //mChartView.repaint();
+                            isCleared = true
+                            if (mMapChartIndexToDate.containsKey(3)) {
+                                Utils.deleteFiles(mMapChartIndexToDate[3], "_R3")
+                            }
+                        }
+                        if (isCleared) {
+                            var existInitedGraphCurve = false
+                            for (i in 0 until mGraphSeriesDataset.seriesCount) {
+                                if (mGraphSeriesDataset.getSeriesAt(i).itemCount != 0) {
+                                    existInitedGraphCurve = true
+                                    break
+                                }
+                            }
+                            if (!existInitedGraphCurve) {
+                                GraphPopulatorUtils.clearYTextLabels(renderer)
+                            }
+                            chartView.repaint()
+                            //mRenderer.setLabelsTextSize(12);
+                        }
+                        if (mItemsChecked[0]) {
+                            clearData()
+                        }
+                        dialog.cancel()
+                    }
+                })
+                alert.setNegativeButton(
+                    "Close"
+                ) { dialog, which -> dialog.cancel() }
+                alert.create().show()
+            }
+        })
+        mButtonMeasure.setOnClickListener(object : View.OnClickListener {
+            lateinit var editDelay: EditText
+            lateinit var editDuration: EditText
+            lateinit var editKnownPpm: EditText
+            lateinit var editVolume: EditText
+            lateinit var editUserComment: EditText
+            lateinit var commandsEditText1: EditText
+            lateinit var commandsEditText2: EditText
+            lateinit var commandsEditText3: EditText
+            lateinit var chkAutoManual: CheckBox
+            lateinit var chkKnownPpm: CheckBox
+            lateinit var chkUseRecentDirectory: CheckBox
+            lateinit var llkppm: LinearLayout
+            lateinit var ll_user_comment: LinearLayout
+            lateinit var mRadioGroup: RadioGroup
+            lateinit var mRadio1: RadioButton
+            lateinit var mRadio2: RadioButton
+            lateinit var mRadio3: RadioButton
+            override fun onClick(v: View) {
+                /*if (mAdvancedEditText.getText().toString().isEmpty()) {
+	                Toast.makeText(MainActivity.this, "Please enter command", Toast
+                            .LENGTH_SHORT).show();
+                    return;
+                }*/
+                if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                    return
+                }
+                if (isTimerRunning) {
+                    val toast = Toast.makeText(
+                        this@MainActivity, "Timer is running. Please"
+                                + " wait", Toast.LENGTH_SHORT
+                    )
+                    ToastUtils.wrap(toast)
+                    toast.show()
+                    return
+                }
+                val arrSeries = mGraphSeriesDataset.series
+                var i = 0
+                var isChart1Clear = true
+                var isChart2Clear = true
+                var isChart3Clear = true
+                for (series in arrSeries) {
+                    if (series.itemCount > 0) {
+                        when (i) {
+                            0 -> isChart1Clear = false
+                            1 -> isChart2Clear = false
+                            2 -> isChart3Clear = false
+                            else -> {}
+                        }
+                    }
+                    i++
+                }
+                if (!isChart1Clear && !isChart2Clear && !isChart3Clear) {
+                    val toast = Toast.makeText(
+                        this@MainActivity, "No chart available." +
+                                " " +
+                                "Please clear " +
+                                "one of " + "the charts", Toast.LENGTH_SHORT
+                    )
+                    ToastUtils.wrap(toast)
+                    toast.show()
+                    return
+                }
+                v.isEnabled = false
+                val initLayoutListener =
+                    OnInitLayoutListener { contentView ->
+                        editDelay = contentView.findViewById<View>(R.id.editDelay) as EditText
+                        editDuration = contentView.findViewById<View>(R.id.editDuration) as EditText
+                        editKnownPpm = contentView.findViewById<View>(R.id.editKnownPpm) as EditText
+                        editVolume = contentView.findViewById<View>(R.id.editVolume) as EditText
+                        editUserComment =
+                            contentView.findViewById<View>(R.id.editUserComment) as EditText
+
+                        //chkAutoManual
+                        chkAutoManual =
+                            contentView.findViewById<View>(R.id.chkAutoManual) as CheckBox
+                        chkKnownPpm = contentView.findViewById<View>(R.id.chkKnownPpm) as CheckBox
+                        chkUseRecentDirectory =
+                            contentView.findViewById<View>(R.id.chkUseRecentDirectory) as CheckBox
+                        llkppm = contentView.findViewById<View>(R.id.llkppm) as LinearLayout
+                        ll_user_comment =
+                            contentView.findViewById<View>(R.id.ll_user_comment) as LinearLayout
+                        commandsEditText1 =
+                            contentView.findViewById<View>(R.id.commandsEditText1) as EditText
+                        commandsEditText2 =
+                            contentView.findViewById<View>(R.id.commandsEditText2) as EditText
+                        commandsEditText3 =
+                            contentView.findViewById<View>(R.id.commandsEditText3) as EditText
+                        mRadio1 = contentView.findViewById<View>(R.id.radio1) as RadioButton
+                        mRadio2 = contentView.findViewById<View>(R.id.radio2) as RadioButton
+                        mRadio3 = contentView.findViewById<View>(R.id.radio3) as RadioButton
+                        mRadioGroup = contentView.findViewById<View>(R.id.radio_group) as RadioGroup
+                        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+                        val duration_v =
+                            prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+                        val volume =
+                            prefs.getInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
+                        val kppm = prefs.getInt(PrefConstants.KPPM, -1)
+                        val user_comment = prefs.getString(PrefConstants.USER_COMMENT, "")
+                        editDelay.setText("" + delay_v)
+                        editDuration.setText("" + duration_v)
+                        editVolume.setText("" + volume)
+                        editUserComment.setText(user_comment)
+                        commandsEditText1.setText(
+                            prefs.getString(
+                                PrefConstants.MEASURE_FILE_NAME1,
+                                PrefConstants.MEASURE_FILE_NAME1_DEFAULT
+                            )
+                        )
+                        commandsEditText2.setText(
+                            prefs.getString(
+                                PrefConstants.MEASURE_FILE_NAME2,
+                                PrefConstants.MEASURE_FILE_NAME2_DEFAULT
+                            )
+                        )
+                        commandsEditText3.setText(
+                            prefs.getString(
+                                PrefConstants.MEASURE_FILE_NAME3,
+                                PrefConstants.MEASURE_FILE_NAME3_DEFAULT
+                            )
+                        )
+                        if (kppm != -1) {
+                            editKnownPpm.setText("" + kppm)
+                        }
+                        val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
+                        chkAutoManual.isChecked = isAuto
+                        chkKnownPpm.setOnCheckedChangeListener { buttonView, isChecked ->
+                            if (isChecked) {
+                                editKnownPpm.isEnabled = true
+                                llkppm.visibility = View.VISIBLE
+                            } else {
+                                editKnownPpm.isEnabled = false
+                                llkppm.visibility = View.GONE
+                            }
+                        }
+                    }
+                val okListener: DialogInterface.OnClickListener =
+                    object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface, which: Int) {
+                            v.isEnabled = true
+                            val inputManager =
+                                getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                            inputManager.hideSoftInputFromWindow(
+                                (dialog as AlertDialog)
+                                    .currentFocus!!.windowToken, 0
+                            )
+                            val strDelay = editDelay.text.toString()
+                            val strDuration = editDuration.text.toString()
+                            if (strDelay == "" || strDuration == "") {
+                                val toast = Toast.makeText(
+                                    this@MainActivity, "Please enter all"
+                                            + " values", Toast.LENGTH_LONG
+                                )
+                                ToastUtils.wrap(toast)
+                                toast.show()
+                                return
+                            }
+                            if (chkKnownPpm.isChecked) {
+                                val strkPPM = editKnownPpm.text.toString()
+                                if (strkPPM == "") {
+                                    val toast = Toast.makeText(
+                                        this@MainActivity, "Please " +
+                                                "enter" +
+                                                " ppm " +
+                                                "values", Toast.LENGTH_LONG
+                                    )
+                                    ToastUtils.wrap(toast)
+                                    toast.show()
+                                    return
+                                } else {
+                                    val kppm = strkPPM.toInt()
+                                    val edit = prefs.edit()
+                                    edit.putInt(PrefConstants.KPPM, kppm)
+                                    edit.apply()
+                                }
+                            } else {
+                                val edit = prefs.edit()
+                                edit.remove(PrefConstants.KPPM)
+                                edit.apply()
+                            }
+
+                            //else
+                            run {
+                                val str_uc = editUserComment.text.toString()
+                                if (str_uc == "") {
+                                    val toast = Toast.makeText(
+                                        this@MainActivity, "Please enter"
+                                                + " comments", Toast.LENGTH_LONG
+                                    )
+                                    ToastUtils.wrap(toast)
+                                    toast.show()
+                                    return
+                                } else {
+                                    val edit = prefs.edit()
+                                    edit.putString(
+                                        PrefConstants.USER_COMMENT,
+                                        str_uc
+                                    )
+                                    edit.apply()
+                                }
+                            }
+                            val strVolume = editVolume.text.toString()
+                            if (strVolume == "") {
+                                val toast = Toast.makeText(
+                                    this@MainActivity, "Please enter " +
+                                            "volume values", Toast.LENGTH_LONG
+                                )
+                                ToastUtils.wrap(toast)
+                                toast.show()
+                                return
+                            } else {
+                                val volume = strVolume.toInt()
+                                val edit = prefs.edit()
+                                edit.putInt(PrefConstants.VOLUME, volume)
+                                edit.apply()
+                            }
+                            val b = chkAutoManual.isChecked
+                            var edit = prefs.edit()
+                            edit.putBoolean(PrefConstants.IS_AUTO, b)
+                            edit.putBoolean(
+                                PrefConstants.SAVE_AS_CALIBRATION,
+                                chkKnownPpm.isChecked
+                            )
+                            edit.apply()
+                            val delay = strDelay.toInt()
+                            val duration = strDuration.toInt()
+                            if (delay == 0 || duration == 0) {
+                                val toast = Toast.makeText(
+                                    this@MainActivity, "zero is not " +
+                                            "allowed", Toast.LENGTH_LONG
+                                )
+                                ToastUtils.wrap(toast)
+                                toast.show()
+                                return
+                            } else {
+
+                                // resest so user can set new delay or
+                                // duration
+                                // if(countMeasures == 4){
+                                // oldCountMeasures=0;
+                                // countMeasures=0;
+                                // }
+                                if (countMeasure == 0) {
+                                    val graphData = GraphPopulatorUtils.createXYChart(
+                                        duration,
+                                        delay, this@MainActivity
+                                    )
+                                    renderer = graphData.renderer
+                                    mGraphSeriesDataset = graphData.seriesDataset
+                                    currentSeries = graphData.xySeries
+                                    val intent = graphData.intent
+                                    chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
+                                        this@MainActivity,
+                                        intent.extras!!["chart"] as AbstractChart?
+                                    )
+                                }
+                                countMeasure++
+                                edit = prefs.edit()
+                                edit.putInt(PrefConstants.DELAY, delay)
+                                edit.putInt(PrefConstants.DURATION, duration)
+                                edit.apply()
+                                val future = (duration * 60 * 1000).toLong()
+                                val delay_timer = (delay * 1000).toLong()
+                                if (mGraphSeriesDataset.getSeriesAt(0).itemCount == 0) {
+                                    chartIdx = 1
+                                    readingCount = 0
+                                    currentSeries = mGraphSeriesDataset.getSeriesAt(0)
+                                } else if (mGraphSeriesDataset.getSeriesAt(1).itemCount == 0) {
+                                    chartIdx = 2
+                                    readingCount = duration * 60 / delay
+                                    currentSeries = mGraphSeriesDataset.getSeriesAt(1)
+                                } else if (mGraphSeriesDataset.getSeriesAt(2).itemCount == 0) {
+                                    chartIdx = 3
+                                    readingCount = duration * 60
+                                    currentSeries = mGraphSeriesDataset.getSeriesAt(2)
+                                }
+                                val checkedId = mRadioGroup.checkedRadioButtonId
+                                if (mAdvancedEditText.text.toString() == "" && checkedId ==
+                                    -1
+                                ) {
+                                    val toast = Toast.makeText(
+                                        this@MainActivity, "Please enter"
+                                                + " command", Toast.LENGTH_SHORT
+                                    )
+                                    ToastUtils.wrap(toast)
+                                    toast.show()
+                                    return
+                                }
+                                val contentForUpload: String?
+                                val success: Boolean
+                                if (checkedId != -1) {
+                                    if (mRadio1.id == checkedId) {
+                                        contentForUpload = TextFileUtils.readTextFile(
+                                            File(
+                                                File(
+                                                    Environment.getExternalStorageDirectory(),
+                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
+                                                ),
+                                                commandsEditText1.text.toString()
+                                            )
+                                        )
+                                        success = true
+                                    } else if (mRadio2.id == checkedId) {
+                                        contentForUpload = TextFileUtils.readTextFile(
+                                            File(
+                                                File(
+                                                    Environment.getExternalStorageDirectory(),
+                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
+                                                ),
+                                                commandsEditText2.text.toString()
+                                            )
+                                        )
+                                        success = true
+                                    } else if (mRadio3.id == checkedId) {
+                                        contentForUpload = TextFileUtils.readTextFile(
+                                            File(
+                                                File(
+                                                    Environment.getExternalStorageDirectory(),
+                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
+                                                ),
+                                                commandsEditText3.text.toString()
+                                            )
+                                        )
+                                        success = true
+                                    } else {
+                                        contentForUpload = null
+                                        success = false
+                                    }
+                                } else {
+                                    contentForUpload = mAdvancedEditText.text.toString()
+                                    success = true
+                                }
+                                val editor = prefs.edit()
+                                editor.putString(
+                                    PrefConstants.MEASURE_FILE_NAME1, commandsEditText1
+                                        .getText().toString()
+                                )
+                                editor.putString(
+                                    PrefConstants.MEASURE_FILE_NAME2, commandsEditText2
+                                        .getText().toString()
+                                )
+                                editor.putString(
+                                    PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
+                                        .getText().toString()
+                                )
+                                editor.apply()
+
+                                // collect commands
+                                if (contentForUpload != null && !contentForUpload.isEmpty()) {
+                                    startService(
+                                        PullStateManagingService.intentForService(
+                                            this@MainActivity,
+                                            false
+                                        )
+                                    )
+                                    val multiLines: String = contentForUpload
+                                    val commands: Array<String>
+                                    val delimiter = "\n"
+                                    commands = multiLines.split(delimiter).toTypedArray()
+                                    val simpleCommands: MutableList<String> = ArrayList()
+                                    val loopCommands: MutableList<String> = ArrayList()
+                                    var isLoop = false
+                                    var loopcmd1Idx = -1
+                                    var loopcmd2Idx = -1
+                                    var autoPpm = false
+                                    for (i in commands.indices) {
+                                        val command = commands[i]
+                                        //Log.d("command", command);
+                                        if (command != null && command != "" &&
+                                            command != "\n"
+                                        ) {
+                                            if (command.contains("loop")) {
+                                                isLoop = true
+                                                var lineNos = command.replace("loop", "")
+                                                lineNos = lineNos.replace("\n", "")
+                                                lineNos = lineNos.replace("\r", "")
+                                                lineNos = lineNos.trim { it <= ' ' }
+                                                val line1 = lineNos.substring(
+                                                    0, lineNos.length
+                                                            / 2
+                                                )
+                                                val line2 = lineNos.substring(
+                                                    lineNos.length / 2,
+                                                    lineNos.length
+                                                )
+                                                loopcmd1Idx = line1.toInt() - 1
+                                                loopcmd2Idx = line2.toInt() - 1
+                                            } else if (command == "autoppm") {
+                                                autoPpm = true
+                                            } else if (isLoop) {
+                                                if (i == loopcmd1Idx) {
+                                                    loopCommands.add(command)
+                                                } else if (i == loopcmd2Idx) {
+                                                    loopCommands.add(command)
+                                                    isLoop = false
+                                                }
+                                            } else {
+                                                simpleCommands.add(command)
+                                            }
+                                        }
+                                    }
+                                    val autoPpmCalculate = autoPpm
+                                    mHandler.postDelayed(Runnable {
+                                        if (mSendDataToUsbTask != null && mSendDataToUsbTask!!
+                                                .status == AsyncTask.Status.RUNNING
+                                        ) {
+                                            mSendDataToUsbTask!!.cancel(true)
+                                        }
+                                        mSendDataToUsbTask = SendDataToUsbTask(
+                                            simpleCommands,
+                                            loopCommands,
+                                            autoPpmCalculate,
+                                            this@MainActivity,
+                                            chkUseRecentDirectory.isChecked
+                                        )
+                                        mSendDataToUsbTask!!.execute(future, delay_timer)
+                                    }, 300)
+                                } else if (success) {
+                                    val toast = Toast.makeText(
+                                        this@MainActivity, "File not " +
+                                                "found", Toast.LENGTH_LONG
+                                    )
+                                    ToastUtils.wrap(toast)
+                                    toast.show()
+                                    return
+                                } else {
+                                    val toast = Toast.makeText(
+                                        this@MainActivity, "Unexpected "
+                                                + "error", Toast.LENGTH_LONG
+                                    )
+                                    ToastUtils.wrap(toast)
+                                    toast.show()
+                                    return
+                                }
+
+                                // end collect commands
+
+
+                                //									ctimer = new
+                                // CountDownTimer(future,
+                                //											delay_timer) {
+                                //
+                                //										@Override
+                                //										public void onTick(
+                                //												long
+                                // millisUntilFinished) {
+                                //											// TODO
+                                // Auto-generated method stub
+                                //											mReadingCount =
+                                // mReadingCount + 1;
+                                //											sendMessage();
+                                //
+                                ////											byte [] arr =
+                                // new byte[]{(byte) 0xFE,0x44,0x11,
+                                // 0x22,0x33,0x44,0x55};
+                                ////											Message msg =
+                                // new Message();
+                                ////											msg.what = 0;
+                                ////											msg.obj = arr;
+                                ////											MainActivity
+                                // .sHandler.sendMessage(msg);
+                                //										}
+                                //
+                                //										@Override
+                                //										public void onFinish
+                                // () {
+                                //											// TODO
+                                // Auto-generated method stub
+                                //											mReadingCount =
+                                // mReadingCount + 1;
+                                //											sendMessage();
+                                //
+                                ////											byte [] arr =
+                                // new byte[]{(byte) 0xFE,0x44,0x11,
+                                // 0x22,0x33,0x44,0x55};
+                                ////											Message msg =
+                                // new Message();
+                                ////											msg.what = 0;
+                                ////											msg.obj = arr;
+                                ////											MainActivity
+                                // .sHandler.sendMessage(msg);
+                                //
+                                //											mIsTimerRunning =
+                                // false;
+                                //											Toast.makeText
+                                // (MainActivity.this,
+                                //													"Timer
+                                // Finish",
+                                //													Toast
+                                // .LENGTH_LONG).show();
+                                //										}
+                                //									};
+                                //
+                                //									Toast.makeText(MainActivity
+                                // .this,
+                                //											"Timer Started",
+                                // Toast.LENGTH_LONG)
+                                //											.show();
+                                //									mIsTimerRunning = true;
+                                //									ctimer.start();
+                            }
+                            dialog.cancel()
+                        }
+                    }
+                val cancelListener =
+                    DialogInterface.OnClickListener { dialog, which ->
+                        val inputManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(
+                            (dialog as AlertDialog)
+                                .currentFocus!!.windowToken, 0
+                        )
+                        dialog.cancel()
+                        v.isEnabled = true
+                    }
+                val alertDialog = AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
+                    this@MainActivity, R.layout.layout_dialog_measure, "Start Measure",
+                    okListener, cancelListener, initLayoutListener
+                ).create()
+                alertDialog.setOnCancelListener { v.isEnabled = true }
+                alertDialog.show()
+            }
+        })
+        setFilters()
+        usbDeviceConnection = UsbDeviceConnection(this)
+        refreshUsbDevice()
+        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+        val preferences = prefs
+        if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
+            EToCApplication.getInstance().isPreLooping = true
+            val i = PullStateManagingService.intentForService(this, true)
+            i.action = PullStateManagingService.WAIT_FOR_COOLING_ACTION
+            startService(i)
+
+            //TODO uncomment for simulating
+            /*Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
+			message.obj = "";
+			mHandler.sendMessageDelayed(message, 10800);*/
+        }
+        if (!preferences.contains(PrefConstants.DELAY)) {
+            val editor = prefs.edit()
+            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
+            editor.apply()
+        }
+        val graphData = GraphPopulatorUtils.createXYChart(
+            duration_v, delay_v,
+            this@MainActivity
+        )
+        renderer = graphData.renderer
+        mGraphSeriesDataset = graphData.seriesDataset
+        currentSeries = graphData.xySeries
+        val intent = graphData.intent
+        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
+            this@MainActivity,
+            intent.extras!!["chart"] as AbstractChart?
+        )
+        val actionBar = supportActionBar
+        actionBar!!.setDisplayUseLogoEnabled(true)
+        actionBar.setLogo(R.drawable.ic_launcher)
+        val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
+        titleView.setTextColor(Color.WHITE)
+        (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(
+            RelativeLayout.CENTER_HORIZONTAL,
+            0
+        )
+
+        //Intent timeIntent = GraphPopulatorUtils.createTimeChart(this);
+        //GraphPopulatorUtils.attachTimeChartIntoLayout(this, (AbstractChart)timeIntent.getExtras
+        //		 ().get("chart"));
+    }
+
+    fun initPowerAccordToItState() {
+        val powerText: String?
+        val powerTag: String?
+        val drawableResource: Int
+        when (powerCommandsFactory.currentPowerState()) {
+            PowerState.OFF, PowerState.PRE_LOOPING -> {
+                powerText = prefs.getString(
+                    PrefConstants.POWER_OFF_NAME,
+                    PrefConstants.POWER_OFF_NAME_DEFAULT
+                )
+                powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
+                drawableResource = R.drawable.power_off_drawable
+            }
+            PowerState.ON -> {
+                powerText = prefs.getString(
+                    PrefConstants.POWER_ON_NAME,
+                    PrefConstants.POWER_ON_NAME_DEFAULT
+                )
+                powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.lowercase(Locale.getDefault())
+                drawableResource = R.drawable.power_on_drawable
+            }
+            else -> {
+                run {
+                    powerTag = null
+                    powerText = powerTag
+                }
+                drawableResource = 0
+            }
+        }
+        isPowerPressed = false
+        mPower.isEnabled = true
+        if (powerTag != null && powerText != null) {
+            mPower.text = powerText
+            mPower.tag = powerTag
+            mPower.post {
+                mPower.alpha = 1f
+                mPower.setBackgroundResource(drawableResource)
+            }
+        }
+    }
+
+    private fun changeTextsForButtons(contentView: View) {
+        val addTextBuilder = StringBuilder()
+        for (i in 0..8) {
+            addTextBuilder.append(' ')
+        }
+        (contentView.findViewById<View>(R.id.txtOn) as TextView).text = addTextBuilder.toString() +
+                "Command 1: "
+        (contentView.findViewById<View>(R.id.txtOn1) as TextView).text = "Button State1 " + "Name: "
+        (contentView.findViewById<View>(R.id.txtOff) as TextView).text = addTextBuilder.toString() +
+                "Command 2: "
+        (contentView.findViewById<View>(R.id.txtOff1) as TextView).text =
+            "Button State2" + " Name: "
+    }
+
+    fun refreshUsbDevice() {
+        lifecycleScope.launchWhenResumed {
+            try {
+                usbDevice = usbDeviceConnection.findUsbDevice()
+                sendBroadcast(Intent(UsbService.ACTION_USB_PERMISSION_GRANTED))
+            } catch (e: CreateDeviceException) {
+                val actionName = when(e.reason) {
+                    ConnectionFailureReason.DEVICE_NOT_FOUND -> {
+                        UsbService.ACTION_NO_USB
+                    }
+                    ConnectionFailureReason.PERMISSION_NOT_GRANTED -> {
+                        UsbService.ACTION_USB_PERMISSION_NOT_GRANTED
+                    }
+                }
+                sendBroadcast(Intent(actionName))
+            }
+        }
+    }
+
+    private fun loadPreferencesFromLocalData() {
+        val settingsFolder =
+            File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
+        val buttonPowerDataFile = File(settingsFolder, AppData.POWER_DATA)
+        var powerData: String? = ""
+        if (buttonPowerDataFile.exists()) {
+            powerData = TextFileUtils.readTextFile(buttonPowerDataFile)
+        }
+        powerCommandsFactory = EToCApplication.getInstance().parseCommands(powerData)
+        val commandFactory: String
+        commandFactory = if (powerCommandsFactory is FilePowerCommandsFactory) {
+            "FilePowerCommand"
+        } else {
+            "DefaultPowerCommand"
+        }
+        Toast.makeText(this, commandFactory, Toast.LENGTH_LONG).show()
+        if (!settingsFolder.exists()) {
+            return
+        }
+        val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
+        if (button1DataFile.exists()) {
+            val button1Data = TextFileUtils.readTextFile(button1DataFile)
+            if (!button1Data.isEmpty()) {
+                val values = button1Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME1, values[0])
+                    editor.putString(PrefConstants.OFF_NAME1, values[1])
+                    editor.putString(PrefConstants.ON1, values[2])
+                    editor.putString(PrefConstants.OFF1, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
+        if (button2DataFile.exists()) {
+            val button2Data = TextFileUtils.readTextFile(button2DataFile)
+            if (!button2Data.isEmpty()) {
+                val values = button2Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME2, values[0])
+                    editor.putString(PrefConstants.OFF_NAME2, values[1])
+                    editor.putString(PrefConstants.ON2, values[2])
+                    editor.putString(PrefConstants.OFF2, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
+        if (button3DataFile.exists()) {
+            val button3Data = TextFileUtils.readTextFile(button3DataFile)
+            if (!button3Data.isEmpty()) {
+                val values = button3Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME3, values[0])
+                    editor.putString(PrefConstants.OFF_NAME3, values[1])
+                    editor.putString(PrefConstants.ON3, values[2])
+                    editor.putString(PrefConstants.OFF3, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val temperatureShiftFolder = File(settingsFolder, AppData.TEMPERATURE_SHIFT_FILE)
+        if (temperatureShiftFolder.exists()) {
+            val temperatureData = TextFileUtils.readTextFile(temperatureShiftFolder)
+            if (!temperatureData.isEmpty()) {
+                mTemperatureShift = try {
+                    temperatureData.toInt()
+                } catch (e: NumberFormatException) {
+                    0
+                }
+            }
+        } else {
+            mTemperatureShift = 0
+        }
+        val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
+        if (measureDefaultFilesFile.exists()) {
+            val measureFilesData = TextFileUtils.readTextFile(measureDefaultFilesFile)
+            if (!measureFilesData.isEmpty()) {
+                val values = measureFilesData.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 3) {
+                    val editor = prefs.edit()
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME1,
+                        values[0]
+                    )
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME2,
+                        values[1]
+                    )
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME3,
+                        values[2]
+                    )
+                    editor.apply()
+                }
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun savePreferencesToLocalData() {
+        val settingsFolder =
+            File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
+        if (!settingsFolder.exists()) {
+            settingsFolder.mkdir()
+        }
+        val preferences = prefs
+        val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
+        button1DataFile.createNewFile()
+        val button1DataBuilder = StringBuilder()
+        button1DataBuilder.append(
+            preferences.getString(
+                PrefConstants.ON_NAME1,
+                PrefConstants.ON_NAME_DEFAULT
+            )
+        )
+        button1DataBuilder.append(AppData.SPLIT_STRING)
+        button1DataBuilder.append(
+            preferences.getString(
+                PrefConstants.OFF_NAME1,
+                PrefConstants.OFF_NAME_DEFAULT
+            )
+        )
+        button1DataBuilder.append(AppData.SPLIT_STRING)
+        button1DataBuilder.append(preferences.getString(PrefConstants.ON1, ""))
+        button1DataBuilder.append(AppData.SPLIT_STRING)
+        button1DataBuilder.append(preferences.getString(PrefConstants.OFF1, ""))
+        TextFileUtils.writeTextFile(button1DataFile.absolutePath, button1DataBuilder.toString())
+        val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
+        button2DataFile.createNewFile()
+        val button2DataBuilder = StringBuilder()
+        button2DataBuilder.append(
+            preferences.getString(
+                PrefConstants.ON_NAME2,
+                PrefConstants.ON_NAME_DEFAULT
+            )
+        )
+        button2DataBuilder.append(AppData.SPLIT_STRING)
+        button2DataBuilder.append(
+            preferences.getString(
+                PrefConstants.OFF_NAME2,
+                PrefConstants.OFF_NAME_DEFAULT
+            )
+        )
+        button2DataBuilder.append(AppData.SPLIT_STRING)
+        button2DataBuilder.append(preferences.getString(PrefConstants.ON2, ""))
+        button2DataBuilder.append(AppData.SPLIT_STRING)
+        button2DataBuilder.append(preferences.getString(PrefConstants.OFF2, ""))
+        TextFileUtils.writeTextFile(button2DataFile.absolutePath, button2DataBuilder.toString())
+        val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
+        button2DataFile.createNewFile()
+        val button3DataBuilder = StringBuilder()
+        button3DataBuilder.append(
+            preferences.getString(
+                PrefConstants.ON_NAME3,
+                PrefConstants.ON_NAME_DEFAULT
+            )
+        )
+        button3DataBuilder.append(AppData.SPLIT_STRING)
+        button3DataBuilder.append(
+            preferences.getString(
+                PrefConstants.OFF_NAME3,
+                PrefConstants.OFF_NAME_DEFAULT
+            )
+        )
+        button3DataBuilder.append(AppData.SPLIT_STRING)
+        button3DataBuilder.append(preferences.getString(PrefConstants.ON3, ""))
+        button3DataBuilder.append(AppData.SPLIT_STRING)
+        button3DataBuilder.append(preferences.getString(PrefConstants.OFF3, ""))
+        TextFileUtils.writeTextFile(button3DataFile.absolutePath, button3DataBuilder.toString())
+
+        /*File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
+		buttonPowerDataFile.createNewFile();
+		StringBuilder buttonPowerDataBuilder = new StringBuilder();
+		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME,
+				PrefConstants.POWER_ON_NAME_DEFAULT));
+		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF_NAME,
+				PrefConstants.POWER_OFF_NAME_DEFAULT));
+		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON, PrefConstants
+				.POWER_ON_COMMAND_DEFAULT));
+		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
+		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF, PrefConstants
+				.POWER_OFF_COMMAND_DEFAULT));
+
+		TextFileUtils.writeTextFile(buttonPowerDataFile.getAbsolutePath(), buttonPowerDataBuilder
+				.toString());*/
+        val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
+        measureDefaultFilesFile.createNewFile()
+        val measureDefaultFilesBuilder = StringBuilder()
+        measureDefaultFilesBuilder.append(
+            preferences.getString(
+                PrefConstants.MEASURE_FILE_NAME1,
+                PrefConstants.MEASURE_FILE_NAME1_DEFAULT
+            )
+        )
+        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING)
+        measureDefaultFilesBuilder.append(
+            preferences.getString(
+                PrefConstants.MEASURE_FILE_NAME2,
+                PrefConstants.MEASURE_FILE_NAME2_DEFAULT
+            )
+        )
+        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING)
+        measureDefaultFilesBuilder.append(
+            preferences.getString(
+                PrefConstants.MEASURE_FILE_NAME3,
+                PrefConstants.MEASURE_FILE_NAME3_DEFAULT
+            )
+        )
+        TextFileUtils.writeTextFile(
+            measureDefaultFilesFile.absolutePath,
+            measureDefaultFilesBuilder.toString()
+        )
+    }
+
+    //TODO
+    //make power on
+    //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+    // 0.5 second wait -> repeat
+    // "/5J5R" "respond as ->" "@5J4"
+    // 1 second wait ->
+    // "(FE............)" "respond as ->" "lala"
+    // 2 second wait ->
+    // "/1ZR" "respond as ->" "blasad" -> power on
+    fun powerOn() {
+        if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+            isPowerPressed = true
+            mPower.alpha = 0.6f
+            powerCommandsFactory.moveStateToNext()
+            powerCommandsFactory.sendRequest(this, mHandler, this)
+        } else {
+            throw IllegalStateException()
+        }
+    }
+
+    private fun simulateClick1() {
+        powerOff()
+        var temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
+        var message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = temperatureData
+        //TODO temperature out of range
+        mHandler.sendMessageDelayed(message, 3800)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = temperatureData
+        //TODO temperature out of range
+        mHandler.sendMessageDelayed(message, 5000)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
+        message.obj = temperatureData
+        //TODO temperature in of range
+        mHandler.sendMessageDelayed(message, 20000)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        mHandler.sendMessageDelayed(message, 24000)
+    }
+
+    private fun simulateClick2() {
+        powerOn()
+        val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
+        var message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        mHandler.sendMessageDelayed(message, 800)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = "@5J001 "
+        mHandler.sendMessageDelayed(message, 1600)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = "@5J101 "
+        mHandler.sendMessageDelayed(message, 3000)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = "255"
+        mHandler.sendMessageDelayed(message, 4800)
+        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
+        message.obj = "/1ZR"
+        mHandler.sendMessageDelayed(message, 5400)
+    }
+
+    //TODO
+    //make power off
+    //interrupt all activities by software (mean measure process etc)
+    // 1 second wait ->
+    // "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+    // around 75C -> "/5J5R" -> "@5J5" -> then power off
+    // bigger, then
+    //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
+    fun powerOff() {
+        if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+            isPowerPressed = true
+            mPower.alpha = 0.6f
+            if (mButtonOn2.tag.toString() != PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                mButtonOn2.performClick()
+                mHandler.postDelayed({
+                    powerCommandsFactory.moveStateToNext()
+                    powerCommandsFactory.sendRequest(
+                        this@MainActivity, mHandler,
+                        this@MainActivity
+                    )
+                }, 1200)
+            } else {
+                powerCommandsFactory.moveStateToNext()
+                powerCommandsFactory.sendRequest(this, mHandler, this)
+            }
+        } else {
+            throw IllegalStateException()
+        }
+    }
+
+    override fun getFragmentContainerId(): Int {
+        return R.id.fragment_container
+    }
+
+    override fun getDrawerLayout(): DrawerLayout? {
+        return null
+    }
+
+    override fun getToolbarId(): Int {
+        return R.id.toolbar
+    }
+
+    override fun getLeftDrawerFragmentId(): Int {
+        return LEFT_DRAWER_FRAGMENT_ID_UNDEFINED
+    }
+
+    override fun getFrameLayout(): FrameLayout {
+        return findViewById<View>(R.id.frame_container) as FrameLayout
+    }
+
+    override fun getLayoutId(): Int {
+        return R.layout.layout_editor_updated
+    }
+
+    override fun getFirstFragment(): Fragment {
+        return EmptyFragment()
+    }
+
+    override fun getFolderDrawable(): Int {
+        return R.drawable.folder
+    }
+
+    override fun graphContainer(): LinearLayout {
+        return findViewById<View>(R.id.exported_chart_layout) as LinearLayout
+    }
+
+    override fun getFileDrawable(): Int {
+        return R.drawable.file
+    }
+
+    override fun onGraphAttached() {
+        mMarginLayout.setBackgroundColor(Color.BLACK)
+        mExportLayout.setBackgroundColor(Color.WHITE)
+    }
+
+    override fun onGraphDetached() {
+        mMarginLayout.setBackgroundColor(Color.TRANSPARENT)
+        mExportLayout.setBackgroundColor(Color.TRANSPARENT)
+    }
+
+    override fun toolbarTitle(): String {
+        return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
+    }
+
+    private val toast: Toast? = null
+    fun showToastMessage(message: String?) {
+        /*if(toast != null) {
+            toast.cancel();
+        }
+        toast = Toast.makeText(this, message, Toast.LENGTH_LONG);
+        ToastUtils.wrap(toast);
+        toast.show();*/
+    }
+
+    fun sendCommand(command: String?) {
+        var command = command
+        if (command != null && command != "" && command != "\n") {
+            command = command.replace("\r", "")
+            command = command.replace("\n", "")
+            command = command.trim { it <= ' ' }
+            val tempUsbDevice = usbDevice
+            if (tempUsbDevice != null) {
+                if (command.contains("(") && command.contains(")")) {
+                    // HEX
+                    command = command.replace("(", "")
+                    command = command.replace(")", "")
+                    command = command.trim { it <= ' ' }
+                    val arr = command.split("-").toTypedArray()
+                    val bytes = ByteArray(arr.size)
+                    for (j in bytes.indices) {
+                        bytes[j] = arr[j].toInt(16).toByte()
+                    }
+                    tempUsbDevice.write(bytes)
+                } else {
+                    // ASCII
+                    tempUsbDevice.write(command.toByteArray())
+                    tempUsbDevice.write("\r".toByteArray())
+                }
+
+                //if(Utils.isPullStateNone()) {
+                Utils.appendText(txtOutput, "Tx: $command")
+                scrollView.smoothScrollTo(0, 0)
+                //}
+            } else {
+                val toast = Toast.makeText(
+                    this@MainActivity,
+                    "serial port not found",
+                    Toast.LENGTH_LONG
+                )
+                ToastUtils.wrap(toast)
+                toast.show()
+            }
+        }
+    }
+
+    private fun sendMessage() {
+        if (mAdvancedEditText.text.toString() != "") {
+            val multiLines = mAdvancedEditText.text.toString()
+            val commands: Array<String>
+            val delimiter = "\n"
+            commands = multiLines.split(delimiter).toTypedArray()
+            for (i in commands.indices) {
+                val command = commands[i]
+                Log.d("command", command)
+                sendCommand(command)
+            }
+        } else {
+            val tempUsbDevice = usbDevice
+            if (tempUsbDevice != null) { // if UsbService was
+                // correctly binded,
+                // Send data
+                tempUsbDevice.write("\r".toByteArray())
+            } else {
+                val toast = Toast.makeText(
+                    this@MainActivity,
+                    "serial port not found",
+                    Toast.LENGTH_LONG
+                )
+                ToastUtils.wrap(toast)
+                toast.show()
+            }
+
+            // mTxtOutput.append("Tx: " + data + "\n");
+            // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(mUsbReceiver)
+        //		if (ctimer != null) {
+        //			ctimer.cancel();
+        //		}
+        mExecutor.shutdown()
+        while (!mExecutor.isTerminated) { }
+        if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
+            mEToCOpenChartTask!!.cancel(true)
+            mEToCOpenChartTask = null
+        }
+        if (mSendDataToUsbTask != null && mSendDataToUsbTask!!.status == AsyncTask.Status.RUNNING) {
+            mSendDataToUsbTask!!.cancel(true)
+            mSendDataToUsbTask = null
+        }
+        usbDeviceConnection.close()
+        mHandler.removeCallbacksAndMessages(null)
+        stopService(Intent(this, PullStateManagingService::class.java))
+        prefs.edit().putBoolean(IS_SERVICE_RUNNING, false).apply()
+    }
+
+    /**
+     * @see android.app.Activity.onRestart
+     */
+    override fun onRestart() {
+        super.onRestart()
+        mReadIntent = false
+    }
+
+    /**
+     * @see android.app.Activity.onRestoreInstanceState
+     */
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        Log.d("TED", "onRestoreInstanceState")
+        Log.v("TED", mAdvancedEditText.text.toString())
+    }
+
+    /**
+     * @see android.app.Activity.onResume
+     */
+    override fun onResume() {
+        super.onResume()
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onResume")
+        if (mReadIntent) {
+            readIntent()
+        }
+        mReadIntent = false
+        updateTitle()
+        mAdvancedEditText.updateFromSettings()
+        val isServiceRunning = prefs.getBoolean(IS_SERVICE_RUNNING, false)
+        if (!isServiceRunning) {
+            EToCApplication.getInstance().pullState = PullState.NONE
+            //startService(PullStateManagingService.intentForService(this, true));
+        }
+    }
+
+    /**
+     * @see android.app.Activity.onPause
+     */
+    override fun onPause() {
+        super.onPause()
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onPause")
+        if (Settings.FORCE_AUTO_SAVE && mDirty && !mReadOnly) {
+            if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) doAutoSaveFile() else if (Settings.AUTO_SAVE_OVERWRITE) doSaveFile(
+                mCurrentFilePath
+            )
+        }
+        prefs.edit().putBoolean(IS_SERVICE_RUNNING, true).apply()
+    }
+
+    /**
+     * @see android.app.Activity.onActivityResult
+     */
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onActivityResult")
+        mReadIntent = false
+        if (resultCode == RESULT_CANCELED) {
+            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Result canceled")
+            return
+        }
+        if (resultCode != RESULT_OK || data == null) {
+            if (BuildConfig.DEBUG) Log.e(
+                Constants.TAG,
+                "Result error or null data! / $resultCode"
+            )
+            return
+        }
+        val extras: Bundle? = data.extras
+        if (extras == null) {
+            if (BuildConfig.DEBUG) Log.e(Constants.TAG, "No extra data ! ")
+            return
+        }
+        when (requestCode) {
+            Constants.REQUEST_SAVE_AS -> {
+                if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Save as : " + extras.getString("path"))
+                doSaveFile(extras.getString("path"))
+            }
+            Constants.REQUEST_OPEN -> {
+                if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Open : " + extras.getString("path"))
+                if (extras.getString("path")!!.endsWith(".txt")) {
+                    doOpenFile(File(extras.getString("path")), false)
+                } else if (extras.getString("path")!!.endsWith(".csv")) {
+                    openchart1(extras.getString("path"))
+                } else {
+                    val toast =
+                        Toast.makeText(this@MainActivity, "Invalid File", Toast.LENGTH_SHORT)
+                    ToastUtils.wrap(toast)
+                    toast.show()
+                }
+            }
+        }
+    }
+
+    /**
+     * @see android.app.Activity.onConfigurationChanged
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onConfigurationChanged")
+    }
+
+    /**
+     * @see android.app.Activity.onCreateOptionsMenu
+     */
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        super.onCreateOptionsMenu(menu)
+        return true
+    }
+
+    /**
+     * @see android.app.Activity.onPrepareOptionsMenu
+     */
+    @TargetApi(11)
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        super.onPrepareOptionsMenu(menu)
+        Log.d("onPrepareOptionsMenu", "onPrepareOptionsMenu")
+        menu.clear()
+        menu.close()
+
+        // boolean isUsbConnected = checkUsbConnection();
+        if (mIsUsbConnected) {
+            wrapMenuItem(
+                ActivityDecorator.addMenuItem(
+                    menu,
+                    Constants.MENU_ID_CONNECT_DISCONNECT,
+                    R.string.menu_disconnect,
+                    R.drawable.usb_connected
+                ), true
+            )
+        } else {
+            wrapMenuItem(
+                ActivityDecorator.addMenuItem(
+                    menu,
+                    Constants.MENU_ID_CONNECT_DISCONNECT,
+                    R.string.menu_connect,
+                    R.drawable.usb_disconnected
+                ), true
+            )
+        }
+        wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_NEW,
+                R.string.menu_new,
+                R.drawable.ic_menu_file_new
+            ), false
+        )
+        wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_OPEN,
+                R.string.menu_open,
+                R.drawable.ic_menu_file_open
+            ), false
+        )
+        wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_OPEN_CHART,
+                R.string.menu_open_chart,
+                R.drawable.ic_menu_file_open
+            ), false
+        )
+        if (!mReadOnly) wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_SAVE,
+                R.string.menu_save,
+                R.drawable.ic_menu_save
+            ), false
+        )
+
+        // if ((!mReadOnly) && Settings.UNDO)
+        // addMenuItem(menu, MENU_ID_UNDO, R.string.menu_undo,
+        // R.drawable.ic_menu_undo);
+
+        // addMenuItem(menu, MENU_ID_SEARCH, R.string.menu_search,
+        // R.drawable.ic_menu_search);
+        if (RecentFiles.getRecentFiles().size > 0) wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_OPEN_RECENT,
+                R.string.menu_open_recent,
+                R.drawable.ic_menu_recent
+            ), false
+        )
+        wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_SAVE_AS,
+                R.string.menu_save_as,
+                0
+            ), false
+        )
+        wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_SETTINGS,
+                R.string.menu_settings,
+                0
+            ), false
+        )
+        if (Settings.BACK_BTN_AS_UNDO && Settings.UNDO) wrapMenuItem(
+            ActivityDecorator.addMenuItem(
+                menu,
+                Constants.MENU_ID_QUIT,
+                R.string.menu_quit,
+                0
+            ), false
+        )
+
+        // if ((!mReadOnly) && Settings.UNDO) {
+        // showMenuItemAsAction(menu.findItem(MENU_ID_UNDO),
+        // R.drawable.ic_menu_undo, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        // }
+
+        // showMenuItemAsAction(menu.findItem(MENU_ID_SEARCH),
+        // R.drawable.ic_menu_search);
+        if (mIsUsbConnected) {
+            ActivityDecorator.showMenuItemAsAction(
+                menu.findItem(Constants.MENU_ID_CONNECT_DISCONNECT),
+                R.drawable.usb_connected,
+                MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_WITH_TEXT
+            )
+        } else {
+            ActivityDecorator.showMenuItemAsAction(
+                menu.findItem(Constants.MENU_ID_CONNECT_DISCONNECT),
+                R.drawable.usb_disconnected,
+                MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_WITH_TEXT
+            )
+        }
+        return true
+    }
+
+    private fun wrapMenuItem(menuItem: MenuItem, isShow: Boolean) {
+        if (isShow) {
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        } else {
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+        }
+    }
+
+    /**
+     * @see android.app.Activity.onOptionsItemSelected
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        mWarnedShouldQuit = false
+        when (item.itemId) {
+            Constants.MENU_ID_CONNECT_DISCONNECT -> {
+                Log.d("isUsbConnected", "" + mIsUsbConnected)
+                if (mIsUsbConnected) {
+                    // unregisterReceiver(mUsbReceiver);
+                    // unbindService(usbConnection);
+                    // if(UsbService.mHandlerStop != null){
+                    // UsbService.mHandlerStop.sendEmptyMessage(0);
+                    // }
+                } else {
+                    // setFilters(); // Start listening notifications from
+                    // UsbService
+                    // startService(UsbService.class, usbConnection, null); // Start
+                    // UsbService(if it was not started before) and Bind it
+                    // startService(new Intent(MainActivity.this, UsbService.class));
+                }
+            }
+            Constants.MENU_ID_NEW -> {
+                newContent()
+                return true
+            }
+            Constants.MENU_ID_SAVE -> saveContent()
+            Constants.MENU_ID_SAVE_AS -> saveContentAs()
+            Constants.MENU_ID_OPEN -> openFile()
+            Constants.MENU_ID_OPEN_CHART -> openFile()
+            Constants.MENU_ID_OPEN_RECENT -> openRecentFile()
+            Constants.MENU_ID_SETTINGS -> {
+                settingsActivity()
+                return true
+            }
+            Constants.MENU_ID_QUIT -> {
+                quit()
+                return true
+            }
+            Constants.MENU_ID_UNDO -> {
+                if (!undo()) {
+                    Crouton.showText(this, R.string.toast_warn_no_undo, Style.INFO)
+                }
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    /**
+     * @see TextWatcher.beforeTextChanged
+     */
+    override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+        if (Settings.UNDO && !mInUndo && mWatcher != null) mWatcher!!.beforeChange(
+            s,
+            start,
+            count,
+            after
+        )
+    }
+
+    /**
+     * @see TextWatcher.onTextChanged
+     */
+    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+        if (mInUndo) return
+        if (Settings.UNDO && !mInUndo && mWatcher != null) mWatcher!!.afterChange(
+            s,
+            start,
+            before,
+            count
+        )
+    }
+
+    /**
+     * @see TextWatcher.afterTextChanged
+     */
+    override fun afterTextChanged(s: Editable) {
+        if (!mDirty) {
+            mDirty = true
+            updateTitle()
+        }
+    }
+
+    /**
+     * @see android.app.Activity.onKeyUp
+     */
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_BACK -> {
+                if (Settings.UNDO && Settings.BACK_BTN_AS_UNDO) {
+                    if (!undo()) warnOrQuit()
+                } else if (shouldQuit()) {
+                    quit()
+                } else {
+                    mWarnedShouldQuit = false
+                    return super.onKeyUp(keyCode, event)
+                }
+                return true
+            }
+        }
+        mWarnedShouldQuit = false
+        return super.onKeyUp(keyCode, event)
+    }
+
+    private fun shouldQuit(): Boolean {
+        val entriesCount = supportFragmentManager.backStackEntryCount
+        return entriesCount == 0 && mExportLayout.childCount == 0
+    }
+
+    /**
+     * Read the intent used to start this activity (open the text file) as well
+     * as the non configuration instance if activity is started after a screen
+     * rotate
+     */
+    protected fun readIntent() {
+        val intent: Intent?
+        val action: String?
+        val file: File
+        intent = getIntent()
+        if (intent == null) {
+            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "No intent found, use default instead")
+            doDefaultAction()
+            return
+        }
+        action = intent.action
+        if (action == null) {
+            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Intent w/o action, default action")
+            doDefaultAction()
+        } else if (action == Intent.ACTION_VIEW || action == Intent.ACTION_EDIT) {
+            try {
+                file = File(URI(intent.data.toString()))
+                doOpenFile(file, false)
+            } catch (e: URISyntaxException) {
+                Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
+            } catch (e: IllegalArgumentException) {
+                Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+            }
+        } else if (action == Constants.ACTION_WIDGET_OPEN) {
+            try {
+                file = File(URI(intent.data.toString()))
+                doOpenFile(file, intent.getBooleanExtra(Constants.EXTRA_FORCE_READ_ONLY, false))
+            } catch (e: URISyntaxException) {
+                Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
+            } catch (e: IllegalArgumentException) {
+                Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+            }
+        } else {
+            doDefaultAction()
+        }
+    }
+
+    /**
+     * Run the default startup action
+     */
+    protected fun doDefaultAction() {
+        val file: File
+        var loaded: Boolean
+        loaded = false
+        if (doOpenBackup()) loaded = true
+        if (!loaded && Settings.USE_HOME_PAGE) {
+            file = File(Settings.HOME_PAGE_PATH)
+            if (!file.exists()) {
+                Crouton.showText(this, R.string.toast_open_home_page_error, Style.ALERT)
+            } else if (!file.canRead()) {
+                Crouton.showText(this, R.string.toast_home_page_cant_read, Style.ALERT)
+            } else {
+                loaded = doOpenFile(file, false)
+            }
+        }
+        if (!loaded) doClearContents()
+    }
+
+    /**
+     * Clears the content of the editor. Assumes that user was prompted and
+     * previous data was saved
+     */
+    protected fun doClearContents() {
+        mWatcher = null
+        mInUndo = true
+        mAdvancedEditText.setText("")
+        mCurrentFilePath = null
+        mCurrentFileName = null
+        Settings.END_OF_LINE = Settings.DEFAULT_END_OF_LINE
+        mDirty = false
+        mReadOnly = false
+        mWarnedShouldQuit = false
+        mWatcher = TextChangeWatcher()
+        mInUndo = false
+        mDoNotBackup = false
+        TextFileUtils.clearInternal(applicationContext)
+        updateTitle()
+    }
+
+    /**
+     * Opens the given file and replace the editors content with the file.
+     * Assumes that user was prompted and previous data was saved
+     *
+     * @param file          the file to load
+     * @param forceReadOnly force the file to be used as read only
+     * @return if the file was loaded successfully
+     */
+    protected fun doOpenFile(file: File?, forceReadOnly: Boolean): Boolean {
+        val text: String?
+        if (file == null) return false
+        if (BuildConfig.DEBUG) Log.i(Constants.TAG, "Openning file " + file.name)
+        try {
+            text = TextFileUtils.readTextFile(file)
+            if (text != null) {
+                mInUndo = true
+                if (mAdvancedEditText.text.toString() == "") {
+                    mAdvancedEditText.append(text) // change by nkl ori settext
+                } else {
+                    mAdvancedEditText.append(
+                        """
+                            
+                            $text
+                            """.trimIndent()
+                    ) // change by nkl ori settext
+                }
+                mWatcher = TextChangeWatcher()
+                mCurrentFilePath = FileUtils.getCanonizePath(file)
+                mCurrentFileName = file.name
+                RecentFiles.updateRecentList(mCurrentFilePath)
+                RecentFiles.saveRecentList(
+                    getSharedPreferences(
+                        Constants.PREFERENCES_NAME,
+                        MODE_PRIVATE
+                    )
+                )
+                mDirty = false
+                mInUndo = false
+                mDoNotBackup = false
+                if (file.canWrite() && !forceReadOnly) {
+                    mReadOnly = false
+                    mAdvancedEditText.isEnabled = true
+                } else {
+                    mReadOnly = true
+                    mAdvancedEditText.isEnabled = false
+                }
+                updateTitle()
+                return true
+            } else {
+                Crouton.showText(this, R.string.toast_open_error, Style.ALERT)
+            }
+        } catch (e: OutOfMemoryError) {
+            Crouton.showText(this, R.string.toast_memory_open, Style.ALERT)
+        }
+        return false
+    }
+
+    /**
+     * Open the last backup file
+     *
+     * @return if a backup file was loaded
+     */
+    protected fun doOpenBackup(): Boolean {
+        val text: String
+        try {
+            text = TextFileUtils.readInternal(this)
+            return if (!TextUtils.isEmpty(text)) {
+                mInUndo = true
+                mAdvancedEditText.setText(text)
+                mWatcher = TextChangeWatcher()
+                mCurrentFilePath = null
+                mCurrentFileName = null
+                mDirty = false
+                mInUndo = false
+                mDoNotBackup = false
+                mReadOnly = false
+                mAdvancedEditText.isEnabled = true
+                updateTitle()
+                true
+            } else {
+                false
+            }
+        } catch (e: OutOfMemoryError) {
+            Crouton.showText(this, R.string.toast_memory_open, Style.ALERT)
+        }
+        return true
+    }
+
+    /**
+     * Saves the text editor's content into a file at the given path. If an
+     * after save [Runnable] exists, run it
+     *
+     * @param path the path to the file (must be a valid path and not null)
+     */
+    protected fun doSaveFile(path: String?) {
+        val content: String
+        if (path == null) {
+            Crouton.showText(this, R.string.toast_save_null, Style.ALERT)
+            return
+        }
+        content = mAdvancedEditText.text.toString()
+        if (!TextFileUtils.writeTextFile("$path.tmp", content)) {
+            Crouton.showText(this, R.string.toast_save_temp, Style.ALERT)
+            return
+        }
+        if (!FileUtils.deleteItem(path)) {
+            Crouton.showText(this, R.string.toast_save_delete, Style.ALERT)
+            return
+        }
+        if (!FileUtils.renameItem("$path.tmp", path)) {
+            Crouton.showText(this, R.string.toast_save_rename, Style.ALERT)
+            return
+        }
+        mCurrentFilePath = FileUtils.getCanonizePath(File(path))
+        mCurrentFileName = File(path).name
+        RecentFiles.updateRecentList(path)
+        RecentFiles.saveRecentList(getSharedPreferences(Constants.PREFERENCES_NAME, MODE_PRIVATE))
+        mReadOnly = false
+        mDirty = false
+        updateTitle()
+        Crouton.showText(this, R.string.toast_save_success, Style.CONFIRM)
+    }
+
+    protected fun doAutoSaveFile() {
+        if (mDoNotBackup) {
+            doClearContents()
+        }
+        val text = mAdvancedEditText.text.toString()
+        if (text.length == 0) return
+        if (TextFileUtils.writeInternal(this, text)) {
+            Toaster.showToast(this, R.string.toast_file_saved_auto, false)
+        }
+    }
+
+    /**
+     * Undo the last change
+     *
+     * @return if an undo was don
+     */
+    protected fun undo(): Boolean {
+        var didUndo = false
+        mInUndo = true
+        val caret: Int
+        caret = mWatcher!!.undo(mAdvancedEditText.text)
+        if (caret >= 0) {
+            mAdvancedEditText.setSelection(caret, caret)
+            didUndo = true
+        }
+        mInUndo = false
+        return didUndo
+    }
+
+    /**
+     * Prompt the user to save the current file before doing something else
+     */
+    protected fun promptSaveDirty() {
+        if (!mDirty) {
+            executeRunnableAndClean()
+            return
+        }
+        val okListener =
+            DialogInterface.OnClickListener { dialog, which ->
+                saveContent()
+                mDoNotBackup = true
+            }
+        val cancelListener =
+            DialogInterface.OnClickListener { dialog, which -> }
+        val builder = AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
+            this, 0,
+            getString(R.string.app_name), okListener, cancelListener, null
+        )
+        builder.setMessage(R.string.ui_save_text)
+        builder.setNeutralButton(
+            R.string.ui_no_save
+        ) { dialog, which ->
+            executeRunnableAndClean()
+            mDoNotBackup = true
+        }
+        builder.create().show()
+    }
+
+    /**
+     *
+     */
+    protected fun newContent() {
+        mRunnable = Runnable { doClearContents() }
+
+        // promptSaveDirty();
+        // added by nkl
+        executeRunnableAndClean()
+    }
+
+    /**
+     * Runs the after save to complete
+     */
+    protected fun executeRunnableAndClean() {
+        if (mRunnable == null) {
+            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "No runnable, ignoring...")
+            return
+        }
+        mRunnable!!.run()
+        mRunnable = null
+    }
+
+    /**
+     * Starts an activity to choose a file to open
+     */
+    protected fun openFile() {
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "openFile")
+        mRunnable = Runnable {
+            val open = Intent()
+            open.setClass(applicationContext, TedOpenActivity::class.java)
+            // open = new Intent(ACTION_OPEN);
+            open.putExtra(Constants.EXTRA_REQUEST_CODE, Constants.REQUEST_OPEN)
+            try {
+                startActivityForResult(open, Constants.REQUEST_OPEN)
+            } catch (e: ActivityNotFoundException) {
+                Crouton.showText(this@MainActivity, R.string.toast_activity_open, Style.ALERT)
+            }
+        }
+
+        // change by nkl
+        // promptSaveDirty();
+
+        // added by nkl
+        executeRunnableAndClean()
+    }
+
+    private fun openchart1(filep: String?) {
+        var isLogsExist = false
+        if (filep!!.contains("R1")) {
+            isLogsExist = true
+            mGraphSeriesDataset.getSeriesAt(0).clear()
+            chartSeries = mGraphSeriesDataset.getSeriesAt(0)
+        } else if (filep.contains("R2")) {
+            isLogsExist = true
+            mGraphSeriesDataset.getSeriesAt(1).clear()
+            chartSeries = mGraphSeriesDataset.getSeriesAt(1)
+        } else if (filep.contains("R3")) {
+            isLogsExist = true
+            mGraphSeriesDataset.getSeriesAt(2).clear()
+            chartSeries = mGraphSeriesDataset.getSeriesAt(2)
+        }
+        if (!isLogsExist) {
+            //			Toast.makeText(MainActivity.this,
+            //					"Required Log files not available",
+            //					Toast.LENGTH_SHORT).show();
+            return
+        }
+        if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
+            mEToCOpenChartTask!!.cancel(true)
+        }
+        mEToCOpenChartTask = EToCOpenChartTask(this)
+        mEToCOpenChartTask!!.execute(filep)
+    }
+
+    /**
+     * render chart from selected file
+     */
+    private fun openChart() {
+        if (isTimerRunning) {
+            val toast = Toast.makeText(
+                this@MainActivity, "Timer is running. Please wait",
+                Toast.LENGTH_SHORT
+            )
+            ToastUtils.wrap(toast)
+            toast.show()
+            return
+        }
+        val dir = File(Environment.getExternalStorageDirectory().toString() + "/AEToCLogs_MES")
+        if (!dir.exists()) {
+            val toast = Toast.makeText(
+                this@MainActivity, "Logs diretory is not available",
+                Toast.LENGTH_SHORT
+            )
+            ToastUtils.wrap(toast)
+            toast.show()
+            return
+        }
+        val filenameArry = dir.list()
+        if (filenameArry == null) {
+            val toast = Toast.makeText(
+                this@MainActivity, "Logs not available. Logs " +
+                        "directory is empty", Toast.LENGTH_SHORT
+            )
+            ToastUtils.wrap(toast)
+            toast.show()
+            return
+        }
+        val items = arrayOfNulls<CharSequence>(filenameArry.size)
+        for (i in filenameArry.indices) {
+            items[i] = filenameArry[i]
+        }
+        val alert = AlertDialog.Builder(this@MainActivity)
+        alert.setTitle("Select file")
+        alert.setSingleChoiceItems(items, 0, object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface, which: Int) {
+                val filename = items[which] as String?
+                var isLogsExist = false
+                if (filename!!.contains("R1")) {
+                    isLogsExist = true
+                    mGraphSeriesDataset.getSeriesAt(0).clear()
+                    chartSeries = mGraphSeriesDataset.getSeriesAt(0)
+                } else if (filename.contains("R2")) {
+                    isLogsExist = true
+                    mGraphSeriesDataset.getSeriesAt(1).clear()
+                    chartSeries = mGraphSeriesDataset.getSeriesAt(1)
+                } else if (filename.contains("R3")) {
+                    isLogsExist = true
+                    mGraphSeriesDataset.getSeriesAt(2).clear()
+                    chartSeries = mGraphSeriesDataset.getSeriesAt(2)
+                }
+                if (!isLogsExist) {
+                    val toast = Toast.makeText(
+                        this@MainActivity, "Required Log files not "
+                                + "available", Toast.LENGTH_SHORT
+                    )
+                    ToastUtils.wrap(toast)
+                    toast.show()
+                    dialog.cancel()
+                    return
+                }
+                val logFile = File(
+                    File(
+                        Environment.getExternalStorageDirectory(),
+                        "AEToCLogs_MES"
+                    ), filename
+                )
+                if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
+                    mEToCOpenChartTask!!.cancel(true)
+                }
+                mEToCOpenChartTask = EToCOpenChartTask(this@MainActivity)
+                mEToCOpenChartTask!!.execute(logFile.absolutePath)
+                dialog.cancel()
+            }
+        })
+        alert.setNegativeButton(
+            "Close"
+        ) { dialog, which -> dialog.cancel() }
+        alert.create().show()
+    }
+
+    /**
+     * Open the recent files activity to open
+     */
+    protected fun openRecentFile() {
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "openRecentFile")
+        if (RecentFiles.getRecentFiles().size == 0) {
+            Crouton.showText(this, R.string.toast_no_recent_files, Style.ALERT)
+            return
+        }
+        mRunnable = Runnable {
+            val open: Intent
+            open = Intent()
+            open.setClass(this@MainActivity, TedOpenRecentActivity::class.java)
+            try {
+                startActivityForResult(open, Constants.REQUEST_OPEN)
+            } catch (e: ActivityNotFoundException) {
+                Crouton.showText(
+                    this@MainActivity, R.string.toast_activity_open_recent,
+                    Style.ALERT
+                )
+            }
+        }
+
+        // promptSaveDirty();
+        // added by nkl
+        executeRunnableAndClean()
+    }
+
+    /**
+     * Warns the user that the next back press will qui the application, or quit
+     * if the warning has already been shown
+     */
+    protected fun warnOrQuit() {
+        if (mWarnedShouldQuit) {
+            quit()
+        } else {
+            Crouton.showText(this, R.string.toast_warn_no_undo_will_quit, Style.INFO)
+            mWarnedShouldQuit = true
+        }
+    }
+
+    /**
+     * Quit the app (user pressed back)
+     */
+    protected fun quit() {
+        mRunnable = Runnable { finish() }
+
+        // promptSaveDirty();
+        // added by nkl
+        executeRunnableAndClean()
+    }
+
+    override fun finish() {
+        try {
+            Crouton.clearCroutonsForActivity(this)
+            savePreferencesToLocalData()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            val toast = Toast.makeText(this, e.message, Toast.LENGTH_LONG)
+            ToastUtils.wrap(toast)
+            toast.show()
+        }
+        super.finish()
+    }
+
+    /**
+     * General save command : check if a path exist for the current content,
+     * then save it , else invoke the [MainActivity.saveContentAs] method
+     */
+    protected fun saveContent() {
+        if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) {
+            saveContentAs()
+        } else {
+            doSaveFile(mCurrentFilePath)
+        }
+    }
+
+    /**
+     * General Save as command : prompt the user for a location and file name,
+     * then save the editor'd content
+     */
+    protected fun saveContentAs() {
+        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "saveContentAs")
+        val saveAs: Intent
+        saveAs = Intent()
+        saveAs.setClass(this, TedSaveAsActivity::class.java)
+        try {
+            startActivityForResult(saveAs, Constants.REQUEST_SAVE_AS)
+        } catch (e: ActivityNotFoundException) {
+            Crouton.showText(this, R.string.toast_activity_save_as, Style.ALERT)
+        }
+    }
+
+    /**
+     * Opens the settings activity
+     */
+    protected fun settingsActivity() {
+        mRunnable = Runnable {
+            val settings = Intent()
+            settings.setClass(this@MainActivity, TedSettingsActivity::class.java)
+            try {
+                startActivity(settings)
+            } catch (e: ActivityNotFoundException) {
+                Crouton.showText(
+                    this@MainActivity, R.string.toast_activity_settings,
+                    Style.ALERT
+                )
+            }
+        }
+
+        // promptSaveDirty();
+        // added by nkl
+        executeRunnableAndClean()
+    }
+
+    /**
+     * Update the window title
+     */
+    @TargetApi(11)
+    protected fun updateTitle() {
+        var title: String
+        var name: String
+
+        // name = "?";
+        // if ((mCurrentFileName != null) && (mCurrentFileName.length() > 0))
+        // name = mCurrentFileName;
+        //
+        // if (mReadOnly)
+        // title = getString(R.string.title_editor_readonly, name);
+        // else if (mDirty)
+        // title = getString(R.string.title_editor_dirty, name);
+        // else
+        // title = getString(R.string.title_editor, name);
+        //
+        // setTitle(title);
+        //
+        // if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB)
+        // invalidateOptionsMenu();
+    }
+
+    private fun setFilters() {
+        val filter = IntentFilter()
+        filter.addAction(UsbService.ACTION_USB_PERMISSION_GRANTED)
+        filter.addAction(UsbService.ACTION_NO_USB)
+        filter.addAction(UsbService.ACTION_USB_DISCONNECTED)
+        filter.addAction(UsbService.ACTION_USB_NOT_SUPPORTED)
+        filter.addAction(UsbService.ACTION_USB_PERMISSION_NOT_GRANTED)
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+        filter.addAction(UsbService.ACTION_DATA_RECEIVED)
+        filter.addAction(EToCMainHandler.USB_DATA_READY)
+        filter.addAction(EToCMainHandler.UN_SCHEDULING)
+        registerReceiver(mUsbReceiver, filter)
+    }
+
+    fun sendMessageWithUsbDataReceived(bytes: ByteArray?) {
+        val message = mHandler.obtainMessage()
+        message.obj = bytes
+        message.what = EToCMainHandler.MESSAGE_USB_DATA_RECEIVED
+        message.sendToTarget()
+    }
+
+    fun sendOpenChartDataToHandler(value: String?) {
+        val message = mHandler.obtainMessage()
+        message.obj = value
+        message.what = EToCMainHandler.MESSAGE_OPEN_CHART
+        message.sendToTarget()
+    }
+
+    fun sendMessageWithUsbDataReady(dataForSend: String?) {
+        val message = mHandler.obtainMessage()
+        message.obj = dataForSend
+        message.what = EToCMainHandler.MESSAGE_USB_DATA_READY
+        message.sendToTarget()
+    }
+
+    fun sendMessageForToast(dataForSend: String?) {
+        val message = mHandler.obtainMessage()
+        message.obj = dataForSend
+        message.what = EToCMainHandler.MESSAGE_SHOW_TOAST
+        message.sendToTarget()
+    }
+
+    fun sendMessageInterruptingCalculations() {
+        val message = mHandler.obtainMessage()
+        message.what = EToCMainHandler.MESSAGE_INTERRUPT_ACTIONS
+        message.sendToTarget()
+    }
+
+    fun interruptActionsIfAny() {
+        //TODO interrupt actions
+    }
+
+    fun setCurrentSeries(index: Int) {
+        currentSeries = mGraphSeriesDataset.getSeriesAt(index)
+    }
+
+    fun execute(runnable: Runnable?) {
+        mExecutor.execute(runnable)
+    }
+
+    fun incCountMeasure() {
+        countMeasure++
+    }
+
+    fun repaintChartView() {
+        chartView.repaint()
+    }
+
+    fun refreshOldCountMeasure() {
+        oldCountMeasure = countMeasure
+    }
+
+    val mapChartDate: Map<Int, String>
+        get() = mMapChartIndexToDate
+
+    fun setUsbConnected(isUsbConnected: Boolean) {
+        mIsUsbConnected = isUsbConnected
+    }
+
+    fun simulateClick() {
+        /* String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
+        sendMessageWithUsbDataReceived(value.getBytes());
+        isClicked = !isClicked;*/
+    }
+
+    private fun changeBackground(button: View?, isPressed: Boolean) {
+        if (isPressed) {
+            button!!.setBackgroundResource(R.drawable.temperature_button_drawable_pressed)
+        } else {
+            button!!.setBackgroundResource(R.drawable.temperature_button_drawable_unpressed)
+        }
+    }
+
+    fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
+        if (isTemperature) {
+            mTemperatureData = TemperatureData.parse(text).also { temperatureData ->
+                if (temperatureData.isCorrect) {
+                    val updateRunnable = Runnable {
+                        mTemperature.text = "" + (temperatureData.temperature1 + mTemperatureShift)
+                    }
+                    updateRunnable.run()
+                } else {
+                    mTemperature.text = "" + temperatureData.getWrongPosition()
+                }
+            }
+        } else {
+            mCo2.text = text
+        }
+    }
+
+    fun incReadingCount() {
+        readingCount++
+    }
+
+    fun refreshCurrentSeries() {
+        currentSeries = GraphPopulatorUtils.addNewSet(renderer, mGraphSeriesDataset)
+    }
+
+    fun invokeAutoCalculations() {
+        supportFragmentManager.findFragmentById(R.id.bottom_fragment)!!.view!!.findViewById<View>(R.id.calculate_ppm_auto)
+            .performClick()
+    }
+
+    fun clearData() {
+        subDirDate = null
+        for (series in mGraphSeriesDataset.series) {
+            series.clear()
+        }
+        oldCountMeasure = 0
+        countMeasure = oldCountMeasure
+        mMapChartIndexToDate.clear()
+        GraphPopulatorUtils.clearYTextLabels(renderer)
+        repaintChartView()
+    }
+
+    override fun currentDate(): Date {
+        return mReportDate!!
+    }
+
+    override fun reportDateString(): String {
+        mReportDate = Date()
+        return FORMATTER.format(mReportDate)
+    }
+
+    //TODO implement this for handle report changes
+    override fun sampleId(): String? {
+        return null
+    }
+
+    override fun location(): String? {
+        return null
+    }
+
+    override fun countMinutes(): Int {
+        return prefs.getInt(PrefConstants.DURATION, 0)
+    }
+
+    override fun volume(): Int {
+        return prefs.getInt(PrefConstants.VOLUME, 0)
+    }
+
+    override fun operator(): String? {
+        return null
+    }
+
+    override fun dateString(): String {
+        return FORMATTER.format(mReportDate)
+    }
+
+    override fun writeReport(reportHtml: String, fileName: String) {
+        val file = File(reportFolders(), "$fileName.html")
+        file.parentFile!!.mkdirs()
+        try {
+            file.createNewFile()
+            TextFileUtils.writeTextFile(file.absolutePath, reportHtml)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun reportFolders(): String {
+        return File(Environment.getExternalStorageDirectory(), AppData.REPORT_FOLDER_NAME)
+            .absolutePath
+    }
+
+    override fun deliverCommand(command: String) {
+        sendCommand(command)
+    }
+
+    interface AutoPullResolverCallback {
+        fun onPrePullStopped()
+        fun onPostPullStopped()
+        fun onPostPullStarted()
+    }
+
+    private inner class AutoPullResolverListener(private val mAutoPullResolverCallback: AutoPullResolverCallback) :
+        View.OnClickListener {
+        override fun onClick(v: View) {
+            if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                return
+            }
+            mAutoPullResolverCallback.onPrePullStopped()
+            val nowTime = SystemClock.uptimeMillis()
+            val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, mLastTimePressed)
+            if (timeElapsed) {
+                mLastTimePressed = nowTime
+                startService(
+                    PullStateManagingService.intentForService(
+                        this@MainActivity,
+                        false
+                    )
+                )
+            }
+            mAutoPullResolverCallback.onPostPullStopped()
+            if (timeElapsed) {
+                mHandler.postDelayed({
+                    if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                        startService(
+                            PullStateManagingService.intentForService(
+                                this@MainActivity,
+                                true
+                            )
+                        )
+                    }
+                    mAutoPullResolverCallback.onPostPullStarted()
+                }, 1000)
+            }
+        }
+    }
+
+    companion object {
+        private const val IS_SERVICE_RUNNING = "is_service_reunning"
+        private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
+        fun sendBroadCastWithData(context: Context, data: String?) {
+            val intent = Intent(EToCMainHandler.USB_DATA_READY)
+            intent.putExtra(EToCMainHandler.DATA_EXTRA, data)
+            context.sendBroadcast(intent)
+        }
+
+        fun sendBroadCastWithData(context: Context, data: Int) {
+            val intent = Intent(EToCMainHandler.USB_DATA_READY)
+            intent.putExtra(EToCMainHandler.DATA_EXTRA, data.toString() + "")
+            intent.putExtra(EToCMainHandler.IS_TOAST, true)
+            context.sendBroadcast(intent)
+        }
+    }
+}

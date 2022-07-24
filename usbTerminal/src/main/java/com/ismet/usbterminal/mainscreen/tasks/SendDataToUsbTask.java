@@ -6,6 +6,7 @@ import android.os.Environment;
 import androidx.core.util.Pair;
 import android.widget.Toast;
 
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.data.AppData;
 import com.ismet.usbterminal.data.PrefConstants;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
@@ -26,11 +27,11 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 
     private final boolean autoPpm;
 
-    private final WeakReference<EToCMainActivity> weakActivity;
+    private final WeakReference<MainActivity> weakActivity;
     private boolean useRecentDirectory;
 
     public SendDataToUsbTask(List<String> simpleCommands, List<String> loopCommands,
-                             boolean autoPpm, EToCMainActivity activity, boolean useRecentDirectory) {
+                             boolean autoPpm, MainActivity activity, boolean useRecentDirectory) {
         this.simpleCommands = simpleCommands;
         this.loopCommands = loopCommands;
         this.autoPpm = autoPpm;
@@ -38,17 +39,26 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
         this.useRecentDirectory = useRecentDirectory;
     }
 
+    public SendDataToUsbTask(List<String> simpleCommands, List<String> loopCommands,
+                             boolean autoPpm, EToCMainActivity activity, boolean useRecentDirectory) {
+        this.simpleCommands = simpleCommands;
+        this.loopCommands = loopCommands;
+        this.autoPpm = autoPpm;
+        this.weakActivity = new WeakReference<>(null);
+        this.useRecentDirectory = useRecentDirectory;
+    }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        EToCMainActivity activity = weakActivity.get();
+        MainActivity activity = weakActivity.get();
         if (activity != null && useRecentDirectory) {
 
             int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
             //cal direcory
             if (ppm != -1) {
                 File directory = new File(Environment.getExternalStorageDirectory(), AppData.CAL_FOLDER_NAME);
-                File directoriesInside[] = directory.listFiles(new FileFilter() {
+                File[] directoriesInside = directory.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
                         return pathname.isDirectory();
@@ -90,7 +100,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
 
             if (isAuto && autoPpm && !preferences.getBoolean(PrefConstants.SAVE_AS_CALIBRATION,
                     false)) {
-                publishProgress(new Pair<Integer, String>(2, null));
+                publishProgress(new Pair<>(2, null));
             }
 
             weakActivity.get().startService(PullStateManagingService.intentForService
@@ -205,7 +215,7 @@ public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, St
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
         if (weakActivity.get() != null) {
-            EToCMainActivity activity = weakActivity.get();
+            MainActivity activity = weakActivity.get();
 
             activity.setTimerRunning(false);
 

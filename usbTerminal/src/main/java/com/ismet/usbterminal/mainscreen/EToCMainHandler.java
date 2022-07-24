@@ -7,6 +7,7 @@ import android.os.Message;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.EToCApplication;
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.data.AppData;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
@@ -60,23 +61,28 @@ public class EToCMainHandler extends Handler {
 
 	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
-	private final WeakReference<EToCMainActivity> weakActivity;
+	private final WeakReference<MainActivity> weakActivity;
 
 	private
 	@PullState
 	int mTempState;
 
-	public EToCMainHandler(EToCMainActivity tedActivity) {
+	public EToCMainHandler(MainActivity tedActivity) {
 		super();
 		this.weakActivity = new WeakReference<>(tedActivity);
 	}
+
+    public EToCMainHandler(EToCMainActivity tedActivity) {
+        super();
+        this.weakActivity = new WeakReference<>(null);
+    }
 
 	@Override
 	public void handleMessage(Message msg) {
 		super.handleMessage(msg);
 
 		if (weakActivity.get() != null) {
-			EToCMainActivity activity = weakActivity.get();
+			MainActivity activity = weakActivity.get();
 			EToCApplication application = EToCApplication.getInstance();
 			switch (msg.what) {
 				case MESSAGE_USB_DATA_RECEIVED:
@@ -384,7 +390,7 @@ public class EToCMainHandler extends Handler {
 		}
 	}
 
-	private void handleResponse(final WeakReference<EToCMainActivity> activityWeakReference,
+	private void handleResponse(final WeakReference<MainActivity> activityWeakReference,
 			String response) {
 
 		boolean correctResponse = false;
@@ -392,7 +398,7 @@ public class EToCMainHandler extends Handler {
 		int curPowerState = 0;
 
 		if (activityWeakReference.get() != null) {
-			final EToCMainActivity activity = activityWeakReference.get();
+			final MainActivity activity = activityWeakReference.get();
 			PowerCommandsFactory powerCommandsFactory = activity.getPowerCommandsFactory();
 			final int powerState = powerCommandsFactory.currentPowerState();
 			curPowerState = powerState;
