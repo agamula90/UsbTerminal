@@ -433,8 +433,8 @@ public class FileDialog extends ListActivity {
 		setListAdapter(fileList);
 	}
 
-	private File[] removePointFiles(File files[]) {
-		List<File> fileList = new ArrayList<File>(Arrays.asList(files));
+	private File[] removePointFiles(File[] files) {
+		List<File> fileList = new ArrayList<>(Arrays.asList(files));
 		for (int i = fileList.size() - 1; i >= 0; i--) {
 			if (fileList.get(i).getName().startsWith(".")) {
 				fileList.remove(i);

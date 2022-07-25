@@ -2164,7 +2164,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * @return if a backup file was loaded
      */
     protected fun doOpenBackup(): Boolean {
-        val text: String
+        val text: String?
         try {
             text = TextFileUtils.readInternal(this)
             return if (!TextUtils.isEmpty(text)) {
