@@ -31,8 +31,6 @@ public class EToCMainHandler extends Handler {
 
 	public static final String USB_DATA_READY = "com.ismet.usbservice.USB_DATA_READY";
 
-	public static final String UN_SCHEDULING = "com.ismet.usbservice.UN_SCHEDULING";
-
 	public static final String DATA_EXTRA = "data_extra";
 
     public static final String IS_TOAST = "is_toast";

@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import kotlin.Deprecated;
+
 public class GraphPopulatorUtils {
 
 	public static XYSeries addNewSet(XYMultipleSeriesRenderer renderer, XYMultipleSeriesDataset
@@ -65,6 +67,7 @@ public class GraphPopulatorUtils {
 		return r;
 	}
 
+    @Deprecated(message = "Use MainActivity instead")
 	public static GraphData createXYChart(int mins, int secs, EToCMainActivity activity) {
 		String[] titles = new String[]{"ppm", "ppm", "ppm"};// ,"","" };//
 
@@ -143,6 +146,7 @@ public class GraphPopulatorUtils {
 		return new GraphData(renderer, seriesDataset, intent, currentSeries);
 	}
 
+    @Deprecated(message = "Use MainActivity instead")
 	public static GraphicalView attachXYChartIntoLayout(EToCMainActivity activity,
 			AbstractChart mChart) {
 		final LinearLayout chartLayout = (LinearLayout) activity.findViewById(R.id.chart);
@@ -327,17 +331,7 @@ public class GraphPopulatorUtils {
 		return intent;
 	}
 
-	public static void attachTimeChartIntoLayout(EToCMainActivity activity, AbstractChart mChart) {
-		final LinearLayout view = (LinearLayout) activity.findViewById(R.id.chart);
-		GraphicalView mChartView = new GraphicalView(activity, mChart);
-		// mChartView.addZoomListener(mZoomListener, true, false);
-		view.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
-				.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-		// to reflect margin
-		// mChartView.repaint();
-	}
-
-	private static XYMultipleSeriesRenderer initRendererXYLabels(XYMultipleSeriesRenderer renderer) {
+    private static XYMultipleSeriesRenderer initRendererXYLabels(XYMultipleSeriesRenderer renderer) {
 		renderer.setXLabels(0);
 		renderer.setYLabels(15);
 		renderer.setLabelsTextSize(13);

@@ -27,7 +27,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.EToCMainHandler
-import com.ismet.usbterminal.mainscreen.EToCMainUsbReceiver
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
@@ -72,7 +71,39 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     /*
 	 * Notifications from UsbService will be received here.
 	 */
-    private val mUsbReceiver: BroadcastReceiver = EToCMainUsbReceiver(this)
+    private val mUsbReceiver: BroadcastReceiver = object: BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when(intent.action) {
+                EToCMainHandler.USB_DATA_READY -> {
+                    val isToast = intent.getBooleanExtra(EToCMainHandler.IS_TOAST, false)
+                    val data = intent.getStringExtra(EToCMainHandler.DATA_EXTRA)
+                    if (isToast) {
+                        sendMessageForToast(data)
+                    } else {
+                        sendMessageWithUsbDataReady(data)
+                    }
+                }
+                UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
+                    refreshUsbDevice()
+                    showCustomisedToast("USB Device Attached")
+                }
+                UsbManager.ACTION_USB_DEVICE_DETACHED -> {
+                    val device = intent.extras!!.getParcelable<android.hardware.usb.UsbDevice>(UsbManager.EXTRA_DEVICE)!!
+                    showCustomisedToast("USB Device Detached")
+                    val deviceId = UsbDeviceId(vendorId = device.vendorId, productId = device.productId)
+                    if (usbDevice?.deviceId == deviceId) {
+                        usbDevice?.close()
+                        usbDevice = null
+                        showCustomisedToast("USB disconnected")
+                        setUsbConnected(false)
+                    }
+                }
+                else -> {
+                    //TODO handle event
+                }
+            }
+        }
+    }
 
     /**
      * the path of the file currently opened
@@ -472,12 +503,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         val strOn1 = editOn1.text.toString()
                         val strOff1 = editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            val toast = Toast.makeText(
-                                this@MainActivity, "Please enter all"
-                                        + " values", Toast.LENGTH_LONG
-                            )
-                            ToastUtils.wrap(toast)
-                            toast.show()
+                            showCustomisedToast("Please enter all values")
                             return@OnClickListener
                         }
                         val edit = prefs.edit()
@@ -610,12 +636,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         val strOn1 = editOn1.text.toString()
                         val strOff1 = editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            val toast = Toast.makeText(
-                                this@MainActivity, "Please enter all"
-                                        + " values", Toast.LENGTH_LONG
-                            )
-                            ToastUtils.wrap(toast)
-                            toast.show()
+                            showCustomisedToast("Please enter all values")
                             return@OnClickListener
                         }
                         val edit = prefs.edit()
@@ -731,12 +752,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         val strOn1 = editOn1.text.toString()
                         val strOff1 = editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            val toast = Toast.makeText(
-                                this@MainActivity, "Please enter all"
-                                        + " values", Toast.LENGTH_LONG
-                            )
-                            ToastUtils.wrap(toast)
-                            toast.show()
+                            showCustomisedToast("Please enter all values")
                             return@OnClickListener
                         }
                         val edit = prefs.edit()
@@ -806,12 +822,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mButtonClear.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View) {
                 if (isTimerRunning) {
-                    val toast = Toast.makeText(
-                        this@MainActivity, "Timer is running. Please"
-                                + " wait", Toast.LENGTH_SHORT
-                    )
-                    ToastUtils.wrap(toast)
-                    toast.show()
+                    showCustomisedToast("Timer is running. Please wait")
                     return
                 }
                 val items = arrayOf<CharSequence>(
@@ -918,12 +929,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     return
                 }
                 if (isTimerRunning) {
-                    val toast = Toast.makeText(
-                        this@MainActivity, "Timer is running. Please"
-                                + " wait", Toast.LENGTH_SHORT
-                    )
-                    ToastUtils.wrap(toast)
-                    toast.show()
+                    showCustomisedToast("Timer is running. Please wait")
                     return
                 }
                 val arrSeries = mGraphSeriesDataset.series
@@ -943,14 +949,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     i++
                 }
                 if (!isChart1Clear && !isChart2Clear && !isChart3Clear) {
-                    val toast = Toast.makeText(
-                        this@MainActivity, "No chart available." +
-                                " " +
-                                "Please clear " +
-                                "one of " + "the charts", Toast.LENGTH_SHORT
-                    )
-                    ToastUtils.wrap(toast)
-                    toast.show()
+                    showCustomisedToast("No chart available. Please clear one of the charts")
                     return
                 }
                 v.isEnabled = false
@@ -1039,25 +1038,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                             val strDelay = editDelay.text.toString()
                             val strDuration = editDuration.text.toString()
                             if (strDelay == "" || strDuration == "") {
-                                val toast = Toast.makeText(
-                                    this@MainActivity, "Please enter all"
-                                            + " values", Toast.LENGTH_LONG
-                                )
-                                ToastUtils.wrap(toast)
-                                toast.show()
+                                showCustomisedToast("Please enter all values")
                                 return
                             }
                             if (chkKnownPpm.isChecked) {
                                 val strkPPM = editKnownPpm.text.toString()
                                 if (strkPPM == "") {
-                                    val toast = Toast.makeText(
-                                        this@MainActivity, "Please " +
-                                                "enter" +
-                                                " ppm " +
-                                                "values", Toast.LENGTH_LONG
-                                    )
-                                    ToastUtils.wrap(toast)
-                                    toast.show()
+                                    showCustomisedToast("Please enter ppm values")
                                     return
                                 } else {
                                     val kppm = strkPPM.toInt()
@@ -1075,12 +1062,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                             run {
                                 val str_uc = editUserComment.text.toString()
                                 if (str_uc == "") {
-                                    val toast = Toast.makeText(
-                                        this@MainActivity, "Please enter"
-                                                + " comments", Toast.LENGTH_LONG
-                                    )
-                                    ToastUtils.wrap(toast)
-                                    toast.show()
+                                    showCustomisedToast("Please enter comments")
                                     return
                                 } else {
                                     val edit = prefs.edit()
@@ -1093,12 +1075,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                             }
                             val strVolume = editVolume.text.toString()
                             if (strVolume == "") {
-                                val toast = Toast.makeText(
-                                    this@MainActivity, "Please enter " +
-                                            "volume values", Toast.LENGTH_LONG
-                                )
-                                ToastUtils.wrap(toast)
-                                toast.show()
+                                showCustomisedToast("Please enter volume values")
                                 return
                             } else {
                                 val volume = strVolume.toInt()
@@ -1117,12 +1094,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                             val delay = strDelay.toInt()
                             val duration = strDuration.toInt()
                             if (delay == 0 || duration == 0) {
-                                val toast = Toast.makeText(
-                                    this@MainActivity, "zero is not " +
-                                            "allowed", Toast.LENGTH_LONG
-                                )
-                                ToastUtils.wrap(toast)
-                                toast.show()
+                                showCustomisedToast("zero is not allowed")
                                 return
                             } else {
 
@@ -1170,12 +1142,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 if (mAdvancedEditText.text.toString() == "" && checkedId ==
                                     -1
                                 ) {
-                                    val toast = Toast.makeText(
-                                        this@MainActivity, "Please enter"
-                                                + " command", Toast.LENGTH_SHORT
-                                    )
-                                    ToastUtils.wrap(toast)
-                                    toast.show()
+                                    showCustomisedToast( "Please enter command")
                                     return
                                 }
                                 val contentForUpload: String?
@@ -1308,20 +1275,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                         mSendDataToUsbTask!!.execute(future, delay_timer)
                                     }, 300)
                                 } else if (success) {
-                                    val toast = Toast.makeText(
-                                        this@MainActivity, "File not " +
-                                                "found", Toast.LENGTH_LONG
-                                    )
-                                    ToastUtils.wrap(toast)
-                                    toast.show()
+                                    showCustomisedToast("File not found")
                                     return
                                 } else {
-                                    val toast = Toast.makeText(
-                                        this@MainActivity, "Unexpected "
-                                                + "error", Toast.LENGTH_LONG
-                                    )
-                                    ToastUtils.wrap(toast)
-                                    toast.show()
+                                    showCustomisedToast("Unexpected error")
                                     return
                                 }
 
@@ -1464,6 +1421,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         //		 ().get("chart"));
     }
 
+    private fun showCustomisedToast(message: String) {
+        val customToast = Toast.makeText(this, message, Toast.LENGTH_LONG)
+        ToastUtils.wrap(customToast)
+        customToast.show()
+    }
+
+    fun showToastMessage(message: String?) {
+        // showCustomisedToast(message.toString())
+    }
+
     fun initPowerAccordToItState() {
         val powerText: String?
         val powerTag: String?
@@ -1519,21 +1486,44 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             "Button State2" + " Name: "
     }
 
-    fun refreshUsbDevice() {
+    private fun refreshUsbDevice() {
         lifecycleScope.launchWhenResumed {
             try {
-                usbDevice = usbDeviceConnection.findUsbDevice()
-                sendBroadcast(Intent(UsbService.ACTION_USB_PERMISSION_GRANTED))
+                val usbDevice = usbDeviceConnection.findUsbDevice()
+                showCustomisedToast("USB Ready")
+                setUsbConnected(true)
+                if (!usbDevice.isConnectionEstablished()) {
+                    showCustomisedToast("USB device not supported")
+                    setUsbConnected(false)
+                    usbDevice.close()
+                } else {
+                    usbDevice.readCallback = object: OnDataReceivedCallback {
+                        override fun onDataReceived(data: ByteArray) {
+                            sendMessageWithUsbDataReceived(data)
+                        }
+                    }
+                    val oldUsbDevice = this@MainActivity.usbDevice
+                    if (oldUsbDevice != null) {
+                        oldUsbDevice.readCallback = object: OnDataReceivedCallback {
+                            override fun onDataReceived(data: ByteArray) {
+                                // ignore
+                            }
+                        }
+                        oldUsbDevice.close()
+                    }
+                    this@MainActivity.usbDevice = usbDevice
+                }
             } catch (e: CreateDeviceException) {
-                val actionName = when(e.reason) {
+                when(e.reason) {
                     ConnectionFailureReason.DEVICE_NOT_FOUND -> {
-                        UsbService.ACTION_NO_USB
+                        showCustomisedToast("No USB connected")
+                        setUsbConnected(false)
                     }
                     ConnectionFailureReason.PERMISSION_NOT_GRANTED -> {
-                        UsbService.ACTION_USB_PERMISSION_NOT_GRANTED
+                        showCustomisedToast("USB Permission not granted")
+                        finish()
                     }
                 }
-                sendBroadcast(Intent(actionName))
             }
         }
     }
@@ -1547,8 +1537,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             powerData = TextFileUtils.readTextFile(buttonPowerDataFile)
         }
         powerCommandsFactory = EToCApplication.getInstance().parseCommands(powerData)
-        val commandFactory: String
-        commandFactory = if (powerCommandsFactory is FilePowerCommandsFactory) {
+        val commandFactory: String = if (powerCommandsFactory is FilePowerCommandsFactory) {
             "FilePowerCommand"
         } else {
             "DefaultPowerCommand"
@@ -1901,17 +1890,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
-    private val toast: Toast? = null
-    fun showToastMessage(message: String?) {
-        /*if(toast != null) {
-            toast.cancel();
-        }
-        toast = Toast.makeText(this, message, Toast.LENGTH_LONG);
-        ToastUtils.wrap(toast);
-        toast.show();*/
-    }
-
     fun sendCommand(command: String?) {
+        Log.e("Oops", "send command")
         var command = command
         if (command != null && command != "" && command != "\n") {
             command = command.replace("\r", "")
@@ -1941,13 +1921,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 scrollView.smoothScrollTo(0, 0)
                 //}
             } else {
-                val toast = Toast.makeText(
-                    this@MainActivity,
-                    "serial port not found",
-                    Toast.LENGTH_LONG
-                )
-                ToastUtils.wrap(toast)
-                toast.show()
+                showCustomisedToast("serial port not found")
             }
         }
     }
@@ -1964,19 +1938,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 sendCommand(command)
             }
         } else {
+            Log.e("Oops", "send message")
             val tempUsbDevice = usbDevice
             if (tempUsbDevice != null) { // if UsbService was
                 // correctly binded,
                 // Send data
                 tempUsbDevice.write("\r".toByteArray())
             } else {
-                val toast = Toast.makeText(
-                    this@MainActivity,
-                    "serial port not found",
-                    Toast.LENGTH_LONG
-                )
-                ToastUtils.wrap(toast)
-                toast.show()
+                showCustomisedToast("serial port not found")
             }
 
             // mTxtOutput.append("Tx: " + data + "\n");
@@ -2091,10 +2060,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
                     openchart1(extras.getString("path"))
                 } else {
-                    val toast =
-                        Toast.makeText(this@MainActivity, "Invalid File", Toast.LENGTH_SHORT)
-                    ToastUtils.wrap(toast)
-                    toast.show()
+                    showCustomisedToast("Invalid File")
                 }
             }
         }
@@ -2119,7 +2085,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     /**
      * @see android.app.Activity.onPrepareOptionsMenu
      */
-    @TargetApi(11)
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         super.onPrepareOptionsMenu(menu)
         Log.d("onPrepareOptionsMenu", "onPrepareOptionsMenu")
@@ -2704,32 +2669,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      */
     private fun openChart() {
         if (isTimerRunning) {
-            val toast = Toast.makeText(
-                this@MainActivity, "Timer is running. Please wait",
-                Toast.LENGTH_SHORT
-            )
-            ToastUtils.wrap(toast)
-            toast.show()
+            showCustomisedToast("Timer is running. Please wait")
             return
         }
         val dir = File(Environment.getExternalStorageDirectory().toString() + "/AEToCLogs_MES")
         if (!dir.exists()) {
-            val toast = Toast.makeText(
-                this@MainActivity, "Logs diretory is not available",
-                Toast.LENGTH_SHORT
-            )
-            ToastUtils.wrap(toast)
-            toast.show()
+            showCustomisedToast("Logs diretory is not available")
             return
         }
         val filenameArry = dir.list()
         if (filenameArry == null) {
-            val toast = Toast.makeText(
-                this@MainActivity, "Logs not available. Logs " +
-                        "directory is empty", Toast.LENGTH_SHORT
-            )
-            ToastUtils.wrap(toast)
-            toast.show()
+            showCustomisedToast("Logs not available. Logs directory is empty")
             return
         }
         val items = arrayOfNulls<CharSequence>(filenameArry.size)
@@ -2756,12 +2706,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     chartSeries = mGraphSeriesDataset.getSeriesAt(2)
                 }
                 if (!isLogsExist) {
-                    val toast = Toast.makeText(
-                        this@MainActivity, "Required Log files not "
-                                + "available", Toast.LENGTH_SHORT
-                    )
-                    ToastUtils.wrap(toast)
-                    toast.show()
+                    showCustomisedToast("Required Log files not available")
                     dialog.cancel()
                     return
                 }
@@ -2843,9 +2788,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             savePreferencesToLocalData()
         } catch (e: Exception) {
             e.printStackTrace()
-            val toast = Toast.makeText(this, e.message, Toast.LENGTH_LONG)
-            ToastUtils.wrap(toast)
-            toast.show()
+            showCustomisedToast(e.message!!)
         }
         super.finish()
     }
@@ -2927,16 +2870,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     private fun setFilters() {
         val filter = IntentFilter()
-        filter.addAction(UsbService.ACTION_USB_PERMISSION_GRANTED)
-        filter.addAction(UsbService.ACTION_NO_USB)
-        filter.addAction(UsbService.ACTION_USB_DISCONNECTED)
-        filter.addAction(UsbService.ACTION_USB_NOT_SUPPORTED)
-        filter.addAction(UsbService.ACTION_USB_PERMISSION_NOT_GRANTED)
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-        filter.addAction(UsbService.ACTION_DATA_RECEIVED)
         filter.addAction(EToCMainHandler.USB_DATA_READY)
-        filter.addAction(EToCMainHandler.UN_SCHEDULING)
         registerReceiver(mUsbReceiver, filter)
     }
 
@@ -3003,6 +2939,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun setUsbConnected(isUsbConnected: Boolean) {
         mIsUsbConnected = isUsbConnected
+        invalidateOptionsMenu()
     }
 
     fun simulateClick() {
@@ -3121,8 +3058,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         fun onPostPullStarted()
     }
 
-    private inner class AutoPullResolverListener(private val mAutoPullResolverCallback: AutoPullResolverCallback) :
-        View.OnClickListener {
+    private inner class AutoPullResolverListener(
+        private val mAutoPullResolverCallback: AutoPullResolverCallback
+    ) : View.OnClickListener {
         override fun onClick(v: View) {
             if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
                 return

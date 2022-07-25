@@ -8,7 +8,9 @@ import android.content.IntentFilter
 import android.hardware.usb.UsbManager
 import com.felhr.usbserial.UsbSerialDevice
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.Closeable
 
 class UsbDeviceConnection(val context: Context): Closeable {
@@ -20,17 +22,18 @@ class UsbDeviceConnection(val context: Context): Closeable {
             val extras = intent.extras!!
             val granted = extras.getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED)
             val device = extras.getParcelable<android.hardware.usb.UsbDevice>(UsbManager.EXTRA_DEVICE)!!
+            val deviceId = UsbDeviceId(device.vendorId, device.productId)
 
             when(granted) {
                 true -> {
-                    continuations[UsbDeviceId(device.vendorId, device.productId)]!!.forEach {
+                    continuations[deviceId]!!.forEach {
                         val connection = usbManager.openDevice(device)
                         val serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection)
-                        it.resumeWith(Result.success(UsbDevice(connection, serialPort)))
+                        it.resumeWith(Result.success(UsbDevice(deviceId, connection, serialPort)))
                     }
                 }
                 false -> {
-                    continuations[UsbDeviceId(device.vendorId, device.productId)]!!.forEach {
+                    continuations[deviceId]!!.forEach {
                         it.resumeWith(Result.failure(CreateDeviceException(ConnectionFailureReason.PERMISSION_NOT_GRANTED)))
                     }
                 }
@@ -55,10 +58,10 @@ class UsbDeviceConnection(val context: Context): Closeable {
         }
     }
 
-    suspend fun findUsbDevice(): UsbDevice {
+    suspend fun findUsbDevice(): UsbDevice = withContext(Dispatchers.IO) {
         for (deviceId in supportedDeviceIds) {
             try {
-                return createDevice(deviceId)
+                createDevice(deviceId)
             } catch (e: CreateDeviceException) {
                 if (e.reason != ConnectionFailureReason.DEVICE_NOT_FOUND) throw e
             }

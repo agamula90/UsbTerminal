@@ -7,6 +7,7 @@ import com.felhr.usbserial.UsbSerialInterface
 import java.io.Closeable
 
 class UsbDevice(
+    val deviceId: UsbDeviceId,
     private val connection: UsbDeviceConnection,
     private var serialPort: UsbSerialDevice?
 ): Closeable {

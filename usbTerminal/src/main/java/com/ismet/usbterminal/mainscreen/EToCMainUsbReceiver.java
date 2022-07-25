@@ -6,22 +6,20 @@ import android.content.Intent;
 import android.hardware.usb.UsbManager;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.services.UsbService;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
 import java.lang.ref.WeakReference;
 
+import kotlin.Deprecated;
+
+@Deprecated(message = "Use MainActivity instead")
 public class EToCMainUsbReceiver extends BroadcastReceiver {
 
-    private final WeakReference<MainActivity> weakActivity;
-
-    public EToCMainUsbReceiver(MainActivity activity) {
-        this.weakActivity = new WeakReference<>(activity);
-    }
+    private final WeakReference<EToCMainActivity> weakActivity;
 
     public EToCMainUsbReceiver(EToCMainActivity activity) {
-        this.weakActivity = new WeakReference<>(null);
+        this.weakActivity = new WeakReference<>(activity);
     }
 
     @Override
@@ -30,14 +28,14 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
 
         if (action.equals(UsbService.ACTION_DATA_RECEIVED)) {
             if (weakActivity.get() != null) {
-                MainActivity activity = weakActivity.get();
+                EToCMainActivity activity = weakActivity.get();
                 activity.sendMessageWithUsbDataReceived(intent.getByteArrayExtra(UsbService
                         .DATA_RECEIVED));
             }
             return;
         } else if(action.equals(EToCMainHandler.USB_DATA_READY)) {
             if (weakActivity.get() != null) {
-                MainActivity activity = weakActivity.get();
+                EToCMainActivity activity = weakActivity.get();
                 boolean isToast = intent.getBooleanExtra(EToCMainHandler.IS_TOAST, false);
 
                 String data = intent.getStringExtra(EToCMainHandler.DATA_EXTRA);
@@ -110,7 +108,7 @@ public class EToCMainUsbReceiver extends BroadcastReceiver {
 
         if (weakActivity.get() != null) {
             synchronized (weakActivity.get()) {
-                MainActivity activity = weakActivity.get();
+                EToCMainActivity activity = weakActivity.get();
 
                 if (isUsbConnected != null) {
                     activity.setUsbConnected(isUsbConnected);

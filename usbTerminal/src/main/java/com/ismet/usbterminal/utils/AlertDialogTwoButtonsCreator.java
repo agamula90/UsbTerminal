@@ -9,8 +9,11 @@ import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 
+import kotlin.Deprecated;
+
 public class AlertDialogTwoButtonsCreator {
 
+    @Deprecated(message = "Use MainActivity instead")
 	public static AlertDialog.Builder createTwoButtonsAlert(EToCMainActivity activity, int
 			layoutId, String
 			dialogText, DialogInterface.OnClickListener okListener, DialogInterface

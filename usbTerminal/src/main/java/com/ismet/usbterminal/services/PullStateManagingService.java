@@ -9,10 +9,10 @@ import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.ismet.usbterminal.EToCApplication;
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.data.PullState;
-import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 
 import java.util.ArrayList;
@@ -112,9 +112,9 @@ public class PullStateManagingService extends Service {
                             int state = commandsFactory.currentPowerState();
 
                             if (state != PowerState.OFF) {
-                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
                                         .this, message);
-                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
                                         .this, state);
                             }
 
@@ -211,7 +211,7 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
-                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
                         CO2_REQUEST);
             }
         };
@@ -224,7 +224,7 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
-                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
                         "/5J5R");
 
                 try {
@@ -233,7 +233,7 @@ public class PullStateManagingService extends Service {
                     e.printStackTrace();
                 }
 
-                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
+                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
                         eToCApplication.getCurrentTemperatureRequest());
             }
         };

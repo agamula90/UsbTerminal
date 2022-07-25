@@ -109,6 +109,7 @@ import fr.xgouchet.texteditor.common.Settings;
 import fr.xgouchet.texteditor.common.TextFileUtils;
 import fr.xgouchet.texteditor.ui.view.AdvancedEditText;
 import fr.xgouchet.texteditor.undo.TextChangeWatcher;
+import kotlin.Deprecated;
 
 import static fr.xgouchet.androidlib.data.FileUtils.deleteItem;
 import static fr.xgouchet.androidlib.data.FileUtils.getCanonizePath;
@@ -134,6 +135,7 @@ import static fr.xgouchet.texteditor.common.Constants.REQUEST_OPEN;
 import static fr.xgouchet.texteditor.common.Constants.REQUEST_SAVE_AS;
 import static fr.xgouchet.texteditor.common.Constants.TAG;
 
+@Deprecated(message = "Use MainActivity instead")
 public class EToCMainActivity extends BaseAttachableActivity implements TextWatcher,
 		CommandsDeliverer {
 
@@ -3287,7 +3289,6 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
 		filter.addAction(UsbService.ACTION_DATA_RECEIVED);
 		filter.addAction(EToCMainHandler.USB_DATA_READY);
-		filter.addAction(EToCMainHandler.UN_SCHEDULING);
 		registerReceiver(mUsbReceiver, filter);
 	}
 

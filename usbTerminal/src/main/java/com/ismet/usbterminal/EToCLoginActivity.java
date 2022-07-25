@@ -27,7 +27,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.ismet.usbterminalnew.R;
 
 import java.util.ArrayList;
@@ -345,7 +344,7 @@ public class EToCLoginActivity extends Activity implements LoaderCallbacks<Curso
 			showProgress(false);
 
 			if (success) {
-				Intent intent = new Intent(EToCLoginActivity.this, EToCMainActivity.class);
+				Intent intent = new Intent(EToCLoginActivity.this, MainActivity.class);
 				startActivity(intent);
 				finish();
 			} else {
