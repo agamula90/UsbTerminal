@@ -21,7 +21,6 @@ import static fr.xgouchet.texteditor.common.Constants.*;
 /**
  * Misc file utilities
  * <p/>
- * TODO code review
  */
 public class TextFileUtils {
 

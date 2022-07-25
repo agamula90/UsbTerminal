@@ -13,7 +13,6 @@ import static fr.xgouchet.texteditor.common.Constants.*;
 /**
  * Storage for a recent files list
  * <p/>
- * TODO code review
  */
 public class RecentFiles {
 

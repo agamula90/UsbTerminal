@@ -1,6 +1,5 @@
 package com.ismet.usbterminal
 
-import android.annotation.TargetApi
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.*
@@ -33,7 +32,6 @@ import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.tasks.EToCOpenChartTask
 import com.ismet.usbterminal.mainscreen.tasks.SendDataToUsbTask
 import com.ismet.usbterminal.services.PullStateManagingService
-import com.ismet.usbterminal.services.UsbService
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
@@ -199,12 +197,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         private set
     lateinit var powerCommandsFactory: PowerCommandsFactory
 
-    /**
-     * @see android.app.Activity.onCreate
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        //        WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState)
         if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onCreate")
         mExecutor = Executors.newSingleThreadExecutor()
@@ -235,204 +228,28 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mPower = findViewById<View>(R.id.power) as Button
         initPowerAccordToItState()
 
-        /*mPower.setOnLongClickListener(new OnLongClickListener() {
-
-			@Override
-			public boolean onLongClick(View v) {
-				switch (mPowerState) {
-					case PowerState.OFF:
-						v.setEnabled(false);
-						powerOn();
-						//simulateClick2();
-						break;
-					case PowerState.ON:
-						v.setEnabled(false);
-						powerOff();
-						//simulateClick1();
-						break;
-				}
-
-				return true;
-			}
-		});*/mPower.setOnClickListener { v ->
+        mPower.setOnClickListener { v ->
             when (powerCommandsFactory.currentPowerState()) {
                 PowerState.OFF -> {
                     v.isEnabled = false
                     powerOn()
+                    //TODO uncomment for simulating
+                    //simulateClick2();
                 }
                 PowerState.ON -> {
                     v.isEnabled = false
                     powerOff()
+                    //TODO uncomment for simulating
+                    //simulateClick1();
                 }
             }
         }
 
-        /*mPower.setOnClickListener(new AutoPullResolverListener(new AutoPullResolverCallback() {
-
-            private String command;
-
-            @Override
-            public void onPrePullStopped() {
-                String powerOnName = mPrefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants
-                        .POWER_ON_NAME_DEFAULT);
-                String powerOffName = mPrefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants
-                        .POWER_OFF_NAME_DEFAULT);
-
-                String s = mPower.getTag().toString();
-
-                boolean powerOn;
-
-                command = "";
-
-                if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
-                    mPower.setText(powerOffName);
-                    mPower.setTag(PrefConstants.POWER_OFF_NAME_DEFAULT.toLowerCase());
-                    powerOn = true;
-                    command = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
-                            .POWER_ON_COMMAND_DEFAULT);
-                } else {
-                    mPower.setText(powerOnName);
-                    mPower.setTag(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase());
-                    powerOn = false;
-                    command = mPrefs.getString(PrefConstants.POWER_OFF, PrefConstants
-                            .POWER_OFF_NAME_DEFAULT);
-                }
-
-                mPowerState = powerOn ? PowerState.ON : PowerState.OFF;
-            }
-
-            @Override
-            public void onPostPullStopped() {
-                sendCommand(command);
-            }
-
-            @Override
-            public void onPostPullStarted() {
-
-            }
-        }));
-
-        mPower.setOnLongClickListener(new OnLongClickListener() {
-
-            private EditText editOn, editOff, editOn1, editOff1;
-
-            @Override
-            public boolean onLongClick(View v) {
-                AlertDialogTwoButtonsCreator.OnInitLayoutListener initLayoutListener = new
-                        AlertDialogTwoButtonsCreator.OnInitLayoutListener() {
-
-                    @Override
-                    public void onInitLayout(View contentView) {
-                        editOn = (EditText) contentView.findViewById(R.id.editOn);
-                        editOff = (EditText) contentView.findViewById(R.id.editOff);
-                        editOn1 = (EditText) contentView.findViewById(R.id.editOn1);
-                        editOff1 = (EditText) contentView.findViewById(R.id.editOff1);
-
-                        String str_on_name = mPrefs.getString(PrefConstants.POWER_ON_NAME,
-                                PrefConstants.POWER_ON_NAME_DEFAULT);
-                        String str_off_name = mPrefs.getString(PrefConstants.POWER_OFF_NAME,
-                                PrefConstants.POWER_OFF_NAME_DEFAULT);
-
-                        String str_on = mPrefs.getString(PrefConstants.POWER_ON, PrefConstants
-                                .POWER_ON_COMMAND_DEFAULT);
-                        String str_off = mPrefs.getString(PrefConstants.POWER_OFF, PrefConstants
-                                .POWER_OFF_COMMAND_DEFAULT);
-
-                        editOn.setText(str_on);
-                        editOff.setText(str_off);
-                        editOn1.setText(str_on_name);
-                        editOff1.setText(str_off_name);
-                    }
-                };
-
-                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener
-                        () {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        InputMethodManager inputManager = (InputMethodManager) getSystemService
-                                (Context.INPUT_METHOD_SERVICE);
-
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
-                                .getCurrentFocus().getWindowToken(), 0);
-
-                        String strOn = editOn.getText().toString();
-                        String strOff = editOff.getText().toString();
-                        String strOn1 = editOn1.getText().toString();
-                        String strOff1 = editOff1.getText().toString();
-
-                        if (strOn.equals("") || strOff.equals("") || strOn1.equals("") ||
-                                strOff1.equals("")) {
-                            Toast.makeText(MainActivity.this, "Please enter all values", Toast
-                                    .LENGTH_LONG).show();
-                            return;
-                        }
-
-                        Editor edit = mPrefs.edit();
-                        edit.putString(PrefConstants.POWER_ON, strOn);
-                        edit.putString(PrefConstants.POWER_OFF, strOff);
-                        edit.putString(PrefConstants.POWER_ON_NAME, strOn1);
-                        edit.putString(PrefConstants.POWER_OFF_NAME, strOff1);
-                        edit.apply();
-
-                        String a = mPrefs.getString(PrefConstants.POWER_ON_NAME, "asd");
-
-                        String s = mPower.getTag().toString();
-                        if (s.equals(PrefConstants.POWER_ON_NAME_DEFAULT.toLowerCase())) {
-                            mPower.setText(strOn1);
-                        } else {
-                            mPower.setText(strOff1);
-                        }
-
-                        dialog.cancel();
-                    }
-                };
-
-                DialogInterface.OnClickListener cancelListener = new DialogInterface
-                        .OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        InputMethodManager inputManager = (InputMethodManager) getSystemService
-                                (Context.INPUT_METHOD_SERVICE);
-
-                        inputManager.hideSoftInputFromWindow(((AlertDialog) dialog)
-                                .getCurrentFocus().getWindowToken(), 0);
-                        dialog.cancel();
-                    }
-                };
-
-                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(MainActivity.this, R.layout
-                        .layout_dialog_on_off, "Set On/Off commands", okListener, cancelListener,
-                        initLayoutListener).create().show();
-
-                return true;
-            }
-        });
-*/mTemperature = findViewById<View>(R.id.temperature) as TextView
         mTemperatureBackground = findViewById(R.id.temperature_background)
         changeBackground(mTemperatureBackground, false)
         mCo2 = findViewById<View>(R.id.co2) as TextView
         mCo2Background = findViewById(R.id.co2_background)
         changeBackground(mCo2Background, false)
-
-        // Timer mTimer = new Timer();
-        // mTimer.scheduleAtFixedRate(new TimerTask() {
-        //
-        // @Override
-        // public void run() {
-        // // TODO Auto-generated method stub
-        // runOnUiThread(new Runnable() {
-        //
-        // @Override
-        // public void run() {
-        // // TODO Auto-generated method stub
-        // mTxtOutput.append("asdf\n");
-        // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
-        // }
-        // });
-        // }
-        // }, 1000, 1000);
         mButtonOn1 = findViewById<View>(R.id.buttonOn1) as Button
         mButtonOn1.text = prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
         mButtonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
@@ -920,11 +737,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             lateinit var mRadio2: RadioButton
             lateinit var mRadio3: RadioButton
             override fun onClick(v: View) {
-                /*if (mAdvancedEditText.getText().toString().isEmpty()) {
-	                Toast.makeText(MainActivity.this, "Please enter command", Toast
-                            .LENGTH_SHORT).show();
-                    return;
-                }*/
                 if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
                     return
                 }
@@ -1701,23 +1513,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         button3DataBuilder.append(preferences.getString(PrefConstants.OFF3, ""))
         TextFileUtils.writeTextFile(button3DataFile.absolutePath, button3DataBuilder.toString())
 
-        /*File buttonPowerDataFile = new File(settingsFolder, AppData.POWER_DATA);
-		buttonPowerDataFile.createNewFile();
-		StringBuilder buttonPowerDataBuilder = new StringBuilder();
-		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON_NAME,
-				PrefConstants.POWER_ON_NAME_DEFAULT));
-		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
-		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF_NAME,
-				PrefConstants.POWER_OFF_NAME_DEFAULT));
-		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
-		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_ON, PrefConstants
-				.POWER_ON_COMMAND_DEFAULT));
-		buttonPowerDataBuilder.append(AppData.SPLIT_STRING);
-		buttonPowerDataBuilder.append(preferences.getString(PrefConstants.POWER_OFF, PrefConstants
-				.POWER_OFF_COMMAND_DEFAULT));
-
-		TextFileUtils.writeTextFile(buttonPowerDataFile.getAbsolutePath(), buttonPowerDataBuilder
-				.toString());*/
         val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
         measureDefaultFilesFile.createNewFile()
         val measureDefaultFilesBuilder = StringBuilder()
@@ -1890,9 +1685,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
-    fun sendCommand(command: String?) {
-        Log.e("Oops", "send command")
-        var command = command
+    fun sendCommand(newCommand: String?) {
+        var command = newCommand
         if (command != null && command != "" && command != "\n") {
             command = command.replace("\r", "")
             command = command.replace("\n", "")
@@ -1915,14 +1709,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     tempUsbDevice.write(command.toByteArray())
                     tempUsbDevice.write("\r".toByteArray())
                 }
-
-                //if(Utils.isPullStateNone()) {
-                Utils.appendText(txtOutput, "Tx: $command")
-                scrollView.smoothScrollTo(0, 0)
-                //}
-            } else {
-                showCustomisedToast("serial port not found")
             }
+
+            //if(Utils.isPullStateNone()) {
+            Utils.appendText(txtOutput, "Tx: $command")
+            scrollView.smoothScrollTo(0, 0)
+        //}
         }
     }
 
@@ -1938,16 +1730,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 sendCommand(command)
             }
         } else {
-            Log.e("Oops", "send message")
-            val tempUsbDevice = usbDevice
-            if (tempUsbDevice != null) { // if UsbService was
-                // correctly binded,
-                // Send data
-                tempUsbDevice.write("\r".toByteArray())
-            } else {
-                showCustomisedToast("serial port not found")
-            }
-
+            usbDevice?.write("\r".toByteArray())
             // mTxtOutput.append("Tx: " + data + "\n");
             // mScrollView.smoothScrollTo(0, mTxtOutput.getBottom());
         }
@@ -1975,26 +1758,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         prefs.edit().putBoolean(IS_SERVICE_RUNNING, false).apply()
     }
 
-    /**
-     * @see android.app.Activity.onRestart
-     */
     override fun onRestart() {
         super.onRestart()
         mReadIntent = false
     }
 
-    /**
-     * @see android.app.Activity.onRestoreInstanceState
-     */
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         Log.d("TED", "onRestoreInstanceState")
         Log.v("TED", mAdvancedEditText.text.toString())
     }
 
-    /**
-     * @see android.app.Activity.onResume
-     */
     override fun onResume() {
         super.onResume()
         if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onResume")
@@ -2002,7 +1776,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             readIntent()
         }
         mReadIntent = false
-        updateTitle()
         mAdvancedEditText.updateFromSettings()
         val isServiceRunning = prefs.getBoolean(IS_SERVICE_RUNNING, false)
         if (!isServiceRunning) {
@@ -2011,9 +1784,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    /**
-     * @see android.app.Activity.onPause
-     */
     override fun onPause() {
         super.onPause()
         if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onPause")
@@ -2025,9 +1795,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         prefs.edit().putBoolean(IS_SERVICE_RUNNING, true).apply()
     }
 
-    /**
-     * @see android.app.Activity.onActivityResult
-     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onActivityResult")
@@ -2066,25 +1833,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    /**
-     * @see android.app.Activity.onConfigurationChanged
-     */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onConfigurationChanged")
     }
 
-    /**
-     * @see android.app.Activity.onCreateOptionsMenu
-     */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
         return true
     }
 
-    /**
-     * @see android.app.Activity.onPrepareOptionsMenu
-     */
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         super.onPrepareOptionsMenu(menu)
         Log.d("onPrepareOptionsMenu", "onPrepareOptionsMenu")
@@ -2214,27 +1972,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    /**
-     * @see android.app.Activity.onOptionsItemSelected
-     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         mWarnedShouldQuit = false
         when (item.itemId) {
             Constants.MENU_ID_CONNECT_DISCONNECT -> {
                 Log.d("isUsbConnected", "" + mIsUsbConnected)
-                if (mIsUsbConnected) {
-                    // unregisterReceiver(mUsbReceiver);
-                    // unbindService(usbConnection);
-                    // if(UsbService.mHandlerStop != null){
-                    // UsbService.mHandlerStop.sendEmptyMessage(0);
-                    // }
-                } else {
-                    // setFilters(); // Start listening notifications from
-                    // UsbService
-                    // startService(UsbService.class, usbConnection, null); // Start
-                    // UsbService(if it was not started before) and Bind it
-                    // startService(new Intent(MainActivity.this, UsbService.class));
-                }
             }
             Constants.MENU_ID_NEW -> {
                 newContent()
@@ -2263,9 +2005,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         return super.onOptionsItemSelected(item)
     }
 
-    /**
-     * @see TextWatcher.beforeTextChanged
-     */
     override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
         if (Settings.UNDO && !mInUndo && mWatcher != null) mWatcher!!.beforeChange(
             s,
@@ -2275,9 +2014,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         )
     }
 
-    /**
-     * @see TextWatcher.onTextChanged
-     */
     override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
         if (mInUndo) return
         if (Settings.UNDO && !mInUndo && mWatcher != null) mWatcher!!.afterChange(
@@ -2288,19 +2024,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         )
     }
 
-    /**
-     * @see TextWatcher.afterTextChanged
-     */
     override fun afterTextChanged(s: Editable) {
         if (!mDirty) {
             mDirty = true
-            updateTitle()
         }
     }
 
-    /**
-     * @see android.app.Activity.onKeyUp
-     */
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
@@ -2405,7 +2134,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mInUndo = false
         mDoNotBackup = false
         TextFileUtils.clearInternal(applicationContext)
-        updateTitle()
     }
 
     /**
@@ -2454,7 +2182,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     mReadOnly = true
                     mAdvancedEditText.isEnabled = false
                 }
-                updateTitle()
                 return true
             } else {
                 Crouton.showText(this, R.string.toast_open_error, Style.ALERT)
@@ -2485,7 +2212,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 mDoNotBackup = false
                 mReadOnly = false
                 mAdvancedEditText.isEnabled = true
-                updateTitle()
                 true
             } else {
                 false
@@ -2527,7 +2253,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         RecentFiles.saveRecentList(getSharedPreferences(Constants.PREFERENCES_NAME, MODE_PRIVATE))
         mReadOnly = false
         mDirty = false
-        updateTitle()
         Crouton.showText(this, R.string.toast_save_success, Style.CONFIRM)
     }
 
@@ -2589,9 +2314,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         builder.create().show()
     }
 
-    /**
-     *
-     */
     protected fun newContent() {
         mRunnable = Runnable { doClearContents() }
 
@@ -2843,31 +2565,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         executeRunnableAndClean()
     }
 
-    /**
-     * Update the window title
-     */
-    @TargetApi(11)
-    protected fun updateTitle() {
-        var title: String
-        var name: String
-
-        // name = "?";
-        // if ((mCurrentFileName != null) && (mCurrentFileName.length() > 0))
-        // name = mCurrentFileName;
-        //
-        // if (mReadOnly)
-        // title = getString(R.string.title_editor_readonly, name);
-        // else if (mDirty)
-        // title = getString(R.string.title_editor_dirty, name);
-        // else
-        // title = getString(R.string.title_editor, name);
-        //
-        // setTitle(title);
-        //
-        // if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB)
-        // invalidateOptionsMenu();
-    }
-
     private fun setFilters() {
         val filter = IntentFilter()
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
@@ -2940,12 +2637,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     fun setUsbConnected(isUsbConnected: Boolean) {
         mIsUsbConnected = isUsbConnected
         invalidateOptionsMenu()
-    }
-
-    fun simulateClick() {
-        /* String value = "@5," + (isClicked ? "1" : "0") + "(0,0,0,0),1000,234,25,25,25";
-        sendMessageWithUsbDataReceived(value.getBytes());
-        isClicked = !isClicked;*/
     }
 
     private fun changeBackground(button: View?, isPressed: Boolean) {
