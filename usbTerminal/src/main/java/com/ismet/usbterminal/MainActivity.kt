@@ -1,7 +1,6 @@
 package com.ismet.usbterminal
 
 import android.app.AlertDialog
-import android.app.Dialog
 import android.content.*
 import android.content.res.Configuration
 import android.graphics.Color
@@ -142,8 +141,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private lateinit var mHandler: Handler
     private var mIsUsbConnected = false
 
-    //String chart_time = "";
-    // String filename = "";
     var countMeasure = 0
         private set
     var oldCountMeasure = 0
@@ -152,7 +149,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     var readingCount = 0
         private set
 
-    // int idx_count = 0;
     var chartIdx = 0
     var chartDate = ""
     var subDirDate: String? = null
@@ -167,7 +163,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
 
-    //private CountDownTimer ctimer;
     private lateinit var mExecutor: ExecutorService
     private var mEToCOpenChartTask: EToCOpenChartTask? = null
     private var mSendDataToUsbTask: SendDataToUsbTask? = null
@@ -197,7 +192,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onCreate")
         mExecutor = Executors.newSingleThreadExecutor()
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         Settings.updateFromPreferences(
@@ -209,12 +203,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         loadPreferencesFromLocalData()
         mHandler = EToCMainHandler(this)
 
-        //
         mReadIntent = true
         mExportLayout = exportLayout
         mMarginLayout = findViewById<View>(R.id.margin_layout) as LinearLayout
-
-        // editor
         mAdvancedEditText = findViewById<View>(R.id.editor) as AdvancedEditText
         mAdvancedEditText.addTextChangedListener(this)
         mAdvancedEditText.updateFromSettings()
@@ -243,6 +234,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             }
         }
 
+        mTemperature = findViewById<View>(R.id.temperature) as TextView
         mTemperatureBackground = findViewById(R.id.temperature_background)
         changeBackground(mTemperatureBackground, false)
         mCo2 = findViewById<View>(R.id.co2) as TextView
@@ -498,7 +490,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             }
         })
         mButtonOn3 = findViewById<View>(R.id.buttonPpm) as Button
-        //final String str_off_name1 = mPrefs.getString("off_name1", "");
         mButtonOn3.text = prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
         mButtonOn3.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
         mButtonOn3.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
@@ -663,27 +654,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     }
                     var isCleared = false
                     if (mItemsChecked[3]) {
-                        // mTxtOutput.setText("");
                         mGraphSeriesDataset.getSeriesAt(0).clear()
-                        //mChartView.repaint();
                         isCleared = true
                         if (mMapChartIndexToDate.containsKey(1)) {
                             Utils.deleteFiles(mMapChartIndexToDate[1], "_R1")
                         }
                     }
                     if (mItemsChecked[4]) {
-                        // mTxtOutput.setText("");
                         mGraphSeriesDataset.getSeriesAt(1).clear()
-                        //mChartView.repaint();
                         isCleared = true
                         if (mMapChartIndexToDate.containsKey(2)) {
                             Utils.deleteFiles(mMapChartIndexToDate[2], "_R2")
                         }
                     }
                     if (mItemsChecked[5]) {
-                        // mTxtOutput.setText("");
                         mGraphSeriesDataset.getSeriesAt(2).clear()
-                        //mChartView.repaint();
                         isCleared = true
                         if (mMapChartIndexToDate.containsKey(3)) {
                             Utils.deleteFiles(mMapChartIndexToDate[3], "_R3")
@@ -701,7 +686,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                             GraphPopulatorUtils.clearYTextLabels(renderer)
                         }
                         chartView.repaint()
-                        //mRenderer.setLabelsTextSize(12);
                     }
                     if (mItemsChecked[0]) {
                         clearData()
@@ -770,7 +754,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         editUserComment =
                             contentView.findViewById<View>(R.id.editUserComment) as EditText
 
-                        //chkAutoManual
                         chkAutoManual =
                             contentView.findViewById<View>(R.id.chkAutoManual) as CheckBox
                         chkKnownPpm = contentView.findViewById<View>(R.id.chkKnownPpm) as CheckBox
@@ -849,7 +832,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 edit.apply()
                             }
 
-                            //else
                             run {
                                 val str_uc = editUserComment.text.toString()
                                 if (str_uc == "") {
@@ -888,13 +870,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 showCustomisedToast("zero is not allowed")
                                 return
                             } else {
-
-                                // resest so user can set new delay or
-                                // duration
-                                // if(countMeasures == 4){
-                                // oldCountMeasures=0;
-                                // countMeasures=0;
-                                // }
                                 if (countMeasure == 0) {
                                     val graphData = GraphPopulatorUtils.createXYChart(
                                         duration,
@@ -995,7 +970,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 )
                                 editor.apply()
 
-                                // collect commands
                                 if (contentForUpload != null && !contentForUpload.isEmpty()) {
                                     startService(
                                         PullStateManagingService.intentForService(
@@ -1015,7 +989,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                     var autoPpm = false
                                     for (commandIndex in commands.indices) {
                                         val command = commands[commandIndex]
-                                        //Log.d("command", command);
                                         if (command != "" && command != "\n") {
                                             if (command.contains("loop")) {
                                                 isLoop = true
@@ -1658,7 +1631,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             val tempUsbDevice = usbDevice
             if (tempUsbDevice != null) {
                 if (command.contains("(") && command.contains(")")) {
-                    // HEX
                     command = command.replace("(", "")
                     command = command.replace(")", "")
                     command = command.trim { it <= ' ' }
@@ -1669,7 +1641,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     }
                     tempUsbDevice.write(bytes)
                 } else {
-                    // ASCII
                     tempUsbDevice.write(command.toByteArray())
                     tempUsbDevice.write("\r".toByteArray())
                 }
@@ -1690,7 +1661,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             commands = multiLines.split(delimiter).toTypedArray()
             for (i in commands.indices) {
                 val command = commands[i]
-                Log.d("command", command)
                 sendCommand(command)
             }
         } else {
@@ -1703,9 +1673,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(mUsbReceiver)
-        //		if (ctimer != null) {
-        //			ctimer.cancel();
-        //		}
         mExecutor.shutdown()
         while (!mExecutor.isTerminated) { }
         if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
@@ -1729,15 +1696,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mReadIntent = false
     }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        Log.d("TED", "onRestoreInstanceState")
-        Log.v("TED", mAdvancedEditText.text.toString())
-    }
-
     override fun onResume() {
         super.onResume()
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onResume")
         if (mReadIntent) {
             readIntent()
         }
@@ -1752,7 +1712,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun onPause() {
         super.onPause()
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onPause")
         if (Settings.FORCE_AUTO_SAVE && mDirty && !mReadOnly) {
             if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) doAutoSaveFile() else if (Settings.AUTO_SAVE_OVERWRITE) doSaveFile(
                 mCurrentFilePath
@@ -1763,31 +1722,22 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onActivityResult")
         mReadIntent = false
         if (resultCode == RESULT_CANCELED) {
-            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Result canceled")
             return
         }
         if (resultCode != RESULT_OK || data == null) {
-            if (BuildConfig.DEBUG) Log.e(
-                Constants.TAG,
-                "Result error or null data! / $resultCode"
-            )
             return
         }
         val extras: Bundle? = data.extras
         if (extras == null) {
-            if (BuildConfig.DEBUG) Log.e(Constants.TAG, "No extra data ! ")
             return
         }
         when (requestCode) {
             Constants.REQUEST_SAVE_AS -> {
-                if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Save as : " + extras.getString("path"))
                 doSaveFile(extras.getString("path"))
             }
             Constants.REQUEST_OPEN -> {
-                if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Open : " + extras.getString("path"))
                 if (extras.getString("path")!!.endsWith(".txt")) {
                     doOpenFile(File(extras.getString("path")!!), false)
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
@@ -1799,11 +1749,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "onConfigurationChanged")
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
         return true
@@ -1811,7 +1756,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         super.onPrepareOptionsMenu(menu)
-        Log.d("onPrepareOptionsMenu", "onPrepareOptionsMenu")
         menu.clear()
         menu.close()
 
@@ -1942,7 +1886,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mWarnedShouldQuit = false
         when (item.itemId) {
             Constants.MENU_ID_CONNECT_DISCONNECT -> {
-                Log.d("isUsbConnected", "" + mIsUsbConnected)
+
             }
             Constants.MENU_ID_NEW -> {
                 newContent()
@@ -2030,13 +1974,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         val file: File
         intent = getIntent()
         if (intent == null) {
-            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "No intent found, use default instead")
             doDefaultAction()
             return
         }
         action = intent.action
         if (action == null) {
-            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Intent w/o action, default action")
             doDefaultAction()
         } else if (action == Intent.ACTION_VIEW || action == Intent.ACTION_EDIT) {
             try {
@@ -2113,20 +2055,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     protected fun doOpenFile(file: File?, forceReadOnly: Boolean): Boolean {
         val text: String?
         if (file == null) return false
-        if (BuildConfig.DEBUG) Log.i(Constants.TAG, "Openning file " + file.name)
         try {
             text = TextFileUtils.readTextFile(file)
             if (text != null) {
                 mInUndo = true
                 if (mAdvancedEditText.text.toString() == "") {
-                    mAdvancedEditText.append(text) // change by nkl ori settext
+                    mAdvancedEditText.append(text)
                 } else {
                     mAdvancedEditText.append(
                         """
                             
                             $text
                             """.trimIndent()
-                    ) // change by nkl ori settext
+                    )
                 }
                 mWatcher = TextChangeWatcher()
                 mCurrentFilePath = FileUtils.getCanonizePath(file)
@@ -2284,7 +2225,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mRunnable = Runnable { doClearContents() }
 
         // promptSaveDirty();
-        // added by nkl
         executeRunnableAndClean()
     }
 
@@ -2293,7 +2233,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      */
     protected fun executeRunnableAndClean() {
         if (mRunnable == null) {
-            if (BuildConfig.DEBUG) Log.d(Constants.TAG, "No runnable, ignoring...")
             return
         }
         mRunnable!!.run()
@@ -2304,7 +2243,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * Starts an activity to choose a file to open
      */
     protected fun openFile() {
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "openFile")
         mRunnable = Runnable {
             val open = Intent()
             open.setClass(applicationContext, TedOpenActivity::class.java)
@@ -2317,10 +2255,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             }
         }
 
-        // change by nkl
         // promptSaveDirty();
-
-        // added by nkl
         executeRunnableAndClean()
     }
 
@@ -2422,7 +2357,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * Open the recent files activity to open
      */
     protected fun openRecentFile() {
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "openRecentFile")
         if (RecentFiles.getRecentFiles().size == 0) {
             Crouton.showText(this, R.string.toast_no_recent_files, Style.ALERT)
             return
@@ -2442,7 +2376,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
 
         // promptSaveDirty();
-        // added by nkl
         executeRunnableAndClean()
     }
 
@@ -2466,7 +2399,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mRunnable = Runnable { finish() }
 
         // promptSaveDirty();
-        // added by nkl
         executeRunnableAndClean()
     }
 
@@ -2498,9 +2430,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * then save the editor'd content
      */
     protected fun saveContentAs() {
-        if (BuildConfig.DEBUG) Log.d(Constants.TAG, "saveContentAs")
-        val saveAs: Intent
-        saveAs = Intent()
+        val saveAs = Intent()
         saveAs.setClass(this, TedSaveAsActivity::class.java)
         try {
             startActivityForResult(saveAs, Constants.REQUEST_SAVE_AS)
@@ -2527,7 +2457,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
 
         // promptSaveDirty();
-        // added by nkl
         executeRunnableAndClean()
     }
 
