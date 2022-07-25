@@ -11,11 +11,7 @@ class UsbDevice(
     private val connection: UsbDeviceConnection,
     private var serialPort: UsbSerialDevice?
 ): Closeable {
-    var readCallback: OnDataReceivedCallback = object : OnDataReceivedCallback {
-        override fun onDataReceived(data: ByteArray) {
-            Log.d(TAG, data.decodeToString())
-        }
-    }
+    var readCallback = OnDataReceivedCallback { data -> Log.d(TAG, data.decodeToString()) }
 
     private val usbReadCallback = UsbSerialInterface.UsbReadCallback {
         readCallback.onDataReceived(it)
@@ -60,6 +56,6 @@ class UsbDevice(
     }
 }
 
-interface OnDataReceivedCallback {
+fun interface OnDataReceivedCallback {
     fun onDataReceived(data: ByteArray)
 }

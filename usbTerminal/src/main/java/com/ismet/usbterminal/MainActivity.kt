@@ -23,7 +23,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.EToCMainHandler
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
@@ -82,7 +81,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     }
                 }
                 UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                    refreshUsbDevice()
+                    findDevice()
                     showCustomisedToast("USB Device Attached")
                 }
                 UsbManager.ACTION_USB_DEVICE_DETACHED -> {
@@ -192,7 +191,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private var mTemperatureShift = 0
     private var mLastTimePressed: Long = 0
     private var mReportDate: Date? = null
-    private val mAlertDialog: Dialog? = null
     var isPowerPressed = false
         private set
     lateinit var powerCommandsFactory: PowerCommandsFactory
@@ -308,7 +306,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         editOff1.setText(str_off_name)
                     }
                 val okListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -338,7 +336,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         dialog.cancel()
                     }
                 val cancelListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -441,7 +439,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         editOff1.setText(str_off_name)
                     }
                 val okListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -479,7 +477,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         dialog.cancel()
                     }
                 val cancelListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -557,7 +555,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         editOff1.setText(str_off_name)
                     }
                 val okListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -587,7 +585,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         dialog.cancel()
                     }
                 val cancelListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -626,7 +624,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
             override fun onPostPullStarted() {}
         }))
-        mAdvancedEditText.setOnEditorActionListener { v, actionId, event ->
+        mAdvancedEditText.setOnEditorActionListener { _, actionId, _ ->
             var handled = false
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 // sendMessage();
@@ -653,65 +651,63 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 }
                 val alert = AlertDialog.Builder(this@MainActivity)
                 alert.setTitle("Select items")
-                alert.setMultiChoiceItems(
-                    items, checkedItems
-                ) { dialog, which, isChecked -> mItemsChecked.put(which, isChecked) }
-                alert.setPositiveButton("Select/Clear", object : DialogInterface.OnClickListener {
-                    override fun onClick(dialog: DialogInterface, which: Int) {
-                        if (mItemsChecked[1]) {
-                            mAdvancedEditText.setText("")
-                        }
-                        if (mItemsChecked[2]) {
-                            txtOutput.text = ""
-                        }
-                        var isCleared = false
-                        if (mItemsChecked[3]) {
-                            // mTxtOutput.setText("");
-                            mGraphSeriesDataset.getSeriesAt(0).clear()
-                            //mChartView.repaint();
-                            isCleared = true
-                            if (mMapChartIndexToDate.containsKey(1)) {
-                                Utils.deleteFiles(mMapChartIndexToDate[1], "_R1")
-                            }
-                        }
-                        if (mItemsChecked[4]) {
-                            // mTxtOutput.setText("");
-                            mGraphSeriesDataset.getSeriesAt(1).clear()
-                            //mChartView.repaint();
-                            isCleared = true
-                            if (mMapChartIndexToDate.containsKey(2)) {
-                                Utils.deleteFiles(mMapChartIndexToDate[2], "_R2")
-                            }
-                        }
-                        if (mItemsChecked[5]) {
-                            // mTxtOutput.setText("");
-                            mGraphSeriesDataset.getSeriesAt(2).clear()
-                            //mChartView.repaint();
-                            isCleared = true
-                            if (mMapChartIndexToDate.containsKey(3)) {
-                                Utils.deleteFiles(mMapChartIndexToDate[3], "_R3")
-                            }
-                        }
-                        if (isCleared) {
-                            var existInitedGraphCurve = false
-                            for (i in 0 until mGraphSeriesDataset.seriesCount) {
-                                if (mGraphSeriesDataset.getSeriesAt(i).itemCount != 0) {
-                                    existInitedGraphCurve = true
-                                    break
-                                }
-                            }
-                            if (!existInitedGraphCurve) {
-                                GraphPopulatorUtils.clearYTextLabels(renderer)
-                            }
-                            chartView.repaint()
-                            //mRenderer.setLabelsTextSize(12);
-                        }
-                        if (mItemsChecked[0]) {
-                            clearData()
-                        }
-                        dialog.cancel()
+                alert.setMultiChoiceItems(items, checkedItems) { dialog, which, isChecked ->
+                    mItemsChecked.put(which, isChecked)
+                }
+                alert.setPositiveButton("Select/Clear") { dialog, which ->
+                    if (mItemsChecked[1]) {
+                        mAdvancedEditText.setText("")
                     }
-                })
+                    if (mItemsChecked[2]) {
+                        txtOutput.text = ""
+                    }
+                    var isCleared = false
+                    if (mItemsChecked[3]) {
+                        // mTxtOutput.setText("");
+                        mGraphSeriesDataset.getSeriesAt(0).clear()
+                        //mChartView.repaint();
+                        isCleared = true
+                        if (mMapChartIndexToDate.containsKey(1)) {
+                            Utils.deleteFiles(mMapChartIndexToDate[1], "_R1")
+                        }
+                    }
+                    if (mItemsChecked[4]) {
+                        // mTxtOutput.setText("");
+                        mGraphSeriesDataset.getSeriesAt(1).clear()
+                        //mChartView.repaint();
+                        isCleared = true
+                        if (mMapChartIndexToDate.containsKey(2)) {
+                            Utils.deleteFiles(mMapChartIndexToDate[2], "_R2")
+                        }
+                    }
+                    if (mItemsChecked[5]) {
+                        // mTxtOutput.setText("");
+                        mGraphSeriesDataset.getSeriesAt(2).clear()
+                        //mChartView.repaint();
+                        isCleared = true
+                        if (mMapChartIndexToDate.containsKey(3)) {
+                            Utils.deleteFiles(mMapChartIndexToDate[3], "_R3")
+                        }
+                    }
+                    if (isCleared) {
+                        var existInitedGraphCurve = false
+                        for (i in 0 until mGraphSeriesDataset.seriesCount) {
+                            if (mGraphSeriesDataset.getSeriesAt(i).itemCount != 0) {
+                                existInitedGraphCurve = true
+                                break
+                            }
+                        }
+                        if (!existInitedGraphCurve) {
+                            GraphPopulatorUtils.clearYTextLabels(renderer)
+                        }
+                        chartView.repaint()
+                        //mRenderer.setLabelsTextSize(12);
+                    }
+                    if (mItemsChecked[0]) {
+                        clearData()
+                    }
+                    dialog.cancel()
+                }
                 alert.setNegativeButton(
                     "Close"
                 ) { dialog, which -> dialog.cancel() }
@@ -794,36 +790,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         mRadio3 = contentView.findViewById<View>(R.id.radio3) as RadioButton
                         mRadioGroup = contentView.findViewById<View>(R.id.radio_group) as RadioGroup
                         val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-                        val duration_v =
-                            prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
-                        val volume =
-                            prefs.getInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
+                        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+                        val volume = prefs.getInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
                         val kppm = prefs.getInt(PrefConstants.KPPM, -1)
                         val user_comment = prefs.getString(PrefConstants.USER_COMMENT, "")
-                        editDelay.setText("" + delay_v)
-                        editDuration.setText("" + duration_v)
-                        editVolume.setText("" + volume)
+                        editDelay.setText(delay_v.toString())
+                        editDuration.setText(duration_v.toString())
+                        editVolume.setText(volume.toString())
                         editUserComment.setText(user_comment)
-                        commandsEditText1.setText(
-                            prefs.getString(
-                                PrefConstants.MEASURE_FILE_NAME1,
-                                PrefConstants.MEASURE_FILE_NAME1_DEFAULT
-                            )
-                        )
-                        commandsEditText2.setText(
-                            prefs.getString(
-                                PrefConstants.MEASURE_FILE_NAME2,
-                                PrefConstants.MEASURE_FILE_NAME2_DEFAULT
-                            )
-                        )
-                        commandsEditText3.setText(
-                            prefs.getString(
-                                PrefConstants.MEASURE_FILE_NAME3,
-                                PrefConstants.MEASURE_FILE_NAME3_DEFAULT
-                            )
-                        )
+                        commandsEditText1.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT))
+                        commandsEditText2.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT))
+                        commandsEditText3.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT))
                         if (kppm != -1) {
-                            editKnownPpm.setText("" + kppm)
+                            editKnownPpm.setText(kppm.toString())
                         }
                         val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
                         chkAutoManual.isChecked = isAuto
@@ -1034,12 +1013,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                     var loopcmd1Idx = -1
                                     var loopcmd2Idx = -1
                                     var autoPpm = false
-                                    for (i in commands.indices) {
-                                        val command = commands[i]
+                                    for (commandIndex in commands.indices) {
+                                        val command = commands[commandIndex]
                                         //Log.d("command", command);
-                                        if (command != null && command != "" &&
-                                            command != "\n"
-                                        ) {
+                                        if (command != "" && command != "\n") {
                                             if (command.contains("loop")) {
                                                 isLoop = true
                                                 var lineNos = command.replace("loop", "")
@@ -1059,9 +1036,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                             } else if (command == "autoppm") {
                                                 autoPpm = true
                                             } else if (isLoop) {
-                                                if (i == loopcmd1Idx) {
+                                                if (commandIndex == loopcmd1Idx) {
                                                     loopCommands.add(command)
-                                                } else if (i == loopcmd2Idx) {
+                                                } else if (commandIndex == loopcmd2Idx) {
                                                     loopCommands.add(command)
                                                     isLoop = false
                                                 }
@@ -1071,7 +1048,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                         }
                                     }
                                     val autoPpmCalculate = autoPpm
-                                    mHandler.postDelayed(Runnable {
+                                    mHandler.postDelayed({
                                         if (mSendDataToUsbTask != null && mSendDataToUsbTask!!
                                                 .status == AsyncTask.Status.RUNNING
                                         ) {
@@ -1184,7 +1161,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         })
         setFilters()
         usbDeviceConnection = UsbDeviceConnection(this)
-        refreshUsbDevice()
+        usbDeviceConnection.permissionCallback = PermissionCallback { _, device ->
+            usbDevice = device
+            when(val notNullDevice = usbDevice) {
+                null -> {
+                    showCustomisedToast("USB Permission not granted")
+                    finish()
+                }
+                else -> notNullDevice.refreshUi()
+            }
+        }
+        findDevice()
         val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
         val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
         val preferences = prefs
@@ -1289,54 +1276,31 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         for (i in 0..8) {
             addTextBuilder.append(' ')
         }
-        (contentView.findViewById<View>(R.id.txtOn) as TextView).text = addTextBuilder.toString() +
-                "Command 1: "
-        (contentView.findViewById<View>(R.id.txtOn1) as TextView).text = "Button State1 " + "Name: "
-        (contentView.findViewById<View>(R.id.txtOff) as TextView).text = addTextBuilder.toString() +
-                "Command 2: "
-        (contentView.findViewById<View>(R.id.txtOff1) as TextView).text =
-            "Button State2" + " Name: "
+        (contentView.findViewById<View>(R.id.txtOn) as TextView).text = "${addTextBuilder}Command 1: "
+        (contentView.findViewById<View>(R.id.txtOn1) as TextView).text = "Button State1 Name: "
+        (contentView.findViewById<View>(R.id.txtOff) as TextView).text = "${addTextBuilder}Command 2: "
+        (contentView.findViewById<View>(R.id.txtOff1) as TextView).text = "Button State2 Name: "
     }
 
-    private fun refreshUsbDevice() {
-        lifecycleScope.launchWhenResumed {
-            try {
-                val usbDevice = usbDeviceConnection.findUsbDevice()
-                showCustomisedToast("USB Ready")
-                setUsbConnected(true)
-                if (!usbDevice.isConnectionEstablished()) {
-                    showCustomisedToast("USB device not supported")
-                    setUsbConnected(false)
-                    usbDevice.close()
-                } else {
-                    usbDevice.readCallback = object: OnDataReceivedCallback {
-                        override fun onDataReceived(data: ByteArray) {
-                            sendMessageWithUsbDataReceived(data)
-                        }
-                    }
-                    val oldUsbDevice = this@MainActivity.usbDevice
-                    if (oldUsbDevice != null) {
-                        oldUsbDevice.readCallback = object: OnDataReceivedCallback {
-                            override fun onDataReceived(data: ByteArray) {
-                                // ignore
-                            }
-                        }
-                        oldUsbDevice.close()
-                    }
-                    this@MainActivity.usbDevice = usbDevice
-                }
-            } catch (e: CreateDeviceException) {
-                when(e.reason) {
-                    ConnectionFailureReason.DEVICE_NOT_FOUND -> {
-                        showCustomisedToast("No USB connected")
-                        setUsbConnected(false)
-                    }
-                    ConnectionFailureReason.PERMISSION_NOT_GRANTED -> {
-                        showCustomisedToast("USB Permission not granted")
-                        finish()
-                    }
-                }
-            }
+    private fun findDevice() {
+        try {
+            usbDeviceConnection.findDevice()
+        } catch (_: FindDeviceException) {
+            showCustomisedToast("No USB connected")
+            setUsbConnected(false)
+        }
+    }
+
+    private fun UsbDevice.refreshUi() {
+        showCustomisedToast("USB Ready")
+        setUsbConnected(true)
+        if (!isConnectionEstablished()) {
+            showCustomisedToast("USB device not supported")
+            setUsbConnected(false)
+            close()
+            usbDevice = null
+        } else {
+            readCallback = OnDataReceivedCallback { sendMessageWithUsbDataReceived(it) }
         }
     }
 
@@ -1752,6 +1716,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             mSendDataToUsbTask!!.cancel(true)
             mSendDataToUsbTask = null
         }
+        usbDevice?.close()
+        usbDevice = null
         usbDeviceConnection.close()
         mHandler.removeCallbacksAndMessages(null)
         stopService(Intent(this, PullStateManagingService::class.java))
@@ -1823,7 +1789,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             Constants.REQUEST_OPEN -> {
                 if (BuildConfig.DEBUG) Log.d(Constants.TAG, "Open : " + extras.getString("path"))
                 if (extras.getString("path")!!.endsWith(".txt")) {
-                    doOpenFile(File(extras.getString("path")), false)
+                    doOpenFile(File(extras.getString("path")!!), false)
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
                     openchart1(extras.getString("path"))
                 } else {
@@ -2652,11 +2618,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             mTemperatureData = TemperatureData.parse(text).also { temperatureData ->
                 if (temperatureData.isCorrect) {
                     val updateRunnable = Runnable {
-                        mTemperature.text = "" + (temperatureData.temperature1 + mTemperatureShift)
+                        mTemperature.text = (temperatureData.temperature1 + mTemperatureShift).toString()
                     }
                     updateRunnable.run()
                 } else {
-                    mTemperature.text = "" + temperatureData.getWrongPosition()
+                    mTemperature.text = temperatureData.wrongPosition.toString()
                 }
             }
         } else {
@@ -2695,7 +2661,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun reportDateString(): String {
         mReportDate = Date()
-        return FORMATTER.format(mReportDate)
+        return FORMATTER.format(mReportDate!!)
     }
 
     //TODO implement this for handle report changes
@@ -2720,7 +2686,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     }
 
     override fun dateString(): String {
-        return FORMATTER.format(mReportDate)
+        return FORMATTER.format(mReportDate!!)
     }
 
     override fun writeReport(reportHtml: String, fileName: String) {

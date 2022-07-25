@@ -6,36 +6,37 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbManager
+import android.util.Log
 import com.felhr.usbserial.UsbSerialDevice
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.io.Closeable
 
 class UsbDeviceConnection(val context: Context): Closeable {
-    private val continuations = mutableMapOf<UsbDeviceId, List<CancellableContinuation<UsbDevice>>>()
-
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+    private var device: UsbDevice? = null
+    var permissionCallback = PermissionCallback { deviceId, device -> Log.d(TAG, "permission for $deviceId ${if (device != null) "granted" else "not granted"}") }
+
     private val usbDeviceReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val extras = intent.extras!!
             val granted = extras.getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED)
-            val device = extras.getParcelable<android.hardware.usb.UsbDevice>(UsbManager.EXTRA_DEVICE)!!
-            val deviceId = UsbDeviceId(device.vendorId, device.productId)
+            val platformDevice = extras.getParcelable<android.hardware.usb.UsbDevice>(UsbManager.EXTRA_DEVICE)!!
+            val deviceId = UsbDeviceId(platformDevice.vendorId, platformDevice.productId)
 
             when(granted) {
                 true -> {
-                    continuations[deviceId]!!.forEach {
-                        val connection = usbManager.openDevice(device)
-                        val serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection)
-                        it.resumeWith(Result.success(UsbDevice(deviceId, connection, serialPort)))
-                    }
+                    val connection = usbManager.openDevice(platformDevice)
+                    val serialPort = UsbSerialDevice.createUsbSerialDevice(platformDevice, connection)
+                    val newDevice = UsbDevice(deviceId, connection, serialPort)
+                    device?.close()
+                    device = newDevice
+                    permissionCallback.onPermissionResult(deviceId, newDevice)
                 }
                 false -> {
-                    continuations[deviceId]!!.forEach {
-                        it.resumeWith(Result.failure(CreateDeviceException(ConnectionFailureReason.PERMISSION_NOT_GRANTED)))
+                    if (device?.deviceId == deviceId) {
+                        device?.close()
+                        device = null
                     }
+                    permissionCallback.onPermissionResult(deviceId, null)
                 }
             }
         }
@@ -45,32 +46,32 @@ class UsbDeviceConnection(val context: Context): Closeable {
         context.registerReceiver(usbDeviceReceiver, IntentFilter(USB_PERMISSION))
     }
 
-    private suspend fun createDevice(deviceId: UsbDeviceId): UsbDevice = suspendCancellableCoroutine { continuation ->
+    private fun findDevice(deviceId: UsbDeviceId) {
         val usbDevices = usbManager.deviceList
         val usbDevice = usbDevices.values.firstOrNull { it.vendorId == deviceId.vendorId && it.productId == deviceId.productId }
         when (usbDevice) {
-            null -> continuation.resumeWith(Result.failure(CreateDeviceException(ConnectionFailureReason.DEVICE_NOT_FOUND)))
+            null -> throw FindDeviceException()
             else -> {
-                continuations[deviceId] = (continuations[deviceId] ?: emptyList()) + continuation
                 val mPendingIntent = PendingIntent.getBroadcast(context, 0, Intent(USB_PERMISSION), 0)
                 usbManager.requestPermission(usbDevice, mPendingIntent)
             }
         }
     }
 
-    suspend fun findUsbDevice(): UsbDevice = withContext(Dispatchers.IO) {
+    fun findDevice() {
         for (deviceId in supportedDeviceIds) {
             try {
-                createDevice(deviceId)
-            } catch (e: CreateDeviceException) {
-                if (e.reason != ConnectionFailureReason.DEVICE_NOT_FOUND) throw e
+                findDevice(deviceId)
+            } catch (e: FindDeviceException) {
+                // ignore
             }
         }
-        throw CreateDeviceException(ConnectionFailureReason.DEVICE_NOT_FOUND)
+        throw FindDeviceException()
     }
 
     companion object {
         private const val USB_PERMISSION = "com.ismet.usb.permission"
+        private const val TAG = "UsbDeviceConnection"
 
         val supportedDeviceIds = listOf(
             UsbDeviceId(vendorId = 0x1a86, productId = 0x7523),
@@ -85,7 +86,8 @@ class UsbDeviceConnection(val context: Context): Closeable {
     }
 }
 
-enum class ConnectionFailureReason {
-    DEVICE_NOT_FOUND, PERMISSION_NOT_GRANTED
+fun interface PermissionCallback {
+    fun onPermissionResult(deviceId: UsbDeviceId, device: UsbDevice?)
 }
-class CreateDeviceException(val reason: ConnectionFailureReason): Exception()
+
+class FindDeviceException : Exception()
