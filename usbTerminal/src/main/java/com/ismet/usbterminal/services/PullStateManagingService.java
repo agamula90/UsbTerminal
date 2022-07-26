@@ -15,14 +15,14 @@ import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.data.PullState;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import kotlin.Deprecated;
+
+@Deprecated(message = "Use MainViewModel instead")
 public class PullStateManagingService extends Service {
 
     private static final String TAG = PullStateManagingService.class.getSimpleName();
@@ -30,11 +30,8 @@ public class PullStateManagingService extends Service {
     public static final String WAIT_FOR_COOLING_ACTION = "wait_for_cooling";
 
     public static final String IS_AUTO_PULL_ON = "is_auto_pull_on";
-    public static final String IS_RECREATING = "is_recreating";
 
     public static final String CO2_REQUEST = "(FE-44-00-08-02-9F-25)";
-    private static final int MAX_WAIT_TIME_FOR_CANCEL_EXECUTOR = 100;
-    public static final int DELAY_ON_CHANGE_REQUEST = 1000;
 
     private ScheduledExecutorService mPullDataService;
     private ScheduledExecutorService mWaitPullService;
@@ -97,34 +94,30 @@ public class PullStateManagingService extends Service {
                     Log.e(TAG, "Service 1 started");
 
                     eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService
-                            .scheduleWithFixedDelay(new Runnable() {
+                            .scheduleWithFixedDelay(() -> {
+                                final String message;
 
-                        @Override
-                        public void run() {
-                            final String message;
+                                if (eToCApplication.isPreLooping()) {
+                                    message = command.getCommand();
+                                } else {
+                                    message = "/5H0000R";
+                                }
 
-                            if (eToCApplication.isPreLooping()) {
-                                message = command.getCommand();
-                            } else {
-                                message = "/5H0000R";
-                            }
+                                int state = commandsFactory.currentPowerState();
 
-                            int state = commandsFactory.currentPowerState();
+                                if (state != PowerState.OFF) {
+                                    MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
+                                            .this, message);
+                                    MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
+                                            .this, state);
+                                }
 
-                            if (state != PowerState.OFF) {
-                                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
-                                        .this, message);
-                                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
-                                        .this, state);
-                            }
-
-                            try {
-                                Thread.sleep((int) (0.3 * command.getDelay()));
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
+                                try {
+                                    Thread.sleep((int) (0.3 * command.getDelay()));
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
                 } else {
                     Log.e(TAG, "Service 1 stopped");
                     eToCApplication.getWaitPullFuture().cancel(true);
@@ -156,42 +149,34 @@ public class PullStateManagingService extends Service {
                         }
                     }
 
-                    List<ScheduledFuture> scheduledFutures = new ArrayList<>(1);
+                    Runnable autoChangeRunnable = () -> {
+                        int pullState = eToCApplication.getPullState();
 
-                    Runnable autoChangeRunnable = new Runnable() {
+                        if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                            return;
+                        }
 
-                        @Override
-                        public void run() {
-                            int pullState = eToCApplication.getPullState();
+                        switch (pullState) {
+                            case PullState.TEMPERATURE:
+                                pullState = PullState.CO2;
+                                break;
+                            case PullState.CO2:
+                                pullState = PullState.TEMPERATURE;
+                                break;
+                        }
 
-                            if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
-                                return;
-                            }
+                        eToCApplication.setPullState(pullState);
 
-                            switch (pullState) {
-                                case PullState.TEMPERATURE:
-                                    pullState = PullState.CO2;
-                                    break;
-                                case PullState.CO2:
-                                    pullState = PullState.TEMPERATURE;
-                                    break;
-                            }
-
-                            eToCApplication.setPullState(pullState);
-
-                            boolean isTemperature = pullState == PullState.TEMPERATURE;
-                            if (isTemperature) {
-                                initAutoPullTemperatureRunnable().run();
-                            } else {
-                                initAutoPullCo2Runnable().run();
-                            }
+                        boolean isTemperature = pullState == PullState.TEMPERATURE;
+                        if (isTemperature) {
+                            initAutoPullTemperatureRunnable().run();
+                        } else {
+                            initAutoPullCo2Runnable().run();
                         }
                     };
 
-                    scheduledFutures.add(mPullDataService.scheduleWithFixedDelay
+                    eToCApplication.setPullDataFuture(mPullDataService.scheduleWithFixedDelay
                             (autoChangeRunnable, 0, 1, TimeUnit.SECONDS));
-
-                    eToCApplication.setScheduledFutures(scheduledFutures);
                 } else {
                     Log.e(TAG, "Service 0 stopped");
 

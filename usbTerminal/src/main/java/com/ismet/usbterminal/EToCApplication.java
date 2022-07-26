@@ -29,12 +29,9 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	private volatile boolean mStopPulling;
 
 	private ScheduledExecutorService mPullDataService;
-
+    private ScheduledFuture pullDataFuture;
 	private ScheduledExecutorService mWaitPullService;
-
 	private ScheduledFuture mWaitPullFuture;
-
-	private List<ScheduledFuture> mScheduledFutures;
 
 	private String mCurrentTemperatureRequest;
 
@@ -95,10 +92,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	}
 
 	public void unScheduleTasks() {
-		if (mScheduledFutures != null) {
-			for (ScheduledFuture future : mScheduledFutures) {
-				future.cancel(true);
-			}
+		if (pullDataFuture != null) {
+			pullDataFuture.cancel(true);
 		}
 	}
 
@@ -110,8 +105,8 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		this.isPreLooping = isPreLooping;
 	}
 
-	public void setScheduledFutures(List<ScheduledFuture> scheduledFutures) {
-		this.mScheduledFutures = scheduledFutures;
+	public void setPullDataFuture(ScheduledFuture pullDataFuture) {
+		this.pullDataFuture = pullDataFuture;
 	}
 
 	public String getCurrentTemperatureRequest() {

@@ -19,7 +19,9 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.StringTokenizer;
 
-//TODO migrate to coroutines
+import kotlin.Deprecated;
+
+@Deprecated(message = "Use MainViewModel instead")
 public class SendDataToUsbTask extends AsyncTask<Long, Pair<Integer, String>, String> {
 
     private final List<String> simpleCommands;

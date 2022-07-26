@@ -127,7 +127,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private var mWatcher: TextChangeWatcher? = null
     private var mInUndo = false
     private var mWarnedShouldQuit = false
-    private var mDoNotBackup = false
 
     /**
      * are we in a post activity result ?
@@ -166,7 +165,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private lateinit var mExecutor: ExecutorService
     private var mEToCOpenChartTask: EToCOpenChartTask? = null
     private var mSendDataToUsbTask: SendDataToUsbTask? = null
-    private var mRunnable: Runnable? = null
     lateinit var txtOutput: TextView
     lateinit var scrollView: ScrollView
     private lateinit var mButtonOn1: Button
@@ -182,7 +180,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private lateinit var mCo2Background: View
     private lateinit var mExportLayout: LinearLayout
     private lateinit var mMarginLayout: LinearLayout
-    private var mTemperatureData: TemperatureData? = null
     private var mTemperatureShift = 0
     private var mLastTimePressed: Long = 0
     private var mReportDate: Date? = null
@@ -211,7 +208,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mAdvancedEditText.updateFromSettings()
         mWatcher = TextChangeWatcher()
         mWarnedShouldQuit = false
-        mDoNotBackup = false
         txtOutput = findViewById<View>(R.id.output) as TextView
         scrollView = findViewById<View>(R.id.mScrollView) as ScrollView
         mPower = findViewById<View>(R.id.power) as Button
@@ -600,13 +596,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mSendButton.setOnClickListener(AutoPullResolverListener(object :
             AutoPullResolverCallback {
             override fun onPrePullStopped() {
-                //				if (mIsTimerRunning) {
-                //					Toast.makeText(MainActivity.this,
-                //							"Timer is running. Please wait", Toast.LENGTH_SHORT)
-                //							.show();
-                //				} else {
-                //					sendMessage();
-                //				}
             }
 
             override fun onPostPullStopped() {
@@ -1043,72 +1032,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                     showCustomisedToast("Unexpected error")
                                     return
                                 }
-
-                                // end collect commands
-
-
-                                //									ctimer = new
-                                // CountDownTimer(future,
-                                //											delay_timer) {
-                                //
-                                //										@Override
-                                //										public void onTick(
-                                //												long
-                                // millisUntilFinished) {
-                                //											// TODO
-                                // Auto-generated method stub
-                                //											mReadingCount =
-                                // mReadingCount + 1;
-                                //											sendMessage();
-                                //
-                                ////											byte [] arr =
-                                // new byte[]{(byte) 0xFE,0x44,0x11,
-                                // 0x22,0x33,0x44,0x55};
-                                ////											Message msg =
-                                // new Message();
-                                ////											msg.what = 0;
-                                ////											msg.obj = arr;
-                                ////											MainActivity
-                                // .sHandler.sendMessage(msg);
-                                //										}
-                                //
-                                //										@Override
-                                //										public void onFinish
-                                // () {
-                                //											// TODO
-                                // Auto-generated method stub
-                                //											mReadingCount =
-                                // mReadingCount + 1;
-                                //											sendMessage();
-                                //
-                                ////											byte [] arr =
-                                // new byte[]{(byte) 0xFE,0x44,0x11,
-                                // 0x22,0x33,0x44,0x55};
-                                ////											Message msg =
-                                // new Message();
-                                ////											msg.what = 0;
-                                ////											msg.obj = arr;
-                                ////											MainActivity
-                                // .sHandler.sendMessage(msg);
-                                //
-                                //											mIsTimerRunning =
-                                // false;
-                                //											Toast.makeText
-                                // (MainActivity.this,
-                                //													"Timer
-                                // Finish",
-                                //													Toast
-                                // .LENGTH_LONG).show();
-                                //										}
-                                //									};
-                                //
-                                //									Toast.makeText(MainActivity
-                                // .this,
-                                //											"Timer Started",
-                                // Toast.LENGTH_LONG)
-                                //											.show();
-                                //									mIsTimerRunning = true;
-                                //									ctimer.start();
                             }
                             dialog.cancel()
                         }
@@ -1889,7 +1812,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
             }
             Constants.MENU_ID_NEW -> {
-                newContent()
+                doClearContents()
                 return true
             }
             Constants.MENU_ID_SAVE -> saveContent()
@@ -1902,7 +1825,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 return true
             }
             Constants.MENU_ID_QUIT -> {
-                quit()
+                finish()
                 return true
             }
             Constants.MENU_ID_UNDO -> {
@@ -1946,7 +1869,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 if (Settings.UNDO && Settings.BACK_BTN_AS_UNDO) {
                     if (!undo()) warnOrQuit()
                 } else if (shouldQuit()) {
-                    quit()
+                    finish()
                 } else {
                     mWarnedShouldQuit = false
                     return super.onKeyUp(keyCode, event)
@@ -1968,7 +1891,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * as the non configuration instance if activity is started after a screen
      * rotate
      */
-    protected fun readIntent() {
+    private fun readIntent() {
         val intent: Intent?
         val action: String?
         val file: File
@@ -2006,7 +1929,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     /**
      * Run the default startup action
      */
-    protected fun doDefaultAction() {
+    private fun doDefaultAction() {
         val file: File
         var loaded: Boolean
         loaded = false
@@ -2028,7 +1951,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * Clears the content of the editor. Assumes that user was prompted and
      * previous data was saved
      */
-    protected fun doClearContents() {
+    private fun doClearContents() {
         mWatcher = null
         mInUndo = true
         mAdvancedEditText.setText("")
@@ -2040,7 +1963,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         mWarnedShouldQuit = false
         mWatcher = TextChangeWatcher()
         mInUndo = false
-        mDoNotBackup = false
         TextFileUtils.clearInternal(applicationContext)
     }
 
@@ -2052,7 +1974,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * @param forceReadOnly force the file to be used as read only
      * @return if the file was loaded successfully
      */
-    protected fun doOpenFile(file: File?, forceReadOnly: Boolean): Boolean {
+    private fun doOpenFile(file: File?, forceReadOnly: Boolean): Boolean {
         val text: String?
         if (file == null) return false
         try {
@@ -2081,7 +2003,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 )
                 mDirty = false
                 mInUndo = false
-                mDoNotBackup = false
                 if (file.canWrite() && !forceReadOnly) {
                     mReadOnly = false
                     mAdvancedEditText.isEnabled = true
@@ -2104,7 +2025,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      *
      * @return if a backup file was loaded
      */
-    protected fun doOpenBackup(): Boolean {
+    private fun doOpenBackup(): Boolean {
         val text: String?
         try {
             text = TextFileUtils.readInternal(this)
@@ -2116,7 +2037,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 mCurrentFileName = null
                 mDirty = false
                 mInUndo = false
-                mDoNotBackup = false
                 mReadOnly = false
                 mAdvancedEditText.isEnabled = true
                 true
@@ -2135,7 +2055,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      *
      * @param path the path to the file (must be a valid path and not null)
      */
-    protected fun doSaveFile(path: String?) {
+    private fun doSaveFile(path: String?) {
         val content: String
         if (path == null) {
             Crouton.showText(this, R.string.toast_save_null, Style.ALERT)
@@ -2163,10 +2083,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         Crouton.showText(this, R.string.toast_save_success, Style.CONFIRM)
     }
 
-    protected fun doAutoSaveFile() {
-        if (mDoNotBackup) {
-            doClearContents()
-        }
+    private fun doAutoSaveFile() {
         val text = mAdvancedEditText.text.toString()
         if (text.length == 0) return
         if (TextFileUtils.writeInternal(this, text)) {
@@ -2179,11 +2096,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      *
      * @return if an undo was don
      */
-    protected fun undo(): Boolean {
+    private fun undo(): Boolean {
         var didUndo = false
         mInUndo = true
-        val caret: Int
-        caret = mWatcher!!.undo(mAdvancedEditText.text)
+        val caret = mWatcher!!.undo(mAdvancedEditText.text)
         if (caret >= 0) {
             mAdvancedEditText.setSelection(caret, caret)
             didUndo = true
@@ -2193,70 +2109,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     }
 
     /**
-     * Prompt the user to save the current file before doing something else
-     */
-    protected fun promptSaveDirty() {
-        if (!mDirty) {
-            executeRunnableAndClean()
-            return
-        }
-        val okListener =
-            DialogInterface.OnClickListener { dialog, which ->
-                saveContent()
-                mDoNotBackup = true
-            }
-        val cancelListener =
-            DialogInterface.OnClickListener { dialog, which -> }
-        val builder = AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
-            this, 0,
-            getString(R.string.app_name), okListener, cancelListener, null
-        )
-        builder.setMessage(R.string.ui_save_text)
-        builder.setNeutralButton(
-            R.string.ui_no_save
-        ) { dialog, which ->
-            executeRunnableAndClean()
-            mDoNotBackup = true
-        }
-        builder.create().show()
-    }
-
-    protected fun newContent() {
-        mRunnable = Runnable { doClearContents() }
-
-        // promptSaveDirty();
-        executeRunnableAndClean()
-    }
-
-    /**
-     * Runs the after save to complete
-     */
-    protected fun executeRunnableAndClean() {
-        if (mRunnable == null) {
-            return
-        }
-        mRunnable!!.run()
-        mRunnable = null
-    }
-
-    /**
      * Starts an activity to choose a file to open
      */
-    protected fun openFile() {
-        mRunnable = Runnable {
-            val open = Intent()
-            open.setClass(applicationContext, TedOpenActivity::class.java)
-            // open = new Intent(ACTION_OPEN);
-            open.putExtra(Constants.EXTRA_REQUEST_CODE, Constants.REQUEST_OPEN)
-            try {
-                startActivityForResult(open, Constants.REQUEST_OPEN)
-            } catch (e: ActivityNotFoundException) {
-                Crouton.showText(this@MainActivity, R.string.toast_activity_open, Style.ALERT)
-            }
+    private fun openFile() {
+        val open = Intent()
+        open.setClass(applicationContext, TedOpenActivity::class.java)
+        // open = new Intent(ACTION_OPEN);
+        open.putExtra(Constants.EXTRA_REQUEST_CODE, Constants.REQUEST_OPEN)
+        try {
+            startActivityForResult(open, Constants.REQUEST_OPEN)
+        } catch (e: ActivityNotFoundException) {
+            Crouton.showText(this@MainActivity, R.string.toast_activity_open, Style.ALERT)
         }
-
-        // promptSaveDirty();
-        executeRunnableAndClean()
     }
 
     private fun openchart1(filep: String?) {
@@ -2288,118 +2152,37 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     }
 
     /**
-     * render chart from selected file
-     */
-    private fun openChart() {
-        if (isTimerRunning) {
-            showCustomisedToast("Timer is running. Please wait")
-            return
-        }
-        val dir = File(Environment.getExternalStorageDirectory().toString() + "/AEToCLogs_MES")
-        if (!dir.exists()) {
-            showCustomisedToast("Logs diretory is not available")
-            return
-        }
-        val filenameArry = dir.list()
-        if (filenameArry == null) {
-            showCustomisedToast("Logs not available. Logs directory is empty")
-            return
-        }
-        val items = arrayOfNulls<CharSequence>(filenameArry.size)
-        for (i in filenameArry.indices) {
-            items[i] = filenameArry[i]
-        }
-        val alert = AlertDialog.Builder(this@MainActivity)
-        alert.setTitle("Select file")
-        alert.setSingleChoiceItems(items, 0, object : DialogInterface.OnClickListener {
-            override fun onClick(dialog: DialogInterface, which: Int) {
-                val filename = items[which] as String?
-                var isLogsExist = false
-                if (filename!!.contains("R1")) {
-                    isLogsExist = true
-                    mGraphSeriesDataset.getSeriesAt(0).clear()
-                    chartSeries = mGraphSeriesDataset.getSeriesAt(0)
-                } else if (filename.contains("R2")) {
-                    isLogsExist = true
-                    mGraphSeriesDataset.getSeriesAt(1).clear()
-                    chartSeries = mGraphSeriesDataset.getSeriesAt(1)
-                } else if (filename.contains("R3")) {
-                    isLogsExist = true
-                    mGraphSeriesDataset.getSeriesAt(2).clear()
-                    chartSeries = mGraphSeriesDataset.getSeriesAt(2)
-                }
-                if (!isLogsExist) {
-                    showCustomisedToast("Required Log files not available")
-                    dialog.cancel()
-                    return
-                }
-                val logFile = File(
-                    File(
-                        Environment.getExternalStorageDirectory(),
-                        "AEToCLogs_MES"
-                    ), filename
-                )
-                if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
-                    mEToCOpenChartTask!!.cancel(true)
-                }
-                mEToCOpenChartTask = EToCOpenChartTask(this@MainActivity)
-                mEToCOpenChartTask!!.execute(logFile.absolutePath)
-                dialog.cancel()
-            }
-        })
-        alert.setNegativeButton(
-            "Close"
-        ) { dialog, which -> dialog.cancel() }
-        alert.create().show()
-    }
-
-    /**
      * Open the recent files activity to open
      */
-    protected fun openRecentFile() {
+    private fun openRecentFile() {
         if (RecentFiles.getRecentFiles().size == 0) {
             Crouton.showText(this, R.string.toast_no_recent_files, Style.ALERT)
             return
         }
-        mRunnable = Runnable {
-            val open: Intent
-            open = Intent()
-            open.setClass(this@MainActivity, TedOpenRecentActivity::class.java)
-            try {
-                startActivityForResult(open, Constants.REQUEST_OPEN)
-            } catch (e: ActivityNotFoundException) {
-                Crouton.showText(
-                    this@MainActivity, R.string.toast_activity_open_recent,
-                    Style.ALERT
-                )
-            }
-        }
 
-        // promptSaveDirty();
-        executeRunnableAndClean()
+        val open = Intent()
+        open.setClass(this@MainActivity, TedOpenRecentActivity::class.java)
+        try {
+            startActivityForResult(open, Constants.REQUEST_OPEN)
+        } catch (e: ActivityNotFoundException) {
+            Crouton.showText(
+                this@MainActivity, R.string.toast_activity_open_recent,
+                Style.ALERT
+            )
+        }
     }
 
     /**
      * Warns the user that the next back press will qui the application, or quit
      * if the warning has already been shown
      */
-    protected fun warnOrQuit() {
+    private fun warnOrQuit() {
         if (mWarnedShouldQuit) {
-            quit()
+            finish()
         } else {
             Crouton.showText(this, R.string.toast_warn_no_undo_will_quit, Style.INFO)
             mWarnedShouldQuit = true
         }
-    }
-
-    /**
-     * Quit the app (user pressed back)
-     */
-    protected fun quit() {
-        mRunnable = Runnable { finish() }
-
-        // promptSaveDirty();
-        executeRunnableAndClean()
     }
 
     override fun finish() {
@@ -2417,7 +2200,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * General save command : check if a path exist for the current content,
      * then save it , else invoke the [MainActivity.saveContentAs] method
      */
-    protected fun saveContent() {
+    private fun saveContent() {
         if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) {
             saveContentAs()
         } else {
@@ -2429,7 +2212,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
      * General Save as command : prompt the user for a location and file name,
      * then save the editor'd content
      */
-    protected fun saveContentAs() {
+    private fun saveContentAs() {
         val saveAs = Intent()
         saveAs.setClass(this, TedSaveAsActivity::class.java)
         try {
@@ -2442,22 +2225,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     /**
      * Opens the settings activity
      */
-    protected fun settingsActivity() {
-        mRunnable = Runnable {
-            val settings = Intent()
-            settings.setClass(this@MainActivity, TedSettingsActivity::class.java)
-            try {
-                startActivity(settings)
-            } catch (e: ActivityNotFoundException) {
-                Crouton.showText(
-                    this@MainActivity, R.string.toast_activity_settings,
-                    Style.ALERT
-                )
-            }
+    private fun settingsActivity() {
+        val settings = Intent()
+        settings.setClass(this, TedSettingsActivity::class.java)
+        try {
+            startActivity(settings)
+        } catch (e: ActivityNotFoundException) {
+            Crouton.showText(this, R.string.toast_activity_settings, Style.ALERT)
         }
-
-        // promptSaveDirty();
-        executeRunnableAndClean()
     }
 
     private fun setFilters() {
@@ -2496,12 +2271,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         message.sendToTarget()
     }
 
-    fun sendMessageInterruptingCalculations() {
-        val message = mHandler.obtainMessage()
-        message.what = EToCMainHandler.MESSAGE_INTERRUPT_ACTIONS
-        message.sendToTarget()
-    }
-
     fun interruptActionsIfAny() {
         //TODO interrupt actions
     }
@@ -2510,6 +2279,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         currentSeries = mGraphSeriesDataset.getSeriesAt(index)
     }
 
+    // TODO remove executor, send data to usb task to be job
+    // cancel previous job when measure clicked again
+    // write to file with append option only when "send data to usb" task is running
     fun execute(runnable: Runnable?) {
         mExecutor.execute(runnable)
     }
@@ -2544,7 +2316,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
         if (isTemperature) {
-            mTemperatureData = TemperatureData.parse(text).also { temperatureData ->
+            TemperatureData.parse(text).also { temperatureData ->
                 if (temperatureData.isCorrect) {
                     val updateRunnable = Runnable {
                         mTemperature.text = (temperatureData.temperature1 + mTemperatureShift).toString()

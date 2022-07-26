@@ -13,7 +13,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
-//TODO migrate to coroutines
+import kotlin.Deprecated;
+
+@Deprecated(message = "Use MainViewModel instead")
 public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 
 	private final WeakReference<MainActivity> weakActivity;

@@ -1,7 +1,6 @@
 package com.ismet.usbterminal.mainscreen;
 
 import android.content.Intent;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
@@ -12,7 +11,6 @@ import com.ismet.usbterminal.data.AppData;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.data.PrefConstants;
-import com.ismet.usbterminal.data.PullState;
 import com.ismet.usbterminal.data.TemperatureData;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 import com.ismet.usbterminal.services.PullStateManagingService;
@@ -20,13 +18,13 @@ import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
-import java.io.File;
-import java.io.FileFilter;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.StringTokenizer;
 
+import kotlin.Deprecated;
+
+@Deprecated(message = "Use MainViewModel instead")
 public class EToCMainHandler extends Handler {
 
 	public static final String USB_DATA_READY = "com.ismet.usbservice.USB_DATA_READY";
@@ -49,21 +47,13 @@ public class EToCMainHandler extends Handler {
 
 	public static final int MESSAGE_STOP_PULLING_FOR_TEMPERATURE = 6;
 
-	public static final int MESSAGE_CHECK_TEMPERATURE = 7;
-
-	public static final int MESSAGE_SIMULATE_RESPONSE = 8;
+    public static final int MESSAGE_SIMULATE_RESPONSE = 8;
 
 	public static final int MESSAGE_SHOW_TOAST = 9;
 
-	private static final long DELAY_BEFORE_START_AUTO_PULLING = 500;
-
-	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyyMMdd_HHmmss");
+    private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
 	private final WeakReference<MainActivity> weakActivity;
-
-	private
-	@PullState
-	int mTempState;
 
 	public EToCMainHandler(MainActivity tedActivity) {
 		super();
@@ -92,12 +82,6 @@ public class EToCMainHandler extends Handler {
 					if (usbReadBytes.length == 7) {
 						if ((String.format("%02X", usbReadBytes[0]).equals("FE")) && (String
 								.format("%02X", usbReadBytes[1]).equals("44"))) {
-
-                            /*if(pullState != PullState.NONE) {
-                                application.unScheduleTasks();
-                            }*/
-
-							// SENSOR Response
 							String strHex = "";
 							for (byte b : usbReadBytes) {
 								strHex = strHex + String.format("%02X-", b);
@@ -109,164 +93,112 @@ public class EToCMainHandler extends Handler {
 									usbReadBytes[4]);
 							int co2 = Integer.parseInt(strH, 16);
 
-							if (activity.getRenderer() != null) {
-								int yMax = (int) activity.getRenderer().getYAxisMax();
-								if (co2 >= yMax) {
-									if (activity.getCurrentSeries().getItemCount() == 0) {
-										int vmax = 3 * co2;
-										activity.getRenderer().setYAxisMax(vmax);
-									} else {
-										int vmax = (int) (co2 + (co2 * 15) / 100f);
-										activity.getRenderer().setYAxisMax(vmax);
-									}
-								}
+                            activity.getRenderer();
+                            int yMax = (int) activity.getRenderer().getYAxisMax();
+                            if (co2 >= yMax) {
+                                if (activity.getCurrentSeries().getItemCount() == 0) {
+                                    int vmax = 3 * co2;
+                                    activity.getRenderer().setYAxisMax(vmax);
+                                } else {
+                                    int vmax = (int) (co2 + (co2 * 15) / 100f);
+                                    activity.getRenderer().setYAxisMax(vmax);
+                                }
+                            }
 
-								// int yMin = (int) renderer.getYAxisMin();
-								// if(yMin == 0){
-								// int vmin = co2 - (co2 * (15/100));
-								// renderer.setYAxisMin(vmin);
-								// }else if(co2<yMin){
-								// int vmin = co2 - (co2 * (15/100));
-								// renderer.setYAxisMin(vmin);
-								// }
+                            // auto
+                            int delay_v = activity.getPrefs().getInt(PrefConstants.DELAY, 2);
+                            int duration_v = activity.getPrefs().getInt(PrefConstants
+                                    .DURATION, 3);
+                            int rCount1 = (int) ((duration_v * 60) / delay_v);
+                            int rCount2 = (int) (duration_v * 60);
+                            boolean isauto = activity.getPrefs().getBoolean(PrefConstants
+                                    .IS_AUTO, false);
+                            if (isauto) {
+                                if (activity.getReadingCount() == rCount1) {
+                                    activity.incCountMeasure();
+                                    activity.setChartIdx(2);
+                                    activity.setCurrentSeries(1);
+                                } else if (activity.getReadingCount() == rCount2) {
+                                    activity.incCountMeasure();
+                                    activity.setChartIdx(3);
+                                    activity.setCurrentSeries(2);
+                                }
+                            }
 
-								// int delay_v = prefs.getInt("delay", 2);
-								// int duration_v = prefs.getInt("duration", 3);
-								// int limit = (duration_v * 60)/delay_v;
-								// if(readingCount != 1){
-								// if((readingCount%limit) == 1){
-								//activity.refreshCurrentSeries();
-								// if(idx_count<=1){
-								// // Toast.makeText(EToCMainActivity.this,
-								// // "Series Changed",
-								// // Toast.LENGTH_LONG).show();
-								// currentSeries =
-								// currentdataset.getSeriesAt(idx_count+1);
-								// // if(c == 0){
-								// //
-								// renderer.getSeriesRendererAt(0).setColor(Color.rgb(0,
-								// 171, 234));
-								// // }else if(c == 1){
-								// //
-								// renderer.getSeriesRendererAt(0).setColor(Color.RED);
-								// // }
-								//
-								//activity.refreshCurrentSeries();
-								// idx_count++;
-								// }
-								// }
-								// }
+                            Date currentDate = new Date();
 
-								// XYSeries currentSeries =
-								// currentdataset.getSeriesAt(0);
+                            if (activity.getCountMeasure() != activity.getOldCountMeasure()) {
+                                activity.setChartDate(FORMATTER.format(currentDate));
 
-								// file writing
-								// Toast.makeText(EToCMainActivity.this, filename,
-								// Toast.LENGTH_SHORT).show();
+                                activity.refreshOldCountMeasure();
+                                activity.getMapChartDate().put(activity.getChartIdx(),
+                                        activity.getChartDate());
+                            }
 
-								// auto
-								int delay_v = activity.getPrefs().getInt(PrefConstants.DELAY, 2);
-								int duration_v = activity.getPrefs().getInt(PrefConstants
-										.DURATION, 3);
-								int rCount1 = (int) ((duration_v * 60) / delay_v);
-								int rCount2 = (int) (duration_v * 60);
-								boolean isauto = activity.getPrefs().getBoolean(PrefConstants
-										.IS_AUTO, false);
-								if (isauto) {
-									if (activity.getReadingCount() == rCount1) {
-										activity.incCountMeasure();
-										activity.setChartIdx(2);
-										activity.setCurrentSeries(1);
-									} else if (activity.getReadingCount() == rCount2) {
-										activity.incCountMeasure();
-										activity.setChartIdx(3);
-										activity.setCurrentSeries(2);
-									}
-								}
+                            if (activity.getSubDirDate() == null) {
+                                activity.setSubDirDate(FORMATTER.format(currentDate));
+                            }
 
-								Date currentDate = new Date();
+                            if (activity.isTimerRunning()) {
+                                activity.getCurrentSeries().add(activity.getReadingCount(),
+                                        co2);
+                                activity.repaintChartView();
+                                int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
+                                int volumeValue = activity.getPrefs().getInt(PrefConstants
+                                        .VOLUME, -1);
 
-								if (activity.getCountMeasure() != activity.getOldCountMeasure()) {
-									activity.setChartDate(FORMATTER.format(currentDate));
+                                final String ppmPrefix;
+                                final String volume = "_" + (volumeValue == -1 ? "" : "" +
+                                        volumeValue);
 
-									activity.refreshOldCountMeasure();
-									activity.getMapChartDate().put(activity.getChartIdx(),
-											activity.getChartDate());
-								}
+                                if (ppm == -1) {
+                                    ppmPrefix = "_";
+                                } else {
+                                    ppmPrefix = "_" + ppm;
+                                }
 
-								if (activity.getSubDirDate() == null) {
-									activity.setSubDirDate(FORMATTER.format(currentDate));
-								}
+                                String str_uc = activity.getPrefs().getString(PrefConstants
+                                        .USER_COMMENT, "");
 
-								if (activity.isTimerRunning()) {
-									activity.getCurrentSeries().add(activity.getReadingCount(),
-											co2);
-									activity.repaintChartView();
-									int ppm = activity.getPrefs().getInt(PrefConstants.KPPM, -1);
-									int volumeValue = activity.getPrefs().getInt(PrefConstants
-											.VOLUME, -1);
+                                final String fileName;
+                                final String dirName;
+                                final String subDirName;
 
-									final String ppmPrefix;
-									final String volume = "_" + (volumeValue == -1 ? "" : "" +
-											volumeValue);
+                                if (ppmPrefix.equals("_")) {
+                                    dirName = AppData.MES_FOLDER_NAME;
 
-									if (ppm == -1) {
-										ppmPrefix = "_";
-									} else {
-										ppmPrefix = "_" + ppm;
-									}
+                                    fileName = "MES_" + activity.getChartDate() +
+                                            volume + "_R" + activity.getChartIdx() + "" +
+                                            ".csv";
+                                    subDirName = "MES_" + activity.getSubDirDate() + "_" +
+                                            str_uc;
 
-									String str_uc = activity.getPrefs().getString(PrefConstants
-											.USER_COMMENT, "");
+                                } else {
+                                    dirName = AppData.CAL_FOLDER_NAME;
 
-									final String fileName;
-									final String dirName;
-									final String subDirName;
+                                    fileName = "CAL_" + activity.getChartDate() +
+                                            volume + ppmPrefix + "_R" + activity.getChartIdx()
+                                            + ".csv";
+                                    subDirName = "CAL_" + activity.getSubDirDate() + "_" +
+                                            str_uc;
+                                }
 
-									if (ppmPrefix.equals("_")) {
-										dirName = AppData.MES_FOLDER_NAME;
+                                activity.execute(new FileWriteRunnable("" + co2, fileName,
+                                        dirName, subDirName));
+                            }
 
-										fileName = "MES_" + activity.getChartDate() +
-												volume + "_R" + activity.getChartIdx() + "" +
-												".csv";
-										subDirName = "MES_" + activity.getSubDirDate() + "_" +
-												str_uc;
+                            if (co2 == 10000) {
+                                Toast toast = Toast.makeText(activity, "Dilute sample", Toast
+                                        .LENGTH_LONG);
+                                ToastUtils.wrap(toast);
+                                toast.show();
+                            }
 
-									} else {
-										dirName = AppData.CAL_FOLDER_NAME;
-
-										fileName = "CAL_" + activity.getChartDate() +
-												volume + ppmPrefix + "_R" + activity.getChartIdx()
-												+ ".csv";
-										subDirName = "CAL_" + activity.getSubDirDate() + "_" +
-												str_uc;
-									}
-
-									activity.execute(new FileWriteRunnable("" + co2, fileName,
-											dirName, subDirName));
-								}
-
-								if (co2 == 10000) {
-									Toast toast = Toast.makeText(activity, "Dilute sample", Toast
-											.LENGTH_LONG);
-									ToastUtils.wrap(toast);
-									toast.show();
-								}
-							}
-
-							data += "\nCO2: " + co2 + " ppm";
+                            data += "\nCO2: " + co2 + " ppm";
 
 							activity.refreshTextAccordToSensor(false, co2 + "");
 
 							responseForChecking = co2 + "";
-
-                            /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
-	                            mTempState = PullState.TEMPERATURE;
-	                            application.setPullState(PullState.NONE);
-	                            Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
-                                sendMessageDelayed(message, PullStateManagingService
-                                         .DELAY_ON_CHANGE_REQUEST);
-                            }*/
 						} else {
 							data = new String(usbReadBytes);
 							data = data.replace("\r", "");
@@ -274,26 +206,14 @@ public class EToCMainHandler extends Handler {
 							responseForChecking = new String(data);
 						}
 					} else {
-					    /*if(pullState != PullState.NONE) {
-				            application.unScheduleTasks();
-                        }*/
 						data = new String(usbReadBytes);
 						data = data.replace("\r", "");
 						data = data.replace("\n", "");
 						activity.refreshTextAccordToSensor(true, data);
 
-						responseForChecking = new String(data);
-
-                        /*if(pullState != PullState.NONE && !application.isPullingStopped()) {
-	                        mTempState = PullState.CO2;
-	                        application.setPullState(PullState.NONE);
-	                        Message message = obtainMessage(MESSAGE_RESUME_AUTO_PULLING);
-                            sendMessageDelayed(message, PullStateManagingService
-                                     .DELAY_ON_CHANGE_REQUEST);
-                        }*/
+						responseForChecking = data;
 					}
 
-					//if(pullState == PullState.NONE) {
 					Utils.appendText(activity.getTxtOutput(), "Rx: " + data);
 					activity.getScrollView().smoothScrollTo(0, 0);
 
@@ -309,7 +229,6 @@ public class EToCMainHandler extends Handler {
 							powerCommandsFactory.moveStateToNext();
 						}
 					}
-					//}
 
 					break;
 				case MESSAGE_USB_DATA_READY:
@@ -327,10 +246,6 @@ public class EToCMainHandler extends Handler {
 
 					int yMax = (int) activity.getRenderer().getYAxisMax();
 					if (co2 >= yMax) {
-						// int vmax = (int) (co2 + (co2*15)/100f);
-						// int vmax_extra = (int) Math.ceil(1.5 *
-						// (co2/20)) ;
-						// int vmax = co2 + vmax_extra;
 						if (activity.getChartSeries().getItemCount() == 0) {
 							int vmax = (int) (3 * co2);
 							activity.getRenderer().setYAxisMax(vmax);
@@ -344,9 +259,6 @@ public class EToCMainHandler extends Handler {
 					activity.getChartView().repaint();
 					break;
 				case MESSAGE_RESUME_AUTO_PULLING:
-					//application.setPullState(mTempState);
-					//mTempState = PullState.NONE;
-
 					activity.startService(PullStateManagingService.intentForService(activity,
 							true));
 					break;
@@ -391,16 +303,11 @@ public class EToCMainHandler extends Handler {
 	private void handleResponse(final WeakReference<MainActivity> activityWeakReference,
 			String response) {
 
-		boolean correctResponse = false;
-
-		int curPowerState = 0;
-
-		if (activityWeakReference.get() != null) {
+        if (activityWeakReference.get() != null) {
 			final MainActivity activity = activityWeakReference.get();
 			PowerCommandsFactory powerCommandsFactory = activity.getPowerCommandsFactory();
 			final int powerState = powerCommandsFactory.currentPowerState();
-			curPowerState = powerState;
-			switch (powerState) {
+            switch (powerState) {
 				case PowerState.ON_STAGE1:
 				case PowerState.ON_STAGE1_REPEAT:
 				case PowerState.ON_STAGE3A:
@@ -418,30 +325,25 @@ public class EToCMainHandler extends Handler {
 						if (currentCommand.isResponseCorrect(response)) {
 
 							if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-								postDelayed(new Runnable() {
+								postDelayed(() -> {
+                                    if (activityWeakReference.get() != null) {
+                                        PowerCommandsFactory powerCommandsFactory1 =
+                                                activityWeakReference.get()
+                                                        .getPowerCommandsFactory();
 
-									@Override
-									public void run() {
-										if (activityWeakReference.get() != null) {
-											PowerCommandsFactory powerCommandsFactory =
-													activityWeakReference.get()
-															.getPowerCommandsFactory();
+                                        if (powerCommandsFactory1.currentPowerState() !=
+                                                PowerState.ON) {
+                                            powerCommandsFactory1.sendRequest
+                                                    (activityWeakReference.get(),
+                                                            EToCMainHandler.this,
+                                                            activityWeakReference.get());
 
-											if (powerCommandsFactory.currentPowerState() !=
-													PowerState.ON) {
-												powerCommandsFactory.sendRequest
-														(activityWeakReference.get(),
-																EToCMainHandler.this,
-																activityWeakReference.get());
-
-											}
-										}
-									}
-								}, currentCommand.getDelay());
+                                        }
+                                    }
+                                }, currentCommand.getDelay());
 							}
 
-							correctResponse = true;
-						} else {
+                        } else {
 							StringBuilder responseBuilder = new StringBuilder();
 							for (String possibleResponse : currentCommand.getPossibleResponses()) {
 								responseBuilder.append("\"" + possibleResponse + "\" or ");
@@ -465,47 +367,37 @@ public class EToCMainHandler extends Handler {
 						sendMessage(Message.obtain(this, MESSAGE_RESUME_AUTO_PULLING));
 						return;
 					}
-					correctResponse = true;
-					break;
+                    break;
 				case PowerState.OFF_INTERRUPTING:
 					sendMessage(Message.obtain(this, MESSAGE_PAUSE_AUTO_PULLING));
 					powerCommandsFactory.moveStateToNext();
 
 					final long delayForPausing = powerCommandsFactory.currentCommand().getDelay();
 
-					postDelayed(new Runnable() {
+					postDelayed(() -> {
+                        if (activityWeakReference.get() != null) {
+                            activityWeakReference.get().interruptActionsIfAny();
 
-						@Override
-						public void run() {
-							if (activityWeakReference.get() != null) {
-								activityWeakReference.get().interruptActionsIfAny();
+                            postDelayed(() -> {
+                                if (activityWeakReference.get() != null) {
+                                    PowerCommandsFactory powerCommandsFactory12 =
+                                            activityWeakReference.get()
+                                                    .getPowerCommandsFactory();
 
-								postDelayed(new Runnable() {
+                                    if (powerCommandsFactory12.currentPowerState() !=
+                                            PowerState.OFF) {
+                                        powerCommandsFactory12.sendRequest
+                                                (activityWeakReference.get(),
+                                                        EToCMainHandler.this,
+                                                        activityWeakReference.get());
 
-									@Override
-									public void run() {
-										if (activityWeakReference.get() != null) {
-											PowerCommandsFactory powerCommandsFactory =
-													activityWeakReference.get()
-															.getPowerCommandsFactory();
+                                    }
+                                }
+                            }, delayForPausing);
+                        }
+                    }, delayForPausing);
 
-											if (powerCommandsFactory.currentPowerState() !=
-													PowerState.OFF) {
-												powerCommandsFactory.sendRequest
-														(activityWeakReference.get(),
-																EToCMainHandler.this,
-																activityWeakReference.get());
-
-											}
-										}
-									}
-								}, delayForPausing);
-							}
-						}
-					}, delayForPausing);
-
-					correctResponse = true;
-					break;
+                    break;
 				case PowerState.OFF_STAGE1:
 					TemperatureData temperatureData = TemperatureData.parse(response);
 					if (temperatureData.isCorrect()) {
@@ -517,26 +409,21 @@ public class EToCMainHandler extends Handler {
 						}
 						powerCommandsFactory.moveStateToNext();
 
-						postDelayed(new Runnable() {
+						postDelayed(() -> {
+                            if (activityWeakReference.get() != null) {
+                                PowerCommandsFactory powerCommandsFactory13 =
+                                        activityWeakReference.get().getPowerCommandsFactory();
 
-							@Override
-							public void run() {
-								if (activityWeakReference.get() != null) {
-									PowerCommandsFactory powerCommandsFactory =
-											activityWeakReference.get().getPowerCommandsFactory();
+                                if (powerCommandsFactory13.currentPowerState() != PowerState
+                                        .OFF) {
+                                    powerCommandsFactory13.sendRequest(activityWeakReference.get
+                                            (), EToCMainHandler.this, activityWeakReference
+                                            .get());
 
-									if (powerCommandsFactory.currentPowerState() != PowerState
-											.OFF) {
-										powerCommandsFactory.sendRequest(activityWeakReference.get
-												(), EToCMainHandler.this, activityWeakReference
-												.get());
-
-									}
-								}
-							}
-						}, powerCommandsFactory.currentCommand().getDelay());
-						correctResponse = true;
-					}
+                                }
+                            }
+                        }, powerCommandsFactory.currentCommand().getDelay());
+                    }
 					break;
 				case PowerState.OFF_WAIT_FOR_COOLING:
 					temperatureData = TemperatureData.parse(response);
@@ -549,27 +436,22 @@ public class EToCMainHandler extends Handler {
 									MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
 							powerCommandsFactory.moveStateToNext();
 
-							postDelayed(new Runnable() {
+							postDelayed(() -> {
+                                if (activityWeakReference.get() != null) {
+                                    PowerCommandsFactory powerCommandsFactory14 =
+                                            activityWeakReference.get()
+                                                    .getPowerCommandsFactory();
 
-								@Override
-								public void run() {
-									if (activityWeakReference.get() != null) {
-										PowerCommandsFactory powerCommandsFactory =
-												activityWeakReference.get()
-														.getPowerCommandsFactory();
-
-										if (powerCommandsFactory.currentPowerState() != PowerState
-												.OFF) {
-											powerCommandsFactory.sendRequest(activityWeakReference
-													.get(), EToCMainHandler.this,
-													activityWeakReference.get());
-										}
-									}
-								}
-							}, powerCommandsFactory.currentCommand().getDelay());
+                                    if (powerCommandsFactory14.currentPowerState() != PowerState
+                                            .OFF) {
+                                        powerCommandsFactory14.sendRequest(activityWeakReference
+                                                .get(), EToCMainHandler.this,
+                                                activityWeakReference.get());
+                                    }
+                                }
+                            }, powerCommandsFactory.currentCommand().getDelay());
 						}
-						correctResponse = true;
-					}
+                    }
 					break;
 				case PowerState.OFF_RUNNING:
 				case PowerState.OFF_FINISHING:
@@ -583,27 +465,22 @@ public class EToCMainHandler extends Handler {
 
 					if (currentCommand.hasSelectableResponses()) {
 						if (currentCommand.isResponseCorrect(response)) {
-							postDelayed(new Runnable() {
+							postDelayed(() -> {
+                                if (activityWeakReference.get() != null) {
+                                    PowerCommandsFactory powerCommandsFactory15 =
+                                            activityWeakReference.get()
+                                                    .getPowerCommandsFactory();
+                                    if (powerCommandsFactory15.currentPowerState() != PowerState
+                                            .OFF) {
+                                        powerCommandsFactory15.sendRequest(activityWeakReference
+                                                .get(), EToCMainHandler.this,
+                                                activityWeakReference.get());
 
-								@Override
-								public void run() {
-									if (activityWeakReference.get() != null) {
-										PowerCommandsFactory powerCommandsFactory =
-												activityWeakReference.get()
-														.getPowerCommandsFactory();
-										if (powerCommandsFactory.currentPowerState() != PowerState
-												.OFF) {
-											powerCommandsFactory.sendRequest(activityWeakReference
-													.get(), EToCMainHandler.this,
-													activityWeakReference.get());
+                                    }
+                                }
+                            }, powerCommandsFactory.currentCommand().getDelay());
 
-										}
-									}
-								}
-							}, powerCommandsFactory.currentCommand().getDelay());
-
-							correctResponse = true;
-						} else {
+                        } else {
 							StringBuilder responseBuilder = new StringBuilder();
 							for (String possibleResponse : currentCommand.getPossibleResponses()) {
 								responseBuilder.append("\"" + possibleResponse + "\" or ");
@@ -622,10 +499,5 @@ public class EToCMainHandler extends Handler {
 					break;
 			}
 		}
-
-		/*if (!correctResponse && activityWeakReference.get() != null) {
-			Toast.makeText(activityWeakReference.get(), "Wrong response parsing. Message:[" +
-					response + "]. PowerState - " + curPowerState, Toast.LENGTH_LONG).show();
-		}*/
 	}
 }
