@@ -3,6 +3,9 @@ package com.ismet.usbterminal
 import android.app.Application
 import android.graphics.PointF
 import androidx.lifecycle.*
+import com.ismet.usbterminal.data.PowerCommand
+import com.ismet.usbterminal.data.PowerState
+import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.tasks.MainEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
@@ -19,13 +22,16 @@ class MainViewModel @Inject constructor(
     application: Application,
     handle: SavedStateHandle
 ): ViewModel() {
+    private val app = application as EToCApplication
+
     val events = Channel<MainEvent>(Channel.UNLIMITED)
     val chartPoints = handle.getLiveData<List<PointF>>("chartPoints", emptyList())
     val maxY = handle.getLiveData("maxY",0)
+
+    private var shouldSendTemperatureRequest = true
     private var readChartJob: Job? = null
     private var sendTemperatureOrCo2Job: Job? = null
-    private val app = application as EToCApplication
-    private var shouldSendTemperatureRequest = true
+    private var sendWaitForCoolingJob: Job? = null
 
     /**
      * return chart index, based on filePath input
@@ -93,5 +99,39 @@ class MainViewModel @Inject constructor(
     fun stopSendingTemperatureOrCo2Requests() {
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = null
+    }
+
+    fun waitForCooling() {
+        val commandsFactory: PowerCommandsFactory = app.powerCommandsFactory
+
+        val command = if (app.isPreLooping) {
+            PowerCommand("/5J1R", 1000)
+        } else {
+            commandsFactory.currentCommand()
+        }
+
+        sendWaitForCoolingJob?.cancel()
+        sendWaitForCoolingJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                val message = if (app.isPreLooping) {
+                    command.command
+                } else {
+                    "/5H0000R"
+                }
+                val state = commandsFactory.currentPowerState()
+                if (state != PowerState.OFF) {
+                    events.send(MainEvent.WriteToUsb(message))
+                    //TODO do we need next line?
+                    //events.send(MainEvent.WriteToUsb(state))
+                }
+                delay((0.3 * command.delay).toLong())
+                delay(command.delay)
+            }
+        }
+    }
+
+    fun stopWaitForCooling() {
+        sendWaitForCoolingJob?.cancel()
+        sendWaitForCoolingJob = null
     }
 }

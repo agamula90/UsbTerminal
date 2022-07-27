@@ -8,6 +8,7 @@ import android.os.Message;
 import android.view.Window;
 import android.widget.TextView;
 
+import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
@@ -34,6 +35,7 @@ public abstract class PowerCommandsFactory {
 	public void sendRequest(final Context context, final Handler mHandler, final CommandsDeliverer
 			commandsDeliverer) {
 		final boolean handled;
+        MainActivity activity = (MainActivity) context;
 
 		@PowerState int mPowerState = currentPowerState();
 
@@ -45,9 +47,7 @@ public abstract class PowerCommandsFactory {
 				handled = true;
 				break;
 			case PowerState.OFF_WAIT_FOR_COOLING:
-				Intent i = PullStateManagingService.intentForService(context, true);
-				i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
-				context.startService(i);
+				activity.waitForCooling();
 
 				if(context instanceof LibraryContentAttachable) {
 					((LibraryContentAttachable) context).dismissProgress();

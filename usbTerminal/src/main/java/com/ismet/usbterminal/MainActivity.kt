@@ -9,7 +9,6 @@ import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
-import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.KeyEvent
 import android.view.Menu
@@ -1071,10 +1070,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         val preferences = prefs
         if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
             EToCApplication.getInstance().isPreLooping = true
-            //TODO move to mainviewmodel
-            val i = PullStateManagingService.intentForService(this, true)
-            i.action = PullStateManagingService.WAIT_FOR_COOLING_ACTION
-            startService(i)
+            viewModel.waitForCooling()
 
             //TODO uncomment for simulating
             /*Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
@@ -1124,6 +1120,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun stopSendingTemperatureOrCo2Requests() {
         viewModel.stopSendingTemperatureOrCo2Requests()
+    }
+
+    fun stopPullingForTemperature() {
+        viewModel.stopWaitForCooling()
+        if (powerCommandsFactory.coolingDialog != null) {
+            powerCommandsFactory.coolingDialog.dismiss()
+        }
+    }
+
+    fun waitForCooling() {
+        viewModel.waitForCooling()
     }
 
     fun initPowerAccordToItState() {

@@ -1,6 +1,5 @@
 package com.ismet.usbterminal.mainscreen;
 
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
@@ -13,7 +12,6 @@ import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.data.PrefConstants;
 import com.ismet.usbterminal.data.TemperatureData;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
-import com.ismet.usbterminal.services.PullStateManagingService;
 import com.ismet.usbterminal.utils.FileWriteRunnable;
 import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
@@ -45,8 +43,6 @@ public class EToCMainHandler extends Handler {
 
 	public static final int MESSAGE_PAUSE_AUTO_PULLING = 5;
 
-	public static final int MESSAGE_STOP_PULLING_FOR_TEMPERATURE = 6;
-
     public static final int MESSAGE_SIMULATE_RESPONSE = 8;
 
 	public static final int MESSAGE_SHOW_TOAST = 9;
@@ -74,9 +70,8 @@ public class EToCMainHandler extends Handler {
 			EToCApplication application = EToCApplication.getInstance();
 			switch (msg.what) {
 				case MESSAGE_USB_DATA_RECEIVED:
-					int pullState = application.getPullState();
 
-					byte[] usbReadBytes = (byte[]) msg.obj;
+                    byte[] usbReadBytes = (byte[]) msg.obj;
 					String data = "";
 					final String responseForChecking;
 					if (usbReadBytes.length == 7) {
@@ -225,7 +220,7 @@ public class EToCMainHandler extends Handler {
 						final int powerState = powerCommandsFactory.currentPowerState();
 						if (powerState == PowerState.PRE_LOOPING) {
 							EToCApplication.getInstance().setPreLooping(false);
-							sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							activity.stopPullingForTemperature();
 							powerCommandsFactory.moveStateToNext();
 						}
 					}
@@ -267,14 +262,6 @@ public class EToCMainHandler extends Handler {
 				case MESSAGE_PAUSE_AUTO_PULLING:
 					activity.stopSendingTemperatureOrCo2Requests();
 					break;
-				case MESSAGE_STOP_PULLING_FOR_TEMPERATURE:
-					Intent i = PullStateManagingService.intentForService(activity, false);
-					i.setAction(PullStateManagingService.WAIT_FOR_COOLING_ACTION);
-					activity.startService(i);
-					if (activity.getPowerCommandsFactory().getCoolingDialog() != null) {
-						activity.getPowerCommandsFactory().getCoolingDialog().dismiss();
-					}
-					break;
 				case MESSAGE_SIMULATE_RESPONSE:
 					String sVal = "";
 					if (msg.obj != null) {
@@ -289,7 +276,7 @@ public class EToCMainHandler extends Handler {
 						final int powerState = powerCommandsFactory.currentPowerState();
 						if (powerState == PowerState.PRE_LOOPING) {
 							EToCApplication.getInstance().setPreLooping(false);
-							sendMessage(obtainMessage(MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							activity.stopPullingForTemperature();
 							powerCommandsFactory.moveStateToNext();
 						}
 					}
@@ -430,8 +417,7 @@ public class EToCMainHandler extends Handler {
 
 						if (curTemperature <= EToCApplication.getInstance()
 								.getBorderCoolingTemperature()) {
-							sendMessage(Message.obtain(this,
-									MESSAGE_STOP_PULLING_FOR_TEMPERATURE));
+							activity.stopPullingForTemperature();
 							powerCommandsFactory.moveStateToNext();
 
 							postDelayed(() -> {
