@@ -9,14 +9,17 @@ import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.ismet.usbterminal.EToCApplication;
-import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.data.PullState;
+import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,8 +33,11 @@ public class PullStateManagingService extends Service {
     public static final String WAIT_FOR_COOLING_ACTION = "wait_for_cooling";
 
     public static final String IS_AUTO_PULL_ON = "is_auto_pull_on";
+    public static final String IS_RECREATING = "is_recreating";
 
     public static final String CO2_REQUEST = "(FE-44-00-08-02-9F-25)";
+    private static final int MAX_WAIT_TIME_FOR_CANCEL_EXECUTOR = 100;
+    public static final int DELAY_ON_CHANGE_REQUEST = 1000;
 
     private ScheduledExecutorService mPullDataService;
     private ScheduledExecutorService mWaitPullService;
@@ -94,30 +100,34 @@ public class PullStateManagingService extends Service {
                     Log.e(TAG, "Service 1 started");
 
                     eToCApplication.initWaitPullService(mWaitPullService, mWaitPullService
-                            .scheduleWithFixedDelay(() -> {
-                                final String message;
+                            .scheduleWithFixedDelay(new Runnable() {
 
-                                if (eToCApplication.isPreLooping()) {
-                                    message = command.getCommand();
-                                } else {
-                                    message = "/5H0000R";
-                                }
+                        @Override
+                        public void run() {
+                            final String message;
 
-                                int state = commandsFactory.currentPowerState();
+                            if (eToCApplication.isPreLooping()) {
+                                message = command.getCommand();
+                            } else {
+                                message = "/5H0000R";
+                            }
 
-                                if (state != PowerState.OFF) {
-                                    MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
-                                            .this, message);
-                                    MainActivity.Companion.sendBroadCastWithData(PullStateManagingService
-                                            .this, state);
-                                }
+                            int state = commandsFactory.currentPowerState();
 
-                                try {
-                                    Thread.sleep((int) (0.3 * command.getDelay()));
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
+                            if (state != PowerState.OFF) {
+                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                        .this, message);
+                                EToCMainActivity.sendBroadCastWithData(PullStateManagingService
+                                        .this, state);
+                            }
+
+                            try {
+                                Thread.sleep((int) (0.3 * command.getDelay()));
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, 0, command.getDelay(), TimeUnit.MILLISECONDS));
                 } else {
                     Log.e(TAG, "Service 1 stopped");
                     eToCApplication.getWaitPullFuture().cancel(true);
@@ -149,34 +159,42 @@ public class PullStateManagingService extends Service {
                         }
                     }
 
-                    Runnable autoChangeRunnable = () -> {
-                        int pullState = eToCApplication.getPullState();
+                    List<ScheduledFuture> scheduledFutures = new ArrayList<>(1);
 
-                        if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
-                            return;
-                        }
+                    Runnable autoChangeRunnable = new Runnable() {
 
-                        switch (pullState) {
-                            case PullState.TEMPERATURE:
-                                pullState = PullState.CO2;
-                                break;
-                            case PullState.CO2:
-                                pullState = PullState.TEMPERATURE;
-                                break;
-                        }
+                        @Override
+                        public void run() {
+                            int pullState = eToCApplication.getPullState();
 
-                        eToCApplication.setPullState(pullState);
+                            if (pullState == PullState.NONE || !mIsAutoHandling.get()) {
+                                return;
+                            }
 
-                        boolean isTemperature = pullState == PullState.TEMPERATURE;
-                        if (isTemperature) {
-                            initAutoPullTemperatureRunnable().run();
-                        } else {
-                            initAutoPullCo2Runnable().run();
+                            switch (pullState) {
+                                case PullState.TEMPERATURE:
+                                    pullState = PullState.CO2;
+                                    break;
+                                case PullState.CO2:
+                                    pullState = PullState.TEMPERATURE;
+                                    break;
+                            }
+
+                            eToCApplication.setPullState(pullState);
+
+                            boolean isTemperature = pullState == PullState.TEMPERATURE;
+                            if (isTemperature) {
+                                initAutoPullTemperatureRunnable().run();
+                            } else {
+                                initAutoPullCo2Runnable().run();
+                            }
                         }
                     };
 
-                    eToCApplication.setPullDataFuture(mPullDataService.scheduleWithFixedDelay
+                    scheduledFutures.add(mPullDataService.scheduleWithFixedDelay
                             (autoChangeRunnable, 0, 1, TimeUnit.SECONDS));
+
+                    //eToCApplication.setScheduledFutures(scheduledFutures);
                 } else {
                     Log.e(TAG, "Service 0 stopped");
 
@@ -196,7 +214,7 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
-                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         CO2_REQUEST);
             }
         };
@@ -209,7 +227,7 @@ public class PullStateManagingService extends Service {
                 if (eToCApplication.getPullState() == PullState.NONE) {
                     return;
                 }
-                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         "/5J5R");
 
                 try {
@@ -218,7 +236,7 @@ public class PullStateManagingService extends Service {
                     e.printStackTrace();
                 }
 
-                MainActivity.Companion.sendBroadCastWithData(PullStateManagingService.this,
+                EToCMainActivity.sendBroadCastWithData(PullStateManagingService.this,
                         eToCApplication.getCurrentTemperatureRequest());
             }
         };

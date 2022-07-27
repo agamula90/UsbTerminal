@@ -42,7 +42,7 @@ public abstract class PowerCommandsFactory {
 		switch (mPowerState) {
 			case PowerState.OFF_INTERRUPTING:
 				Message message = mHandler.obtainMessage();
-				message.what = EToCMainHandler.MESSAGE_INTERRUPT_ACTIONS;
+				message.what = com.ismet.usbterminal.MainActivity.MESSAGE_INTERRUPT_ACTIONS;
 				message.sendToTarget();
 				handled = true;
 				break;

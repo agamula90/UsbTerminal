@@ -28,10 +28,10 @@ import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.tasks.MainEvent
-import com.ismet.usbterminal.mainscreen.tasks.SendDataToUsbTask
 import com.ismet.usbterminal.services.PullStateManagingService
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
+import com.ismet.usbterminal.utils.FileWriteRunnable
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
@@ -65,21 +65,13 @@ import java.util.concurrent.Executors
 
 @AndroidEntryPoint
 class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
+
     /*
 	 * Notifications from UsbService will be received here.
 	 */
     private val mUsbReceiver: BroadcastReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when(intent.action) {
-                EToCMainHandler.USB_DATA_READY -> {
-                    val isToast = intent.getBooleanExtra(EToCMainHandler.IS_TOAST, false)
-                    val data = intent.getStringExtra(EToCMainHandler.DATA_EXTRA)
-                    if (isToast) {
-                        sendMessageForToast(data)
-                    } else {
-                        sendMessageWithUsbDataReady(data)
-                    }
-                }
                 UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
                     findDevice()
                     showCustomisedToast("USB Device Attached")
@@ -165,7 +157,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private val viewModel: MainViewModel by viewModels()
 
     private lateinit var mExecutor: ExecutorService
-    private var mSendDataToUsbTask: SendDataToUsbTask? = null
     lateinit var txtOutput: TextView
     lateinit var scrollView: ScrollView
     private lateinit var mButtonOn1: Button
@@ -201,7 +192,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         loadPreferencesFromLocalData()
         observeChartUpdates()
         observeEvents()
-        mHandler = EToCMainHandler(this)
+        mHandler = object: Handler(Looper.getMainLooper()) {
+            override fun handleMessage(msg: Message) {
+                super.handleMessage(msg)
+                if (msg.what == MESSAGE_INTERRUPT_ACTIONS) {
+                    handleResponse( "")
+                }
+            }
+        }
 
         mReadIntent = true
         mExportLayout = exportLayout
@@ -896,139 +894,49 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                     currentSeries = mGraphSeriesDataset.getSeriesAt(2)
                                 }
                                 val checkedId = mRadioGroup.checkedRadioButtonId
-                                if (mAdvancedEditText.text.toString() == "" && checkedId ==
-                                    -1
-                                ) {
-                                    showCustomisedToast( "Please enter command")
+                                if (mAdvancedEditText.text.toString() == "" && checkedId == -1) {
+                                    showCustomisedToast("Please enter command")
                                     return
-                                }
-                                val contentForUpload: String?
-                                val success: Boolean
-                                if (checkedId != -1) {
-                                    if (mRadio1.id == checkedId) {
-                                        contentForUpload = TextFileUtils.readTextFile(
-                                            File(
-                                                File(
-                                                    Environment.getExternalStorageDirectory(),
-                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
-                                                ),
-                                                commandsEditText1.text.toString()
-                                            )
-                                        )
-                                        success = true
-                                    } else if (mRadio2.id == checkedId) {
-                                        contentForUpload = TextFileUtils.readTextFile(
-                                            File(
-                                                File(
-                                                    Environment.getExternalStorageDirectory(),
-                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
-                                                ),
-                                                commandsEditText2.text.toString()
-                                            )
-                                        )
-                                        success = true
-                                    } else if (mRadio3.id == checkedId) {
-                                        contentForUpload = TextFileUtils.readTextFile(
-                                            File(
-                                                File(
-                                                    Environment.getExternalStorageDirectory(),
-                                                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
-                                                ),
-                                                commandsEditText3.text.toString()
-                                            )
-                                        )
-                                        success = true
-                                    } else {
-                                        contentForUpload = null
-                                        success = false
-                                    }
-                                } else {
-                                    contentForUpload = mAdvancedEditText.text.toString()
-                                    success = true
                                 }
                                 val editor = prefs.edit()
-                                editor.putString(
-                                    PrefConstants.MEASURE_FILE_NAME1, commandsEditText1
-                                        .getText().toString()
-                                )
-                                editor.putString(
-                                    PrefConstants.MEASURE_FILE_NAME2, commandsEditText2
-                                        .getText().toString()
-                                )
-                                editor.putString(
-                                    PrefConstants.MEASURE_FILE_NAME3, commandsEditText3
-                                        .getText().toString()
-                                )
+                                editor.putString(PrefConstants.MEASURE_FILE_NAME1, commandsEditText1.text.toString())
+                                editor.putString(PrefConstants.MEASURE_FILE_NAME2, commandsEditText2.text.toString())
+                                editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3.text.toString())
                                 editor.apply()
 
-                                if (contentForUpload != null && !contentForUpload.isEmpty()) {
-                                    viewModel.stopSendingTemperatureOrCo2Requests()
-                                    val multiLines: String = contentForUpload
-                                    val commands: Array<String>
-                                    val delimiter = "\n"
-                                    commands = multiLines.split(delimiter).toTypedArray()
-                                    val simpleCommands: MutableList<String> = ArrayList()
-                                    val loopCommands: MutableList<String> = ArrayList()
-                                    var isLoop = false
-                                    var loopcmd1Idx = -1
-                                    var loopcmd2Idx = -1
-                                    var autoPpm = false
-                                    for (commandIndex in commands.indices) {
-                                        val command = commands[commandIndex]
-                                        if (command != "" && command != "\n") {
-                                            if (command.contains("loop")) {
-                                                isLoop = true
-                                                var lineNos = command.replace("loop", "")
-                                                lineNos = lineNos.replace("\n", "")
-                                                lineNos = lineNos.replace("\r", "")
-                                                lineNos = lineNos.trim { it <= ' ' }
-                                                val line1 = lineNos.substring(
-                                                    0, lineNos.length
-                                                            / 2
-                                                )
-                                                val line2 = lineNos.substring(
-                                                    lineNos.length / 2,
-                                                    lineNos.length
-                                                )
-                                                loopcmd1Idx = line1.toInt() - 1
-                                                loopcmd2Idx = line2.toInt() - 1
-                                            } else if (command == "autoppm") {
-                                                autoPpm = true
-                                            } else if (isLoop) {
-                                                if (commandIndex == loopcmd1Idx) {
-                                                    loopCommands.add(command)
-                                                } else if (commandIndex == loopcmd2Idx) {
-                                                    loopCommands.add(command)
-                                                    isLoop = false
-                                                }
-                                            } else {
-                                                simpleCommands.add(command)
-                                            }
-                                        }
+                                val shouldUseRecentDirectory = chkUseRecentDirectory.isChecked
+
+                                val filePath = when {
+                                    checkedId == mRadio1.id -> commandsEditText1.text.toString()
+                                    checkedId == mRadio2.id -> commandsEditText2.text.toString()
+                                    checkedId == mRadio3.id -> commandsEditText3.text.toString()
+                                    checkedId == -1 && mAdvancedEditText.text.toString().isEmpty() -> {
+                                        showCustomisedToast("File not found")
+                                        return
                                     }
-                                    val autoPpmCalculate = autoPpm
-                                    mHandler.postDelayed({
-                                        if (mSendDataToUsbTask != null && mSendDataToUsbTask!!
-                                                .status == AsyncTask.Status.RUNNING
-                                        ) {
-                                            mSendDataToUsbTask!!.cancel(true)
-                                        }
-                                        mSendDataToUsbTask = SendDataToUsbTask(
-                                            simpleCommands,
-                                            loopCommands,
-                                            autoPpmCalculate,
-                                            this@MainActivity,
-                                            chkUseRecentDirectory.isChecked
+                                    checkedId == -1 -> {
+                                        viewModel.readCommandsFromText(
+                                            text = mAdvancedEditText.text.toString(),
+                                            shouldUseRecentDirectory = shouldUseRecentDirectory,
+                                            runningTime = future,
+                                            oneLoopTime = delay_timer
                                         )
-                                        mSendDataToUsbTask!!.execute(future, delay_timer)
-                                    }, 300)
-                                } else if (success) {
-                                    showCustomisedToast("File not found")
-                                    return
-                                } else {
-                                    showCustomisedToast("Unexpected error")
-                                    return
+                                        return
+                                    }
+                                    else -> {
+                                        showCustomisedToast("Unexpected error")
+                                        return
+                                    }
                                 }
+                                viewModel.readCommandsFromFile(
+                                    file = File(
+                                        File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME),
+                                        filePath
+                                    ),
+                                    shouldUseRecentDirectory = shouldUseRecentDirectory,
+                                    runningTime = future,
+                                    oneLoopTime = delay_timer
+                                )
                             }
                             dialog.cancel()
                         }
@@ -1110,6 +1018,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         customToast.show()
     }
 
+    @Deprecated("Use showCustomisedToast instead")
     fun showToastMessage(message: String?) {
         // showCustomisedToast(message.toString())
     }
@@ -1326,6 +1235,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 when(event) {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
                     is MainEvent.WriteToUsb -> sendCommand(event.data)
+                    is MainEvent.ChangeSubDirDate -> subDirDate = event.subDirDate
+                    is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
+                    is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
+                    is MainEvent.IncReadingCount -> incReadingCount()
                 }
             }
         }
@@ -1454,41 +1367,62 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     private fun simulateClick1() {
         powerOff()
-        var temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
-        var message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = temperatureData
-        //TODO temperature out of range
-        mHandler.sendMessageDelayed(message, 3800)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = temperatureData
-        //TODO temperature out of range
-        mHandler.sendMessageDelayed(message, 5000)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
-        message.obj = temperatureData
-        //TODO temperature in of range
-        mHandler.sendMessageDelayed(message, 20000)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        mHandler.sendMessageDelayed(message, 24000)
+        mHandler.postDelayed({
+            //TODO temperature out of range
+            val temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
+            simulateResponse(temperatureData)
+        }, 3800)
+        mHandler.postDelayed({
+            //TODO temperature out of range
+            val temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
+            simulateResponse(temperatureData)
+        }, 5000)
+        mHandler.postDelayed({
+            //TODO temperature in of range
+            val temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
+            simulateResponse(temperatureData)
+        }, 20000)
+        mHandler.postDelayed({
+            simulateResponse(null)
+        }, 24000)
+    }
+
+    private fun simulateResponse(response: String?) {
+        var sVal = ""
+        if (response != null) {
+            sVal = response
+        }
+
+        if (isPowerPressed) {
+            handleResponse(sVal)
+        } else {
+            val powerState = powerCommandsFactory.currentPowerState()
+            if (powerState == PowerState.PRE_LOOPING) {
+                EToCApplication.getInstance().isPreLooping = false
+                stopPullingForTemperature()
+                powerCommandsFactory.moveStateToNext()
+            }
+        }
     }
 
     private fun simulateClick2() {
         powerOn()
-        val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
-        var message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        mHandler.sendMessageDelayed(message, 800)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = "@5J001 "
-        mHandler.sendMessageDelayed(message, 1600)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = "@5J101 "
-        mHandler.sendMessageDelayed(message, 3000)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = "255"
-        mHandler.sendMessageDelayed(message, 4800)
-        message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE)
-        message.obj = "/1ZR"
-        mHandler.sendMessageDelayed(message, 5400)
+        mHandler.postDelayed({
+            val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
+            simulateResponse(temperatureData)
+        }, 800)
+        mHandler.postDelayed({
+            simulateResponse("@5J001 ")
+        }, 1600)
+        mHandler.postDelayed({
+            simulateResponse("@5J101 ")
+        }, 3000)
+        mHandler.postDelayed({
+            simulateResponse("255")
+        }, 4800)
+        mHandler.postDelayed({
+            simulateResponse("1ZR")
+        }, 5400)
     }
 
     //TODO
@@ -1628,10 +1562,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         unregisterReceiver(mUsbReceiver)
         mExecutor.shutdown()
         while (!mExecutor.isTerminated) { }
-        if (mSendDataToUsbTask != null && mSendDataToUsbTask!!.status == AsyncTask.Status.RUNNING) {
-            mSendDataToUsbTask!!.cancel(true)
-            mSendDataToUsbTask = null
-        }
         usbDevice?.close()
         usbDevice = null
         usbDeviceConnection.close()
@@ -2245,40 +2175,243 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         val filter = IntentFilter()
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-        filter.addAction(EToCMainHandler.USB_DATA_READY)
         registerReceiver(mUsbReceiver, filter)
     }
 
-    fun sendMessageWithUsbDataReceived(bytes: ByteArray?) {
-        val message = mHandler.obtainMessage()
-        message.obj = bytes
-        message.what = EToCMainHandler.MESSAGE_USB_DATA_RECEIVED
-        message.sendToTarget()
+    fun sendMessageWithUsbDataReceived(bytes: ByteArray) {
+        val usbReadBytes = bytes
+        var data = ""
+        val responseForChecking: String
+        if (usbReadBytes.size == 7) {
+            if (String.format("%02X", usbReadBytes[0]) == "FE" && String.format("%02X", usbReadBytes[1]) == "44") {
+                var strHex = ""
+                for (b in usbReadBytes) {
+                    strHex += String.format("%02X-", b)
+                }
+                val end = strHex.length - 1
+                data = strHex.substring(0, end)
+                val strH = String.format(
+                    "%02X%02X", usbReadBytes[3],
+                    usbReadBytes[4]
+                )
+                val co2 = strH.toInt(16)
+                val yMax: Int = renderer.yAxisMax.toInt()
+                if (co2 >= yMax) {
+                    renderer.yAxisMax = if (currentSeries.itemCount == 0) {
+                        (3 * co2).toDouble()
+                    } else {
+                        (co2 + co2 * 15 / 100f).toDouble()
+                    }
+                }
+
+                // auto
+                val delay_v = prefs.getInt(PrefConstants.DELAY, 2)
+                val duration_v = prefs.getInt(PrefConstants.DURATION, 3)
+                val isauto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
+                if (isauto) {
+                    if (readingCount == (duration_v * 60 / delay_v)) {
+                        incCountMeasure()
+                        chartIdx = 2
+                        setCurrentSeries(1)
+                    } else if (readingCount == (duration_v * 60)) {
+                        incCountMeasure()
+                        chartIdx = 3
+                        setCurrentSeries(2)
+                    }
+                }
+                val currentDate = Date()
+                if (countMeasure != oldCountMeasure) {
+                    chartDate = FORMATTER.format(currentDate)
+                    refreshOldCountMeasure()
+                    mMapChartIndexToDate.put(
+                        chartIdx,
+                        chartDate
+                    )
+                }
+                if (subDirDate == null) {
+                    subDirDate = FORMATTER.format(currentDate)
+                }
+                if (isTimerRunning) {
+                    currentSeries.add(readingCount.toDouble(), co2.toDouble())
+                    repaintChartView()
+                    val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
+                    val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
+                    val volume = "_" + if (volumeValue == -1) "" else "" +
+                            volumeValue
+                    val ppmPrefix = if (ppm == -1) {
+                        "_"
+                    } else {
+                        "_$ppm"
+                    }
+                    val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
+                    val fileName: String
+                    val dirName: String
+                    val subDirName: String
+                    if (ppmPrefix == "_") {
+                        dirName = AppData.MES_FOLDER_NAME
+                        fileName = "MES_" + chartDate +
+                                volume + "_R" + chartIdx + "" +
+                                ".csv"
+                        subDirName = "MES_" + subDirDate + "_" +
+                                str_uc
+                    } else {
+                        dirName = AppData.CAL_FOLDER_NAME
+                        fileName = ("CAL_" + chartDate +
+                                volume + ppmPrefix + "_R" + chartIdx
+                                + ".csv")
+                        subDirName = "CAL_" + subDirDate + "_" +
+                                str_uc
+                    }
+                    execute(
+                        FileWriteRunnable(
+                            "" + co2, fileName,
+                            dirName, subDirName
+                        )
+                    )
+                }
+                if (co2 == 10000) {
+                    showCustomisedToast( "Dilute sample")
+                }
+                data += "\nCO2: $co2 ppm"
+                refreshTextAccordToSensor(false, co2.toString() + "")
+                responseForChecking = co2.toString() + ""
+            } else {
+                data = String(usbReadBytes)
+                data = data.replace("\r", "")
+                data = data.replace("\n", "")
+                responseForChecking = data
+            }
+        } else {
+            data = String(usbReadBytes)
+            data = data.replace("\r", "")
+            data = data.replace("\n", "")
+            refreshTextAccordToSensor(true, data)
+            responseForChecking = data
+        }
+
+        Utils.appendText(txtOutput, "Rx: $data")
+        scrollView.smoothScrollTo(0, 0)
+
+        if (isPowerPressed) {
+            handleResponse(responseForChecking)
+        } else {
+            val powerState = powerCommandsFactory.currentPowerState()
+            if (powerState == PowerState.PRE_LOOPING) {
+                EToCApplication.getInstance().isPreLooping = false
+                stopPullingForTemperature()
+                powerCommandsFactory.moveStateToNext()
+            }
+        }
     }
 
-    fun sendOpenChartDataToHandler(value: String?) {
-        val message = mHandler.obtainMessage()
-        message.obj = value
-        message.what = EToCMainHandler.MESSAGE_OPEN_CHART
-        message.sendToTarget()
-    }
-
-    fun sendMessageWithUsbDataReady(dataForSend: String?) {
-        val message = mHandler.obtainMessage()
-        message.obj = dataForSend
-        message.what = EToCMainHandler.MESSAGE_USB_DATA_READY
-        message.sendToTarget()
-    }
-
-    fun sendMessageForToast(dataForSend: String?) {
-        val message = mHandler.obtainMessage()
-        message.obj = dataForSend
-        message.what = EToCMainHandler.MESSAGE_SHOW_TOAST
-        message.sendToTarget()
-    }
-
-    fun interruptActionsIfAny() {
-        //TODO interrupt actions
+    fun handleResponse(response: String) {
+        when (powerCommandsFactory.currentPowerState()) {
+            PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
+                val currentCommand = powerCommandsFactory.currentCommand()
+                powerCommandsFactory.moveStateToNext()
+                if (currentCommand.hasSelectableResponses()) {
+                    if (currentCommand.isResponseCorrect(response)) {
+                        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                            mHandler.postDelayed({
+                                if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                                    powerCommandsFactory.sendRequest(this, mHandler, this)
+                                }
+                            }, currentCommand.delay)
+                        }
+                    } else {
+                        val responseBuilder = java.lang.StringBuilder()
+                        for (possibleResponse in currentCommand.possibleResponses) {
+                            responseBuilder.append("\"$possibleResponse\" or ")
+                        }
+                        responseBuilder.delete(
+                            responseBuilder.length - 4, responseBuilder
+                                .length
+                        )
+                        showCustomisedToast("Wrong response: Got - \"${response}\".Expected - $responseBuilder")
+                        return
+                    }
+                } else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                    powerCommandsFactory.sendRequest(this, mHandler, this)
+                }
+                if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                    initPowerAccordToItState()
+                    startSendingTemperatureOrCo2Requests()
+                    return
+                }
+            }
+            PowerState.OFF_INTERRUPTING -> {
+                stopSendingTemperatureOrCo2Requests()
+                powerCommandsFactory.moveStateToNext()
+                val delayForPausing = powerCommandsFactory.currentCommand().delay
+                mHandler.postDelayed( {
+                    if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                        powerCommandsFactory.sendRequest(this, mHandler, this)
+                    }
+                }, delayForPausing * 2)
+            }
+            PowerState.OFF_STAGE1 -> {
+                val temperatureData = TemperatureData.parse(response)
+                if (temperatureData.isCorrect) {
+                    val curTemperature = temperatureData.temperature1
+                    if (curTemperature <= EToCApplication.getInstance()
+                            .borderCoolingTemperature
+                    ) {
+                        powerCommandsFactory.moveStateToNext()
+                    }
+                    powerCommandsFactory.moveStateToNext()
+                    mHandler.postDelayed({
+                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                            powerCommandsFactory.sendRequest(this, mHandler, this)
+                        }
+                    }, powerCommandsFactory.currentCommand().delay)
+                }
+            }
+            PowerState.OFF_WAIT_FOR_COOLING -> {
+                val temperatureData = TemperatureData.parse(response)
+                if (temperatureData.isCorrect()) {
+                    val curTemperature: Int = temperatureData.getTemperature1()
+                    if (curTemperature <= EToCApplication.getInstance()
+                            .borderCoolingTemperature
+                    ) {
+                        stopPullingForTemperature()
+                        powerCommandsFactory.moveStateToNext()
+                        mHandler.postDelayed({
+                            if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                                powerCommandsFactory.sendRequest(this, mHandler, this)
+                            }
+                        }, powerCommandsFactory.currentCommand().delay)
+                    }
+                }
+            }
+            PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
+                powerCommandsFactory.moveStateToNext()
+                if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+                    initPowerAccordToItState()
+                    return
+                }
+                val currentCommand = powerCommandsFactory.currentCommand()
+                if (currentCommand.hasSelectableResponses()) {
+                    if (currentCommand.isResponseCorrect(response)) {
+                        mHandler.postDelayed({
+                            if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                                powerCommandsFactory.sendRequest(this, mHandler, this)
+                            }
+                        }, powerCommandsFactory.currentCommand().delay)
+                    } else {
+                        val responseBuilder = java.lang.StringBuilder()
+                        for (possibleResponse in currentCommand.getPossibleResponses()) {
+                            responseBuilder.append("\"$possibleResponse\" or ")
+                        }
+                        responseBuilder.delete(
+                            responseBuilder.length - 4, responseBuilder
+                                .length
+                        )
+                        showCustomisedToast("Wrong response: Got - \"response\".Expected - $responseBuilder")
+                        return
+                    }
+                }
+            }
+        }
     }
 
     fun setCurrentSeries(index: Int) {
@@ -2452,17 +2585,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         //not needed
         private const val IS_SERVICE_RUNNING = "is_service_reunning"
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
-        fun sendBroadCastWithData(context: Context, data: String?) {
-            val intent = Intent(EToCMainHandler.USB_DATA_READY)
-            intent.putExtra(EToCMainHandler.DATA_EXTRA, data)
-            context.sendBroadcast(intent)
-        }
-
-        fun sendBroadCastWithData(context: Context, data: Int) {
-            val intent = Intent(EToCMainHandler.USB_DATA_READY)
-            intent.putExtra(EToCMainHandler.DATA_EXTRA, data.toString() + "")
-            intent.putExtra(EToCMainHandler.IS_TOAST, true)
-            context.sendBroadcast(intent)
-        }
+        const val MESSAGE_INTERRUPT_ACTIONS = 123
     }
 }

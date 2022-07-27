@@ -3,7 +3,6 @@ package com.ismet.usbterminal.mainscreen.tasks;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
-import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
 
@@ -18,15 +17,11 @@ import kotlin.Deprecated;
 @Deprecated(message = "Use MainViewModel instead")
 public class EToCOpenChartTask extends AsyncTask<String, String, String> {
 
-	private final WeakReference<MainActivity> weakActivity;
+	private final WeakReference<EToCMainActivity> weakActivity;
 
 	public EToCOpenChartTask(EToCMainActivity activity) {
-		this.weakActivity = new WeakReference<>(null);
+		this.weakActivity = new WeakReference<>(activity);
 	}
-
-    public EToCOpenChartTask(MainActivity activity) {
-        this.weakActivity = new WeakReference<>(activity);
-    }
 
 	@Override
 	protected String doInBackground(String... params) {
