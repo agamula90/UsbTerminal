@@ -21,11 +21,13 @@ import android.widget.*
 import androidx.activity.viewModels
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.EToCMainHandler
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
+import com.ismet.usbterminal.mainscreen.tasks.MainEvent
 import com.ismet.usbterminal.mainscreen.tasks.SendDataToUsbTask
 import com.ismet.usbterminal.services.PullStateManagingService
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
@@ -198,6 +200,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         )
         loadPreferencesFromLocalData()
         observeChartUpdates()
+        observeEvents()
         mHandler = EToCMainHandler(this)
 
         mReadIntent = true
@@ -1305,6 +1308,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
+    private fun observeEvents() {
+        lifecycleScope.launchWhenResumed {
+            for (event in viewModel.events) {
+                when(event) {
+                    is MainEvent.ShowToast -> showCustomisedToast(event.message)
+                }
+            }
+        }
+    }
+
     @Throws(IOException::class)
     private fun savePreferencesToLocalData() {
         val settingsFolder =
@@ -1661,7 +1674,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 if (extras.getString("path")!!.endsWith(".txt")) {
                     doOpenFile(File(extras.getString("path")!!), false)
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
-                    openChart(extras.getString("path")!!)
+                    val filePath = extras.getString("path")!!
+                    readChart(filePath)
                 } else {
                     showCustomisedToast("Invalid File")
                 }
@@ -2120,29 +2134,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    private fun openChart(filePath: String) {
-        chartSeries = when {
-            filePath.contains("R1") -> {
-                mGraphSeriesDataset.getSeriesAt(0).clear()
-                mGraphSeriesDataset.getSeriesAt(0)
-            }
-            filePath.contains("R2") -> {
-                mGraphSeriesDataset.getSeriesAt(1).clear()
-                mGraphSeriesDataset.getSeriesAt(1)
-            }
-            filePath.contains("R3") -> {
-                mGraphSeriesDataset.getSeriesAt(2).clear()
-                mGraphSeriesDataset.getSeriesAt(2)
-            }
-            else -> {
-                //			Toast.makeText(MainActivity.this,
-                //					"Required Log files not available",
-                //					Toast.LENGTH_SHORT).show();
-                return
-            }
+    private fun readChart(filePath: String) {
+        val chartIndex = viewModel.readChart(filePath)
+        chartSeries = if (chartIndex != CHART_INDEX_UNSELECTED) {
+            mGraphSeriesDataset.getSeriesAt(chartIndex).clear()
+            mGraphSeriesDataset.getSeriesAt(chartIndex)
+        } else {
+            null
         }
-
-        viewModel.readCharts(filePath)
     }
 
     /**
