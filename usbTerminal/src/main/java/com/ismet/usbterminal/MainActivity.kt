@@ -2,7 +2,6 @@ package com.ismet.usbterminal
 
 import android.app.AlertDialog
 import android.content.*
-import android.content.res.Configuration
 import android.graphics.Color
 import android.hardware.usb.UsbManager
 import android.os.*
@@ -10,7 +9,6 @@ import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
-import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.KeyEvent
 import android.view.Menu
@@ -20,6 +18,7 @@ import android.view.View.OnLongClickListener
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.activity.viewModels
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.ismet.usbterminal.data.*
@@ -27,7 +26,6 @@ import com.ismet.usbterminal.mainscreen.EToCMainHandler
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
-import com.ismet.usbterminal.mainscreen.tasks.EToCOpenChartTask
 import com.ismet.usbterminal.mainscreen.tasks.SendDataToUsbTask
 import com.ismet.usbterminal.services.PullStateManagingService
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
@@ -38,6 +36,7 @@ import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
+import dagger.hilt.android.AndroidEntryPoint
 import de.neofonie.mobile.app.android.widget.crouton.Crouton
 import de.neofonie.mobile.app.android.widget.crouton.Style
 import fr.xgouchet.androidlib.data.FileUtils
@@ -50,7 +49,6 @@ import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.ui.view.AdvancedEditText
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
 import org.achartengine.GraphicalView
-import org.achartengine.chart.AbstractChart
 import org.achartengine.model.XYMultipleSeriesDataset
 import org.achartengine.model.XYSeries
 import org.achartengine.renderer.XYMultipleSeriesRenderer
@@ -63,6 +61,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+@AndroidEntryPoint
 class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     /*
 	 * Notifications from UsbService will be received here.
@@ -161,9 +160,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         private set
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
+    private val viewModel: MainViewModel by viewModels()
 
     private lateinit var mExecutor: ExecutorService
-    private var mEToCOpenChartTask: EToCOpenChartTask? = null
     private var mSendDataToUsbTask: SendDataToUsbTask? = null
     lateinit var txtOutput: TextView
     lateinit var scrollView: ScrollView
@@ -198,6 +197,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             )
         )
         loadPreferencesFromLocalData()
+        observeChartUpdates()
         mHandler = EToCMainHandler(this)
 
         mReadIntent = true
@@ -862,15 +862,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 if (countMeasure == 0) {
                                     val graphData = GraphPopulatorUtils.createXYChart(
                                         duration,
-                                        delay, this@MainActivity
+                                        delay
                                     )
                                     renderer = graphData.renderer
                                     mGraphSeriesDataset = graphData.seriesDataset
                                     currentSeries = graphData.xySeries
-                                    val intent = graphData.intent
                                     chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
                                         this@MainActivity,
-                                        intent.extras!!["chart"] as AbstractChart?
+                                        graphData.createChart()
                                     )
                                 }
                                 countMeasure++
@@ -1089,18 +1088,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
             editor.apply()
         }
-        val graphData = GraphPopulatorUtils.createXYChart(
-            duration_v, delay_v,
-            this@MainActivity
-        )
+        val graphData = GraphPopulatorUtils.createXYChart(duration_v, delay_v)
         renderer = graphData.renderer
         mGraphSeriesDataset = graphData.seriesDataset
         currentSeries = graphData.xySeries
-        val intent = graphData.intent
-        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
-            this@MainActivity,
-            intent.extras!!["chart"] as AbstractChart?
-        )
+        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, graphData.createChart())
         val actionBar = supportActionBar
         actionBar!!.setDisplayUseLogoEnabled(true)
         actionBar.setLogo(R.drawable.ic_launcher)
@@ -1298,6 +1290,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     editor.apply()
                 }
             }
+        }
+    }
+
+    private fun observeChartUpdates() {
+        viewModel.maxY.observe(this) {
+            //TODO remove max, move all maxY changes to vm
+            renderer.yAxisMax = maxOf(it.toDouble(), renderer.yAxisMax)
+            chartView.repaint()
+        }
+        viewModel.chartPoints.observe(this) {
+            chartSeries?.set(it)
+            chartView.repaint()
         }
     }
 
@@ -1598,10 +1602,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         unregisterReceiver(mUsbReceiver)
         mExecutor.shutdown()
         while (!mExecutor.isTerminated) { }
-        if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
-            mEToCOpenChartTask!!.cancel(true)
-            mEToCOpenChartTask = null
-        }
         if (mSendDataToUsbTask != null && mSendDataToUsbTask!!.status == AsyncTask.Status.RUNNING) {
             mSendDataToUsbTask!!.cancel(true)
             mSendDataToUsbTask = null
@@ -1652,10 +1652,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         if (resultCode != RESULT_OK || data == null) {
             return
         }
-        val extras: Bundle? = data.extras
-        if (extras == null) {
-            return
-        }
+        val extras: Bundle = data.extras ?: return
         when (requestCode) {
             Constants.REQUEST_SAVE_AS -> {
                 doSaveFile(extras.getString("path"))
@@ -1664,7 +1661,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 if (extras.getString("path")!!.endsWith(".txt")) {
                     doOpenFile(File(extras.getString("path")!!), false)
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
-                    openchart1(extras.getString("path"))
+                    openChart(extras.getString("path")!!)
                 } else {
                     showCustomisedToast("Invalid File")
                 }
@@ -2123,32 +2120,29 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    private fun openchart1(filep: String?) {
-        var isLogsExist = false
-        if (filep!!.contains("R1")) {
-            isLogsExist = true
-            mGraphSeriesDataset.getSeriesAt(0).clear()
-            chartSeries = mGraphSeriesDataset.getSeriesAt(0)
-        } else if (filep.contains("R2")) {
-            isLogsExist = true
-            mGraphSeriesDataset.getSeriesAt(1).clear()
-            chartSeries = mGraphSeriesDataset.getSeriesAt(1)
-        } else if (filep.contains("R3")) {
-            isLogsExist = true
-            mGraphSeriesDataset.getSeriesAt(2).clear()
-            chartSeries = mGraphSeriesDataset.getSeriesAt(2)
+    private fun openChart(filePath: String) {
+        chartSeries = when {
+            filePath.contains("R1") -> {
+                mGraphSeriesDataset.getSeriesAt(0).clear()
+                mGraphSeriesDataset.getSeriesAt(0)
+            }
+            filePath.contains("R2") -> {
+                mGraphSeriesDataset.getSeriesAt(1).clear()
+                mGraphSeriesDataset.getSeriesAt(1)
+            }
+            filePath.contains("R3") -> {
+                mGraphSeriesDataset.getSeriesAt(2).clear()
+                mGraphSeriesDataset.getSeriesAt(2)
+            }
+            else -> {
+                //			Toast.makeText(MainActivity.this,
+                //					"Required Log files not available",
+                //					Toast.LENGTH_SHORT).show();
+                return
+            }
         }
-        if (!isLogsExist) {
-            //			Toast.makeText(MainActivity.this,
-            //					"Required Log files not available",
-            //					Toast.LENGTH_SHORT).show();
-            return
-        }
-        if (mEToCOpenChartTask != null && mEToCOpenChartTask!!.status == AsyncTask.Status.RUNNING) {
-            mEToCOpenChartTask!!.cancel(true)
-        }
-        mEToCOpenChartTask = EToCOpenChartTask(this)
-        mEToCOpenChartTask!!.execute(filep)
+
+        viewModel.readCharts(filePath)
     }
 
     /**

@@ -125,12 +125,6 @@ public class GraphPopulatorUtils {
 
 		XYMultipleSeriesDataset seriesDataset = buildDataSet(titles, x, values);
 
-		String[] types = new String[]{CubicLineChart.TYPE, CubicLineChart.TYPE, CubicLineChart
-				.TYPE};// };
-
-		Intent intent = ChartFactory.getCombinedXYChartIntent(activity, seriesDataset, renderer,
-				types, "Weather parameters");
-
 		renderer.setScale(1);
 
 		XYSeries currentSeries = seriesDataset.getSeriesAt(0);
@@ -143,7 +137,7 @@ public class GraphPopulatorUtils {
 		//TODO can get chart from intent
 		//AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
 
-		return new GraphData(renderer, seriesDataset, intent, currentSeries);
+		return new GraphData(renderer, seriesDataset, currentSeries);
 	}
 
     @Deprecated(message = "Use MainActivity instead")
@@ -176,8 +170,8 @@ public class GraphPopulatorUtils {
 		return mChartView;
 	}
 
-    public static GraphData createXYChart(int mins, int secs, MainActivity activity) {
-        String[] titles = new String[]{"ppm", "ppm", "ppm"};// ,"","" };//
+    public static GraphData createXYChart(int mins, int secs) {
+        String[] titles = new String[]{"ppm", "ppm", "ppm"};
 
         double[] xvArray = new double[1];
         double[] yvArray = new double[1];
@@ -211,8 +205,6 @@ public class GraphPopulatorUtils {
             m = m + mins;
         }
 
-        // String[] xlables={"0","5","10","15"};
-
         int j = 0;
         for (int i = 0; i < xlables.length; i++) {
             if (xlables[i] == 0) {
@@ -233,34 +225,20 @@ public class GraphPopulatorUtils {
 
         XYMultipleSeriesDataset seriesDataset = buildDataSet(titles, x, values);
 
-        String[] types = new String[]{CubicLineChart.TYPE, CubicLineChart.TYPE, CubicLineChart
-                .TYPE};// };
-
-        Intent intent = ChartFactory.getCombinedXYChartIntent(activity, seriesDataset, renderer,
-                types, "Weather parameters");
-
         renderer.setScale(1);
 
         XYSeries currentSeries = seriesDataset.getSeriesAt(0);
 
-        //TODO set fields
-        // renderer - renderer
-        // seriesDataset - currentdataset
-        // xySeries - currentSeries
-
-        //TODO can get chart from intent
-        //AbstractChart mChart = (AbstractChart) intent.getExtras().get("chart");
-
-        return new GraphData(renderer, seriesDataset, intent, currentSeries);
+        return new GraphData(renderer, seriesDataset, currentSeries);
     }
 
     public static GraphicalView attachXYChartIntoLayout(MainActivity activity,
                                                         AbstractChart mChart) {
-        final LinearLayout chartLayout = (LinearLayout) activity.findViewById(R.id.chart);
-        final LinearLayout allChartsLayout = (LinearLayout) activity.findViewById(R.id
+        final LinearLayout chartLayout = activity.findViewById(R.id.chart);
+        final LinearLayout allChartsLayout = activity.findViewById(R.id
                 .all_charts_layout);
 
-        LinearLayout topContainer = (LinearLayout) activity.findViewById(R.id.top_container);
+        LinearLayout topContainer = activity.findViewById(R.id.top_container);
 
         int minHeight = topContainer.getMinimumHeight();
 
@@ -277,9 +255,6 @@ public class GraphPopulatorUtils {
         chartLayout.addView(mChartView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams
                 .MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         mChartView.repaint();
-
-        // TODO set fields
-        // mChartView - mChartView
         return mChartView;
     }
 

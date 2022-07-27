@@ -1416,11 +1416,10 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 								mRenderer = graphData.renderer;
 								mGraphSeriesDataset = graphData.seriesDataset;
 								mCurrentSeries = graphData.xySeries;
-								Intent intent = graphData.intent;
 
 								mChartView = GraphPopulatorUtils.attachXYChartIntoLayout
 										(EToCMainActivity
-										.this, (AbstractChart) intent.getExtras().get("chart"));
+										.this, (AbstractChart) null);
 							}
 
 							countMeasures++;
@@ -1736,10 +1735,9 @@ public class EToCMainActivity extends BaseAttachableActivity implements TextWatc
 		mRenderer = graphData.renderer;
 		mGraphSeriesDataset = graphData.seriesDataset;
 		mCurrentSeries = graphData.xySeries;
-		Intent intent = graphData.intent;
 
 		mChartView = GraphPopulatorUtils.attachXYChartIntoLayout(EToCMainActivity
-				.this, (AbstractChart) intent.getExtras().get("chart"));
+				.this, (AbstractChart) null);
 
 		ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayUseLogoEnabled(true);

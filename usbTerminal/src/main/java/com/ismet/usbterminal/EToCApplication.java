@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import dagger.hilt.android.HiltAndroidApp;
+
+@HiltAndroidApp
 public class EToCApplication extends InterpolationCalculatorApp {
 
 	private static EToCApplication instance;
