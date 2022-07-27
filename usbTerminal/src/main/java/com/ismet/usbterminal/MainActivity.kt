@@ -9,6 +9,7 @@ import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
+import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.KeyEvent
 import android.view.Menu
@@ -962,12 +963,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 editor.apply()
 
                                 if (contentForUpload != null && !contentForUpload.isEmpty()) {
-                                    startService(
-                                        PullStateManagingService.intentForService(
-                                            this@MainActivity,
-                                            false
-                                        )
-                                    )
+                                    viewModel.stopSendingTemperatureOrCo2Requests()
                                     val multiLines: String = contentForUpload
                                     val commands: Array<String>
                                     val delimiter = "\n"
@@ -1075,6 +1071,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         val preferences = prefs
         if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
             EToCApplication.getInstance().isPreLooping = true
+            //TODO move to mainviewmodel
             val i = PullStateManagingService.intentForService(this, true)
             i.action = PullStateManagingService.WAIT_FOR_COOLING_ACTION
             startService(i)
@@ -1119,6 +1116,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun showToastMessage(message: String?) {
         // showCustomisedToast(message.toString())
+    }
+
+    fun startSendingTemperatureOrCo2Requests() {
+        viewModel.startSendingTemperatureOrCo2Requests()
+    }
+
+    fun stopSendingTemperatureOrCo2Requests() {
+        viewModel.stopSendingTemperatureOrCo2Requests()
     }
 
     fun initPowerAccordToItState() {
@@ -1313,6 +1318,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             for (event in viewModel.events) {
                 when(event) {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
+                    is MainEvent.WriteToUsb -> sendCommand(event.data)
                 }
             }
         }
@@ -2421,23 +2427,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, mLastTimePressed)
             if (timeElapsed) {
                 mLastTimePressed = nowTime
-                startService(
-                    PullStateManagingService.intentForService(
-                        this@MainActivity,
-                        false
-                    )
-                )
+                viewModel.stopSendingTemperatureOrCo2Requests()
             }
             mAutoPullResolverCallback.onPostPullStopped()
             if (timeElapsed) {
                 mHandler.postDelayed({
                     if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
-                        startService(
-                            PullStateManagingService.intentForService(
-                                this@MainActivity,
-                                true
-                            )
-                        )
+                        viewModel.startSendingTemperatureOrCo2Requests()
                     }
                     mAutoPullResolverCallback.onPostPullStarted()
                 }, 1000)
@@ -2446,6 +2442,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     }
 
     companion object {
+        //not needed
         private const val IS_SERVICE_RUNNING = "is_service_reunning"
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         fun sendBroadCastWithData(context: Context, data: String?) {

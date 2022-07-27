@@ -19,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
 import dagger.hilt.android.HiltAndroidApp;
+import kotlin.Deprecated;
 
 @HiltAndroidApp
 public class EToCApplication extends InterpolationCalculatorApp {
@@ -120,6 +121,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		this.mCurrentTemperatureRequest = mCurrentTemperatureRequest;
 	}
 
+    @Deprecated(message = "not needed with coroutines")
 	public void setStopPulling(boolean stopPulling) {
 		this.mStopPulling = stopPulling;
 	}
@@ -132,6 +134,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		mTimeOfRecreating = System.currentTimeMillis();
 	}
 
+    @Deprecated(message = "not needed with coroutines")
 	public long getTimeOfRecreating() {
 		return mTimeOfRecreating;
 	}
@@ -149,6 +152,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		return isRefreshed;
 	}
 
+    @Deprecated(message = "not needed with coroutines")
 	public long getRenewTime() {
 		return mRenewTime;
 	}

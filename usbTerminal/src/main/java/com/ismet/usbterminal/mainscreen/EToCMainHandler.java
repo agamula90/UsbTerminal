@@ -259,15 +259,13 @@ public class EToCMainHandler extends Handler {
 					activity.getChartView().repaint();
 					break;
 				case MESSAGE_RESUME_AUTO_PULLING:
-					activity.startService(PullStateManagingService.intentForService(activity,
-							true));
+					activity.startSendingTemperatureOrCo2Requests();
 					break;
 				case MESSAGE_INTERRUPT_ACTIONS:
 					handleResponse(weakActivity, "");
 					break;
 				case MESSAGE_PAUSE_AUTO_PULLING:
-					activity.startService(PullStateManagingService.intentForService(activity,
-							false));
+					activity.stopSendingTemperatureOrCo2Requests();
 					break;
 				case MESSAGE_STOP_PULLING_FOR_TEMPERATURE:
 					Intent i = PullStateManagingService.intentForService(activity, false);

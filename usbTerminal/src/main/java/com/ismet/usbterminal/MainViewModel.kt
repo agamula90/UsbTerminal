@@ -1,27 +1,31 @@
 package com.ismet.usbterminal
 
+import android.app.Application
 import android.graphics.PointF
 import androidx.lifecycle.*
 import com.ismet.usbterminal.mainscreen.tasks.MainEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
 const val CHART_INDEX_UNSELECTED = -1
+private const val SEND_TEMPERATURE_OR_CO2_DELAY = 1000L
+private const val CO2_REQUEST = "(FE-44-00-08-02-9F-25)"
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    application: Application,
     handle: SavedStateHandle
 ): ViewModel() {
     val events = Channel<MainEvent>(Channel.UNLIMITED)
     val chartPoints = handle.getLiveData<List<PointF>>("chartPoints", emptyList())
     val maxY = handle.getLiveData("maxY",0)
     private var readChartJob: Job? = null
+    private var sendTemperatureOrCo2Job: Job? = null
+    private val app = application as EToCApplication
+    private var shouldSendTemperatureRequest = true
 
     /**
      * return chart index, based on filePath input
@@ -66,5 +70,28 @@ class MainViewModel @Inject constructor(
             events.send(MainEvent.ShowToast("File reading done"))
         }
         return newChartIndex
+    }
+
+    fun startSendingTemperatureOrCo2Requests() {
+        sendTemperatureOrCo2Job?.cancel()
+        //this should be run even when activity paused
+        sendTemperatureOrCo2Job = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                shouldSendTemperatureRequest = !shouldSendTemperatureRequest
+                if (shouldSendTemperatureRequest) {
+                    events.send(MainEvent.WriteToUsb("/5J5R"))
+                    delay(350)
+                    events.send(MainEvent.WriteToUsb(app.currentTemperatureRequest))
+                } else {
+                    events.send(MainEvent.WriteToUsb(CO2_REQUEST))
+                }
+                delay(SEND_TEMPERATURE_OR_CO2_DELAY)
+            }
+        }
+    }
+
+    fun stopSendingTemperatureOrCo2Requests() {
+        sendTemperatureOrCo2Job?.cancel()
+        sendTemperatureOrCo2Job = null
     }
 }
