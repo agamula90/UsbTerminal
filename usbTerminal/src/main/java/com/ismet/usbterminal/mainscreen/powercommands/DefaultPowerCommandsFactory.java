@@ -1,8 +1,9 @@
 package com.ismet.usbterminal.mainscreen.powercommands;
 
+import static com.ismet.usbterminal.MainViewModelKt.CO2_REQUEST;
+
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
-import com.ismet.usbterminal.services.PullStateManagingService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +28,7 @@ public class DefaultPowerCommandsFactory extends PowerCommandsFactory {
         mOnCommands.put(PowerState.ON_STAGE3A, new PowerCommand("/5H0000R", 500));
         mOnCommands.put(PowerState.ON_STAGE3B, new PowerCommand("/5H0000R", 500));
 
-		mOnCommands.put(PowerState.ON_STAGE3, new PowerCommand(PullStateManagingService
-				 .CO2_REQUEST, 2000));
+		mOnCommands.put(PowerState.ON_STAGE3, new PowerCommand(CO2_REQUEST, 2000));
 		mOnCommands.put(PowerState.ON_STAGE4, new PowerCommand("/1ZR", 0));
 
 		mOffCommands.put(PowerState.OFF_STAGE1, new PowerCommand("/5H0000R", 1000));

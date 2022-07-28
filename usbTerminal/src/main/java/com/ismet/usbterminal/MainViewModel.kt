@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 const val CHART_INDEX_UNSELECTED = -1
 private const val SEND_TEMPERATURE_OR_CO2_DELAY = 1000L
-private const val CO2_REQUEST = "(FE-44-00-08-02-9F-25)"
+const val CO2_REQUEST = "(FE-44-00-08-02-9F-25)"
 private const val DATE_FORMAT = "yyyyMMdd"
 private const val TIME_FORMAT = "HHmmss"
 private const val DELIMITER = "_"
@@ -83,9 +83,9 @@ class MainViewModel @Inject constructor(
                         }
                     }
                     newChartPoints.add(PointF(startX.toFloat(), co2.toFloat()))
+                    delay(50)
                     maxY.postValue(newMaxY)
                     chartPoints.postValue(newChartPoints)
-                    delay(50)
                 }
             }
             events.send(MainEvent.ShowToast("File reading done"))

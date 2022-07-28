@@ -9,6 +9,7 @@ import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
+import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.KeyEvent
 import android.view.Menu
@@ -86,7 +87,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     }
                 }
                 else -> {
-                    //TODO handle event
+                    Log.e(TAG, "unhandled broadcast: ${intent.action}")
                 }
             }
         }
@@ -1583,9 +1584,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     override fun onPause() {
         super.onPause()
         if (Settings.FORCE_AUTO_SAVE && mDirty && !mReadOnly) {
-            if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) doAutoSaveFile() else if (Settings.AUTO_SAVE_OVERWRITE) doSaveFile(
-                mCurrentFilePath
-            )
+            if (mCurrentFilePath == null || mCurrentFilePath!!.isEmpty()) {
+                doAutoSaveFile()
+            } else if (Settings.AUTO_SAVE_OVERWRITE) {
+                doSaveFile(mCurrentFilePath)
+            }
         }
     }
 
@@ -2168,21 +2171,20 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         registerReceiver(mUsbReceiver, filter)
     }
 
-    fun sendMessageWithUsbDataReceived(bytes: ByteArray) {
-        val usbReadBytes = bytes
+    private fun sendMessageWithUsbDataReceived(bytes: ByteArray) {
         var data: String
         val responseForChecking: String
-        if (usbReadBytes.size == 7) {
-            if (String.format("%02X", usbReadBytes[0]) == "FE" && String.format("%02X", usbReadBytes[1]) == "44") {
+        if (bytes.size == 7) {
+            if (String.format("%02X", bytes[0]) == "FE" && String.format("%02X", bytes[1]) == "44") {
                 var strHex = ""
-                for (b in usbReadBytes) {
+                for (b in bytes) {
                     strHex += String.format("%02X-", b)
                 }
                 val end = strHex.length - 1
                 data = strHex.substring(0, end)
                 val strH = String.format(
-                    "%02X%02X", usbReadBytes[3],
-                    usbReadBytes[4]
+                    "%02X%02X", bytes[3],
+                    bytes[4]
                 )
                 val co2 = strH.toInt(16)
                 val yMax: Int = renderer.yAxisMax.toInt()
@@ -2197,8 +2199,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 // auto
                 val delay_v = prefs.getInt(PrefConstants.DELAY, 2)
                 val duration_v = prefs.getInt(PrefConstants.DURATION, 3)
-                val isauto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
-                if (isauto) {
+                val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
+                if (isAuto) {
                     if (readingCount == (duration_v * 60 / delay_v)) {
                         incCountMeasure()
                         chartIdx = 2
@@ -2260,19 +2262,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     )
                 }
                 if (co2 == 10000) {
-                    showCustomisedToast( "Dilute sample")
+                    showCustomisedToast("Dilute sample")
                 }
                 data += "\nCO2: $co2 ppm"
-                refreshTextAccordToSensor(false, co2.toString() + "")
-                responseForChecking = co2.toString() + ""
+                refreshTextAccordToSensor(false, co2.toString())
+                responseForChecking = co2.toString()
             } else {
-                data = String(usbReadBytes)
+                data = String(bytes)
                 data = data.replace("\r", "")
                 data = data.replace("\n", "")
                 responseForChecking = data
             }
         } else {
-            data = String(usbReadBytes)
+            data = String(bytes)
             data = data.replace("\r", "")
             data = data.replace("\n", "")
             refreshTextAccordToSensor(true, data)
@@ -2294,7 +2296,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
     }
 
-    fun handleResponse(response: String) {
+    private fun handleResponse(response: String) {
         when (powerCommandsFactory.currentPowerState()) {
             PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
                 val currentCommand = powerCommandsFactory.currentCommand()
@@ -2326,7 +2328,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
                     initPowerAccordToItState()
                     startSendingTemperatureOrCo2Requests()
-                    return
                 }
             }
             PowerState.OFF_INTERRUPTING -> {
@@ -2358,7 +2359,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
                 val temperatureData = TemperatureData.parse(response)
-                if (temperatureData.isCorrect()) {
+                if (temperatureData.isCorrect) {
                     val curTemperature: Int = temperatureData.getTemperature1()
                     if (curTemperature <= EToCApplication.getInstance()
                             .borderCoolingTemperature
@@ -2427,14 +2428,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         oldCountMeasure = countMeasure
     }
 
-    val mapChartDate: Map<Int, String>
-        get() = mMapChartIndexToDate
-
     fun setUsbConnected(isUsbConnected: Boolean) {
         mIsUsbConnected = isUsbConnected
         invalidateOptionsMenu()
     }
 
+    //MTODO check isPressed values
     private fun changeBackground(button: View?, isPressed: Boolean) {
         if (isPressed) {
             button!!.setBackgroundResource(R.drawable.temperature_button_drawable_pressed)
@@ -2464,6 +2463,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         readingCount++
     }
 
+    //MTODO check if it should be used
     fun refreshCurrentSeries() {
         currentSeries = GraphPopulatorUtils.addNewSet(renderer, mGraphSeriesDataset)
     }
@@ -2494,7 +2494,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         return FORMATTER.format(mReportDate!!)
     }
 
-    //TODO implement this for handle report changes
     override fun sampleId(): String? {
         return null
     }
@@ -2574,5 +2573,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     companion object {
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         const val MESSAGE_INTERRUPT_ACTIONS = 123
+        private const val TAG = "MainActivity"
     }
 }

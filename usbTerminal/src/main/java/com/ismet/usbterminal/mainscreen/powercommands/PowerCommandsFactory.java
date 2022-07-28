@@ -12,8 +12,6 @@ import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminalnew.R;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
-import com.ismet.usbterminal.mainscreen.EToCMainHandler;
-import com.ismet.usbterminal.services.PullStateManagingService;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 
 public abstract class PowerCommandsFactory {
@@ -42,7 +40,7 @@ public abstract class PowerCommandsFactory {
 		switch (mPowerState) {
 			case PowerState.OFF_INTERRUPTING:
 				Message message = mHandler.obtainMessage();
-				message.what = com.ismet.usbterminal.MainActivity.MESSAGE_INTERRUPT_ACTIONS;
+				message.what = MainActivity.MESSAGE_INTERRUPT_ACTIONS;
 				message.sendToTarget();
 				handled = true;
 				break;
