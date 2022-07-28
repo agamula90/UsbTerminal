@@ -12,14 +12,17 @@ import com.ismet.usbterminal.data.PowerCommand
 import com.ismet.usbterminal.data.PowerState
 import com.ismet.usbterminal.data.PrefConstants
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
-import com.ismet.usbterminal.mainscreen.tasks.MainEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.xgouchet.texteditor.common.TextFileUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.io.BufferedWriter
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 const val CHART_INDEX_UNSELECTED = -1
@@ -35,6 +38,7 @@ class MainViewModel @Inject constructor(
     application: Application,
     handle: SavedStateHandle
 ): ViewModel() {
+    private val cacheFilesDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val app = application as EToCApplication
     private val prefs = PreferenceManager.getDefaultSharedPreferences(app)
 
@@ -47,6 +51,9 @@ class MainViewModel @Inject constructor(
     private var sendTemperatureOrCo2Job: Job? = null
     private var sendWaitForCoolingJob: Job? = null
     private var readCommandsJob: Job? = null
+    var chartDate: String = ""
+    var chartIdx = 0
+    var subDirDate: String = ""
 
     /**
      * return chart index, based on filePath input
@@ -220,7 +227,7 @@ class MainViewModel @Inject constructor(
                             // ${DELIMITER} + ${USER_COMMENT}
                             val date = tokenizer.nextToken()
                             val time = tokenizer.nextToken()
-                            events.send(MainEvent.ChangeSubDirDate(date + DELIMITER + time))
+                            subDirDate = date + DELIMITER + time
                         }
                     }
                 }
@@ -257,7 +264,6 @@ class MainViewModel @Inject constructor(
         }
         events.send(MainEvent.UpdateTimerRunning(true))
 
-        //int i = 0;
         val len = future / delay
         var count: Long = 0
         if (loopCommands.isNotEmpty()) {
@@ -272,6 +278,73 @@ class MainViewModel @Inject constructor(
                 }
 
                 count++
+            }
+        }
+    }
+
+    fun cacheBytesFromUsb(bytes: ByteArray) = viewModelScope.launch {
+        withContext(cacheFilesDispatcher) {
+            val strH = String.format(
+                "%02X%02X", bytes[3],
+                bytes[4]
+            )
+            val co2 = strH.toInt(16)
+            val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
+            val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
+            val volume = "_" + if (volumeValue == -1) "" else "" +
+                    volumeValue
+            val ppmPrefix = if (ppm == -1) {
+                "_"
+            } else {
+                "_$ppm"
+            }
+            val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
+            val fileName: String
+            val dirName: String
+            val subDirName: String
+            if (ppmPrefix == "_") {
+                dirName = AppData.MES_FOLDER_NAME
+                fileName = "MES_" + chartDate +
+                        volume + "_R" + chartIdx + "" +
+                        ".csv"
+                subDirName = "MES_" + subDirDate + "_" +
+                        str_uc
+            } else {
+                dirName = AppData.CAL_FOLDER_NAME
+                fileName = ("CAL_" + chartDate +
+                        volume + ppmPrefix + "_R" + chartIdx
+                        + ".csv")
+                subDirName = "CAL_" + subDirDate + "_" +
+                        str_uc
+            }
+            try {
+                var dir = File(Environment.getExternalStorageDirectory(), dirName)
+                if (!dir.exists()) {
+                    dir.mkdirs()
+                }
+                dir = File(dir, subDirName)
+                if (!dir.exists()) {
+                    dir.mkdir()
+                }
+                val formatter = SimpleDateFormat("mm:ss.S", Locale.ENGLISH)
+                val file = File(dir, fileName)
+                if (!file.exists()) {
+                    file.createNewFile()
+                }
+                val preFormattedTime = formatter.format(Date())
+                val arr = preFormattedTime.split("\\.").toTypedArray()
+                var formattedTime = ""
+                if (arr.size == 1) {
+                    formattedTime = arr[0] + ".0"
+                } else if (arr.size == 2) {
+                    formattedTime = arr[0] + "." + arr[1].substring(0, 1)
+                }
+                val fos = FileOutputStream(file, true)
+                val writer = BufferedWriter(OutputStreamWriter(fos))
+                writer.write("$formattedTime,$co2\n")
+                writer.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

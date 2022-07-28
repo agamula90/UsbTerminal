@@ -27,10 +27,8 @@ import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
-import com.ismet.usbterminal.mainscreen.tasks.MainEvent
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
-import com.ismet.usbterminal.utils.FileWriteRunnable
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
@@ -59,8 +57,6 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @AndroidEntryPoint
 class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
@@ -140,9 +136,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     var readingCount = 0
         private set
 
-    var chartIdx = 0
-    var chartDate = ""
-    var subDirDate: String? = null
     private val mMapChartIndexToDate: MutableMap<Int, String> = HashMap()
     lateinit var prefs: SharedPreferences
     lateinit var currentSeries: XYSeries
@@ -155,7 +148,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
 
-    private lateinit var mExecutor: ExecutorService
     lateinit var txtOutput: TextView
     lateinit var scrollView: ScrollView
     private lateinit var mButtonOn1: Button
@@ -180,7 +172,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mExecutor = Executors.newSingleThreadExecutor()
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         Settings.updateFromPreferences(
             getSharedPreferences(
@@ -232,10 +223,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
         mTemperature = findViewById<View>(R.id.temperature) as TextView
         mTemperatureBackground = findViewById(R.id.temperature_background)
-        changeBackground(mTemperatureBackground, false)
+        changeBackground(mTemperatureBackground)
         mCo2 = findViewById<View>(R.id.co2) as TextView
         mCo2Background = findViewById(R.id.co2_background)
-        changeBackground(mCo2Background, false)
+        changeBackground(mCo2Background)
         mButtonOn1 = findViewById<View>(R.id.buttonOn1) as Button
         mButtonOn1.text = prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
         mButtonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
@@ -880,15 +871,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                                 val future = (duration * 60 * 1000).toLong()
                                 val delay_timer = (delay * 1000).toLong()
                                 if (mGraphSeriesDataset.getSeriesAt(0).itemCount == 0) {
-                                    chartIdx = 1
+                                    viewModel.chartIdx = 1
                                     readingCount = 0
                                     currentSeries = mGraphSeriesDataset.getSeriesAt(0)
                                 } else if (mGraphSeriesDataset.getSeriesAt(1).itemCount == 0) {
-                                    chartIdx = 2
+                                    viewModel.chartIdx = 2
                                     readingCount = duration * 60 / delay
                                     currentSeries = mGraphSeriesDataset.getSeriesAt(1)
                                 } else if (mGraphSeriesDataset.getSeriesAt(2).itemCount == 0) {
-                                    chartIdx = 3
+                                    viewModel.chartIdx = 3
                                     readingCount = duration * 60
                                     currentSeries = mGraphSeriesDataset.getSeriesAt(2)
                                 }
@@ -1234,7 +1225,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 when(event) {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
                     is MainEvent.WriteToUsb -> sendCommand(event.data)
-                    is MainEvent.ChangeSubDirDate -> subDirDate = event.subDirDate
                     is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
                     is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
                     is MainEvent.IncReadingCount -> incReadingCount()
@@ -1559,8 +1549,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(mUsbReceiver)
-        mExecutor.shutdown()
-        while (!mExecutor.isTerminated) { }
         usbDevice?.close()
         usbDevice = null
         usbDeviceConnection.close()
@@ -2203,63 +2191,27 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 if (isAuto) {
                     if (readingCount == (duration_v * 60 / delay_v)) {
                         incCountMeasure()
-                        chartIdx = 2
+                        viewModel.chartIdx = 2
                         setCurrentSeries(1)
                     } else if (readingCount == (duration_v * 60)) {
                         incCountMeasure()
-                        chartIdx = 3
+                        viewModel.chartIdx = 3
                         setCurrentSeries(2)
                     }
                 }
                 val currentDate = Date()
                 if (countMeasure != oldCountMeasure) {
-                    chartDate = FORMATTER.format(currentDate)
+                    viewModel.chartDate = FORMATTER.format(currentDate)
                     refreshOldCountMeasure()
-                    mMapChartIndexToDate.put(
-                        chartIdx,
-                        chartDate
-                    )
+                    mMapChartIndexToDate[viewModel.chartIdx] = viewModel.chartDate
                 }
-                if (subDirDate == null) {
-                    subDirDate = FORMATTER.format(currentDate)
+                if (viewModel.subDirDate.isEmpty()) {
+                    viewModel.subDirDate = FORMATTER.format(currentDate)
                 }
                 if (isTimerRunning) {
                     currentSeries.add(readingCount.toDouble(), co2.toDouble())
                     repaintChartView()
-                    val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
-                    val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
-                    val volume = "_" + if (volumeValue == -1) "" else "" +
-                            volumeValue
-                    val ppmPrefix = if (ppm == -1) {
-                        "_"
-                    } else {
-                        "_$ppm"
-                    }
-                    val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
-                    val fileName: String
-                    val dirName: String
-                    val subDirName: String
-                    if (ppmPrefix == "_") {
-                        dirName = AppData.MES_FOLDER_NAME
-                        fileName = "MES_" + chartDate +
-                                volume + "_R" + chartIdx + "" +
-                                ".csv"
-                        subDirName = "MES_" + subDirDate + "_" +
-                                str_uc
-                    } else {
-                        dirName = AppData.CAL_FOLDER_NAME
-                        fileName = ("CAL_" + chartDate +
-                                volume + ppmPrefix + "_R" + chartIdx
-                                + ".csv")
-                        subDirName = "CAL_" + subDirDate + "_" +
-                                str_uc
-                    }
-                    execute(
-                        FileWriteRunnable(
-                            "" + co2, fileName,
-                            dirName, subDirName
-                        )
-                    )
+                    viewModel.cacheBytesFromUsb(bytes)
                 }
                 if (co2 == 10000) {
                     showCustomisedToast("Dilute sample")
@@ -2409,13 +2361,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         currentSeries = mGraphSeriesDataset.getSeriesAt(index)
     }
 
-    // TODO remove executor, send data to usb task to be job
-    // cancel previous job when measure clicked again
-    // write to file with append option only when "send data to usb" task is running
-    fun execute(runnable: Runnable?) {
-        mExecutor.execute(runnable)
-    }
-
     fun incCountMeasure() {
         countMeasure++
     }
@@ -2433,13 +2378,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         invalidateOptionsMenu()
     }
 
-    //MTODO check isPressed values
-    private fun changeBackground(button: View?, isPressed: Boolean) {
-        if (isPressed) {
-            button!!.setBackgroundResource(R.drawable.temperature_button_drawable_pressed)
-        } else {
-            button!!.setBackgroundResource(R.drawable.temperature_button_drawable_unpressed)
-        }
+    private fun changeBackground(button: View) {
+        button.setBackgroundResource(R.drawable.temperature_button_drawable_unpressed)
     }
 
     fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
@@ -2463,18 +2403,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         readingCount++
     }
 
-    //MTODO check if it should be used
-    fun refreshCurrentSeries() {
-        currentSeries = GraphPopulatorUtils.addNewSet(renderer, mGraphSeriesDataset)
-    }
-
     fun invokeAutoCalculations() {
         supportFragmentManager.findFragmentById(R.id.bottom_fragment)!!.view!!.findViewById<View>(R.id.calculate_ppm_auto)
             .performClick()
     }
 
     fun clearData() {
-        subDirDate = null
+        viewModel.subDirDate = ""
         for (series in mGraphSeriesDataset.series) {
             series.clear()
         }
