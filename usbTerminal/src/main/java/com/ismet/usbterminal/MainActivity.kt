@@ -23,12 +23,10 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.mainscreen.EToCMainHandler
 import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.tasks.MainEvent
-import com.ismet.usbterminal.services.PullStateManagingService
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
 import com.ismet.usbterminal.utils.FileWriteRunnable
@@ -632,10 +630,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 }
                 val alert = AlertDialog.Builder(this@MainActivity)
                 alert.setTitle("Select items")
-                alert.setMultiChoiceItems(items, checkedItems) { dialog, which, isChecked ->
+                alert.setMultiChoiceItems(items, checkedItems) { _, which, isChecked ->
                     mItemsChecked.put(which, isChecked)
                 }
-                alert.setPositiveButton("Select/Clear") { dialog, which ->
+                alert.setPositiveButton("Select/Clear") { dialog, _ ->
                     if (mItemsChecked[1]) {
                         mAdvancedEditText.setText("")
                     }
@@ -684,7 +682,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 }
                 alert.setNegativeButton(
                     "Close"
-                ) { dialog, which -> dialog.cancel() }
+                ) { dialog, _ -> dialog.cancel() }
                 alert.create().show()
             }
         })
@@ -779,7 +777,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         }
                         val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
                         chkAutoManual.isChecked = isAuto
-                        chkKnownPpm.setOnCheckedChangeListener { buttonView, isChecked ->
+                        chkKnownPpm.setOnCheckedChangeListener { _, isChecked ->
                             if (isChecked) {
                                 editKnownPpm.isEnabled = true
                                 llkppm.visibility = View.VISIBLE
@@ -942,7 +940,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         }
                     }
                 val cancelListener =
-                    DialogInterface.OnClickListener { dialog, which ->
+                    DialogInterface.OnClickListener { dialog, _ ->
                         val inputManager =
                             getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         inputManager.hideSoftInputFromWindow(
@@ -1566,8 +1564,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         usbDevice = null
         usbDeviceConnection.close()
         mHandler.removeCallbacksAndMessages(null)
-        stopService(Intent(this, PullStateManagingService::class.java))
-        prefs.edit().putBoolean(IS_SERVICE_RUNNING, false).apply()
     }
 
     override fun onRestart() {
@@ -1582,11 +1578,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
         }
         mReadIntent = false
         mAdvancedEditText.updateFromSettings()
-        val isServiceRunning = prefs.getBoolean(IS_SERVICE_RUNNING, false)
-        if (!isServiceRunning) {
-            EToCApplication.getInstance().pullState = PullState.NONE
-            //startService(PullStateManagingService.intentForService(this, true));
-        }
     }
 
     override fun onPause() {
@@ -1596,7 +1587,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 mCurrentFilePath
             )
         }
-        prefs.edit().putBoolean(IS_SERVICE_RUNNING, true).apply()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -2180,7 +2170,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun sendMessageWithUsbDataReceived(bytes: ByteArray) {
         val usbReadBytes = bytes
-        var data = ""
+        var data: String
         val responseForChecking: String
         if (usbReadBytes.size == 7) {
             if (String.format("%02X", usbReadBytes[0]) == "FE" && String.format("%02X", usbReadBytes[1]) == "44") {
@@ -2582,8 +2572,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
     }
 
     companion object {
-        //not needed
-        private const val IS_SERVICE_RUNNING = "is_service_reunning"
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         const val MESSAGE_INTERRUPT_ACTIONS = 123
     }
