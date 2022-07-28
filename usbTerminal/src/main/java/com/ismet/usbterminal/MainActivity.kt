@@ -993,7 +993,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     fun initPowerAccordToItState() {
         val powerText: String?
-        val powerTag: String?
         val drawableResource: Int
         when (powerCommandsFactory.currentPowerState()) {
             PowerState.OFF, PowerState.PRE_LOOPING -> {
@@ -1001,7 +1000,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     PrefConstants.POWER_OFF_NAME,
                     PrefConstants.POWER_OFF_NAME_DEFAULT
                 )
-                powerTag = PrefConstants.POWER_OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
                 drawableResource = R.drawable.power_off_drawable
             }
             PowerState.ON -> {
@@ -1009,22 +1007,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     PrefConstants.POWER_ON_NAME,
                     PrefConstants.POWER_ON_NAME_DEFAULT
                 )
-                powerTag = PrefConstants.POWER_ON_NAME_DEFAULT.lowercase(Locale.getDefault())
                 drawableResource = R.drawable.power_on_drawable
             }
             else -> {
-                run {
-                    powerTag = null
-                    powerText = powerTag
-                }
-                drawableResource = 0
+                isPowerPressed = false
+                binding.power.isEnabled = true
+                return
             }
         }
         isPowerPressed = false
         binding.power.isEnabled = true
-        if (powerTag != null && powerText != null) {
+        if (powerText != null) {
             binding.power.text = powerText
-            binding.power.tag = powerTag
             binding.power.post {
                 binding.power.alpha = 1f
                 binding.power.setBackgroundResource(drawableResource)
