@@ -11,9 +11,6 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
 import android.widget.TextView;
 
-import com.ismet.usbterminal.EToCApplication;
-import com.ismet.usbterminal.data.PullState;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +45,7 @@ public class Utils {
 		}
 	}
 
-	public static boolean isPullStateNone() {
-		return EToCApplication.getInstance().getPullState() == PullState.NONE;
-	}
-
-	public static void deleteFiles(String date, String chartidx) {
+    public static void deleteFiles(String date, String chartidx) {
 		File dir = new File(Environment.getExternalStorageDirectory(), "/AEToC_MES_Files");
 		String[] filenameArry = dir.list();
 		if (filenameArry != null) {

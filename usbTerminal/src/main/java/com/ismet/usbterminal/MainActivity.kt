@@ -24,7 +24,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.mainscreen.powercommands.CommandsDeliverer
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
@@ -59,7 +58,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
-class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
+class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private val usbReceiver: BroadcastReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -187,6 +186,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     powerOff()
                     //TODO uncomment for simulating
                     //simulateClick1();
+                }
+                else -> {
+                    //do nothing
                 }
             }
         }
@@ -982,9 +984,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
 
     fun stopPullingForTemperature() {
         viewModel.stopWaitForCooling()
-        if (powerCommandsFactory.coolingDialog != null) {
-            powerCommandsFactory.coolingDialog.dismiss()
-        }
+        powerCommandsFactory.coolingDialog?.dismiss()
     }
 
     fun waitForCooling() {
@@ -1307,7 +1307,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             isPowerPressed = true
             binding.power.alpha = 0.6f
             powerCommandsFactory.moveStateToNext()
-            powerCommandsFactory.sendRequest(this, handler, this)
+            powerCommandsFactory.sendRequest(this, handler)
         } else {
             throw IllegalStateException()
         }
@@ -1389,14 +1389,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                 binding.buttonOn2.performClick()
                 handler.postDelayed({
                     powerCommandsFactory.moveStateToNext()
-                    powerCommandsFactory.sendRequest(
-                        this@MainActivity, handler,
-                        this@MainActivity
-                    )
+                    powerCommandsFactory.sendRequest(this, handler)
                 }, 1200)
             } else {
                 powerCommandsFactory.moveStateToNext()
-                powerCommandsFactory.sendRequest(this, handler, this)
+                powerCommandsFactory.sendRequest(this, handler)
             }
         } else {
             throw IllegalStateException()
@@ -2212,12 +2209,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
                 val currentCommand = powerCommandsFactory.currentCommand()
                 powerCommandsFactory.moveStateToNext()
-                if (currentCommand.hasSelectableResponses()) {
+                if (currentCommand?.hasSelectableResponses() == true) {
                     if (currentCommand.isResponseCorrect(response)) {
                         if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
                             handler.postDelayed({
                                 if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                                    powerCommandsFactory.sendRequest(this, handler, this)
+                                    powerCommandsFactory.sendRequest(this, handler)
                                 }
                             }, currentCommand.delay)
                         }
@@ -2234,7 +2231,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         return
                     }
                 } else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    powerCommandsFactory.sendRequest(this, handler, this)
+                    powerCommandsFactory.sendRequest(this, handler)
                 }
                 if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
                     initPowerAccordToItState()
@@ -2244,44 +2241,41 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             PowerState.OFF_INTERRUPTING -> {
                 stopSendingTemperatureOrCo2Requests()
                 powerCommandsFactory.moveStateToNext()
-                val delayForPausing = powerCommandsFactory.currentCommand().delay
+                val delayForPausing = powerCommandsFactory.currentCommand()!!.delay
                 handler.postDelayed( {
                     if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                        powerCommandsFactory.sendRequest(this, handler, this)
+                        powerCommandsFactory.sendRequest(this, handler)
                     }
                 }, delayForPausing * 2)
             }
+            //we can get here only from local power factory
             PowerState.OFF_STAGE1 -> {
                 val temperatureData = TemperatureData.parse(response)
                 if (temperatureData.isCorrect) {
                     val curTemperature = temperatureData.temperature1
-                    if (curTemperature <= EToCApplication.getInstance()
-                            .borderCoolingTemperature
-                    ) {
+                    if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
                         powerCommandsFactory.moveStateToNext()
                     }
                     powerCommandsFactory.moveStateToNext()
                     handler.postDelayed({
                         if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                            powerCommandsFactory.sendRequest(this, handler, this)
+                            powerCommandsFactory.sendRequest(this, handler)
                         }
-                    }, powerCommandsFactory.currentCommand().delay)
+                    }, powerCommandsFactory.currentCommand()!!.delay)
                 }
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
                 val temperatureData = TemperatureData.parse(response)
                 if (temperatureData.isCorrect) {
-                    val curTemperature: Int = temperatureData.getTemperature1()
-                    if (curTemperature <= EToCApplication.getInstance()
-                            .borderCoolingTemperature
-                    ) {
+                    val curTemperature: Int = temperatureData.temperature1
+                    if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
                         stopPullingForTemperature()
                         powerCommandsFactory.moveStateToNext()
                         handler.postDelayed({
                             if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                powerCommandsFactory.sendRequest(this, handler, this)
+                                powerCommandsFactory.sendRequest(this, handler)
                             }
-                        }, powerCommandsFactory.currentCommand().delay)
+                        }, powerCommandsFactory.currentCommand()!!.delay)
                     }
                 }
             }
@@ -2292,16 +2286,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                     return
                 }
                 val currentCommand = powerCommandsFactory.currentCommand()
-                if (currentCommand.hasSelectableResponses()) {
+                if (currentCommand?.hasSelectableResponses() == true) {
                     if (currentCommand.isResponseCorrect(response)) {
                         handler.postDelayed({
                             if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                powerCommandsFactory.sendRequest(this, handler, this)
+                                powerCommandsFactory.sendRequest(this, handler)
                             }
-                        }, powerCommandsFactory.currentCommand().delay)
+                        }, currentCommand.delay)
                     } else {
                         val responseBuilder = java.lang.StringBuilder()
-                        for (possibleResponse in currentCommand.getPossibleResponses()) {
+                        for (possibleResponse in currentCommand.possibleResponses) {
                             responseBuilder.append("\"$possibleResponse\" or ")
                         }
                         responseBuilder.delete(
@@ -2312,6 +2306,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
                         return
                     }
                 }
+            }
+            else -> {
+                //do nothing
             }
         }
     }
@@ -2428,7 +2425,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher, CommandsDeliverer {
             .absolutePath
     }
 
-    override fun deliverCommand(command: String) {
+    fun deliverCommand(command: String) {
         sendCommand(command)
     }
 

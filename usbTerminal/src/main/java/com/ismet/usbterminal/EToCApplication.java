@@ -5,45 +5,24 @@ import android.util.SparseArray;
 
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
-import com.ismet.usbterminal.data.PullState;
-import com.ismet.usbterminal.mainscreen.powercommands.DefaultPowerCommandsFactory;
+import com.ismet.usbterminal.mainscreen.powercommands.LocalPowerCommandsFactory;
 import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory;
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
-import com.ismet.usbterminal.utils.Utils;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-
 import dagger.hilt.android.HiltAndroidApp;
-import kotlin.Deprecated;
 
 @HiltAndroidApp
 public class EToCApplication extends InterpolationCalculatorApp {
 
 	private static EToCApplication instance;
 
-	private volatile
-	@PullState
-	int mPullState;
-
-	private volatile boolean mStopPulling;
-
-	private ScheduledExecutorService mPullDataService;
-    private ScheduledFuture pullDataFuture;
-	private ScheduledExecutorService mWaitPullService;
-	private ScheduledFuture mWaitPullFuture;
-
 	private String mCurrentTemperatureRequest;
 
-	private long mTimeOfRecreating;
-
-	private long mRenewTime;
-
-	private int mBorderCoolingTemperature = 80;
+    private int mBorderCoolingTemperature = 80;
 
 	private PowerCommandsFactory powerCommandsFactory;
 
@@ -59,49 +38,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		instance = this;
 	}
 
-	public
-	@PullState
-	int getPullState() {
-		return mPullState;
-	}
-
-	public void setPullState(@PullState int pullState) {
-		this.mPullState = pullState;
-	}
-
-	public void initPullDataService(ScheduledExecutorService mPullTemperatureService) {
-		this.mPullDataService = mPullTemperatureService;
-	}
-
-	public ScheduledExecutorService getWaitPullService() {
-		return mWaitPullService;
-	}
-
-	public void initWaitPullService(ScheduledExecutorService scheduledExecutorService,
-			ScheduledFuture scheduledFuture) {
-		mWaitPullService = scheduledExecutorService;
-		mWaitPullFuture = scheduledFuture;
-	}
-
-	public ScheduledFuture getWaitPullFuture() {
-		return mWaitPullFuture;
-	}
-
-	public void clearPullDataService() {
-		this.mPullDataService = null;
-	}
-
-	public ScheduledExecutorService getPullDataService() {
-		return mPullDataService;
-	}
-
-	public void unScheduleTasks() {
-		if (pullDataFuture != null) {
-			pullDataFuture.cancel(true);
-		}
-	}
-
-	public boolean isPreLooping() {
+    public boolean isPreLooping() {
 		return isPreLooping;
 	}
 
@@ -109,11 +46,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		this.isPreLooping = isPreLooping;
 	}
 
-	public void setPullDataFuture(ScheduledFuture pullDataFuture) {
-		this.pullDataFuture = pullDataFuture;
-	}
-
-	public String getCurrentTemperatureRequest() {
+    public String getCurrentTemperatureRequest() {
 		return mCurrentTemperatureRequest;
 	}
 
@@ -121,45 +54,9 @@ public class EToCApplication extends InterpolationCalculatorApp {
 		this.mCurrentTemperatureRequest = mCurrentTemperatureRequest;
 	}
 
-    @Deprecated(message = "not needed with coroutines")
-	public void setStopPulling(boolean stopPulling) {
-		this.mStopPulling = stopPulling;
-	}
-
-	public boolean isPullingStopped() {
-		return mStopPulling;
-	}
-
-	public void refreshTimeOfRecreating() {
-		mTimeOfRecreating = System.currentTimeMillis();
-	}
-
-    @Deprecated(message = "not needed with coroutines")
-	public long getTimeOfRecreating() {
-		return mTimeOfRecreating;
-	}
-
-	public boolean reNewTimeOfRecreating() {
-		mRenewTime = System.currentTimeMillis();
-
-		boolean isRefreshed = false;
-
-		if (Utils.elapsedTimeForCacheFill(mRenewTime, mTimeOfRecreating)) {
-			refreshTimeOfRecreating();
-			isRefreshed = true;
-		}
-
-		return isRefreshed;
-	}
-
-    @Deprecated(message = "not needed with coroutines")
-	public long getRenewTime() {
-		return mRenewTime;
-	}
-
-	public PowerCommandsFactory parseCommands(String text) {
+    public PowerCommandsFactory parseCommands(String text) {
 		text = text.replace("\r", "");
-		String rows[] = text.split("\n");
+		String[] rows = text.split("\n");
 		final String borderTemperatureString = "borderTemperature:";
 		final String onString = "on:";
 		final String offString = "off:";
@@ -201,7 +98,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 			}
 		}
 
-		powerCommandsFactory = new DefaultPowerCommandsFactory(PowerState.PRE_LOOPING);
+		powerCommandsFactory = new LocalPowerCommandsFactory(PowerState.PRE_LOOPING);
 
 		if(borderTemperatures.size() != 1) {
 			return powerCommandsFactory;
@@ -245,9 +142,9 @@ public class EToCApplication extends InterpolationCalculatorApp {
 	}
 
 	private static Pair<Integer, PowerCommand> parseCommand(String text) {
-		String splitArr[] = text.split(";");
+		String[] splitArr = text.split(";");
 
-		int indexOfCommand = -1;
+		int indexOfCommand;
 
 		try {
 			indexOfCommand = Integer.parseInt(splitArr[0]);
@@ -256,7 +153,7 @@ public class EToCApplication extends InterpolationCalculatorApp {
 			if(splitArr.length > 3) {
 				List<String> possibleResponses = Arrays.asList(splitArr);
 				possibleResponses = possibleResponses.subList(3, possibleResponses.size());
-				String responses[] = new String[possibleResponses.size()];
+				String[] responses = new String[possibleResponses.size()];
 				possibleResponses.toArray(responses);
 				return new Pair<>(indexOfCommand, new PowerCommand(command, delay, responses));
 			} else {

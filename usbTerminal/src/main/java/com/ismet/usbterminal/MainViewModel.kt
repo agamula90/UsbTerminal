@@ -128,7 +128,7 @@ class MainViewModel @Inject constructor(
         val command = if (app.isPreLooping) {
             PowerCommand("/5J1R", 1000)
         } else {
-            commandsFactory.currentCommand()
+            commandsFactory.currentCommand()!!
         }
 
         sendWaitForCoolingJob?.cancel()
