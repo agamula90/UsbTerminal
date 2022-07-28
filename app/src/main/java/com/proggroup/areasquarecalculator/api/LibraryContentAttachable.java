@@ -11,6 +11,7 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
 
 	int getFragmentContainerId();
 
+    //TODO can't use binding here
 	DrawerLayout getDrawerLayout();
 
 	int getToolbarId();
@@ -23,6 +24,7 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
 
 	FrameLayout getFrameLayout();
 
+    //TODO can't use binding here
 	LinearLayout graphContainer();
 
     void onGraphAttached();

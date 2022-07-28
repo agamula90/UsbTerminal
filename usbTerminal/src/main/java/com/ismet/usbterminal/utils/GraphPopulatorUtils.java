@@ -130,8 +130,7 @@ public class GraphPopulatorUtils {
     public static GraphicalView attachXYChartIntoLayout(MainActivity activity,
                                                         AbstractChart mChart) {
         final LinearLayout chartLayout = activity.findViewById(R.id.chart);
-        final LinearLayout allChartsLayout = activity.findViewById(R.id
-                .all_charts_layout);
+        final View allChartsLayout = activity.findViewById(R.id.all_charts_layout);
 
         LinearLayout topContainer = activity.findViewById(R.id.top_container);
 

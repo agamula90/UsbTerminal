@@ -133,8 +133,8 @@ public class ReportCreator {
             if (maxCountSymbolsInFileName < measurementFiles.get(i).length()) {
                 maxCountSymbolsInFileName = measurementFiles.get(i).length();
             }
-            if (maxPowerOfSquare < FloatFormatter.format(measurementAverages.get(i)).length()) {
-                maxPowerOfSquare = FloatFormatter.format(measurementAverages.get(i)).length();
+            if (maxPowerOfSquare < FloatFormatter.formatWith2(measurementAverages.get(i)).length()) {
+                maxPowerOfSquare = FloatFormatter.formatWith2(measurementAverages.get(i)).length();
             }
         }
 
@@ -144,7 +144,7 @@ public class ReportCreator {
             measurementFiles.set(i, changedToMax(measurementFiles.get(i),
                     maxCountSymbolsInFileName));
 
-            measurementAverageStrings.add(changedToMaxFromLeft(FloatFormatter.format
+            measurementAverageStrings.add(changedToMaxFromLeft(FloatFormatter.formatWith2
                     (measurementAverages.get(i)), maxPowerOfSquare));
         }
 
@@ -174,7 +174,7 @@ public class ReportCreator {
 
         average /= countMeasurements;
 
-        measureAverageBuilder.append(changedToMaxFromLeft(FloatFormatter.format
+        measureAverageBuilder.append(changedToMaxFromLeft(FloatFormatter.formatWith2
                 (average), maxPowerOfSquare));
 
         lineBuilder.append(changedToMax("", '-', maxPowerOfSquare));

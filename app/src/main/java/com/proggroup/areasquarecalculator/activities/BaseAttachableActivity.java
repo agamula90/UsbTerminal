@@ -58,10 +58,6 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
         mExportLayout = graphContainer();
 	}
 
-    protected LinearLayout getExportLayout() {
-        return mExportLayout;
-    }
-
 	@Override
 	public void finish() {
 		super.finish();
