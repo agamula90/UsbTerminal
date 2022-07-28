@@ -32,6 +32,7 @@ import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
+import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
@@ -48,9 +49,7 @@ import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
 import org.achartengine.GraphicalView
 import org.achartengine.chart.XYChart
-import org.achartengine.model.XYMultipleSeriesDataset
 import org.achartengine.model.XYSeries
-import org.achartengine.renderer.XYMultipleSeriesRenderer
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -223,18 +222,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             override fun onPostPullStarted() {}
         }))
         binding.buttonOn1.setOnLongClickListener(object : OnLongClickListener {
-            private lateinit var editOn: EditText
-            private lateinit var editOff: EditText
-            private lateinit var editOn1: EditText
-            private lateinit var editOff1: EditText
             override fun onLongClick(v: View): Boolean {
-                val initLayoutListener =
-                    OnInitLayoutListener { contentView ->
-                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
-                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
-                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
-                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
-                        changeTextsForButtons(contentView)
+                showOnOffDialog(
+                    init = {
+                        changeTextsForButtons(it)
                         val str_on = prefs.getString(PrefConstants.ON1, "")
                         val str_off = prefs.getString(PrefConstants.OFF1, "")
                         val str_on_name = prefs.getString(
@@ -245,26 +236,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                             PrefConstants.OFF_NAME1,
                             PrefConstants.OFF_NAME_DEFAULT
                         )
-                        editOn.setText(str_on)
-                        editOff.setText(str_off)
-                        editOn1.setText(str_on_name)
-                        editOff1.setText(str_off_name)
-                    }
-                val okListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        val strOn = editOn.text.toString()
-                        val strOff = editOff.text.toString()
-                        val strOn1 = editOn1.text.toString()
-                        val strOff1 = editOff1.text.toString()
+                        it.editOn.setText(str_on)
+                        it.editOff.setText(str_off)
+                        it.editOn1.setText(str_on_name)
+                        it.editOff1.setText(str_off_name)
+                    },
+                    okClick = { localBinding, dialog ->
+                        val strOn = localBinding.editOn.text.toString()
+                        val strOff = localBinding.editOff.text.toString()
+                        val strOn1 = localBinding.editOn1.text.toString()
+                        val strOff1 = localBinding.editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
                             showCustomisedToast("Please enter all values")
-                            return@OnClickListener
+                            return@showOnOffDialog
                         }
                         val edit = prefs.edit()
                         edit.putString(PrefConstants.ON1, strOn)
@@ -280,24 +264,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         }
                         dialog.cancel()
                     }
-                val cancelListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        dialog.cancel()
-                    }
-                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
-                    this@MainActivity,
-                    R.layout.layout_dialog_on_off,
-                    "Set On/Off commands",
-                    okListener,
-                    cancelListener,
-                    initLayoutListener
-                ).create().show()
+                )
+
                 return true
             }
         })
@@ -354,18 +322,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }))
         binding.buttonOn2.setOnLongClickListener(object : OnLongClickListener {
-            private lateinit var editOn: EditText
-            private lateinit var editOff: EditText
-            private lateinit var editOn1: EditText
-            private lateinit var editOff1: EditText
             override fun onLongClick(v: View): Boolean {
-                val initLayoutListener =
-                    OnInitLayoutListener { contentView ->
-                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
-                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
-                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
-                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
-                        changeTextsForButtons(contentView)
+                showOnOffDialog(
+                    init = {
+                        changeTextsForButtons(it)
                         val str_on_name = prefs.getString(
                             PrefConstants.ON_NAME2,
                             PrefConstants.ON_NAME_DEFAULT
@@ -376,26 +336,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         )
                         val str_on = prefs.getString(PrefConstants.ON2, "")
                         val str_off = prefs.getString(PrefConstants.OFF2, "")
-                        editOn.setText(str_on)
-                        editOff.setText(str_off)
-                        editOn1.setText(str_on_name)
-                        editOff1.setText(str_off_name)
-                    }
-                val okListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        val strOn = editOn.text.toString()
-                        val strOff = editOff.text.toString()
-                        val strOn1 = editOn1.text.toString()
-                        val strOff1 = editOff1.text.toString()
+                        it.editOn.setText(str_on)
+                        it.editOff.setText(str_off)
+                        it.editOn1.setText(str_on_name)
+                        it.editOff1.setText(str_off_name)
+                    },
+                    okClick = { localBinding, dialog ->
+                        val strOn = localBinding.editOn.text.toString()
+                        val strOff = localBinding.editOff.text.toString()
+                        val strOn1 = localBinding.editOn1.text.toString()
+                        val strOff1 = localBinding.editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
                             showCustomisedToast("Please enter all values")
-                            return@OnClickListener
+                            return@showOnOffDialog
                         }
                         val edit = prefs.edit()
                         edit.putString(PrefConstants.ON2, strOn)
@@ -419,24 +372,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                             .getString(prefName, defaultValue)
                         dialog.cancel()
                     }
-                val cancelListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        dialog.cancel()
-                    }
-                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
-                    this@MainActivity,
-                    R.layout.layout_dialog_on_off,
-                    "Set On/Off commands",
-                    okListener,
-                    cancelListener,
-                    initLayoutListener
-                ).create().show()
+                )
                 return true
             }
         })
@@ -473,13 +409,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             private lateinit var editOn1: EditText
             private lateinit var editOff1: EditText
             override fun onLongClick(v: View): Boolean {
-                val initLayoutListener =
-                    OnInitLayoutListener { contentView ->
-                        editOn = contentView.findViewById<View>(R.id.editOn) as EditText
-                        editOff = contentView.findViewById<View>(R.id.editOff) as EditText
-                        editOn1 = contentView.findViewById<View>(R.id.editOn1) as EditText
-                        editOff1 = contentView.findViewById<View>(R.id.editOff1) as EditText
-                        changeTextsForButtons(contentView)
+                showOnOffDialog(
+                    init = {
+                        changeTextsForButtons(it)
                         val str_on_name = prefs.getString(
                             PrefConstants.ON_NAME3,
                             PrefConstants.ON_NAME_DEFAULT
@@ -490,26 +422,19 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         )
                         val str_on = prefs.getString(PrefConstants.ON3, "")
                         val str_off = prefs.getString(PrefConstants.OFF3, "")
-                        editOn.setText(str_on)
-                        editOff.setText(str_off)
-                        editOn1.setText(str_on_name)
-                        editOff1.setText(str_off_name)
-                    }
-                val okListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        val strOn = editOn.text.toString()
-                        val strOff = editOff.text.toString()
-                        val strOn1 = editOn1.text.toString()
-                        val strOff1 = editOff1.text.toString()
+                        it.editOn.setText(str_on)
+                        it.editOff.setText(str_off)
+                        it.editOn1.setText(str_on_name)
+                        it.editOff1.setText(str_off_name)
+                    },
+                    okClick = { localBinding, dialog ->
+                        val strOn = localBinding.editOn.text.toString()
+                        val strOff = localBinding.editOff.text.toString()
+                        val strOn1 = localBinding.editOn1.text.toString()
+                        val strOff1 = localBinding.editOff1.text.toString()
                         if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
                             showCustomisedToast("Please enter all values")
-                            return@OnClickListener
+                            return@showOnOffDialog
                         }
                         val edit = prefs.edit()
                         edit.putString(PrefConstants.ON3, strOn)
@@ -525,24 +450,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         }
                         dialog.cancel()
                     }
-                val cancelListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        dialog.cancel()
-                    }
-                AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
-                    this@MainActivity,
-                    R.layout.layout_dialog_on_off,
-                    "Set On/Off commands",
-                    okListener,
-                    cancelListener,
-                    initLayoutListener
-                ).create().show()
+                )
                 return true
             }
         })
@@ -656,7 +564,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             lateinit var mRadio1: RadioButton
             lateinit var mRadio2: RadioButton
             lateinit var mRadio3: RadioButton
-            override fun onClick(v: View) {
+            override fun onClick(measureView: View) {
                 if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
                     return
                 }
@@ -682,7 +590,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     showCustomisedToast("No chart available. Please clear one of the charts")
                     return
                 }
-                v.isEnabled = false
+                measureView.isEnabled = false
                 val initLayoutListener =
                     OnInitLayoutListener { contentView ->
                         editDelay = contentView.findViewById<View>(R.id.editDelay) as EditText
@@ -740,7 +648,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 val okListener: DialogInterface.OnClickListener =
                     object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface, which: Int) {
-                            v.isEnabled = true
+                            measureView.isEnabled = true
                             val inputManager =
                                 getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                             inputManager.hideSoftInputFromWindow(
@@ -770,19 +678,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                 edit.apply()
                             }
 
-                            run {
-                                val str_uc = editUserComment.text.toString()
-                                if (str_uc == "") {
-                                    showCustomisedToast("Please enter comments")
-                                    return
-                                } else {
-                                    val edit = prefs.edit()
-                                    edit.putString(
-                                        PrefConstants.USER_COMMENT,
-                                        str_uc
-                                    )
-                                    edit.apply()
-                                }
+                            val str_uc = editUserComment.text.toString()
+                            if (str_uc == "") {
+                                showCustomisedToast("Please enter comments")
+                                return
+                            } else {
+                                val edit = prefs.edit()
+                                edit.putString(
+                                    PrefConstants.USER_COMMENT,
+                                    str_uc
+                                )
+                                edit.apply()
                             }
                             val strVolume = editVolume.text.toString()
                             if (strVolume == "") {
@@ -897,13 +803,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                 .currentFocus!!.windowToken, 0
                         )
                         dialog.cancel()
-                        v.isEnabled = true
+                        measureView.isEnabled = true
                     }
                 val alertDialog = AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
                     this@MainActivity, R.layout.layout_dialog_measure, "Start Measure",
                     okListener, cancelListener, initLayoutListener
                 ).create()
-                alertDialog.setOnCancelListener { v.isEnabled = true }
+                alertDialog.setOnCancelListener { measureView.isEnabled = true }
                 alertDialog.show()
             }
         })
@@ -964,11 +870,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         customToast.show()
     }
 
-    @Deprecated("Use showCustomisedToast instead")
-    fun showToastMessage(message: String?) {
-        // showCustomisedToast(message.toString())
-    }
-
     fun startSendingTemperatureOrCo2Requests() {
         viewModel.startSendingTemperatureOrCo2Requests()
     }
@@ -1021,15 +922,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
     }
 
-    private fun changeTextsForButtons(contentView: View) {
+    private fun changeTextsForButtons(binding: LayoutDialogOnOffBinding) {
         val addTextBuilder = StringBuilder()
         for (i in 0..8) {
             addTextBuilder.append(' ')
         }
-        (contentView.findViewById<View>(R.id.txtOn) as TextView).text = "${addTextBuilder}Command 1: "
-        (contentView.findViewById<View>(R.id.txtOn1) as TextView).text = "Button State1 Name: "
-        (contentView.findViewById<View>(R.id.txtOff) as TextView).text = "${addTextBuilder}Command 2: "
-        (contentView.findViewById<View>(R.id.txtOff1) as TextView).text = "Button State2 Name: "
+        binding.txtOn.text = "${addTextBuilder}Command 1: "
+        binding.txtOn1.text = "Button State1 Name: "
+        binding.txtOff.text = "${addTextBuilder}Command 2: "
+        binding.txtOff1.text = "Button State2 Name: "
     }
 
     private fun findDevice() {

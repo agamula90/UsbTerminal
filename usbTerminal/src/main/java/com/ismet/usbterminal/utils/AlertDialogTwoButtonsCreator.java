@@ -8,8 +8,6 @@ import android.view.View;
 import com.ismet.usbterminal.MainActivity;
 import com.ismet.usbterminalnew.R;
 
-import kotlin.Deprecated;
-
 public class AlertDialogTwoButtonsCreator {
 
     public static AlertDialog.Builder createTwoButtonsAlert(

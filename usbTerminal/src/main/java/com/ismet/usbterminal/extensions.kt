@@ -1,6 +1,13 @@
 package com.ismet.usbterminal
 
+import android.app.AlertDialog
+import android.content.Context
+import android.content.DialogInterface
 import android.graphics.PointF
+import android.view.LayoutInflater
+import android.view.inputmethod.InputMethodManager
+import com.ismet.usbterminalnew.R
+import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import org.achartengine.model.XYSeries
 
 fun XYSeries.set(points: List<PointF>) {
@@ -18,5 +25,33 @@ fun XYSeries.set(points: List<PointF>) {
     }
     for (point in pointsToAdd) {
         add(point.x.toDouble(), point.y.toDouble())
+    }
+}
+
+fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (LayoutDialogOnOffBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
+    val inflater = LayoutInflater.from(this)
+    val binding = LayoutDialogOnOffBinding.inflate(inflater)
+    init(binding)
+    val dialog = it.apply {
+        setTitle("Set On/Off commands")
+        setView(binding.root)
+        setPositiveButton(R.string.ui_save) { dialog, _ ->
+            dialog.hideSoftInput()
+            okClick(binding, dialog)
+        }
+        setNegativeButton(R.string.ui_cancel) { dialog, _ ->
+            dialog.hideSoftInput()
+            dialog.cancel()
+        }
+    }.create()
+    dialog.show()
+    dialog
+}
+
+//TODO not always work
+private fun DialogInterface.hideSoftInput() {
+    (this as? AlertDialog)?.currentFocus?.windowToken?.let {
+        val inputManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputManager.hideSoftInputFromWindow(it, 0)
     }
 }
