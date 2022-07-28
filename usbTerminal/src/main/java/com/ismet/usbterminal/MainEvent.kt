@@ -6,4 +6,5 @@ sealed class MainEvent {
     object InvokeAutoCalculations: MainEvent()
     class UpdateTimerRunning(val isRunning: Boolean): MainEvent()
     object IncReadingCount: MainEvent()
+    //class UpdateStartMeasureClickability(val isClickable: Boolean): MainEvent()
 }

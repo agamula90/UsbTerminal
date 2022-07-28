@@ -133,7 +133,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     lateinit var chartView: GraphicalView
     private lateinit var graphSeriesDataset: XYMultipleSeriesDataset
     lateinit var renderer: XYMultipleSeriesRenderer
-    private var chartSeries: XYSeries? = null
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
@@ -274,7 +273,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         edit.putString(PrefConstants.OFF_NAME1, strOff1)
                         edit.apply()
                         val s = binding.buttonOn1.tag.toString()
-                        if (s == "on") {
+                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
                             binding.buttonOn1.text = strOn1
                         } else {
                             binding.buttonOn1.text = strOff1
@@ -294,7 +293,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
                     this@MainActivity,
                     R.layout.layout_dialog_on_off,
-                    "Set On/Off " + "commands",
+                    "Set On/Off commands",
                     okListener,
                     cancelListener,
                     initLayoutListener
@@ -303,6 +302,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         })
         binding.buttonOn2.text = prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
+        // on - activated, off - else, or vice versa
         binding.buttonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
         EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")
         binding.buttonOn2.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
@@ -330,8 +330,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     binding.buttonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
                     binding.buttonOn2.alpha = 0.6f
                 }
-                EToCApplication.getInstance().currentTemperatureRequest =
-                    prefs.getString(prefName, defaultValue)
+                EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
             }
 
             override fun onPostPullStopped() {
@@ -666,11 +665,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     return
                 }
                 val arrSeries = graphSeriesDataset.series
-                var i = 0
                 var isChart1Clear = true
                 var isChart2Clear = true
                 var isChart3Clear = true
-                for (series in arrSeries) {
+                for ((i, series) in arrSeries.withIndex()) {
                     if (series.itemCount > 0) {
                         when (i) {
                             0 -> isChart1Clear = false
@@ -679,7 +677,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                             else -> {}
                         }
                     }
-                    i++
                 }
                 if (!isChart1Clear && !isChart2Clear && !isChart3Clear) {
                     showCustomisedToast("No chart available. Please clear one of the charts")
@@ -1166,8 +1163,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             renderer.yAxisMax = maxOf(it.toDouble(), renderer.yAxisMax)
             chartView.repaint()
         }
-        viewModel.chartPoints.observe(this) {
-            chartSeries?.set(it)
+        viewModel.charts.observe(this) { charts ->
+            for (chart in charts) {
+                graphSeriesDataset.getSeriesAt(chart.id).set(chart.points)
+            }
             chartView.repaint()
         }
     }
@@ -1549,7 +1548,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     doOpenFile(File(extras.getString("path")!!), false)
                 } else if (extras.getString("path")!!.endsWith(".csv")) {
                     val filePath = extras.getString("path")!!
-                    readChart(filePath)
+                    viewModel.readChart(filePath)
                 } else {
                     showCustomisedToast("Invalid File")
                 }
@@ -2005,16 +2004,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             startActivityForResult(open, Constants.REQUEST_OPEN)
         } catch (e: ActivityNotFoundException) {
             Crouton.showText(this@MainActivity, R.string.toast_activity_open, Style.ALERT)
-        }
-    }
-
-    private fun readChart(filePath: String) {
-        val chartIndex = viewModel.readChart(filePath)
-        chartSeries = if (chartIndex != CHART_INDEX_UNSELECTED) {
-            graphSeriesDataset.getSeriesAt(chartIndex).clear()
-            graphSeriesDataset.getSeriesAt(chartIndex)
-        } else {
-            null
         }
     }
 

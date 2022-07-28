@@ -4,13 +4,11 @@ import android.app.Application
 import android.graphics.PointF
 import android.os.Environment
 import android.preference.PreferenceManager
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ismet.usbterminal.data.AppData
-import com.ismet.usbterminal.data.PowerCommand
-import com.ismet.usbterminal.data.PowerState
-import com.ismet.usbterminal.data.PrefConstants
+import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.xgouchet.texteditor.common.TextFileUtils
@@ -31,6 +29,8 @@ const val CO2_REQUEST = "(FE-44-00-08-02-9F-25)"
 private const val DATE_FORMAT = "yyyyMMdd"
 private const val TIME_FORMAT = "HHmmss"
 private const val DELIMITER = "_"
+private const val MAX_CHARTS = 3
+
 val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
 
 @HiltViewModel
@@ -43,7 +43,9 @@ class MainViewModel @Inject constructor(
     private val prefs = PreferenceManager.getDefaultSharedPreferences(app)
 
     val events = Channel<MainEvent>(Channel.UNLIMITED)
-    val chartPoints = handle.getLiveData<List<PointF>>("chartPoints", emptyList())
+    val charts = MutableLiveData(List(MAX_CHARTS) { Chart(it, emptyList()) })
+    //TODO there should be some logic behind one chart
+    //val currentChartIndex
     val maxY = handle.getLiveData("maxY",0)
 
     private var shouldSendTemperatureRequest = true
@@ -55,26 +57,21 @@ class MainViewModel @Inject constructor(
     var chartIdx = 0
     var subDirDate: String = ""
 
-    /**
-     * return chart index, based on filePath input
-     */
-    fun readChart(filePath: String): Int {
+    fun readChart(filePath: String) {
         readChartJob?.cancel()
-        val newChartIndex = when {
-            filePath.contains("R1") -> 0
-            filePath.contains("R2") -> 1
-            filePath.contains("R3") -> 2
-            else -> CHART_INDEX_UNSELECTED
-        }
+        val currentCharts = charts.value!!.toMutableList()
+        val newChartIndex = currentCharts.indexOfFirst { it.canBeRestoredFromFilePath(filePath) }
+
         if (newChartIndex == CHART_INDEX_UNSELECTED) {
             // events.offer(MainEvent.ShowToast("Required Log files not available"))
             readChartJob = null
-            return newChartIndex
+            return
         }
+
         readChartJob = viewModelScope.launch(Dispatchers.IO) {
             val file = File(filePath)
             val lines = file.readLines()
-            var startX = maxOf(1, (lines.size + 1) * newChartIndex)
+            var startX = maxOf(1, (lines.size + 1) * currentCharts[newChartIndex].id)
             var newMaxY = maxY.value!!
             val newChartPoints = mutableListOf<PointF>()
             for (line in lines) {
@@ -92,12 +89,12 @@ class MainViewModel @Inject constructor(
                     newChartPoints.add(PointF(startX.toFloat(), co2.toFloat()))
                     delay(50)
                     maxY.postValue(newMaxY)
-                    chartPoints.postValue(newChartPoints)
+                    currentCharts[newChartIndex] = currentCharts[newChartIndex].copy(points = newChartPoints)
+                    charts.postValue(currentCharts)
                 }
             }
             events.send(MainEvent.ShowToast("File reading done"))
         }
-        return newChartIndex
     }
 
     fun startSendingTemperatureOrCo2Requests() {
