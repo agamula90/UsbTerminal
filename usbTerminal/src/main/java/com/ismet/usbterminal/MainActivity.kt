@@ -47,6 +47,7 @@ import fr.xgouchet.texteditor.common.Settings
 import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
 import org.achartengine.GraphicalView
+import org.achartengine.chart.XYChart
 import org.achartengine.model.XYMultipleSeriesDataset
 import org.achartengine.model.XYSeries
 import org.achartengine.renderer.XYMultipleSeriesRenderer
@@ -131,8 +132,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     lateinit var prefs: SharedPreferences
     lateinit var currentSeries: XYSeries
     lateinit var chartView: GraphicalView
-    private lateinit var graphSeriesDataset: XYMultipleSeriesDataset
-    lateinit var renderer: XYMultipleSeriesRenderer
+    lateinit var chart: XYChart
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
@@ -594,21 +594,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     }
                     var isCleared = false
                     if (mItemsChecked[3]) {
-                        graphSeriesDataset.getSeriesAt(0).clear()
+                        chart.dataset.getSeriesAt(0).clear()
                         isCleared = true
                         if (chartIndexToDate.containsKey(1)) {
                             Utils.deleteFiles(chartIndexToDate[1], "_R1")
                         }
                     }
                     if (mItemsChecked[4]) {
-                        graphSeriesDataset.getSeriesAt(1).clear()
+                        chart.dataset.getSeriesAt(1).clear()
                         isCleared = true
                         if (chartIndexToDate.containsKey(2)) {
                             Utils.deleteFiles(chartIndexToDate[2], "_R2")
                         }
                     }
                     if (mItemsChecked[5]) {
-                        graphSeriesDataset.getSeriesAt(2).clear()
+                        chart.dataset.getSeriesAt(2).clear()
                         isCleared = true
                         if (chartIndexToDate.containsKey(3)) {
                             Utils.deleteFiles(chartIndexToDate[3], "_R3")
@@ -616,14 +616,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     }
                     if (isCleared) {
                         var existInitedGraphCurve = false
-                        for (i in 0 until graphSeriesDataset.seriesCount) {
-                            if (graphSeriesDataset.getSeriesAt(i).itemCount != 0) {
+                        for (i in 0 until chart.dataset.seriesCount) {
+                            if (chart.dataset.getSeriesAt(i).itemCount != 0) {
                                 existInitedGraphCurve = true
                                 break
                             }
                         }
                         if (!existInitedGraphCurve) {
-                            GraphPopulatorUtils.clearYTextLabels(renderer)
+                            GraphPopulatorUtils.clearYTextLabels(chart.renderer)
                         }
                         chartView.repaint()
                     }
@@ -664,7 +664,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     showCustomisedToast("Timer is running. Please wait")
                     return
                 }
-                val arrSeries = graphSeriesDataset.series
+                val arrSeries = chart.dataset.series
                 var isChart1Clear = true
                 var isChart2Clear = true
                 var isChart3Clear = true
@@ -813,12 +813,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                         duration,
                                         delay
                                     )
-                                    renderer = graphData.renderer
-                                    graphSeriesDataset = graphData.seriesDataset
                                     currentSeries = graphData.xySeries
+                                    chart = graphData.createChart()
                                     chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
                                         this@MainActivity,
-                                        graphData.createChart()
+                                        chart
                                     )
                                 }
                                 countMeasure++
@@ -828,18 +827,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                 edit.apply()
                                 val future = (duration * 60 * 1000).toLong()
                                 val delay_timer = (delay * 1000).toLong()
-                                if (graphSeriesDataset.getSeriesAt(0).itemCount == 0) {
+                                if (chart.dataset.getSeriesAt(0).itemCount == 0) {
                                     viewModel.chartIdx = 1
                                     readingCount = 0
-                                    currentSeries = graphSeriesDataset.getSeriesAt(0)
-                                } else if (graphSeriesDataset.getSeriesAt(1).itemCount == 0) {
+                                    currentSeries = chart.dataset.getSeriesAt(0)
+                                } else if (chart.dataset.getSeriesAt(1).itemCount == 0) {
                                     viewModel.chartIdx = 2
                                     readingCount = duration * 60 / delay
-                                    currentSeries = graphSeriesDataset.getSeriesAt(1)
-                                } else if (graphSeriesDataset.getSeriesAt(2).itemCount == 0) {
+                                    currentSeries = chart.dataset.getSeriesAt(1)
+                                } else if (chart.dataset.getSeriesAt(2).itemCount == 0) {
                                     viewModel.chartIdx = 3
                                     readingCount = duration * 60
-                                    currentSeries = graphSeriesDataset.getSeriesAt(2)
+                                    currentSeries = chart.dataset.getSeriesAt(2)
                                 }
                                 val checkedId = mRadioGroup.checkedRadioButtonId
                                 if (binding.editor.text.toString() == "" && checkedId == -1) {
@@ -941,10 +940,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             editor.apply()
         }
         val graphData = GraphPopulatorUtils.createXYChart(duration_v, delay_v)
-        renderer = graphData.renderer
-        graphSeriesDataset = graphData.seriesDataset
         currentSeries = graphData.xySeries
-        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, graphData.createChart())
+        chart = graphData.createChart()
+        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, chart)
         val actionBar = supportActionBar
         actionBar!!.setDisplayUseLogoEnabled(true)
         actionBar.setLogo(R.drawable.ic_launcher)
@@ -1160,12 +1158,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private fun observeChartUpdates() {
         viewModel.maxY.observe(this) {
             //TODO remove max, move all maxY changes to vm
-            renderer.yAxisMax = maxOf(it.toDouble(), renderer.yAxisMax)
+            chart.renderer.yAxisMax = maxOf(it.toDouble(), chart.renderer.yAxisMax)
             chartView.repaint()
         }
         viewModel.charts.observe(this) { charts ->
-            for (chart in charts) {
-                graphSeriesDataset.getSeriesAt(chart.id).set(chart.points)
+            for (modelChart in charts) {
+                chart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
             }
             chartView.repaint()
         }
@@ -2114,9 +2112,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     bytes[4]
                 )
                 val co2 = strH.toInt(16)
-                val yMax: Int = renderer.yAxisMax.toInt()
+                val yMax: Int = chart.renderer.yAxisMax.toInt()
                 if (co2 >= yMax) {
-                    renderer.yAxisMax = if (currentSeries.itemCount == 0) {
+                    chart.renderer.yAxisMax = if (currentSeries.itemCount == 0) {
                         (3 * co2).toDouble()
                     } else {
                         (co2 + co2 * 15 / 100f).toDouble()
@@ -2297,7 +2295,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     fun setCurrentSeries(index: Int) {
-        currentSeries = graphSeriesDataset.getSeriesAt(index)
+        currentSeries = chart.dataset.getSeriesAt(index)
     }
 
     fun incCountMeasure() {
@@ -2349,13 +2347,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     fun clearData() {
         viewModel.subDirDate = ""
-        for (series in graphSeriesDataset.series) {
+        for (series in chart.dataset.series) {
             series.clear()
         }
         oldCountMeasure = 0
         countMeasure = oldCountMeasure
         chartIndexToDate.clear()
-        GraphPopulatorUtils.clearYTextLabels(renderer)
+        GraphPopulatorUtils.clearYTextLabels(chart.renderer)
         repaintChartView()
     }
 
