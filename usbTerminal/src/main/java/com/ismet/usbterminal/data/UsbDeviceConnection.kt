@@ -10,10 +10,9 @@ import android.util.Log
 import com.felhr.usbserial.UsbSerialDevice
 import java.io.Closeable
 
-class UsbDeviceConnection(val context: Context): Closeable {
+class UsbDeviceConnection(val context: Context, val permissionCallback: PermissionCallback): Closeable {
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
     private var device: UsbDevice? = null
-    var permissionCallback = PermissionCallback { deviceId, device -> Log.d(TAG, "permission for $deviceId ${if (device != null) "granted" else "not granted"}") }
 
     private val usbDeviceReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {

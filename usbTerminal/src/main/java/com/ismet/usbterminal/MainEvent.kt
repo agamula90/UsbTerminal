@@ -7,5 +7,8 @@ sealed class MainEvent {
     class UpdateTimerRunning(val isRunning: Boolean): MainEvent()
     object IncReadingCount: MainEvent()
     object SendMessage: MainEvent()
+    object ClearEditor: MainEvent()
+    object ClearOutput: MainEvent()
+    object ClearData: MainEvent()
     //class UpdateStartMeasureClickability(val isClickable: Boolean): MainEvent()
 }

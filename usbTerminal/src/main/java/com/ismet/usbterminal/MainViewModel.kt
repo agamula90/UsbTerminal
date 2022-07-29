@@ -35,6 +35,7 @@ private const val DELIMITER = "_"
 private const val MAX_CHARTS = 3
 
 val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
+private val DATE_TIME_FORMAT = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -65,9 +66,12 @@ class MainViewModel @Inject constructor(
     private var sendTemperatureOrCo2Job: Job? = null
     private var sendWaitForCoolingJob: Job? = null
     private var readCommandsJob: Job? = null
-    var chartDate: String = ""
-    var chartIdx = 0
-    var subDirDate: String = ""
+    val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
+    private var chartDate: String = ""
+    private var subDirDate: String = ""
+    val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
+    private var currentClearOptions = mutableSetOf<String>()
+    val checkedClearOptions = List(allClearOptions.size) { false }
 
     init {
         val settingsFolder = File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
@@ -412,14 +416,14 @@ class MainViewModel @Inject constructor(
             if (ppmPrefix == "_") {
                 dirName = AppData.MES_FOLDER_NAME
                 fileName = "MES_" + chartDate +
-                        volume + "_R" + chartIdx + "" +
+                        volume + "_R" + (currentChartIndex.value!! + 1) + "" +
                         ".csv"
                 subDirName = "MES_" + subDirDate + "_" +
                         str_uc
             } else {
                 dirName = AppData.CAL_FOLDER_NAME
                 fileName = ("CAL_" + chartDate +
-                        volume + ppmPrefix + "_R" + chartIdx
+                        volume + ppmPrefix + "_R" + (currentChartIndex.value!! + 1)
                         + ".csv")
                 subDirName = "CAL_" + subDirDate + "_" +
                         str_uc
@@ -752,5 +756,73 @@ class MainViewModel @Inject constructor(
             stopSendingTemperatureOrCo2Requests()
         }
         events.offer(MainEvent.SendMessage)
+    }
+
+    fun onCurrentChartWasModified(wasModified: Boolean) {
+        val currentDate = Date()
+        if (wasModified) {
+            chartDate = DATE_TIME_FORMAT.format(currentDate)
+            charts.value!![currentChartIndex.value!!].tempFilePath = chartDate
+        }
+        if (subDirDate.isEmpty()) {
+            subDirDate = DATE_TIME_FORMAT.format(currentDate)
+        }
+    }
+
+    fun reset() {
+        subDirDate = ""
+        charts.value!!.forEach { it.tempFilePath = null }
+    }
+
+    fun setCurrentChartIndex(index: Int) {
+        currentChartIndex.value = index
+    }
+
+    fun addClearOption(option: String) {
+        currentClearOptions.add(option)
+    }
+
+    fun removeClearOption(option: String) {
+        currentClearOptions.remove(option)
+    }
+
+    fun onClearDialogDismissed() {
+        currentClearOptions.clear()
+    }
+
+    fun clear() {
+        val currentCharts = charts.value!!.toMutableList()
+        if (currentClearOptions.contains("Tx")) {
+            events.offer(MainEvent.ClearEditor)
+        }
+        if (currentClearOptions.contains("LM")) {
+            events.offer(MainEvent.ClearOutput)
+        }
+        if (currentClearOptions.contains("Chart 1")) {
+            currentCharts[0] = currentCharts[0].copy(points = emptyList())
+            val tempFilePath = currentCharts[0].tempFilePath
+            if (tempFilePath != null) {
+                Utils.deleteFiles(tempFilePath, "_R1")
+            }
+        }
+        if (currentClearOptions.contains("Chart 2")) {
+            currentCharts[1] = currentCharts[1].copy(points = emptyList())
+            val tempFilePath = currentCharts[1].tempFilePath
+            if (tempFilePath != null) {
+                Utils.deleteFiles(tempFilePath, "_R2")
+            }
+        }
+        if (currentClearOptions.contains("Chart 3")) {
+            currentCharts[2] = currentCharts[2].copy(points = emptyList())
+            val tempFilePath = currentCharts[2].tempFilePath
+            if (tempFilePath != null) {
+                Utils.deleteFiles(tempFilePath, "_R3")
+            }
+        }
+        if (currentClearOptions.contains("New Measure")) {
+            reset()
+            events.offer(MainEvent.ClearData)
+        }
+        charts.value = currentCharts
     }
 }

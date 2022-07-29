@@ -13,7 +13,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.*
-import android.view.View.OnLongClickListener
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
@@ -116,14 +115,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private lateinit var handler: Handler
     private var isUsbConnected = false
 
-    var countMeasure = 0
-        private set
+    private var countMeasure = 0
     private var oldCountMeasure = 0
     var isTimerRunning = false
     var readingCount = 0
         private set
 
-    private val chartIndexToDate: MutableMap<Int, String> = HashMap()
     lateinit var prefs: SharedPreferences
     lateinit var currentSeries: XYSeries
     lateinit var chartView: GraphicalView
@@ -145,6 +142,27 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 Constants.PREFERENCES_NAME,
                 MODE_PRIVATE
             )
+        )
+        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+        if (!prefs.contains(PrefConstants.DELAY)) {
+            val editor = prefs.edit()
+            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
+            editor.apply()
+        }
+        val graphData = GraphPopulatorUtils.createXYChart(duration_v, delay_v)
+        chart = graphData.createChart()
+        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, chart)
+        val actionBar = supportActionBar
+        actionBar!!.setDisplayUseLogoEnabled(true)
+        actionBar.setLogo(R.drawable.ic_launcher)
+        val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
+        titleView.setTextColor(Color.WHITE)
+        (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(
+            RelativeLayout.CENTER_HORIZONTAL,
+            0
         )
         observeChartUpdates()
         observeEvents()
@@ -195,79 +213,34 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
             handled
         }
-        binding.buttonClear.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View) {
-                if (isTimerRunning) {
-                    showCustomisedToast("Timer is running. Please wait")
-                    return
+        binding.buttonClear.setOnClickListener {
+            if (isTimerRunning) {
+                showCustomisedToast("Timer is running. Please wait")
+                return@setOnClickListener
+            }
+            val items = viewModel.allClearOptions.toTypedArray()
+            val checkedItems = viewModel.checkedClearOptions.toBooleanArray()
+
+            val alert = AlertDialog.Builder(this@MainActivity).apply {
+                setTitle("Select items")
+                setMultiChoiceItems(items, checkedItems) { _, which, isChecked ->
+                    val clearOption = items[which]
+                    if (isChecked) {
+                        viewModel.addClearOption(clearOption)
+                    } else {
+                        viewModel.removeClearOption(clearOption)
+                    }
                 }
-                val items = arrayOf<CharSequence>(
-                    "New Measure", "Tx", "LM", "Chart 1",
-                    "Chart 2", "Chart" + " 3"
-                )
-                val checkedItems = booleanArrayOf(false, false, false, false, false, false)
-                val mItemsChecked = SparseBooleanArray(checkedItems.size)
-                for (i in checkedItems.indices) {
-                    mItemsChecked.put(i, checkedItems[i])
-                }
-                val alert = AlertDialog.Builder(this@MainActivity)
-                alert.setTitle("Select items")
-                alert.setMultiChoiceItems(items, checkedItems) { _, which, isChecked ->
-                    mItemsChecked.put(which, isChecked)
-                }
-                alert.setPositiveButton("Select/Clear") { dialog, _ ->
-                    if (mItemsChecked[1]) {
-                        binding.editor.setText("")
-                    }
-                    if (mItemsChecked[2]) {
-                        binding.output.text = ""
-                    }
-                    var isCleared = false
-                    if (mItemsChecked[3]) {
-                        chart.dataset.getSeriesAt(0).clear()
-                        isCleared = true
-                        if (chartIndexToDate.containsKey(1)) {
-                            Utils.deleteFiles(chartIndexToDate[1], "_R1")
-                        }
-                    }
-                    if (mItemsChecked[4]) {
-                        chart.dataset.getSeriesAt(1).clear()
-                        isCleared = true
-                        if (chartIndexToDate.containsKey(2)) {
-                            Utils.deleteFiles(chartIndexToDate[2], "_R2")
-                        }
-                    }
-                    if (mItemsChecked[5]) {
-                        chart.dataset.getSeriesAt(2).clear()
-                        isCleared = true
-                        if (chartIndexToDate.containsKey(3)) {
-                            Utils.deleteFiles(chartIndexToDate[3], "_R3")
-                        }
-                    }
-                    if (isCleared) {
-                        var existInitedGraphCurve = false
-                        for (i in 0 until chart.dataset.seriesCount) {
-                            if (chart.dataset.getSeriesAt(i).itemCount != 0) {
-                                existInitedGraphCurve = true
-                                break
-                            }
-                        }
-                        if (!existInitedGraphCurve) {
-                            GraphPopulatorUtils.clearYTextLabels(chart.renderer)
-                        }
-                        chartView.repaint()
-                    }
-                    if (mItemsChecked[0]) {
-                        clearData()
-                    }
+                setPositiveButton("Select/Clear") { dialog, _ ->
+                    viewModel.clear()
                     dialog.cancel()
                 }
-                alert.setNegativeButton(
-                    "Close"
-                ) { dialog, _ -> dialog.cancel() }
-                alert.create().show()
-            }
-        })
+                setNegativeButton("Close") { dialog, _ -> dialog.cancel() }
+            }.create()
+
+            alert.setOnCancelListener { viewModel.onClearDialogDismissed() }
+            alert.show()
+        }
         binding.buttonMeasure.setOnClickListener(object : View.OnClickListener {
             lateinit var editDelay: EditText
             lateinit var editDuration: EditText
@@ -441,14 +414,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                         duration,
                                         delay
                                     )
-                                    currentSeries = graphData.xySeries
+                                    viewModel.setCurrentChartIndex(0)
                                     chart = graphData.createChart()
                                     chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
                                         this@MainActivity,
                                         chart
                                     )
                                 }
-                                countMeasure++
+                                incCountMeasure()
                                 edit = prefs.edit()
                                 edit.putInt(PrefConstants.DELAY, delay)
                                 edit.putInt(PrefConstants.DURATION, duration)
@@ -456,17 +429,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                                 val future = (duration * 60 * 1000).toLong()
                                 val delay_timer = (delay * 1000).toLong()
                                 if (chart.dataset.getSeriesAt(0).itemCount == 0) {
-                                    viewModel.chartIdx = 1
+                                    viewModel.setCurrentChartIndex(0)
                                     readingCount = 0
-                                    currentSeries = chart.dataset.getSeriesAt(0)
                                 } else if (chart.dataset.getSeriesAt(1).itemCount == 0) {
-                                    viewModel.chartIdx = 2
+                                    viewModel.setCurrentChartIndex(1)
                                     readingCount = duration * 60 / delay
-                                    currentSeries = chart.dataset.getSeriesAt(1)
                                 } else if (chart.dataset.getSeriesAt(2).itemCount == 0) {
-                                    viewModel.chartIdx = 3
+                                    viewModel.setCurrentChartIndex(2)
                                     readingCount = duration * 60
-                                    currentSeries = chart.dataset.getSeriesAt(2)
                                 }
                                 val checkedId = mRadioGroup.checkedRadioButtonId
                                 if (binding.editor.text.toString() == "" && checkedId == -1) {
@@ -536,8 +506,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         })
         setFilters()
-        usbDeviceConnection = UsbDeviceConnection(this)
-        usbDeviceConnection.permissionCallback = PermissionCallback { _, device ->
+        usbDeviceConnection = UsbDeviceConnection(this) { _, device ->
             usbDevice = device
             when(val notNullDevice = usbDevice) {
                 null -> {
@@ -548,9 +517,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         findDevice()
-        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
-        val preferences = prefs
         if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
             EToCApplication.getInstance().isPreLooping = true
             viewModel.waitForCooling()
@@ -560,30 +526,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 			message.obj = "";
 			mHandler.sendMessageDelayed(message, 10800);*/
         }
-        if (!preferences.contains(PrefConstants.DELAY)) {
-            val editor = prefs.edit()
-            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
-            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
-            editor.apply()
-        }
-        val graphData = GraphPopulatorUtils.createXYChart(duration_v, delay_v)
-        currentSeries = graphData.xySeries
-        chart = graphData.createChart()
-        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, chart)
-        val actionBar = supportActionBar
-        actionBar!!.setDisplayUseLogoEnabled(true)
-        actionBar.setLogo(R.drawable.ic_launcher)
-        val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
-        titleView.setTextColor(Color.WHITE)
-        (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(
-            RelativeLayout.CENTER_HORIZONTAL,
-            0
-        )
-
-        //Intent timeIntent = GraphPopulatorUtils.createTimeChart(this);
-        //GraphPopulatorUtils.attachTimeChartIntoLayout(this, (AbstractChart)timeIntent.getExtras
-        //		 ().get("chart"));
     }
 
     private fun setPowerOnButtonListeners() {
@@ -888,7 +830,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             close()
             usbDevice = null
         } else {
-            readCallback = OnDataReceivedCallback { sendMessageWithUsbDataReceived(it) }
+            readCallback = OnDataReceivedCallback { onDataReceived(it) }
         }
     }
 
@@ -902,7 +844,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             for (modelChart in charts) {
                 chart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
             }
+            if (charts.all { it.points.isEmpty() }) {
+                GraphPopulatorUtils.clearYTextLabels(chart.renderer)
+            }
             chartView.repaint()
+        }
+        viewModel.currentChartIndex.observe(this) {
+            currentSeries = chart.dataset.getSeriesAt(it)
         }
     }
 
@@ -916,6 +864,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
                     is MainEvent.IncReadingCount -> incReadingCount()
                     is MainEvent.SendMessage -> sendMessage()
+                    is MainEvent.ClearEditor -> binding.editor.setText("")
+                    is MainEvent.ClearOutput -> binding.output.text = ""
+                    is MainEvent.ClearData -> clearData()
                 }
             }
         }
@@ -1558,37 +1509,29 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
      * rotate
      */
     private fun readIntent() {
-        val intent: Intent?
-        val action: String?
-        val file: File
-        intent = getIntent()
-        if (intent == null) {
-            doDefaultAction()
-            return
-        }
-        action = intent.action
-        if (action == null) {
-            doDefaultAction()
-        } else if (action == Intent.ACTION_VIEW || action == Intent.ACTION_EDIT) {
-            try {
-                file = File(URI(intent.data.toString()))
-                doOpenFile(file, false)
-            } catch (e: URISyntaxException) {
-                Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
-            } catch (e: IllegalArgumentException) {
-                Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+        when (intent.action) {
+            null -> doDefaultAction()
+            Intent.ACTION_VIEW, Intent.ACTION_EDIT -> {
+                try {
+                    val file = File(URI(intent.data.toString()))
+                    doOpenFile(file, false)
+                } catch (e: URISyntaxException) {
+                    Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
+                } catch (e: IllegalArgumentException) {
+                    Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+                }
             }
-        } else if (action == Constants.ACTION_WIDGET_OPEN) {
-            try {
-                file = File(URI(intent.data.toString()))
-                doOpenFile(file, intent.getBooleanExtra(Constants.EXTRA_FORCE_READ_ONLY, false))
-            } catch (e: URISyntaxException) {
-                Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
-            } catch (e: IllegalArgumentException) {
-                Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+            Constants.ACTION_WIDGET_OPEN -> {
+                try {
+                    val file = File(URI(intent.data.toString()))
+                    doOpenFile(file, intent.getBooleanExtra(Constants.EXTRA_FORCE_READ_ONLY, false))
+                } catch (e: URISyntaxException) {
+                    Crouton.showText(this, R.string.toast_intent_invalid_uri, Style.ALERT)
+                } catch (e: IllegalArgumentException) {
+                    Crouton.showText(this, R.string.toast_intent_illegal, Style.ALERT)
+                }
             }
-        } else {
-            doDefaultAction()
+            else -> doDefaultAction()
         }
     }
 
@@ -1722,12 +1665,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
      * @param path the path to the file (must be a valid path and not null)
      */
     private fun doSaveFile(path: String?) {
-        val content: String
         if (path == null) {
             Crouton.showText(this, R.string.toast_save_null, Style.ALERT)
             return
         }
-        content = binding.editor.text.toString()
+        val content: String = binding.editor.text.toString()
         if (!TextFileUtils.writeTextFile("$path.tmp", content)) {
             Crouton.showText(this, R.string.toast_save_temp, Style.ALERT)
             return
@@ -1751,8 +1693,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private fun doAutoSaveFile() {
         val text = binding.editor.text.toString()
-        if (text.length == 0) return
-        if (TextFileUtils.writeInternal(this, text)) {
+        if (text.isNotEmpty() && TextFileUtils.writeInternal(this, text)) {
             Toaster.showToast(this, R.string.toast_file_saved_auto, false)
         }
     }
@@ -1880,7 +1821,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         registerReceiver(usbReceiver, filter)
     }
 
-    private fun sendMessageWithUsbDataReceived(bytes: ByteArray) {
+    private fun onDataReceived(bytes: ByteArray) {
         var data: String
         val responseForChecking: String
         if (bytes.size == 7) {
@@ -1906,29 +1847,23 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
 
                 // auto
-                val delay_v = prefs.getInt(PrefConstants.DELAY, 2)
-                val duration_v = prefs.getInt(PrefConstants.DURATION, 3)
+                val delay = prefs.getInt(PrefConstants.DELAY, 2)
+                val duration = prefs.getInt(PrefConstants.DURATION, 3)
                 val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
                 if (isAuto) {
-                    if (readingCount == (duration_v * 60 / delay_v)) {
+                    if (readingCount == (duration * 60 / delay)) {
                         incCountMeasure()
-                        viewModel.chartIdx = 2
-                        setCurrentSeries(1)
-                    } else if (readingCount == (duration_v * 60)) {
+                        viewModel.setCurrentChartIndex(1)
+                    } else if (readingCount == (duration * 60)) {
                         incCountMeasure()
-                        viewModel.chartIdx = 3
-                        setCurrentSeries(2)
+                        viewModel.setCurrentChartIndex(2)
                     }
                 }
-                val currentDate = Date()
+                val shouldInitDate = countMeasure != oldCountMeasure
                 if (countMeasure != oldCountMeasure) {
-                    viewModel.chartDate = FORMATTER.format(currentDate)
                     refreshOldCountMeasure()
-                    chartIndexToDate[viewModel.chartIdx] = viewModel.chartDate
                 }
-                if (viewModel.subDirDate.isEmpty()) {
-                    viewModel.subDirDate = FORMATTER.format(currentDate)
-                }
+                viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
                 if (isTimerRunning) {
                     currentSeries.add(readingCount.toDouble(), co2.toDouble())
                     chartView.repaint()
@@ -2078,10 +2013,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
     }
 
-    private fun setCurrentSeries(index: Int) {
-        currentSeries = chart.dataset.getSeriesAt(index)
-    }
-
     private fun incCountMeasure() {
         countMeasure++
     }
@@ -2172,15 +2103,12 @@ System will turn off automaticaly."""
             .performClick()
     }
 
-    fun clearData() {
-        viewModel.subDirDate = ""
+    private fun clearData() {
         for (series in chart.dataset.series) {
             series.clear()
         }
         oldCountMeasure = 0
         countMeasure = oldCountMeasure
-        chartIndexToDate.clear()
-        GraphPopulatorUtils.clearYTextLabels(chart.renderer)
         chartView.repaint()
     }
 
