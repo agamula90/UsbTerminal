@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.PointF
 import android.view.LayoutInflater
+import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import org.achartengine.model.XYSeries
@@ -48,10 +51,8 @@ fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (
     dialog
 }
 
-//TODO not always work
 private fun DialogInterface.hideSoftInput() {
-    (this as? AlertDialog)?.currentFocus?.windowToken?.let {
-        val inputManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputManager.hideSoftInputFromWindow(it, 0)
+    (this as? AlertDialog)?.window?.let {
+        WindowInsetsControllerCompat(it, it.decorView).hide(WindowInsetsCompat.Type.ime())
     }
 }
