@@ -61,7 +61,8 @@
                             android:layout_gravity="center_vertical"
                             android:layout_marginStart="2dp"
                             android:layout_marginLeft="2dp"
-                            android:layout_weight="1">
+                            android:layout_weight="1"
+                            android:background="@drawable/temperature_button_drawable_unpressed">
 
                             <TextView
                                 android:id="@+id/temperature"
@@ -94,7 +95,8 @@
                             android:layout_height="43dp"
                             android:layout_gravity="center_vertical"
                             android:layout_marginStart="2dp"
-                            android:layout_weight="1">
+                            android:layout_weight="1"
+                            android:background="@drawable/temperature_button_drawable_unpressed">
 
                             <TextView
                                 android:id="@+id/co2"

@@ -41,9 +41,17 @@ class MainViewModel @Inject constructor(
     private val cacheFilesDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val app = application as EToCApplication
     private val prefs = PreferenceManager.getDefaultSharedPreferences(app)
+    val powerCommandsFactory: PowerCommandsFactory
 
     val events = Channel<MainEvent>(Channel.UNLIMITED)
     val charts = MutableLiveData(List(MAX_CHARTS) { Chart(it, emptyList()) })
+    val temperatureShift = handle.getLiveData("temperatureShift", 0)
+    val buttonOn1Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 0))
+    val buttonOn2Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 1))
+    val buttonOn3Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 2))
+    val buttonOn4Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 3))
+    val buttonOn5Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 4))
+    val buttonOn6Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 5))
     //TODO there should be some logic behind one chart
     //val currentChartIndex
     val maxY = handle.getLiveData("maxY",0)
@@ -56,6 +64,104 @@ class MainViewModel @Inject constructor(
     var chartDate: String = ""
     var chartIdx = 0
     var subDirDate: String = ""
+
+    init {
+        val settingsFolder = File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
+        powerCommandsFactory = createPowerCommandsFactory(settingsFolder)
+        events.offer(MainEvent.ShowToast(powerCommandsFactory.toString()))
+        if (settingsFolder.exists()) readSettingsFolder(settingsFolder)
+    }
+
+    private fun createPowerCommandsFactory(settingsFolder: File): PowerCommandsFactory {
+        val buttonPowerDataFile = File(settingsFolder, AppData.POWER_DATA)
+        var powerData: String? = ""
+        if (buttonPowerDataFile.exists()) {
+            powerData = TextFileUtils.readTextFile(buttonPowerDataFile)
+        }
+        return app.parseCommands(powerData)
+    }
+
+    private fun readSettingsFolder(settingsFolder: File) {
+        val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
+        if (button1DataFile.exists()) {
+            val button1Data = TextFileUtils.readTextFile(button1DataFile)
+            if (!button1Data.isEmpty()) {
+                val values = button1Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME1, values[0])
+                    editor.putString(PrefConstants.OFF_NAME1, values[1])
+                    editor.putString(PrefConstants.ON1, values[2])
+                    editor.putString(PrefConstants.OFF1, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
+        if (button2DataFile.exists()) {
+            val button2Data = TextFileUtils.readTextFile(button2DataFile)
+            if (!button2Data.isEmpty()) {
+                val values = button2Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME2, values[0])
+                    editor.putString(PrefConstants.OFF_NAME2, values[1])
+                    editor.putString(PrefConstants.ON2, values[2])
+                    editor.putString(PrefConstants.OFF2, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
+        if (button3DataFile.exists()) {
+            val button3Data = TextFileUtils.readTextFile(button3DataFile)
+            if (!button3Data.isEmpty()) {
+                val values = button3Data.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 4) {
+                    val editor = prefs.edit()
+                    editor.putString(PrefConstants.ON_NAME3, values[0])
+                    editor.putString(PrefConstants.OFF_NAME3, values[1])
+                    editor.putString(PrefConstants.ON3, values[2])
+                    editor.putString(PrefConstants.OFF3, values[3])
+                    editor.apply()
+                }
+            }
+        }
+        val temperatureShiftFolder = File(settingsFolder, AppData.TEMPERATURE_SHIFT_FILE)
+        if (temperatureShiftFolder.exists()) {
+            val temperatureData = TextFileUtils.readTextFile(temperatureShiftFolder)
+            if (temperatureData.isNotEmpty()) {
+                temperatureShift.value = try {
+                    temperatureData.toInt()
+                } catch (e: NumberFormatException) {
+                    0
+                }
+            }
+        }
+        val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
+        if (measureDefaultFilesFile.exists()) {
+            val measureFilesData = TextFileUtils.readTextFile(measureDefaultFilesFile)
+            if (measureFilesData.isNotEmpty()) {
+                val values = measureFilesData.split(AppData.SPLIT_STRING).toTypedArray()
+                if (values.size == 3) {
+                    val editor = prefs.edit()
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME1,
+                        values[0]
+                    )
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME2,
+                        values[1]
+                    )
+                    editor.putString(
+                        PrefConstants.MEASURE_FILE_NAME3,
+                        values[2]
+                    )
+                    editor.apply()
+                }
+            }
+        }
+    }
 
     fun readChart(filePath: String) {
         readChartJob?.cancel()
@@ -344,5 +450,53 @@ class MainViewModel @Inject constructor(
                 e.printStackTrace()
             }
         }
+    }
+
+    fun onButton1Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton1PersistedInfo(persistedInfo: PersistedInfo) {
+
+    }
+
+    fun onButton2Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton2PersistedInfo(persistedInfo: PersistedInfo) {
+
+    }
+
+    fun onButton3Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton3PersistedInfo(persistedInfo: PersistedInfo) {
+
+    }
+
+    fun onButton4Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton4PersistedInfo(persistedInfo: PersistedInfo) {
+
+    }
+
+    fun onButton5Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton5PersistedInfo(persistedInfo: PersistedInfo) {
+
+    }
+
+    fun onButton6Click() = viewModelScope.launch(Dispatchers.IO) {
+
+    }
+
+    fun changeButton6PersistedInfo(persistedInfo: PersistedInfo) {
+
     }
 }

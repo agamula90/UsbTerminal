@@ -1,6 +1,7 @@
 package com.ismet.usbterminal
 
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.*
 import android.graphics.Color
 import android.hardware.usb.UsbManager
@@ -11,10 +12,7 @@ import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Log
 import android.util.SparseBooleanArray
-import android.view.KeyEvent
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.view.View.OnLongClickListener
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -135,12 +133,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
-    private var temperatureShift = 0
     private var lastTimePressed: Long = 0
     private var reportDate: Date? = null
     private var isPowerPressed = false
     private lateinit var binding: LayoutEditorUpdatedBinding
-    lateinit var powerCommandsFactory: PowerCommandsFactory
+    private var coolingDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,7 +149,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 MODE_PRIVATE
             )
         )
-        loadPreferencesFromLocalData()
         observeChartUpdates()
         observeEvents()
         handler = object: Handler(Looper.getMainLooper()) {
@@ -172,7 +168,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         initPowerAccordToItState()
 
         binding.power.setOnClickListener { v ->
-            when (powerCommandsFactory.currentPowerState()) {
+            when (viewModel.powerCommandsFactory.currentPowerState()) {
                 PowerState.OFF -> {
                     v.isEnabled = false
                     powerOn()
@@ -191,10 +187,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
 
-        changeBackground(binding.temperatureBackground)
-        changeBackground(binding.co2Background)
         binding.buttonOn1.text = prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
-        binding.buttonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
         binding.buttonOn1.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
             private var command: String? = null
             override fun onPrePullStopped() {
@@ -202,17 +195,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
                 val str_off_name1t =
                     prefs.getString(PrefConstants.OFF_NAME1, PrefConstants.OFF_NAME_DEFAULT)
-                val s = binding.buttonOn1.tag.toString()
                 command = "" //"/5H1000R";
-                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                val isActivated = binding.buttonOn1.isActivated
+                if (!isActivated) {
                     command = prefs.getString(PrefConstants.ON1, "")
                     binding.buttonOn1.text = str_off_name1t
-                    binding.buttonOn1.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
                 } else {
                     command = prefs.getString(PrefConstants.OFF1, "")
                     binding.buttonOn1.text = str_on_name1t
-                    binding.buttonOn1.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
                 }
+                binding.buttonOn1.isActivated = !isActivated
             }
 
             override fun onPostPullStopped() {
@@ -256,8 +248,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         edit.putString(PrefConstants.ON_NAME1, strOn1)
                         edit.putString(PrefConstants.OFF_NAME1, strOff1)
                         edit.apply()
-                        val s = binding.buttonOn1.tag.toString()
-                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                        if (!binding.buttonOn1.isActivated) {
                             binding.buttonOn1.text = strOn1
                         } else {
                             binding.buttonOn1.text = strOff1
@@ -270,8 +261,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         })
         binding.buttonOn2.text = prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
-        // on - activated, off - else, or vice versa
-        binding.buttonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
         EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")
         binding.buttonOn2.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
             private var command: String? = null
@@ -280,24 +269,23 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
                 val str_off_name2t =
                     prefs.getString(PrefConstants.OFF_NAME2, PrefConstants.OFF_NAME_DEFAULT)
-                val s = binding.buttonOn2.tag.toString()
                 command = "" //"/5H1000R";
+                val isActivated = binding.buttonOn2.isActivated
                 val defaultValue: String
                 val prefName: String
-                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                if (!isActivated) {
                     prefName = PrefConstants.OFF2
                     defaultValue = "/5H0000R"
                     command = prefs.getString(PrefConstants.ON2, "")
                     binding.buttonOn2.text = str_off_name2t
-                    binding.buttonOn2.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
                 } else {
                     prefName = PrefConstants.ON2
                     defaultValue = "/5H750R"
                     command = prefs.getString(PrefConstants.OFF2, "")
                     binding.buttonOn2.text = str_on_name2t
-                    binding.buttonOn2.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
                     binding.buttonOn2.alpha = 0.6f
                 }
+                binding.buttonOn2.isActivated = !isActivated
                 EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
             }
 
@@ -306,12 +294,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
 
             override fun onPostPullStarted() {
-                val tag = binding.buttonOn2.tag.toString()
                 binding.buttonOn2.post {
-                    if (tag == PrefConstants.ON_NAME_DEFAULT.lowercase(
-                            Locale.getDefault()
-                        )
-                    ) {
+                    if (!binding.buttonOn2.isActivated) {
                         binding.buttonOn2.alpha = 1f
                         binding.buttonOn2.setBackgroundResource(R.drawable.button_drawable)
                     } else {
@@ -356,10 +340,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         edit.putString(PrefConstants.ON_NAME2, strOn1)
                         edit.putString(PrefConstants.OFF_NAME2, strOff1)
                         edit.apply()
-                        val s = binding.buttonOn2.tag.toString()
                         val defaultValue: String
                         val prefName: String
-                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                        if (!binding.buttonOn2.isActivated) {
                             prefName = PrefConstants.ON2
                             defaultValue = "/5H750R"
                             binding.buttonOn2.text = strOn1
@@ -377,7 +360,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         })
         binding.buttonPpm.text = prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
-        binding.buttonPpm.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
         binding.buttonPpm.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
             private var command: String? = null
             override fun onPrePullStopped() {
@@ -385,16 +367,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
                 val str_off_name3 =
                     prefs.getString(PrefConstants.OFF_NAME3, PrefConstants.OFF_NAME_DEFAULT)
-                val s = binding.buttonPpm.tag.toString()
-                if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                val isActivated = binding.buttonPpm.isActivated
+                if (!isActivated) {
                     binding.buttonPpm.text = str_off_name3
-                    binding.buttonPpm.tag = PrefConstants.OFF_NAME_DEFAULT.lowercase(Locale.getDefault())
                     command = prefs.getString(PrefConstants.ON3, "")
                 } else {
                     binding.buttonPpm.text = str_on_name3
-                    binding.buttonPpm.tag = PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())
                     command = prefs.getString(PrefConstants.OFF3, "")
                 }
+                binding.buttonPpm.isActivated = !isActivated
             }
 
             override fun onPostPullStopped() {
@@ -404,10 +385,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             override fun onPostPullStarted() {}
         }))
         binding.buttonPpm.setOnLongClickListener(object : OnLongClickListener {
-            private lateinit var editOn: EditText
-            private lateinit var editOff: EditText
-            private lateinit var editOn1: EditText
-            private lateinit var editOff1: EditText
             override fun onLongClick(v: View): Boolean {
                 showOnOffDialog(
                     init = {
@@ -442,8 +419,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         edit.putString(PrefConstants.ON_NAME3, strOn1)
                         edit.putString(PrefConstants.OFF_NAME3, strOff1)
                         edit.apply()
-                        val s = binding.buttonPpm.tag.toString()
-                        if (s == PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+                        if (!binding.buttonPpm.isActivated) {
                             binding.buttonPpm.text = strOn1
                         } else {
                             binding.buttonPpm.text = strOff1
@@ -565,7 +541,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             lateinit var mRadio2: RadioButton
             lateinit var mRadio3: RadioButton
             override fun onClick(measureView: View) {
-                if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
                     return
                 }
                 if (isTimerRunning) {
@@ -829,7 +805,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
         val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
         val preferences = prefs
-        if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
+        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
             EToCApplication.getInstance().isPreLooping = true
             viewModel.waitForCooling()
 
@@ -880,7 +856,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     fun stopPullingForTemperature() {
         viewModel.stopWaitForCooling()
-        powerCommandsFactory.coolingDialog?.dismiss()
+        coolingDialog?.dismiss()
     }
 
     fun waitForCooling() {
@@ -890,7 +866,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     fun initPowerAccordToItState() {
         val powerText: String?
         val drawableResource: Int
-        when (powerCommandsFactory.currentPowerState()) {
+        when (viewModel.powerCommandsFactory.currentPowerState()) {
             PowerState.OFF, PowerState.PRE_LOOPING -> {
                 powerText = prefs.getString(
                     PrefConstants.POWER_OFF_NAME,
@@ -952,107 +928,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             usbDevice = null
         } else {
             readCallback = OnDataReceivedCallback { sendMessageWithUsbDataReceived(it) }
-        }
-    }
-
-    private fun loadPreferencesFromLocalData() {
-        val settingsFolder =
-            File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
-        val buttonPowerDataFile = File(settingsFolder, AppData.POWER_DATA)
-        var powerData: String? = ""
-        if (buttonPowerDataFile.exists()) {
-            powerData = TextFileUtils.readTextFile(buttonPowerDataFile)
-        }
-        powerCommandsFactory = EToCApplication.getInstance().parseCommands(powerData)
-        val commandFactory: String = if (powerCommandsFactory is FilePowerCommandsFactory) {
-            "FilePowerCommand"
-        } else {
-            "DefaultPowerCommand"
-        }
-        Toast.makeText(this, commandFactory, Toast.LENGTH_LONG).show()
-        if (!settingsFolder.exists()) {
-            return
-        }
-        val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
-        if (button1DataFile.exists()) {
-            val button1Data = TextFileUtils.readTextFile(button1DataFile)
-            if (!button1Data.isEmpty()) {
-                val values = button1Data.split(AppData.SPLIT_STRING).toTypedArray()
-                if (values.size == 4) {
-                    val editor = prefs.edit()
-                    editor.putString(PrefConstants.ON_NAME1, values[0])
-                    editor.putString(PrefConstants.OFF_NAME1, values[1])
-                    editor.putString(PrefConstants.ON1, values[2])
-                    editor.putString(PrefConstants.OFF1, values[3])
-                    editor.apply()
-                }
-            }
-        }
-        val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
-        if (button2DataFile.exists()) {
-            val button2Data = TextFileUtils.readTextFile(button2DataFile)
-            if (!button2Data.isEmpty()) {
-                val values = button2Data.split(AppData.SPLIT_STRING).toTypedArray()
-                if (values.size == 4) {
-                    val editor = prefs.edit()
-                    editor.putString(PrefConstants.ON_NAME2, values[0])
-                    editor.putString(PrefConstants.OFF_NAME2, values[1])
-                    editor.putString(PrefConstants.ON2, values[2])
-                    editor.putString(PrefConstants.OFF2, values[3])
-                    editor.apply()
-                }
-            }
-        }
-        val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
-        if (button3DataFile.exists()) {
-            val button3Data = TextFileUtils.readTextFile(button3DataFile)
-            if (!button3Data.isEmpty()) {
-                val values = button3Data.split(AppData.SPLIT_STRING).toTypedArray()
-                if (values.size == 4) {
-                    val editor = prefs.edit()
-                    editor.putString(PrefConstants.ON_NAME3, values[0])
-                    editor.putString(PrefConstants.OFF_NAME3, values[1])
-                    editor.putString(PrefConstants.ON3, values[2])
-                    editor.putString(PrefConstants.OFF3, values[3])
-                    editor.apply()
-                }
-            }
-        }
-        val temperatureShiftFolder = File(settingsFolder, AppData.TEMPERATURE_SHIFT_FILE)
-        if (temperatureShiftFolder.exists()) {
-            val temperatureData = TextFileUtils.readTextFile(temperatureShiftFolder)
-            if (!temperatureData.isEmpty()) {
-                temperatureShift = try {
-                    temperatureData.toInt()
-                } catch (e: NumberFormatException) {
-                    0
-                }
-            }
-        } else {
-            temperatureShift = 0
-        }
-        val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
-        if (measureDefaultFilesFile.exists()) {
-            val measureFilesData = TextFileUtils.readTextFile(measureDefaultFilesFile)
-            if (!measureFilesData.isEmpty()) {
-                val values = measureFilesData.split(AppData.SPLIT_STRING).toTypedArray()
-                if (values.size == 3) {
-                    val editor = prefs.edit()
-                    editor.putString(
-                        PrefConstants.MEASURE_FILE_NAME1,
-                        values[0]
-                    )
-                    editor.putString(
-                        PrefConstants.MEASURE_FILE_NAME2,
-                        values[1]
-                    )
-                    editor.putString(
-                        PrefConstants.MEASURE_FILE_NAME3,
-                        values[2]
-                    )
-                    editor.apply()
-                }
-            }
         }
     }
 
@@ -1195,11 +1070,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     // 2 second wait ->
     // "/1ZR" "respond as ->" "blasad" -> power on
     fun powerOn() {
-        if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
             isPowerPressed = true
             binding.power.alpha = 0.6f
-            powerCommandsFactory.moveStateToNext()
-            powerCommandsFactory.sendRequest(this, handler)
+            viewModel.powerCommandsFactory.moveStateToNext()
+            sendRequest(handler)
         } else {
             throw IllegalStateException()
         }
@@ -1236,11 +1111,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         if (isPowerPressed) {
             handleResponse(sVal)
         } else {
-            val powerState = powerCommandsFactory.currentPowerState()
+            val powerState = viewModel.powerCommandsFactory.currentPowerState()
             if (powerState == PowerState.PRE_LOOPING) {
                 EToCApplication.getInstance().isPreLooping = false
                 stopPullingForTemperature()
-                powerCommandsFactory.moveStateToNext()
+                viewModel.powerCommandsFactory.moveStateToNext()
             }
         }
     }
@@ -1274,18 +1149,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     // bigger, then
     //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
     fun powerOff() {
-        if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
             isPowerPressed = true
             binding.power.alpha = 0.6f
-            if (binding.buttonOn2.tag.toString() != PrefConstants.ON_NAME_DEFAULT.lowercase(Locale.getDefault())) {
+            if (binding.buttonOn2.isActivated) {
                 binding.buttonOn2.performClick()
                 handler.postDelayed({
-                    powerCommandsFactory.moveStateToNext()
-                    powerCommandsFactory.sendRequest(this, handler)
+                    viewModel.powerCommandsFactory.moveStateToNext()
+                    sendRequest(handler)
                 }, 1200)
             } else {
-                powerCommandsFactory.moveStateToNext()
-                powerCommandsFactory.sendRequest(this, handler)
+                viewModel.powerCommandsFactory.moveStateToNext()
+                sendRequest(handler)
             }
         } else {
             throw IllegalStateException()
@@ -2077,26 +1952,26 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         if (isPowerPressed) {
             handleResponse(responseForChecking)
         } else {
-            val powerState = powerCommandsFactory.currentPowerState()
+            val powerState = viewModel.powerCommandsFactory.currentPowerState()
             if (powerState == PowerState.PRE_LOOPING) {
                 EToCApplication.getInstance().isPreLooping = false
                 stopPullingForTemperature()
-                powerCommandsFactory.moveStateToNext()
+                viewModel.powerCommandsFactory.moveStateToNext()
             }
         }
     }
 
     private fun handleResponse(response: String) {
-        when (powerCommandsFactory.currentPowerState()) {
+        when (viewModel.powerCommandsFactory.currentPowerState()) {
             PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
-                val currentCommand = powerCommandsFactory.currentCommand()
-                powerCommandsFactory.moveStateToNext()
+                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
+                viewModel.powerCommandsFactory.moveStateToNext()
                 if (currentCommand?.hasSelectableResponses() == true) {
                     if (currentCommand.isResponseCorrect(response)) {
-                        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                        if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
                             handler.postDelayed({
-                                if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                                    powerCommandsFactory.sendRequest(this, handler)
+                                if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                                    sendRequest(handler)
                                 }
                             }, currentCommand.delay)
                         }
@@ -2112,21 +1987,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         showCustomisedToast("Wrong response: Got - \"${response}\".Expected - $responseBuilder")
                         return
                     }
-                } else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    powerCommandsFactory.sendRequest(this, handler)
+                } else if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                    sendRequest(handler)
                 }
-                if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
                     initPowerAccordToItState()
                     startSendingTemperatureOrCo2Requests()
                 }
             }
             PowerState.OFF_INTERRUPTING -> {
                 stopSendingTemperatureOrCo2Requests()
-                powerCommandsFactory.moveStateToNext()
-                val delayForPausing = powerCommandsFactory.currentCommand()!!.delay
+                viewModel.powerCommandsFactory.moveStateToNext()
+                val delayForPausing = viewModel.powerCommandsFactory.currentCommand()!!.delay
                 handler.postDelayed( {
-                    if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                        powerCommandsFactory.sendRequest(this, handler)
+                    if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                        sendRequest(handler)
                     }
                 }, delayForPausing * 2)
             }
@@ -2136,14 +2011,14 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 if (temperatureData.isCorrect) {
                     val curTemperature = temperatureData.temperature1
                     if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
-                        powerCommandsFactory.moveStateToNext()
+                        viewModel.powerCommandsFactory.moveStateToNext()
                     }
-                    powerCommandsFactory.moveStateToNext()
+                    viewModel.powerCommandsFactory.moveStateToNext()
                     handler.postDelayed({
-                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                            powerCommandsFactory.sendRequest(this, handler)
+                        if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                            sendRequest(handler)
                         }
-                    }, powerCommandsFactory.currentCommand()!!.delay)
+                    }, viewModel.powerCommandsFactory.currentCommand()!!.delay)
                 }
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
@@ -2152,27 +2027,27 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     val curTemperature: Int = temperatureData.temperature1
                     if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
                         stopPullingForTemperature()
-                        powerCommandsFactory.moveStateToNext()
+                        viewModel.powerCommandsFactory.moveStateToNext()
                         handler.postDelayed({
-                            if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                powerCommandsFactory.sendRequest(this, handler)
+                            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                                sendRequest(handler)
                             }
-                        }, powerCommandsFactory.currentCommand()!!.delay)
+                        }, viewModel.powerCommandsFactory.currentCommand()!!.delay)
                     }
                 }
             }
             PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
-                powerCommandsFactory.moveStateToNext()
-                if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+                viewModel.powerCommandsFactory.moveStateToNext()
+                if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
                     initPowerAccordToItState()
                     return
                 }
-                val currentCommand = powerCommandsFactory.currentCommand()
+                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
                 if (currentCommand?.hasSelectableResponses() == true) {
                     if (currentCommand.isResponseCorrect(response)) {
                         handler.postDelayed({
-                            if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                powerCommandsFactory.sendRequest(this, handler)
+                            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                                sendRequest(handler)
                             }
                         }, currentCommand.delay)
                     } else {
@@ -2216,8 +2091,55 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         invalidateOptionsMenu()
     }
 
-    private fun changeBackground(button: View) {
-        button.setBackgroundResource(R.drawable.temperature_button_drawable_unpressed)
+    fun sendRequest(mHandler: Handler) {
+        var powerState = viewModel.powerCommandsFactory.currentPowerState()
+        when (powerState) {
+            PowerState.OFF_INTERRUPTING -> {
+                val message = mHandler.obtainMessage()
+                message.what = MainActivity.MESSAGE_INTERRUPT_ACTIONS
+                message.sendToTarget()
+            }
+            PowerState.OFF_WAIT_FOR_COOLING -> {
+                waitForCooling()
+                dismissProgress()
+                coolingDialog = Dialog(this).apply {
+                    requestWindowFeature(Window.FEATURE_NO_TITLE)
+                    setContentView(R.layout.layout_cooling)
+                    window!!.setBackgroundDrawableResource(android.R.color.transparent)
+                    (findViewById<View>(R.id.text) as TextView).text =
+                        """  Cooling down.  Do not switch power off.  Please wait . . . ! ! !    
+System will turn off automaticaly."""
+                    setCancelable(false)
+                    show()
+                }
+            }
+            else -> {
+                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
+                if (currentCommand != null) {
+                    deliverCommand(currentCommand.command)
+                    if (!currentCommand.hasSelectableResponses()) {
+                        powerState = viewModel.powerCommandsFactory.nextPowerState()
+                        if (powerState !== PowerState.OFF && powerState !== PowerState.ON) {
+                            mHandler.postDelayed({
+                                val currentCommandNew = viewModel.powerCommandsFactory.currentCommand()
+                                var currentState = viewModel.powerCommandsFactory.currentPowerState()
+                                if (currentState !== PowerState.OFF && currentState !==
+                                    PowerState.ON
+                                ) {
+                                    if (currentCommand == currentCommandNew) {
+                                        viewModel.powerCommandsFactory.moveStateToNext()
+                                        currentState = viewModel.powerCommandsFactory.currentPowerState()
+                                        if (currentState !== PowerState.OFF && currentState !== PowerState.ON) {
+                                            sendRequest(mHandler)
+                                        }
+                                    }
+                                }
+                            }, currentCommand.delay)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
@@ -2225,7 +2147,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             TemperatureData.parse(text).also { temperatureData ->
                 if (temperatureData.isCorrect) {
                     val updateRunnable = Runnable {
-                        binding.temperature.text = (temperatureData.temperature1 + temperatureShift).toString()
+                        binding.temperature.text = (temperatureData.temperature1 + viewModel.temperatureShift.value!!).toString()
                     }
                     updateRunnable.run()
                 } else {
@@ -2321,7 +2243,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         private val mAutoPullResolverCallback: AutoPullResolverCallback
     ) : View.OnClickListener {
         override fun onClick(v: View) {
-            if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
                 return
             }
             mAutoPullResolverCallback.onPrePullStopped()
@@ -2334,7 +2256,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             mAutoPullResolverCallback.onPostPullStopped()
             if (timeElapsed) {
                 handler.postDelayed({
-                    if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                    if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
                         viewModel.startSendingTemperatureOrCo2Requests()
                     }
                     mAutoPullResolverCallback.onPostPullStarted()

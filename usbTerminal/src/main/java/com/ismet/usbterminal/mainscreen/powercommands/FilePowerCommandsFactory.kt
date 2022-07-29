@@ -109,6 +109,8 @@ class FilePowerCommandsFactory(
         return powerState
     }
 
+    override fun toString(): String = "FilePowerCommand"
+
     companion object {
         const val START_COOLING = "Cooling"
         const val INTERRUPT_SOFTWARE_ACTIONS = "InterruptActions"

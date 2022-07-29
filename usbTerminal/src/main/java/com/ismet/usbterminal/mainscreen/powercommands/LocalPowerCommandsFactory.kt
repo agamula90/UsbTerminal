@@ -110,4 +110,6 @@ class LocalPowerCommandsFactory(
     override fun currentPowerState(): PowerState {
         return powerState
     }
+
+    override fun toString() = "DefaultPowerCommand"
 }
