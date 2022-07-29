@@ -3,6 +3,7 @@ package com.ismet.usbterminal
 import android.app.Application
 import android.graphics.PointF
 import android.os.Environment
+import android.os.SystemClock
 import android.preference.PreferenceManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -10,6 +11,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
+import com.ismet.usbterminal.utils.Utils
+import com.ismet.usbterminalnew.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.xgouchet.texteditor.common.TextFileUtils
 import kotlinx.coroutines.*
@@ -55,6 +58,7 @@ class MainViewModel @Inject constructor(
     //TODO there should be some logic behind one chart
     //val currentChartIndex
     val maxY = handle.getLiveData("maxY",0)
+    private var lastTimePressed: Long = 0
 
     private var shouldSendTemperatureRequest = true
     private var readChartJob: Job? = null
@@ -452,51 +456,301 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onButton1Click() = viewModelScope.launch(Dispatchers.IO) {
-
+    fun onButton1Click() {
+        onClick(0)
     }
 
-    fun changeButton1PersistedInfo(persistedInfo: PersistedInfo) {
-
+    private fun onClick(index: Int) {
+        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+            return
+        }
+        val command = onPrePullStopped(index)
+        val nowTime = SystemClock.uptimeMillis()
+        val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, lastTimePressed)
+        if (timeElapsed) {
+            lastTimePressed = nowTime
+            stopSendingTemperatureOrCo2Requests()
+        }
+        events.offer(MainEvent.WriteToUsb(command))
+        if (timeElapsed) {
+            viewModelScope.launch(Dispatchers.IO) {
+                delay(1000)
+                if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                    startSendingTemperatureOrCo2Requests()
+                }
+                onPostPullStarted(index)
+            }
+        }
     }
 
-    fun onButton2Click() = viewModelScope.launch(Dispatchers.IO) {
+    private fun onPrePullStopped(index: Int): String {
+        val buttonProperties = when(index) {
+            0 -> buttonOn1Properties
+            1 -> buttonOn2Properties
+            2 -> buttonOn3Properties
+            3 -> buttonOn4Properties
+            4 -> buttonOn5Properties
+            5 -> buttonOn6Properties
+            else -> {
+                return ""
+            }
+        }
 
+        val isActivated = buttonProperties.value!!.isActivated
+        val alpha = when {
+            isActivated && index.isHighlighteable() -> 0.6f
+            else -> buttonProperties.value!!.alpha
+        }
+
+        val command = when(index) {
+            0, 3 -> {
+                var command = "" //"/5H1000R";
+                if (!isActivated) {
+                    command = prefs.getString(PrefConstants.ON1, "")!!
+                } else {
+                    command = prefs.getString(PrefConstants.OFF1, "")!!
+                }
+                command
+            }
+            1, 4 -> {
+                var command = "" //"/5H1000R";
+                val defaultValue: String
+                val prefName: String
+                if (!isActivated) {
+                    prefName = PrefConstants.OFF2
+                    defaultValue = "/5H0000R"
+                    command = prefs.getString(PrefConstants.ON2, "")!!
+                } else {
+                    prefName = PrefConstants.ON2
+                    defaultValue = "/5H750R"
+                    command = prefs.getString(PrefConstants.OFF2, "")!!
+                }
+                app.currentTemperatureRequest = prefs.getString(prefName, defaultValue)
+                command
+            }
+            2, 5 -> {
+                if (!isActivated) {
+                    prefs.getString(PrefConstants.ON3, "")!!
+                } else {
+                    prefs.getString(PrefConstants.OFF3, "")!!
+                }
+            }
+            else -> ""
+        }
+
+        buttonProperties.value = buttonProperties.value!!.copy(isActivated = !isActivated, alpha = alpha)
+        return command
     }
 
-    fun changeButton2PersistedInfo(persistedInfo: PersistedInfo) {
+    private fun Int.isHighlighteable() = this < 3
 
+    private fun onPostPullStarted(index: Int) {
+        if (index.isHighlighteable()) {
+            val buttonProperties = when(index) {
+                0 -> buttonOn1Properties
+                1 -> buttonOn2Properties
+                2 -> buttonOn3Properties
+                else -> return
+            }
+            val isActivated = buttonProperties.value!!.isActivated
+            val background = if (!isActivated) R.drawable.button_drawable else R.drawable.power_on_drawable
+            buttonProperties.value = buttonProperties.value!!.copy(alpha = 1f, background = background)
+        }
     }
 
-    fun onButton3Click() = viewModelScope.launch(Dispatchers.IO) {
-
+    // true if success, false otherwise
+    fun changeButton1PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON1, persistedInfo.command)
+            edit.putString(PrefConstants.OFF1, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME1, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME1, persistedInfo.activatedText)
+            edit.apply()
+            buttonOn1Properties.value = buttonOn1Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn4Properties.value = buttonOn4Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
     }
 
-    fun changeButton3PersistedInfo(persistedInfo: PersistedInfo) {
-
+    fun onButton2Click() {
+        onClick(1)
     }
 
-    fun onButton4Click() = viewModelScope.launch(Dispatchers.IO) {
+    fun changeButton2PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON2, persistedInfo.command)
+            edit.putString(PrefConstants.OFF2, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME2, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME2, persistedInfo.activatedText)
+            edit.apply()
+            val isActivated = buttonOn2Properties.value!!.isActivated
+            val defaultValue: String
+            val prefName: String
+            if (!isActivated) {
+                prefName = PrefConstants.ON2
+                defaultValue = "/5H750R"
+            } else {
+                prefName = PrefConstants.OFF2
+                defaultValue = "/5H0000R"
+            }
+            EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
 
+            buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn5Properties.value = buttonOn5Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
     }
 
-    fun changeButton4PersistedInfo(persistedInfo: PersistedInfo) {
-
+    fun onButton3Click() {
+        onClick(2)
     }
 
-    fun onButton5Click() = viewModelScope.launch(Dispatchers.IO) {
-
+    fun changeButton3PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON3, persistedInfo.command)
+            edit.putString(PrefConstants.OFF3, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME3, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME3, persistedInfo.activatedText)
+            edit.apply()
+            buttonOn3Properties.value = buttonOn3Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn6Properties.value = buttonOn6Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
     }
 
-    fun changeButton5PersistedInfo(persistedInfo: PersistedInfo) {
-
+    fun onButton4Click() {
+        onClick(3)
     }
 
-    fun onButton6Click() = viewModelScope.launch(Dispatchers.IO) {
-
+    fun changeButton4PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON1, persistedInfo.command)
+            edit.putString(PrefConstants.OFF1, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME1, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME1, persistedInfo.activatedText)
+            edit.apply()
+            buttonOn1Properties.value = buttonOn1Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn4Properties.value = buttonOn4Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
     }
 
-    fun changeButton6PersistedInfo(persistedInfo: PersistedInfo) {
+    fun onButton5Click() {
+        onClick(4)
+    }
 
+    fun changeButton5PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON2, persistedInfo.command)
+            edit.putString(PrefConstants.OFF2, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME2, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME2, persistedInfo.activatedText)
+            edit.apply()
+            val isActivated = buttonOn2Properties.value!!.isActivated
+            val defaultValue: String
+            val prefName: String
+            if (!isActivated) {
+                prefName = PrefConstants.ON2
+                defaultValue = "/5H750R"
+            } else {
+                prefName = PrefConstants.OFF2
+                defaultValue = "/5H0000R"
+            }
+            EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
+
+            buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn5Properties.value = buttonOn5Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
+    }
+
+    fun onButton6Click() {
+        onClick(5)
+    }
+
+    fun changeButton6PersistedInfo(persistedInfo: PersistedInfo): Boolean = persistedInfo.isValid().apply {
+        if (this) {
+            val edit = prefs.edit()
+            edit.putString(PrefConstants.ON3, persistedInfo.command)
+            edit.putString(PrefConstants.OFF3, persistedInfo.activatedCommand)
+            edit.putString(PrefConstants.ON_NAME3, persistedInfo.text)
+            edit.putString(PrefConstants.OFF_NAME3, persistedInfo.activatedText)
+            edit.apply()
+            buttonOn3Properties.value = buttonOn3Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+            buttonOn6Properties.value = buttonOn6Properties.value!!.copy(
+                text = persistedInfo.text,
+                command = persistedInfo.command,
+                activatedText = persistedInfo.activatedText,
+                activatedCommand = persistedInfo.activatedCommand
+            )
+        }
+    }
+
+    fun onSendClick() {
+        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+            return
+        }
+        val nowTime = SystemClock.uptimeMillis()
+        val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, lastTimePressed)
+        if (timeElapsed) {
+            lastTimePressed = nowTime
+            stopSendingTemperatureOrCo2Requests()
+        }
+        events.offer(MainEvent.SendMessage)
     }
 }

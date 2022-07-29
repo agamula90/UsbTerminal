@@ -60,4 +60,6 @@ class PersistedInfo(
     val command: String,
     val activatedText: String,
     val activatedCommand: String
-)
+) {
+    fun isValid() = activatedText.isNotEmpty() && text.isNotEmpty() && activatedCommand.isNotEmpty() && command.isNotEmpty()
+}

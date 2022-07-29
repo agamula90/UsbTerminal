@@ -22,8 +22,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory
-import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
 import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
@@ -151,6 +149,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         )
         observeChartUpdates()
         observeEvents()
+        observeButtonUpdates()
         handler = object: Handler(Looper.getMainLooper()) {
             override fun handleMessage(msg: Message) {
                 super.handleMessage(msg)
@@ -187,260 +186,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
 
-        binding.buttonOn1.text = prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
-        binding.buttonOn1.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
-            private var command: String? = null
-            override fun onPrePullStopped() {
-                val str_on_name1t =
-                    prefs.getString(PrefConstants.ON_NAME1, PrefConstants.ON_NAME_DEFAULT)
-                val str_off_name1t =
-                    prefs.getString(PrefConstants.OFF_NAME1, PrefConstants.OFF_NAME_DEFAULT)
-                command = "" //"/5H1000R";
-                val isActivated = binding.buttonOn1.isActivated
-                if (!isActivated) {
-                    command = prefs.getString(PrefConstants.ON1, "")
-                    binding.buttonOn1.text = str_off_name1t
-                } else {
-                    command = prefs.getString(PrefConstants.OFF1, "")
-                    binding.buttonOn1.text = str_on_name1t
-                }
-                binding.buttonOn1.isActivated = !isActivated
-            }
-
-            override fun onPostPullStopped() {
-                sendCommand(command)
-            }
-
-            override fun onPostPullStarted() {}
-        }))
-        binding.buttonOn1.setOnLongClickListener(object : OnLongClickListener {
-            override fun onLongClick(v: View): Boolean {
-                showOnOffDialog(
-                    init = {
-                        changeTextsForButtons(it)
-                        val str_on = prefs.getString(PrefConstants.ON1, "")
-                        val str_off = prefs.getString(PrefConstants.OFF1, "")
-                        val str_on_name = prefs.getString(
-                            PrefConstants.ON_NAME1,
-                            PrefConstants.ON_NAME_DEFAULT
-                        )
-                        val str_off_name = prefs.getString(
-                            PrefConstants.OFF_NAME1,
-                            PrefConstants.OFF_NAME_DEFAULT
-                        )
-                        it.editOn.setText(str_on)
-                        it.editOff.setText(str_off)
-                        it.editOn1.setText(str_on_name)
-                        it.editOff1.setText(str_off_name)
-                    },
-                    okClick = { localBinding, dialog ->
-                        val strOn = localBinding.editOn.text.toString()
-                        val strOff = localBinding.editOff.text.toString()
-                        val strOn1 = localBinding.editOn1.text.toString()
-                        val strOff1 = localBinding.editOff1.text.toString()
-                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            showCustomisedToast("Please enter all values")
-                            return@showOnOffDialog
-                        }
-                        val edit = prefs.edit()
-                        edit.putString(PrefConstants.ON1, strOn)
-                        edit.putString(PrefConstants.OFF1, strOff)
-                        edit.putString(PrefConstants.ON_NAME1, strOn1)
-                        edit.putString(PrefConstants.OFF_NAME1, strOff1)
-                        edit.apply()
-                        if (!binding.buttonOn1.isActivated) {
-                            binding.buttonOn1.text = strOn1
-                        } else {
-                            binding.buttonOn1.text = strOff1
-                        }
-                        dialog.cancel()
-                    }
-                )
-
-                return true
-            }
-        })
-        binding.buttonOn2.text = prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
-        EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")
-        binding.buttonOn2.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
-            private var command: String? = null
-            override fun onPrePullStopped() {
-                val str_on_name2t =
-                    prefs.getString(PrefConstants.ON_NAME2, PrefConstants.ON_NAME_DEFAULT)
-                val str_off_name2t =
-                    prefs.getString(PrefConstants.OFF_NAME2, PrefConstants.OFF_NAME_DEFAULT)
-                command = "" //"/5H1000R";
-                val isActivated = binding.buttonOn2.isActivated
-                val defaultValue: String
-                val prefName: String
-                if (!isActivated) {
-                    prefName = PrefConstants.OFF2
-                    defaultValue = "/5H0000R"
-                    command = prefs.getString(PrefConstants.ON2, "")
-                    binding.buttonOn2.text = str_off_name2t
-                } else {
-                    prefName = PrefConstants.ON2
-                    defaultValue = "/5H750R"
-                    command = prefs.getString(PrefConstants.OFF2, "")
-                    binding.buttonOn2.text = str_on_name2t
-                    binding.buttonOn2.alpha = 0.6f
-                }
-                binding.buttonOn2.isActivated = !isActivated
-                EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
-            }
-
-            override fun onPostPullStopped() {
-                sendCommand(command)
-            }
-
-            override fun onPostPullStarted() {
-                binding.buttonOn2.post {
-                    if (!binding.buttonOn2.isActivated) {
-                        binding.buttonOn2.alpha = 1f
-                        binding.buttonOn2.setBackgroundResource(R.drawable.button_drawable)
-                    } else {
-                        binding.buttonOn2.alpha = 1f
-                        binding.buttonOn2.setBackgroundResource(R.drawable.power_on_drawable)
-                    }
-                }
-            }
-        }))
-        binding.buttonOn2.setOnLongClickListener(object : OnLongClickListener {
-            override fun onLongClick(v: View): Boolean {
-                showOnOffDialog(
-                    init = {
-                        changeTextsForButtons(it)
-                        val str_on_name = prefs.getString(
-                            PrefConstants.ON_NAME2,
-                            PrefConstants.ON_NAME_DEFAULT
-                        )
-                        val str_off_name = prefs.getString(
-                            PrefConstants.OFF_NAME2,
-                            PrefConstants.OFF_NAME_DEFAULT
-                        )
-                        val str_on = prefs.getString(PrefConstants.ON2, "")
-                        val str_off = prefs.getString(PrefConstants.OFF2, "")
-                        it.editOn.setText(str_on)
-                        it.editOff.setText(str_off)
-                        it.editOn1.setText(str_on_name)
-                        it.editOff1.setText(str_off_name)
-                    },
-                    okClick = { localBinding, dialog ->
-                        val strOn = localBinding.editOn.text.toString()
-                        val strOff = localBinding.editOff.text.toString()
-                        val strOn1 = localBinding.editOn1.text.toString()
-                        val strOff1 = localBinding.editOff1.text.toString()
-                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            showCustomisedToast("Please enter all values")
-                            return@showOnOffDialog
-                        }
-                        val edit = prefs.edit()
-                        edit.putString(PrefConstants.ON2, strOn)
-                        edit.putString(PrefConstants.OFF2, strOff)
-                        edit.putString(PrefConstants.ON_NAME2, strOn1)
-                        edit.putString(PrefConstants.OFF_NAME2, strOff1)
-                        edit.apply()
-                        val defaultValue: String
-                        val prefName: String
-                        if (!binding.buttonOn2.isActivated) {
-                            prefName = PrefConstants.ON2
-                            defaultValue = "/5H750R"
-                            binding.buttonOn2.text = strOn1
-                        } else {
-                            prefName = PrefConstants.OFF2
-                            defaultValue = "/5H0000R"
-                            binding.buttonOn2.text = strOff1
-                        }
-                        EToCApplication.getInstance().currentTemperatureRequest = prefs
-                            .getString(prefName, defaultValue)
-                        dialog.cancel()
-                    }
-                )
-                return true
-            }
-        })
-        binding.buttonPpm.text = prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
-        binding.buttonPpm.setOnClickListener(AutoPullResolverListener(object : AutoPullResolverCallback {
-            private var command: String? = null
-            override fun onPrePullStopped() {
-                val str_on_name3 =
-                    prefs.getString(PrefConstants.ON_NAME3, PrefConstants.ON_NAME_DEFAULT)
-                val str_off_name3 =
-                    prefs.getString(PrefConstants.OFF_NAME3, PrefConstants.OFF_NAME_DEFAULT)
-                val isActivated = binding.buttonPpm.isActivated
-                if (!isActivated) {
-                    binding.buttonPpm.text = str_off_name3
-                    command = prefs.getString(PrefConstants.ON3, "")
-                } else {
-                    binding.buttonPpm.text = str_on_name3
-                    command = prefs.getString(PrefConstants.OFF3, "")
-                }
-                binding.buttonPpm.isActivated = !isActivated
-            }
-
-            override fun onPostPullStopped() {
-                sendCommand(command)
-            }
-
-            override fun onPostPullStarted() {}
-        }))
-        binding.buttonPpm.setOnLongClickListener(object : OnLongClickListener {
-            override fun onLongClick(v: View): Boolean {
-                showOnOffDialog(
-                    init = {
-                        changeTextsForButtons(it)
-                        val str_on_name = prefs.getString(
-                            PrefConstants.ON_NAME3,
-                            PrefConstants.ON_NAME_DEFAULT
-                        )
-                        val str_off_name = prefs.getString(
-                            PrefConstants.OFF_NAME3,
-                            PrefConstants.OFF_NAME_DEFAULT
-                        )
-                        val str_on = prefs.getString(PrefConstants.ON3, "")
-                        val str_off = prefs.getString(PrefConstants.OFF3, "")
-                        it.editOn.setText(str_on)
-                        it.editOff.setText(str_off)
-                        it.editOn1.setText(str_on_name)
-                        it.editOff1.setText(str_off_name)
-                    },
-                    okClick = { localBinding, dialog ->
-                        val strOn = localBinding.editOn.text.toString()
-                        val strOff = localBinding.editOff.text.toString()
-                        val strOn1 = localBinding.editOn1.text.toString()
-                        val strOff1 = localBinding.editOff1.text.toString()
-                        if (strOn == "" || strOff == "" || strOn1 == "" || strOff1 == "") {
-                            showCustomisedToast("Please enter all values")
-                            return@showOnOffDialog
-                        }
-                        val edit = prefs.edit()
-                        edit.putString(PrefConstants.ON3, strOn)
-                        edit.putString(PrefConstants.OFF3, strOff)
-                        edit.putString(PrefConstants.ON_NAME3, strOn1)
-                        edit.putString(PrefConstants.OFF_NAME3, strOff1)
-                        edit.apply()
-                        if (!binding.buttonPpm.isActivated) {
-                            binding.buttonPpm.text = strOn1
-                        } else {
-                            binding.buttonPpm.text = strOff1
-                        }
-                        dialog.cancel()
-                    }
-                )
-                return true
-            }
-        })
-        binding.buttonSend.setOnClickListener(AutoPullResolverListener(object :
-            AutoPullResolverCallback {
-            override fun onPrePullStopped() {
-            }
-
-            override fun onPostPullStopped() {
-                sendMessage()
-            }
-
-            override fun onPostPullStarted() {}
-        }))
+        setPowerOnButtonListeners()
+        binding.buttonSend.setOnClickListener { viewModel.onSendClick() }
         binding.editor.setOnEditorActionListener { _, actionId, _ ->
             var handled = false
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -840,6 +587,233 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         //		 ().get("chart"));
     }
 
+    private fun setPowerOnButtonListeners() {
+        EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")
+
+        binding.buttonOn1.setOnClickListener { viewModel.onButton1Click() }
+        binding.buttonOn1.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on = prefs.getString(PrefConstants.ON1, "")
+                    val str_off = prefs.getString(PrefConstants.OFF1, "")
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME1,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME1,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton1PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+        binding.buttonOn2.setOnClickListener { viewModel.onButton2Click() }
+        binding.buttonOn2.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME2,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME2,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    val str_on = prefs.getString(PrefConstants.ON2, "")
+                    val str_off = prefs.getString(PrefConstants.OFF2, "")
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton2PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+        binding.buttonPpm.setOnClickListener { viewModel.onButton3Click() }
+        binding.buttonPpm.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME3,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME3,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    val str_on = prefs.getString(PrefConstants.ON3, "")
+                    val str_off = prefs.getString(PrefConstants.OFF3, "")
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton3PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+        binding.buttonOn3.setOnClickListener { viewModel.onButton4Click() }
+        binding.buttonOn3.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on = prefs.getString(PrefConstants.ON1, "")
+                    val str_off = prefs.getString(PrefConstants.OFF1, "")
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME1,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME1,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton4PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+        binding.buttonOn4.setOnClickListener { viewModel.onButton5Click() }
+        binding.buttonOn4.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME2,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME2,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    val str_on = prefs.getString(PrefConstants.ON2, "")
+                    val str_off = prefs.getString(PrefConstants.OFF2, "")
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton5PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+        binding.buttonOn5.setOnClickListener { viewModel.onButton6Click() }
+        binding.buttonOn5.setOnLongClickListener {
+            showOnOffDialog(
+                init = {
+                    changeTextsForButtons(it)
+                    val str_on_name = prefs.getString(
+                        PrefConstants.ON_NAME3,
+                        PrefConstants.ON_NAME_DEFAULT
+                    )
+                    val str_off_name = prefs.getString(
+                        PrefConstants.OFF_NAME3,
+                        PrefConstants.OFF_NAME_DEFAULT
+                    )
+                    val str_on = prefs.getString(PrefConstants.ON3, "")
+                    val str_off = prefs.getString(PrefConstants.OFF3, "")
+                    it.editOn.setText(str_on)
+                    it.editOff.setText(str_off)
+                    it.editOn1.setText(str_on_name)
+                    it.editOff1.setText(str_off_name)
+                },
+                okClick = { localBinding, dialog ->
+                    val command = localBinding.editOn.text.toString()
+                    val activatedCommand = localBinding.editOff.text.toString()
+                    val text = localBinding.editOn1.text.toString()
+                    val activatedText = localBinding.editOff1.text.toString()
+                    val isSuccess = viewModel.changeButton6PersistedInfo(
+                        PersistedInfo(text, command, activatedText, activatedCommand)
+                    )
+                    if (!isSuccess) {
+                        showCustomisedToast("Please enter all values")
+                    } else {
+                        dialog.cancel()
+                    }
+                }
+            )
+            true
+        }
+    }
+
     private fun showCustomisedToast(message: String) {
         val customToast = Toast.makeText(this, message, Toast.LENGTH_LONG)
         ToastUtils.wrap(customToast)
@@ -954,7 +928,53 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
                     is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
                     is MainEvent.IncReadingCount -> incReadingCount()
+                    is MainEvent.SendMessage -> sendMessage()
                 }
+            }
+        }
+    }
+
+    private fun observeButtonUpdates() {
+        viewModel.buttonOn1Properties.observe(this) {
+            binding.buttonOn1.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+            }
+        }
+        viewModel.buttonOn2Properties.observe(this) {
+            binding.buttonOn2.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+            }
+        }
+        viewModel.buttonOn3Properties.observe(this) {
+            binding.buttonPpm.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+            }
+        }
+        viewModel.buttonOn4Properties.observe(this) {
+            binding.buttonOn3.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+            }
+        }
+        viewModel.buttonOn5Properties.observe(this) {
+            binding.buttonOn4.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+            }
+        }
+        viewModel.buttonOn6Properties.observe(this) {
+            binding.buttonOn5.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
             }
         }
     }
@@ -1152,6 +1172,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
             isPowerPressed = true
             binding.power.alpha = 0.6f
+            //TODO move to viewmodel
             if (binding.buttonOn2.isActivated) {
                 binding.buttonOn2.performClick()
                 handler.postDelayed({
