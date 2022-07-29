@@ -56,6 +56,7 @@ class MainViewModel @Inject constructor(
     val buttonOn4Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 3))
     val buttonOn5Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 4))
     val buttonOn6Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 5))
+    val powerProperties = handle.getLiveData("power", ButtonProperties.forPower())
     //TODO there should be some logic behind one chart
     //val currentChartIndex
     val maxY = handle.getLiveData("maxY",0)
@@ -72,12 +73,15 @@ class MainViewModel @Inject constructor(
     val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
     private var currentClearOptions = mutableSetOf<String>()
     val checkedClearOptions = List(allClearOptions.size) { false }
+    var isPowerPressed = false
+        private set
 
     init {
         val settingsFolder = File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
         powerCommandsFactory = createPowerCommandsFactory(settingsFolder)
         events.offer(MainEvent.ShowToast(powerCommandsFactory.toString()))
         if (settingsFolder.exists()) readSettingsFolder(settingsFolder)
+        initPowerAccordToItState()
     }
 
     private fun createPowerCommandsFactory(settingsFolder: File): PowerCommandsFactory {
@@ -263,6 +267,7 @@ class MainViewModel @Inject constructor(
     fun stopWaitForCooling() {
         sendWaitForCoolingJob?.cancel()
         sendWaitForCoolingJob = null
+        events.offer(MainEvent.DismissCoolingDialog)
     }
 
     fun readCommandsFromFile(file: File, shouldUseRecentDirectory: Boolean, runningTime: Long, oneLoopTime: Long) {
@@ -824,5 +829,132 @@ class MainViewModel @Inject constructor(
             events.offer(MainEvent.ClearData)
         }
         charts.value = currentCharts
+    }
+
+    fun onPowerClick() {
+        when (powerCommandsFactory.currentPowerState()) {
+            PowerState.OFF -> {
+                powerProperties.value = powerProperties.value!!.copy(isEnabled = false)
+                //TODO
+                //make power on
+                //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+                // 0.5 second wait -> repeat
+                // "/5J5R" "respond as ->" "@5J4"
+                // 1 second wait ->
+                // "(FE............)" "respond as ->" "lala"
+                // 2 second wait ->
+                // "/1ZR" "respond as ->" "blasad" -> power on
+                isPowerPressed = true
+                powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
+                powerCommandsFactory.moveStateToNext()
+                events.offer(MainEvent.SendRequest)
+                //TODO uncomment for simulating
+                //simulateClick2();
+            }
+            PowerState.ON -> {
+                powerProperties.value = powerProperties.value!!.copy(isEnabled = false)
+                //TODO
+                //make power off
+                //interrupt all activities by software (mean measure process etc)
+                // 1 second wait ->
+                // "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
+                // around 75C -> "/5J5R" -> "@5J5" -> then power off
+                // bigger, then
+                //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
+                isPowerPressed = true
+                powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
+                val isButton2Activated = buttonOn2Properties.value!!.isActivated
+                if (isButton2Activated) {
+                    onButton2Click()
+                    viewModelScope.launch(Dispatchers.IO) {
+                        delay(1200)
+                        powerCommandsFactory.moveStateToNext()
+                        events.send(MainEvent.SendRequest)
+                    }
+                } else {
+                    powerCommandsFactory.moveStateToNext()
+                    events.offer(MainEvent.SendRequest)
+                }
+                //TODO uncomment for simulating
+                //simulateClick1();
+            }
+            else -> {
+                //do nothing
+            }
+        }
+    }
+
+    private fun simulateClick2() = viewModelScope.launch(Dispatchers.IO) {
+        delay(800)
+        val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
+        simulateResponse(temperatureData)
+        delay(800)
+        simulateResponse("@5J001 ")
+        delay(1400)
+        simulateResponse("@5J101 ")
+        delay(1800)
+        simulateResponse("255")
+        delay(600)
+        simulateResponse("1ZR")
+    }
+
+    private fun simulateClick1() = viewModelScope.launch(Dispatchers.IO) {
+        delay(3800)
+        //TODO temperature out of range
+        var temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
+        simulateResponse(temperatureData)
+        delay(1200)
+        //TODO temperature out of range
+        temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
+        simulateResponse(temperatureData)
+        delay(15000)
+        //TODO temperature in of range
+        temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
+        simulateResponse(temperatureData)
+        delay(4000)
+        simulateResponse(null)
+    }
+
+    private suspend fun simulateResponse(response: String?) {
+        val notNullResponse = response.orEmpty()
+
+        if (isPowerPressed) {
+            events.send(MainEvent.SendResponseToPowerCommandsFactory(notNullResponse))
+        } else {
+            val powerState = powerCommandsFactory.currentPowerState()
+            if (powerState == PowerState.PRE_LOOPING) {
+                app.isPreLooping = false
+                stopWaitForCooling()
+                powerCommandsFactory.moveStateToNext()
+            }
+        }
+    }
+
+    fun initPowerAccordToItState() {
+        val text: String
+        val background: Int
+        when (powerCommandsFactory.currentPowerState()) {
+            PowerState.OFF, PowerState.PRE_LOOPING -> {
+                text = prefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants.POWER_OFF_NAME_DEFAULT)!!
+                background = R.drawable.power_off_drawable
+            }
+            PowerState.ON -> {
+                text = prefs.getString(PrefConstants.POWER_ON_NAME, PrefConstants.POWER_ON_NAME_DEFAULT)!!
+                background = R.drawable.power_on_drawable
+            }
+            else -> {
+                isPowerPressed = false
+                powerProperties.value = powerProperties.value!!.copy(isEnabled = true)
+                return
+            }
+        }
+        isPowerPressed = false
+        powerProperties.value = powerProperties.value!!.copy(
+            isEnabled = true,
+            text = text,
+            activatedText = text,
+            alpha = 1f,
+            background = background
+        )
     }
 }

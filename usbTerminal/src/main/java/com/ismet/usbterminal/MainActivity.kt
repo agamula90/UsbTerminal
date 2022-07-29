@@ -129,7 +129,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
     private var reportDate: Date? = null
-    private var isPowerPressed = false
     private lateinit var binding: LayoutEditorUpdatedBinding
     private var coolingDialog: Dialog? = null
 
@@ -181,28 +180,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         binding.editor.updateFromSettings()
         watcher = TextChangeWatcher()
         isWarnedShouldQuit = false
-        initPowerAccordToItState()
 
-        binding.power.setOnClickListener { v ->
-            when (viewModel.powerCommandsFactory.currentPowerState()) {
-                PowerState.OFF -> {
-                    v.isEnabled = false
-                    powerOn()
-                    //TODO uncomment for simulating
-                    //simulateClick2();
-                }
-                PowerState.ON -> {
-                    v.isEnabled = false
-                    powerOff()
-                    //TODO uncomment for simulating
-                    //simulateClick1();
-                }
-                else -> {
-                    //do nothing
-                }
-            }
-        }
-
+        binding.power.setOnClickListener { viewModel.onPowerClick() }
         setPowerOnButtonListeners()
         binding.buttonSend.setOnClickListener { viewModel.onSendClick() }
         binding.editor.setOnEditorActionListener { _, actionId, _ ->
@@ -763,42 +742,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private fun stopPullingForTemperature() {
         viewModel.stopWaitForCooling()
-        coolingDialog?.dismiss()
-    }
-
-    private fun initPowerAccordToItState() {
-        val powerText: String?
-        val drawableResource: Int
-        when (viewModel.powerCommandsFactory.currentPowerState()) {
-            PowerState.OFF, PowerState.PRE_LOOPING -> {
-                powerText = prefs.getString(
-                    PrefConstants.POWER_OFF_NAME,
-                    PrefConstants.POWER_OFF_NAME_DEFAULT
-                )
-                drawableResource = R.drawable.power_off_drawable
-            }
-            PowerState.ON -> {
-                powerText = prefs.getString(
-                    PrefConstants.POWER_ON_NAME,
-                    PrefConstants.POWER_ON_NAME_DEFAULT
-                )
-                drawableResource = R.drawable.power_on_drawable
-            }
-            else -> {
-                isPowerPressed = false
-                binding.power.isEnabled = true
-                return
-            }
-        }
-        isPowerPressed = false
-        binding.power.isEnabled = true
-        if (powerText != null) {
-            binding.power.text = powerText
-            binding.power.post {
-                binding.power.alpha = 1f
-                binding.power.setBackgroundResource(drawableResource)
-            }
-        }
     }
 
     private fun changeTextsForButtons(binding: LayoutDialogOnOffBinding) {
@@ -867,6 +810,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.ClearEditor -> binding.editor.setText("")
                     is MainEvent.ClearOutput -> binding.output.text = ""
                     is MainEvent.ClearData -> clearData()
+                    is MainEvent.SendRequest -> sendRequest(handler)
+                    is MainEvent.SendResponseToPowerCommandsFactory -> handleResponse(event.response)
+                    is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
                 }
             }
         }
@@ -878,6 +824,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
         viewModel.buttonOn2Properties.observe(this) {
@@ -885,6 +833,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
         viewModel.buttonOn3Properties.observe(this) {
@@ -892,6 +842,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
         viewModel.buttonOn4Properties.observe(this) {
@@ -899,6 +851,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
         viewModel.buttonOn5Properties.observe(this) {
@@ -906,6 +860,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
         viewModel.buttonOn6Properties.observe(this) {
@@ -913,6 +869,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 text = if (it.isActivated) it.activatedText else it.text
                 alpha = it.alpha
                 isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
+            }
+        }
+        viewModel.powerProperties.observe(this) {
+            binding.power.apply {
+                text = if (it.isActivated) it.activatedText else it.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
             }
         }
     }
@@ -1016,114 +983,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             measureDefaultFilesFile.absolutePath,
             measureDefaultFilesBuilder.toString()
         )
-    }
-
-    //TODO
-    //make power on
-    //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
-    // 0.5 second wait -> repeat
-    // "/5J5R" "respond as ->" "@5J4"
-    // 1 second wait ->
-    // "(FE............)" "respond as ->" "lala"
-    // 2 second wait ->
-    // "/1ZR" "respond as ->" "blasad" -> power on
-    private fun powerOn() {
-        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
-            isPowerPressed = true
-            binding.power.alpha = 0.6f
-            viewModel.powerCommandsFactory.moveStateToNext()
-            sendRequest(handler)
-        } else {
-            throw IllegalStateException()
-        }
-    }
-
-    private fun simulateClick1() {
-        powerOff()
-        handler.postDelayed({
-            //TODO temperature out of range
-            val temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
-            simulateResponse(temperatureData)
-        }, 3800)
-        handler.postDelayed({
-            //TODO temperature out of range
-            val temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
-            simulateResponse(temperatureData)
-        }, 5000)
-        handler.postDelayed({
-            //TODO temperature in of range
-            val temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
-            simulateResponse(temperatureData)
-        }, 20000)
-        handler.postDelayed({
-            simulateResponse(null)
-        }, 24000)
-    }
-
-    private fun simulateResponse(response: String?) {
-        var sVal = ""
-        if (response != null) {
-            sVal = response
-        }
-
-        if (isPowerPressed) {
-            handleResponse(sVal)
-        } else {
-            val powerState = viewModel.powerCommandsFactory.currentPowerState()
-            if (powerState == PowerState.PRE_LOOPING) {
-                EToCApplication.getInstance().isPreLooping = false
-                stopPullingForTemperature()
-                viewModel.powerCommandsFactory.moveStateToNext()
-            }
-        }
-    }
-
-    private fun simulateClick2() {
-        powerOn()
-        handler.postDelayed({
-            val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
-            simulateResponse(temperatureData)
-        }, 800)
-        handler.postDelayed({
-            simulateResponse("@5J001 ")
-        }, 1600)
-        handler.postDelayed({
-            simulateResponse("@5J101 ")
-        }, 3000)
-        handler.postDelayed({
-            simulateResponse("255")
-        }, 4800)
-        handler.postDelayed({
-            simulateResponse("1ZR")
-        }, 5400)
-    }
-
-    //TODO
-    //make power off
-    //interrupt all activities by software (mean measure process etc)
-    // 1 second wait ->
-    // "/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
-    // around 75C -> "/5J5R" -> "@5J5" -> then power off
-    // bigger, then
-    //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
-    private fun powerOff() {
-        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
-            isPowerPressed = true
-            binding.power.alpha = 0.6f
-            //TODO move to viewmodel
-            if (binding.buttonOn2.isActivated) {
-                binding.buttonOn2.performClick()
-                handler.postDelayed({
-                    viewModel.powerCommandsFactory.moveStateToNext()
-                    sendRequest(handler)
-                }, 1200)
-            } else {
-                viewModel.powerCommandsFactory.moveStateToNext()
-                sendRequest(handler)
-            }
-        } else {
-            throw IllegalStateException()
-        }
     }
 
     override fun getFragmentContainerId(): Int {
@@ -1892,7 +1751,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         Utils.appendText(binding.output, "Rx: $data")
         binding.scrollView.smoothScrollTo(0, 0)
 
-        if (isPowerPressed) {
+        if (viewModel.isPowerPressed) {
             handleResponse(responseForChecking)
         } else {
             val powerState = viewModel.powerCommandsFactory.currentPowerState()
@@ -1934,7 +1793,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     sendRequest(handler)
                 }
                 if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
-                    initPowerAccordToItState()
+                    viewModel.initPowerAccordToItState()
                     viewModel.startSendingTemperatureOrCo2Requests()
                 }
             }
@@ -1982,7 +1841,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
                 viewModel.powerCommandsFactory.moveStateToNext()
                 if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
-                    initPowerAccordToItState()
+                    viewModel.initPowerAccordToItState()
                     return
                 }
                 val currentCommand = viewModel.powerCommandsFactory.currentCommand()

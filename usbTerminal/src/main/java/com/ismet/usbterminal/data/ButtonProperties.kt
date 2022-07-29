@@ -14,7 +14,8 @@ data class ButtonProperties(
     val activatedText: String,
     val activatedCommand: String,
     @DrawableRes val background: Int,
-    val isActivated: Boolean
+    val isActivated: Boolean,
+    val isEnabled: Boolean
 ): Parcelable {
     companion object {
         fun byButtonIndex(prefs: SharedPreferences, index: Int, background: Int = R.drawable.button_drawable): ButtonProperties {
@@ -49,9 +50,21 @@ data class ButtonProperties(
                 activatedText = activatedText,
                 activatedCommand = activatedCommand,
                 background = background,
-                isActivated = false
+                isActivated = false,
+                isEnabled = true
             )
         }
+
+        fun forPower() = ButtonProperties(
+            alpha = 1f,
+            text = "power on",
+            command = "",
+            activatedText = "power on",
+            activatedCommand = "",
+            background = R.drawable.button_drawable,
+            isActivated = false,
+            isEnabled = true
+        )
     }
 }
 
