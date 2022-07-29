@@ -131,7 +131,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
-    private var lastTimePressed: Long = 0
     private var reportDate: Date? = null
     private var isPowerPressed = false
     private lateinit var binding: LayoutEditorUpdatedBinding
@@ -820,24 +819,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         customToast.show()
     }
 
-    fun startSendingTemperatureOrCo2Requests() {
-        viewModel.startSendingTemperatureOrCo2Requests()
-    }
-
-    fun stopSendingTemperatureOrCo2Requests() {
-        viewModel.stopSendingTemperatureOrCo2Requests()
-    }
-
-    fun stopPullingForTemperature() {
+    private fun stopPullingForTemperature() {
         viewModel.stopWaitForCooling()
         coolingDialog?.dismiss()
     }
 
-    fun waitForCooling() {
-        viewModel.waitForCooling()
-    }
-
-    fun initPowerAccordToItState() {
+    private fun initPowerAccordToItState() {
         val powerText: String?
         val drawableResource: Int
         when (viewModel.powerCommandsFactory.currentPowerState()) {
@@ -1089,7 +1076,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     // "(FE............)" "respond as ->" "lala"
     // 2 second wait ->
     // "/1ZR" "respond as ->" "blasad" -> power on
-    fun powerOn() {
+    private fun powerOn() {
         if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
             isPowerPressed = true
             binding.power.alpha = 0.6f
@@ -1168,7 +1155,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     // around 75C -> "/5J5R" -> "@5J5" -> then power off
     // bigger, then
     //You can do 1/2 second for the temperature and 1/2 second for the power and then co2
-    fun powerOff() {
+    private fun powerOff() {
         if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
             isPowerPressed = true
             binding.power.alpha = 0.6f
@@ -1242,7 +1229,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
-    fun sendCommand(newCommand: String?) {
+    private fun sendCommand(newCommand: String?) {
         var command = newCommand
         if (command != null && command != "" && command != "\n") {
             command = command.replace("\r", "")
@@ -1944,7 +1931,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 if (isTimerRunning) {
                     currentSeries.add(readingCount.toDouble(), co2.toDouble())
-                    repaintChartView()
+                    chartView.repaint()
                     viewModel.cacheBytesFromUsb(bytes)
                 }
                 if (co2 == 10000) {
@@ -2013,11 +2000,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
                     initPowerAccordToItState()
-                    startSendingTemperatureOrCo2Requests()
+                    viewModel.startSendingTemperatureOrCo2Requests()
                 }
             }
             PowerState.OFF_INTERRUPTING -> {
-                stopSendingTemperatureOrCo2Requests()
+                viewModel.stopSendingTemperatureOrCo2Requests()
                 viewModel.powerCommandsFactory.moveStateToNext()
                 val delayForPausing = viewModel.powerCommandsFactory.currentCommand()!!.delay
                 handler.postDelayed( {
@@ -2091,19 +2078,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
     }
 
-    fun setCurrentSeries(index: Int) {
+    private fun setCurrentSeries(index: Int) {
         currentSeries = chart.dataset.getSeriesAt(index)
     }
 
-    fun incCountMeasure() {
+    private fun incCountMeasure() {
         countMeasure++
     }
 
-    fun repaintChartView() {
-        chartView.repaint()
-    }
-
-    fun refreshOldCountMeasure() {
+    private fun refreshOldCountMeasure() {
         oldCountMeasure = countMeasure
     }
 
@@ -2112,7 +2095,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         invalidateOptionsMenu()
     }
 
-    fun sendRequest(mHandler: Handler) {
+    private fun sendRequest(mHandler: Handler) {
         var powerState = viewModel.powerCommandsFactory.currentPowerState()
         when (powerState) {
             PowerState.OFF_INTERRUPTING -> {
@@ -2121,7 +2104,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 message.sendToTarget()
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
-                waitForCooling()
+                viewModel.waitForCooling()
                 dismissProgress()
                 coolingDialog = Dialog(this).apply {
                     requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -2137,7 +2120,7 @@ System will turn off automaticaly."""
             else -> {
                 val currentCommand = viewModel.powerCommandsFactory.currentCommand()
                 if (currentCommand != null) {
-                    deliverCommand(currentCommand.command)
+                    sendCommand(currentCommand.command)
                     if (!currentCommand.hasSelectableResponses()) {
                         powerState = viewModel.powerCommandsFactory.nextPowerState()
                         if (powerState !== PowerState.OFF && powerState !== PowerState.ON) {
@@ -2163,7 +2146,7 @@ System will turn off automaticaly."""
         }
     }
 
-    fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
+    private fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
         if (isTemperature) {
             TemperatureData.parse(text).also { temperatureData ->
                 if (temperatureData.isCorrect) {
@@ -2180,11 +2163,11 @@ System will turn off automaticaly."""
         }
     }
 
-    fun incReadingCount() {
+    private fun incReadingCount() {
         readingCount++
     }
 
-    fun invokeAutoCalculations() {
+    private fun invokeAutoCalculations() {
         supportFragmentManager.findFragmentById(R.id.bottom_fragment)!!.view!!.findViewById<View>(R.id.calculate_ppm_auto)
             .performClick()
     }
@@ -2198,7 +2181,7 @@ System will turn off automaticaly."""
         countMeasure = oldCountMeasure
         chartIndexToDate.clear()
         GraphPopulatorUtils.clearYTextLabels(chart.renderer)
-        repaintChartView()
+        chartView.repaint()
     }
 
     override fun currentDate(): Date {
@@ -2248,42 +2231,6 @@ System will turn off automaticaly."""
     override fun reportFolders(): String {
         return File(Environment.getExternalStorageDirectory(), AppData.REPORT_FOLDER_NAME)
             .absolutePath
-    }
-
-    fun deliverCommand(command: String) {
-        sendCommand(command)
-    }
-
-    interface AutoPullResolverCallback {
-        fun onPrePullStopped()
-        fun onPostPullStopped()
-        fun onPostPullStarted()
-    }
-
-    private inner class AutoPullResolverListener(
-        private val mAutoPullResolverCallback: AutoPullResolverCallback
-    ) : View.OnClickListener {
-        override fun onClick(v: View) {
-            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                return
-            }
-            mAutoPullResolverCallback.onPrePullStopped()
-            val nowTime = SystemClock.uptimeMillis()
-            val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, lastTimePressed)
-            if (timeElapsed) {
-                lastTimePressed = nowTime
-                viewModel.stopSendingTemperatureOrCo2Requests()
-            }
-            mAutoPullResolverCallback.onPostPullStopped()
-            if (timeElapsed) {
-                handler.postDelayed({
-                    if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
-                        viewModel.startSendingTemperatureOrCo2Requests()
-                    }
-                    mAutoPullResolverCallback.onPostPullStarted()
-                }, 1000)
-            }
-        }
     }
 
     companion object {
