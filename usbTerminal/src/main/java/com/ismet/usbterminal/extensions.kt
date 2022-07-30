@@ -61,9 +61,8 @@ private fun DialogInterface.hideSoftInput() {
 
 fun TextView.append(command: Command) {
     val countLines = 30
-    val limit = if (command.toString().isEmpty()) countLines else countLines - 1
-    val textTrimmed = text.toString().split(Pattern.compile("\\n"), limit = limit).mapIndexed { index, s ->
-        if (index != limit - 1) {
+    text = (command.toString() + text.toString()).split(Pattern.compile("\\n"), limit = countLines).mapIndexed { index, s ->
+        if (index != countLines - 1) {
             s
         } else {
             val index = s.indexOf("\n")
@@ -74,5 +73,4 @@ fun TextView.append(command: Command) {
             }
         }
     }.joinToString(separator = "\n")
-    text = command.toString() + textTrimmed
 }
