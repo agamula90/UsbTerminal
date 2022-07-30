@@ -221,11 +221,11 @@ class MainViewModel @Inject constructor(
             while (isActive) {
                 shouldSendTemperatureRequest = !shouldSendTemperatureRequest
                 if (shouldSendTemperatureRequest) {
-                    events.send(MainEvent.WriteToUsb("/5J5R"))
+                    events.send(MainEvent.WriteToUsb(Command("/5J5R")))
                     delay(350)
-                    events.send(MainEvent.WriteToUsb(app.currentTemperatureRequest))
+                    events.send(MainEvent.WriteToUsb(Command(app.currentTemperatureRequest)))
                 } else {
-                    events.send(MainEvent.WriteToUsb(CO2_REQUEST))
+                    events.send(MainEvent.WriteToUsb(Command(CO2_REQUEST)))
                 }
                 delay(SEND_TEMPERATURE_OR_CO2_DELAY)
             }
@@ -241,7 +241,7 @@ class MainViewModel @Inject constructor(
         val commandsFactory: PowerCommandsFactory = app.powerCommandsFactory
 
         val command = if (app.isPreLooping) {
-            PowerCommand("/5J1R", 1000)
+            PowerCommand(Command("/5J1R"), 1000)
         } else {
             commandsFactory.currentCommand()!!
         }
@@ -252,7 +252,7 @@ class MainViewModel @Inject constructor(
                 val message = if (app.isPreLooping) {
                     command.command
                 } else {
-                    "/5H0000R"
+                    Command("/5H0000R")
                 }
                 val state = commandsFactory.currentPowerState()
                 if (state != PowerState.OFF) {
@@ -375,7 +375,7 @@ class MainViewModel @Inject constructor(
                 val delayC = simpleCommands[i].replace("delay", "").trim { it <= ' ' }.toLong()
                 delay(delayC)
             } else {
-                events.send(MainEvent.WriteToUsb(simpleCommands[i]))
+                events.send(MainEvent.WriteToUsb(Command(simpleCommands[i])))
             }
         }
         events.send(MainEvent.UpdateTimerRunning(true))
@@ -385,11 +385,11 @@ class MainViewModel @Inject constructor(
         if (loopCommands.isNotEmpty()) {
             while (count < len) {
                 events.send(MainEvent.IncReadingCount)
-                events.send(MainEvent.WriteToUsb(loopCommands[0]))
+                events.send(MainEvent.WriteToUsb(Command(loopCommands[0])))
                 val half_delay = delay / 2
                 delay(half_delay)
                 if (loopCommands.size > 1) {
-                    events.send(MainEvent.WriteToUsb(loopCommands[1]))
+                    events.send(MainEvent.WriteToUsb(Command(loopCommands[1])))
                     delay(half_delay)
                 }
 
@@ -480,7 +480,7 @@ class MainViewModel @Inject constructor(
             lastTimePressed = nowTime
             stopSendingTemperatureOrCo2Requests()
         }
-        events.offer(MainEvent.WriteToUsb(command))
+        events.offer(MainEvent.WriteToUsb(Command(command)))
         if (timeElapsed) {
             viewModelScope.launch(Dispatchers.IO) {
                 delay(1000)

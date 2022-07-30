@@ -19,7 +19,7 @@ class FilePowerCommandsFactory(
             PowerState.ON -> {
                 indexInRunning = 0
                 val powerCommand = offCommands.valueAt(0)
-                powerState = when (powerCommand.command) {
+                powerState = when (powerCommand.command.toString()) {
                     START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
                     INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
                     else -> PowerState.OFF_RUNNING
@@ -42,10 +42,10 @@ class FilePowerCommandsFactory(
                     isFinalState = false
                 }
                 val powerCommand = currentCommand()
-                powerState = when {
-                    powerCommand == null -> PowerState.OFF_RUNNING
-                    powerCommand.command == START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
-                    powerCommand.command == INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
+                powerState = when(powerCommand?.command?.toString()) {
+                    null -> PowerState.OFF_RUNNING
+                    START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
+                    INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
                     else -> PowerState.OFF_RUNNING
                 }
             }

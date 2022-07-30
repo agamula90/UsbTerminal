@@ -4,14 +4,16 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.PointF
+import android.text.TextUtils
 import android.view.LayoutInflater
-import android.view.View
-import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.ismet.usbterminal.data.Command
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import org.achartengine.model.XYSeries
+import java.util.regex.Pattern
 
 fun XYSeries.set(points: List<PointF>) {
     val pointsToAdd = points.toMutableList()
@@ -55,4 +57,21 @@ private fun DialogInterface.hideSoftInput() {
     (this as? AlertDialog)?.window?.let {
         WindowInsetsControllerCompat(it, it.decorView).hide(WindowInsetsCompat.Type.ime())
     }
+}
+
+fun TextView.append(command: Command) {
+    val countLines = 30
+    val textTrimmed = text.toString().split(Pattern.compile("\\n"), limit = countLines - 1).mapIndexed { index, s ->
+        if (index != countLines - 2) {
+            s
+        } else {
+            val index = s.indexOf("\n")
+            if (index != -1) {
+                s.substring(0, index)
+            } else {
+                s
+            }
+        }
+    }.joinToString(separator = "\n")
+    text = command.toString() + textTrimmed
 }

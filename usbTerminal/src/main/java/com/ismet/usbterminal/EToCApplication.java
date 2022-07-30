@@ -3,6 +3,7 @@ package com.ismet.usbterminal;
 import androidx.core.util.Pair;
 import android.util.SparseArray;
 
+import com.ismet.usbterminal.data.Command;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.mainscreen.powercommands.LocalPowerCommandsFactory;
@@ -155,9 +156,9 @@ public class EToCApplication extends InterpolationCalculatorApp {
 				possibleResponses = possibleResponses.subList(3, possibleResponses.size());
 				String[] responses = new String[possibleResponses.size()];
 				possibleResponses.toArray(responses);
-				return new Pair<>(indexOfCommand, new PowerCommand(command, delay, responses));
+				return new Pair<>(indexOfCommand, new PowerCommand(new Command(command), delay, responses));
 			} else {
-				return new Pair<>(indexOfCommand, new PowerCommand(command, delay));
+				return new Pair<>(indexOfCommand, new PowerCommand(new Command(command), delay, new String[0]));
 			}
 		} catch (NumberFormatException e) {
 			e.printStackTrace();

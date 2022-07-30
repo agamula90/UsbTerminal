@@ -1039,51 +1039,22 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
-    private fun sendCommand(newCommand: String?) {
-        var command = newCommand
-        if (command != null && command != "" && command != "\n") {
-            command = command.replace("\r", "")
-            command = command.replace("\n", "")
-            command = command.trim { it <= ' ' }
-            val tempUsbDevice = usbDevice
-            if (tempUsbDevice != null) {
-                if (command.contains("(") && command.contains(")")) {
-                    command = command.replace("(", "")
-                    command = command.replace(")", "")
-                    command = command.trim { it <= ' ' }
-                    val arr = command.split("-").toTypedArray()
-                    val bytes = ByteArray(arr.size)
-                    for (j in bytes.indices) {
-                        bytes[j] = arr[j].toInt(16).toByte()
-                    }
-                    tempUsbDevice.write(bytes)
-                } else {
-                    tempUsbDevice.write(command.toByteArray())
-                    tempUsbDevice.write("\r".toByteArray())
-                }
-            }
-
-            //if(Utils.isPullStateNone()) {
-            Utils.appendText(binding.output, "Tx: $command")
-            binding.scrollView.smoothScrollTo(0, 0)
+    private fun sendCommand(command: Command) {
+        usbDevice?.write(command.byteArray)
+        //if(Utils.isPullStateNone()) {
+        binding.output.append(command)
+        binding.scrollView.smoothScrollTo(0, 0)
         //}
-        }
     }
 
     private fun sendMessage() {
         if (binding.editor.text.toString() != "") {
             val multiLines = binding.editor.text.toString()
-            val commands: Array<String>
-            val delimiter = "\n"
-            commands = multiLines.split(delimiter).toTypedArray()
-            for (i in commands.indices) {
-                val command = commands[i]
-                sendCommand(command)
+            for (command in multiLines.split("\n")) {
+                sendCommand(Command(command))
             }
         } else {
-            usbDevice?.write("\r".toByteArray())
-            // binding.output.append("Tx: " + data + "\n");
-            // binding.scrollView.smoothScrollTo(0, binding.output.getBottom());
+            sendCommand(Command("\r"))
         }
     }
 
