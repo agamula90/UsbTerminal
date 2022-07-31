@@ -6,11 +6,13 @@ import android.content.DialogInterface
 import android.graphics.PointF
 import android.text.TextUtils
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.ismet.usbterminal.data.Command
 import com.ismet.usbterminalnew.R
+import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import org.achartengine.model.XYSeries
 import java.util.regex.Pattern
@@ -73,4 +75,25 @@ fun TextView.append(command: Command) {
             }
         }
     }.joinToString(separator = "\n")
+}
+
+fun View.showMeasureDialog(init: (LayoutDialogMeasureBinding) -> Unit, okClick: (LayoutDialogMeasureBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(context).let {
+    isEnabled = false
+    val inflater = LayoutInflater.from(context)
+    val binding = LayoutDialogMeasureBinding.inflate(inflater)
+    init(binding)
+    val dialog = it.apply {
+        setTitle("Start Measure")
+        setView(binding.root)
+        setPositiveButton(R.string.ui_save) { dialog, _ ->
+            dialog.hideSoftInput()
+            okClick(binding, dialog)
+        }
+        setNegativeButton(R.string.ui_cancel) { dialog, _ ->
+            dialog.hideSoftInput()
+        }
+    }.create()
+    dialog.setOnCancelListener { isEnabled = true }
+    dialog.show()
+    dialog
 }

@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
+import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,8 +58,6 @@ class MainViewModel @Inject constructor(
     val buttonOn5Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 4))
     val buttonOn6Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 5))
     val powerProperties = handle.getLiveData("power", ButtonProperties.forPower())
-    //TODO there should be some logic behind one chart
-    //val currentChartIndex
     val maxY = handle.getLiveData("maxY",0)
     private var lastTimePressed: Long = 0
 
@@ -82,6 +81,7 @@ class MainViewModel @Inject constructor(
         events.offer(MainEvent.ShowToast(powerCommandsFactory.toString()))
         if (settingsFolder.exists()) readSettingsFolder(settingsFolder)
         initPowerAccordToItState()
+        initGraphData()
     }
 
     private fun createPowerCommandsFactory(settingsFolder: File): PowerCommandsFactory {
@@ -270,11 +270,144 @@ class MainViewModel @Inject constructor(
         events.offer(MainEvent.DismissCoolingDialog)
     }
 
-    fun readCommandsFromFile(file: File, shouldUseRecentDirectory: Boolean, runningTime: Long, oneLoopTime: Long) {
+    // return true if operation can succeed, false otherwise
+    fun measure(
+        delay: String,
+        duration: String,
+        isKnownPpm: Boolean,
+        knownPpm: String,
+        userComment: String,
+        volume: String,
+        isAutoMeasurement: Boolean,
+        countMeasure: Int,
+        editorText: String,
+        editText1Text: String,
+        editText2Text: String,
+        editText3Text: String,
+        isUseRecentDirectory: Boolean,
+        checkedRadioButtonIndex: Int
+    ): Boolean {
+        val isValidationFailed = when {
+            delay == "" || duration == "" -> {
+                events.offer(MainEvent.ShowToast("Please enter all values"))
+                true
+            }
+            delay.toInt() == 0 || duration.toInt() == 0 -> {
+                events.offer(MainEvent.ShowToast("zero is not allowed"))
+                true
+            }
+            isKnownPpm && knownPpm == "" -> {
+                events.offer(MainEvent.ShowToast("Please enter ppm values"))
+                true
+            }
+            userComment == "" -> {
+                events.offer(MainEvent.ShowToast("Please enter comments"))
+                true
+            }
+            volume == "" -> {
+                events.offer(MainEvent.ShowToast("Please enter volume values"))
+                true
+            }
+            editorText == "" && checkedRadioButtonIndex == -1 -> {
+                events.offer(MainEvent.ShowToast("Please enter command"))
+                true
+            }
+            else -> false
+        }
+        if (isValidationFailed) return false
+        val edit = prefs.edit()
+        if (isKnownPpm) {
+            val kppm = knownPpm.toInt()
+            edit.putInt(PrefConstants.KPPM, kppm)
+        } else {
+            edit.remove(PrefConstants.KPPM)
+        }
+        edit.putString(PrefConstants.USER_COMMENT, userComment)
+        val intVolume = volume.toInt()
+        edit.putInt(PrefConstants.VOLUME, intVolume)
+        edit.putBoolean(PrefConstants.IS_AUTO, isAutoMeasurement)
+        edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, isKnownPpm)
+        val intDuration = duration.toInt()
+        val intDelay = delay.toInt()
+        val graphData = when(countMeasure) {
+            0 -> {
+                setCurrentChartIndex(0)
+                GraphPopulatorUtils.createXYChart(intDuration, intDelay)
+            }
+            else -> null
+        }
+        events.offer(MainEvent.IncCountMeasure)
+        edit.putInt(PrefConstants.DELAY, intDelay)
+        edit.putInt(PrefConstants.DURATION, intDuration)
+        val future = (intDuration * 60 * 1000).toLong()
+        val delay_timer = (intDelay * 1000).toLong()
+
+        val currentChartIndex: Int
+        val readingCount: Int
+        val charts = charts.value!!
+        when {
+            graphData != null || charts[0].points.isEmpty() -> {
+                currentChartIndex = 0
+                readingCount = 0
+            }
+            charts[1].points.isEmpty() -> {
+                currentChartIndex = 1
+                readingCount = intDuration * 60 / intDelay
+            }
+            charts[2].points.isEmpty() -> {
+                currentChartIndex = 2
+                readingCount = intDuration * 60
+            }
+            else -> {
+                currentChartIndex = -1
+                readingCount = -1
+            }
+        }
+        if (currentChartIndex != -1) setCurrentChartIndex(currentChartIndex)
+        if (readingCount != -1) events.offer(MainEvent.SetReadingCount(readingCount))
+        edit.putString(PrefConstants.MEASURE_FILE_NAME1, editText1Text)
+        edit.putString(PrefConstants.MEASURE_FILE_NAME2, editText2Text)
+        edit.putString(PrefConstants.MEASURE_FILE_NAME3, editText3Text)
+        edit.apply()
+
+        if (graphData != null) events.offer(MainEvent.UpdateGraphData(graphData))
+        if (checkedRadioButtonIndex == -1) {
+            readCommandsFromText(
+                text = editorText,
+                shouldUseRecentDirectory = isUseRecentDirectory,
+                runningTime = future,
+                oneLoopTime = delay_timer
+            )
+            return true
+        }
+
+        val filePath = when (checkedRadioButtonIndex) {
+            0 -> editText1Text
+            1 -> editText2Text
+            2 -> editText3Text
+            else -> throw IllegalArgumentException("Can't handle chart index")
+        }
+
+        readCommandsFromFile(
+            file = File(
+                File(
+                    Environment.getExternalStorageDirectory(),
+                    AppData.SYSTEM_SETTINGS_FOLDER_NAME
+                ),
+                filePath
+            ),
+            shouldUseRecentDirectory = isUseRecentDirectory,
+            runningTime = future,
+            oneLoopTime = delay_timer
+        )
+        return true
+    }
+
+    private fun readCommandsFromFile(file: File, shouldUseRecentDirectory: Boolean, runningTime: Long, oneLoopTime: Long) {
         readCommandsFromText(TextFileUtils.readTextFile(file), shouldUseRecentDirectory, runningTime, oneLoopTime)
     }
 
-    fun readCommandsFromText(text: String?, shouldUseRecentDirectory: Boolean, runningTime: Long, oneLoopTime: Long) {
+    private fun readCommandsFromText(text: String?, shouldUseRecentDirectory: Boolean, runningTime: Long, oneLoopTime: Long) {
         if (text != null && text.isNotEmpty()) {
             stopSendingTemperatureOrCo2Requests()
             val commands: Array<String>
@@ -760,7 +893,7 @@ class MainViewModel @Inject constructor(
             lastTimePressed = nowTime
             stopSendingTemperatureOrCo2Requests()
         }
-        events.offer(MainEvent.SendMessage)
+        events.offer(MainEvent.SendCommandsFromEditor)
     }
 
     fun onCurrentChartWasModified(wasModified: Boolean) {
@@ -956,5 +1089,18 @@ class MainViewModel @Inject constructor(
             alpha = 1f,
             background = background
         )
+    }
+
+    private fun initGraphData() {
+        val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+        val duration = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+        if (!prefs.contains(PrefConstants.DELAY)) {
+            val editor = prefs.edit()
+            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
+            editor.apply()
+        }
+        events.offer(MainEvent.UpdateGraphData(GraphPopulatorUtils.createXYChart(duration, delay)))
     }
 }

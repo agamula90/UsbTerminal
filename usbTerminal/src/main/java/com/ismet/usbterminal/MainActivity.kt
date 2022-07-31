@@ -11,18 +11,16 @@ import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Log
-import android.util.SparseBooleanArray
 import android.view.*
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.activity.viewModels
+import androidx.core.view.forEachIndexed
+import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator
-import com.ismet.usbterminal.utils.AlertDialogTwoButtonsCreator.OnInitLayoutListener
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
@@ -123,8 +121,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     lateinit var prefs: SharedPreferences
     lateinit var currentSeries: XYSeries
-    lateinit var chartView: GraphicalView
-    lateinit var chart: XYChart
+    var chartView: GraphicalView? = null
+    var chart: XYChart? = null
     private lateinit var usbDeviceConnection: UsbDeviceConnection
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
@@ -142,39 +140,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 MODE_PRIVATE
             )
         )
-        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
-        if (!prefs.contains(PrefConstants.DELAY)) {
-            val editor = prefs.edit()
-            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-            editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
-            editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
-            editor.apply()
-        }
-        val graphData = GraphPopulatorUtils.createXYChart(duration_v, delay_v)
-        chart = graphData.createChart()
-        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this, chart)
         val actionBar = supportActionBar
         actionBar!!.setDisplayUseLogoEnabled(true)
         actionBar.setLogo(R.drawable.ic_launcher)
         val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
         titleView.setTextColor(Color.WHITE)
-        (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(
-            RelativeLayout.CENTER_HORIZONTAL,
-            0
-        )
+        (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.CENTER_HORIZONTAL, 0)
         observeChartUpdates()
         observeEvents()
         observeButtonUpdates()
-        handler = object: Handler(Looper.getMainLooper()) {
-            override fun handleMessage(msg: Message) {
-                super.handleMessage(msg)
-                if (msg.what == MESSAGE_INTERRUPT_ACTIONS) {
-                    handleResponse( "")
-                }
-            }
-        }
-
+        handler = Handler(Looper.getMainLooper())
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
@@ -220,33 +195,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             alert.setOnCancelListener { viewModel.onClearDialogDismissed() }
             alert.show()
         }
-        binding.buttonMeasure.setOnClickListener(object : View.OnClickListener {
-            lateinit var editDelay: EditText
-            lateinit var editDuration: EditText
-            lateinit var editKnownPpm: EditText
-            lateinit var editVolume: EditText
-            lateinit var editUserComment: EditText
-            lateinit var commandsEditText1: EditText
-            lateinit var commandsEditText2: EditText
-            lateinit var commandsEditText3: EditText
-            lateinit var chkAutoManual: CheckBox
-            lateinit var chkKnownPpm: CheckBox
-            lateinit var chkUseRecentDirectory: CheckBox
-            lateinit var llkppm: LinearLayout
-            lateinit var ll_user_comment: LinearLayout
-            lateinit var mRadioGroup: RadioGroup
-            lateinit var mRadio1: RadioButton
-            lateinit var mRadio2: RadioButton
-            lateinit var mRadio3: RadioButton
-            override fun onClick(measureView: View) {
+        binding.buttonMeasure.setOnClickListener { measure ->
                 if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    return
+                    return@setOnClickListener
                 }
                 if (isTimerRunning) {
                     showCustomisedToast("Timer is running. Please wait")
-                    return
+                    return@setOnClickListener
                 }
-                val arrSeries = chart.dataset.series
+                val arrSeries = chart!!.dataset.series
                 var isChart1Clear = true
                 var isChart2Clear = true
                 var isChart3Clear = true
@@ -262,228 +219,70 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 if (!isChart1Clear && !isChart2Clear && !isChart3Clear) {
                     showCustomisedToast("No chart available. Please clear one of the charts")
-                    return
+                    return@setOnClickListener
                 }
-                measureView.isEnabled = false
-                val initLayoutListener =
-                    OnInitLayoutListener { contentView ->
-                        editDelay = contentView.findViewById<View>(R.id.editDelay) as EditText
-                        editDuration = contentView.findViewById<View>(R.id.editDuration) as EditText
-                        editKnownPpm = contentView.findViewById<View>(R.id.editKnownPpm) as EditText
-                        editVolume = contentView.findViewById<View>(R.id.editVolume) as EditText
-                        editUserComment =
-                            contentView.findViewById<View>(R.id.editUserComment) as EditText
-
-                        chkAutoManual =
-                            contentView.findViewById<View>(R.id.chkAutoManual) as CheckBox
-                        chkKnownPpm = contentView.findViewById<View>(R.id.chkKnownPpm) as CheckBox
-                        chkUseRecentDirectory =
-                            contentView.findViewById<View>(R.id.chkUseRecentDirectory) as CheckBox
-                        llkppm = contentView.findViewById<View>(R.id.llkppm) as LinearLayout
-                        ll_user_comment =
-                            contentView.findViewById<View>(R.id.ll_user_comment) as LinearLayout
-                        commandsEditText1 =
-                            contentView.findViewById<View>(R.id.commandsEditText1) as EditText
-                        commandsEditText2 =
-                            contentView.findViewById<View>(R.id.commandsEditText2) as EditText
-                        commandsEditText3 =
-                            contentView.findViewById<View>(R.id.commandsEditText3) as EditText
-                        mRadio1 = contentView.findViewById<View>(R.id.radio1) as RadioButton
-                        mRadio2 = contentView.findViewById<View>(R.id.radio2) as RadioButton
-                        mRadio3 = contentView.findViewById<View>(R.id.radio3) as RadioButton
-                        mRadioGroup = contentView.findViewById<View>(R.id.radio_group) as RadioGroup
-                        val delay_v = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
-                        val duration_v = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+                measure.showMeasureDialog(
+                    init = {
+                        val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+                        val duration = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
                         val volume = prefs.getInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
                         val kppm = prefs.getInt(PrefConstants.KPPM, -1)
                         val user_comment = prefs.getString(PrefConstants.USER_COMMENT, "")
-                        editDelay.setText(delay_v.toString())
-                        editDuration.setText(duration_v.toString())
-                        editVolume.setText(volume.toString())
-                        editUserComment.setText(user_comment)
-                        commandsEditText1.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT))
-                        commandsEditText2.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT))
-                        commandsEditText3.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT))
+                        it.editDelay.setText(delay.toString())
+                        it.editDuration.setText(duration.toString())
+                        it.editVolume.setText(volume.toString())
+                        it.editUserComment.setText(user_comment)
+                        it.commandsEditText1.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT))
+                        it.commandsEditText2.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT))
+                        it.commandsEditText3.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT))
                         if (kppm != -1) {
-                            editKnownPpm.setText(kppm.toString())
+                            it.editKnownPpm.setText(kppm.toString())
                         }
                         val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
-                        chkAutoManual.isChecked = isAuto
-                        chkKnownPpm.setOnCheckedChangeListener { _, isChecked ->
-                            if (isChecked) {
-                                editKnownPpm.isEnabled = true
-                                llkppm.visibility = View.VISIBLE
-                            } else {
-                                editKnownPpm.isEnabled = false
-                                llkppm.visibility = View.GONE
-                            }
+                        it.chkAutoManual.isChecked = isAuto
+                        it.chkKnownPpm.setOnCheckedChangeListener { _, isChecked ->
+                            it.editKnownPpm.isEnabled = isChecked
+                            it.llkppm.isVisible = isChecked
                         }
-                    }
-                val okListener: DialogInterface.OnClickListener =
-                    object : DialogInterface.OnClickListener {
-                        override fun onClick(dialog: DialogInterface, which: Int) {
-                            measureView.isEnabled = true
-                            val inputManager =
-                                getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                            inputManager.hideSoftInputFromWindow(
-                                (dialog as AlertDialog)
-                                    .currentFocus!!.windowToken, 0
-                            )
-                            val strDelay = editDelay.text.toString()
-                            val strDuration = editDuration.text.toString()
-                            if (strDelay == "" || strDuration == "") {
-                                showCustomisedToast("Please enter all values")
-                                return
-                            }
-                            if (chkKnownPpm.isChecked) {
-                                val strkPPM = editKnownPpm.text.toString()
-                                if (strkPPM == "") {
-                                    showCustomisedToast("Please enter ppm values")
-                                    return
-                                } else {
-                                    val kppm = strkPPM.toInt()
-                                    val edit = prefs.edit()
-                                    edit.putInt(PrefConstants.KPPM, kppm)
-                                    edit.apply()
-                                }
-                            } else {
-                                val edit = prefs.edit()
-                                edit.remove(PrefConstants.KPPM)
-                                edit.apply()
-                            }
-
-                            val str_uc = editUserComment.text.toString()
-                            if (str_uc == "") {
-                                showCustomisedToast("Please enter comments")
-                                return
-                            } else {
-                                val edit = prefs.edit()
-                                edit.putString(
-                                    PrefConstants.USER_COMMENT,
-                                    str_uc
-                                )
-                                edit.apply()
-                            }
-                            val strVolume = editVolume.text.toString()
-                            if (strVolume == "") {
-                                showCustomisedToast("Please enter volume values")
-                                return
-                            } else {
-                                val volume = strVolume.toInt()
-                                val edit = prefs.edit()
-                                edit.putInt(PrefConstants.VOLUME, volume)
-                                edit.apply()
-                            }
-                            val b = chkAutoManual.isChecked
-                            var edit = prefs.edit()
-                            edit.putBoolean(PrefConstants.IS_AUTO, b)
-                            edit.putBoolean(
-                                PrefConstants.SAVE_AS_CALIBRATION,
-                                chkKnownPpm.isChecked
-                            )
-                            edit.apply()
-                            val delay = strDelay.toInt()
-                            val duration = strDuration.toInt()
-                            if (delay == 0 || duration == 0) {
-                                showCustomisedToast("zero is not allowed")
-                                return
-                            } else {
-                                if (countMeasure == 0) {
-                                    val graphData = GraphPopulatorUtils.createXYChart(
-                                        duration,
-                                        delay
-                                    )
-                                    viewModel.setCurrentChartIndex(0)
-                                    chart = graphData.createChart()
-                                    chartView = GraphPopulatorUtils.attachXYChartIntoLayout(
-                                        this@MainActivity,
-                                        chart
-                                    )
-                                }
-                                incCountMeasure()
-                                edit = prefs.edit()
-                                edit.putInt(PrefConstants.DELAY, delay)
-                                edit.putInt(PrefConstants.DURATION, duration)
-                                edit.apply()
-                                val future = (duration * 60 * 1000).toLong()
-                                val delay_timer = (delay * 1000).toLong()
-                                if (chart.dataset.getSeriesAt(0).itemCount == 0) {
-                                    viewModel.setCurrentChartIndex(0)
-                                    readingCount = 0
-                                } else if (chart.dataset.getSeriesAt(1).itemCount == 0) {
-                                    viewModel.setCurrentChartIndex(1)
-                                    readingCount = duration * 60 / delay
-                                } else if (chart.dataset.getSeriesAt(2).itemCount == 0) {
-                                    viewModel.setCurrentChartIndex(2)
-                                    readingCount = duration * 60
-                                }
-                                val checkedId = mRadioGroup.checkedRadioButtonId
-                                if (binding.editor.text.toString() == "" && checkedId == -1) {
-                                    showCustomisedToast("Please enter command")
-                                    return
-                                }
-                                val editor = prefs.edit()
-                                editor.putString(PrefConstants.MEASURE_FILE_NAME1, commandsEditText1.text.toString())
-                                editor.putString(PrefConstants.MEASURE_FILE_NAME2, commandsEditText2.text.toString())
-                                editor.putString(PrefConstants.MEASURE_FILE_NAME3, commandsEditText3.text.toString())
-                                editor.apply()
-
-                                val shouldUseRecentDirectory = chkUseRecentDirectory.isChecked
-
-                                val filePath = when {
-                                    checkedId == mRadio1.id -> commandsEditText1.text.toString()
-                                    checkedId == mRadio2.id -> commandsEditText2.text.toString()
-                                    checkedId == mRadio3.id -> commandsEditText3.text.toString()
-                                    checkedId == -1 && binding.editor.text.toString().isEmpty() -> {
-                                        showCustomisedToast("File not found")
-                                        return
-                                    }
-                                    checkedId == -1 -> {
-                                        viewModel.readCommandsFromText(
-                                            text = binding.editor.text.toString(),
-                                            shouldUseRecentDirectory = shouldUseRecentDirectory,
-                                            runningTime = future,
-                                            oneLoopTime = delay_timer
-                                        )
-                                        return
-                                    }
-                                    else -> {
-                                        showCustomisedToast("Unexpected error")
-                                        return
-                                    }
-                                }
-                                viewModel.readCommandsFromFile(
-                                    file = File(
-                                        File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME),
-                                        filePath
-                                    ),
-                                    shouldUseRecentDirectory = shouldUseRecentDirectory,
-                                    runningTime = future,
-                                    oneLoopTime = delay_timer
-                                )
-                            }
+                    },
+                    okClick = { editorBinding, dialog ->
+                        val delay = editorBinding.editDelay.text.toString()
+                        val duration = editorBinding.editDuration.text.toString()
+                        val isKnownPpm = editorBinding.chkKnownPpm.isChecked
+                        val knownPpm = editorBinding.editKnownPpm.text.toString()
+                        val userComment = editorBinding.editUserComment.text.toString()
+                        val volume = editorBinding.editVolume.text.toString()
+                        val isAutoMeasurement = editorBinding.chkAutoManual.isChecked
+                        val editText1Text = editorBinding.commandsEditText1.text.toString()
+                        val editText2Text = editorBinding.commandsEditText2.text.toString()
+                        val editText3Text = editorBinding.commandsEditText3.text.toString()
+                        val isUseRecentDirectory = editorBinding.chkUseRecentDirectory.isChecked
+                        val checkedId = editorBinding.radioGroup.checkedRadioButtonId
+                        var checkedRadioButtonIndex = -1
+                        editorBinding.radioGroup.forEachIndexed { index, view ->
+                            if (view.id == checkedId) checkedRadioButtonIndex = index
+                        }
+                        if (viewModel.measure(
+                                delay = delay,
+                                duration = duration,
+                                isKnownPpm = isKnownPpm,
+                                knownPpm = knownPpm,
+                                userComment = userComment,
+                                volume = volume,
+                                isAutoMeasurement = isAutoMeasurement,
+                                isUseRecentDirectory = isUseRecentDirectory,
+                                checkedRadioButtonIndex = checkedRadioButtonIndex,
+                                editText1Text = editText1Text,
+                                editText2Text = editText2Text,
+                                editText3Text = editText3Text,
+                                editorText = binding.editor.text.toString(),
+                                countMeasure = countMeasure)
+                        ) {
                             dialog.cancel()
                         }
                     }
-                val cancelListener =
-                    DialogInterface.OnClickListener { dialog, _ ->
-                        val inputManager =
-                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(
-                            (dialog as AlertDialog)
-                                .currentFocus!!.windowToken, 0
-                        )
-                        dialog.cancel()
-                        measureView.isEnabled = true
-                    }
-                val alertDialog = AlertDialogTwoButtonsCreator.createTwoButtonsAlert(
-                    this@MainActivity, R.layout.layout_dialog_measure, "Start Measure",
-                    okListener, cancelListener, initLayoutListener
-                ).create()
-                alertDialog.setOnCancelListener { measureView.isEnabled = true }
-                alertDialog.show()
-            }
-        })
+                )
+        }
         setFilters()
         usbDeviceConnection = UsbDeviceConnection(this) { _, device ->
             usbDevice = device
@@ -740,10 +539,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         customToast.show()
     }
 
-    private fun stopPullingForTemperature() {
-        viewModel.stopWaitForCooling()
-    }
-
     private fun changeTextsForButtons(binding: LayoutDialogOnOffBinding) {
         val addTextBuilder = StringBuilder()
         for (i in 0..8) {
@@ -780,21 +575,41 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private fun observeChartUpdates() {
         viewModel.maxY.observe(this) {
             //TODO remove max, move all maxY changes to vm
-            chart.renderer.yAxisMax = maxOf(it.toDouble(), chart.renderer.yAxisMax)
-            chartView.repaint()
+            val tempChart = chart
+            if (tempChart != null) {
+                tempChart.renderer.yAxisMax = maxOf(it.toDouble(), tempChart.renderer.yAxisMax)
+            }
+            chartView?.repaint()
         }
         viewModel.charts.observe(this) { charts ->
+            val tempChart = chart ?: return@observe
+            val tempChartView = chartView ?: return@observe
             for (modelChart in charts) {
-                chart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
+                tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
             }
             if (charts.all { it.points.isEmpty() }) {
-                GraphPopulatorUtils.clearYTextLabels(chart.renderer)
+                GraphPopulatorUtils.clearYTextLabels(tempChart.renderer)
             }
-            chartView.repaint()
+            tempChartView.repaint()
         }
-        viewModel.currentChartIndex.observe(this) {
-            currentSeries = chart.dataset.getSeriesAt(it)
+        viewModel.currentChartIndex.observe(this) { index ->
+            chart?.dataset?.getSeriesAt(index)?.let { currentSeries = it }
         }
+    }
+
+    private fun initCharts() {
+        val charts = viewModel.charts.value!!
+        val tempChart = chart!!
+        val tempChartView = chartView!!
+        for (modelChart in charts) {
+            tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
+        }
+        if (charts.all { it.points.isEmpty() }) {
+            GraphPopulatorUtils.clearYTextLabels(tempChart.renderer)
+        }
+        tempChart.renderer.yAxisMax = maxOf(0.0, tempChart.renderer.yAxisMax)
+        currentSeries = tempChart.dataset.getSeriesAt(0)
+        tempChartView.repaint()
     }
 
     private fun observeEvents() {
@@ -806,13 +621,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
                     is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
                     is MainEvent.IncReadingCount -> incReadingCount()
-                    is MainEvent.SendMessage -> sendMessage()
+                    is MainEvent.SendCommandsFromEditor -> sendCommandsFromEditor()
                     is MainEvent.ClearEditor -> binding.editor.setText("")
                     is MainEvent.ClearOutput -> binding.output.text = ""
                     is MainEvent.ClearData -> clearData()
                     is MainEvent.SendRequest -> sendRequest(handler)
                     is MainEvent.SendResponseToPowerCommandsFactory -> handleResponse(event.response)
                     is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
+                    is MainEvent.IncCountMeasure -> incCountMeasure()
+                    is MainEvent.SetReadingCount -> readingCount = event.value
+                    is MainEvent.UpdateGraphData -> {
+                        val graphData = event.graphData
+                        chart = graphData.createChart()
+                        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this@MainActivity, chart)
+                        initCharts()
+                    }
                 }
             }
         }
@@ -1047,14 +870,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         //}
     }
 
-    private fun sendMessage() {
-        if (binding.editor.text.toString() != "") {
-            val multiLines = binding.editor.text.toString()
-            for (command in multiLines.split("\n")) {
-                sendCommand(Command(command))
-            }
-        } else {
+    private fun sendCommandsFromEditor() {
+        val lines = binding.editor.text.toString().split("\n").map { Command(it) }
+        if (lines.size == 1 && lines[0].text.isEmpty()) {
             sendCommand(Command("\r"))
+        } else {
+            lines.forEach(this::sendCommand)
         }
     }
 
@@ -1667,9 +1488,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     bytes[4]
                 )
                 val co2 = strH.toInt(16)
-                val yMax: Int = chart.renderer.yAxisMax.toInt()
+                val tempChart = chart ?: return
+                val yMax: Int = tempChart.renderer.yAxisMax.toInt()
                 if (co2 >= yMax) {
-                    chart.renderer.yAxisMax = if (currentSeries.itemCount == 0) {
+                    tempChart.renderer.yAxisMax = if (currentSeries.itemCount == 0) {
                         (3 * co2).toDouble()
                     } else {
                         (co2 + co2 * 15 / 100f).toDouble()
@@ -1696,7 +1518,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
                 if (isTimerRunning) {
                     currentSeries.add(readingCount.toDouble(), co2.toDouble())
-                    chartView.repaint()
+                    chartView?.repaint()
                     viewModel.cacheBytesFromUsb(bytes)
                 }
                 if (co2 == 10000) {
@@ -1728,7 +1550,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             val powerState = viewModel.powerCommandsFactory.currentPowerState()
             if (powerState == PowerState.PRE_LOOPING) {
                 EToCApplication.getInstance().isPreLooping = false
-                stopPullingForTemperature()
+                viewModel.stopWaitForCooling()
                 viewModel.powerCommandsFactory.moveStateToNext()
             }
         }
@@ -1799,7 +1621,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 if (temperatureData.isCorrect) {
                     val curTemperature: Int = temperatureData.temperature1
                     if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
-                        stopPullingForTemperature()
+                        viewModel.stopWaitForCooling()
                         viewModel.powerCommandsFactory.moveStateToNext()
                         handler.postDelayed({
                             if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
@@ -1860,9 +1682,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         var powerState = viewModel.powerCommandsFactory.currentPowerState()
         when (powerState) {
             PowerState.OFF_INTERRUPTING -> {
-                val message = mHandler.obtainMessage()
-                message.what = MainActivity.MESSAGE_INTERRUPT_ACTIONS
-                message.sendToTarget()
+                handleResponse( response = "")
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
                 viewModel.waitForCooling()
@@ -1934,12 +1754,15 @@ System will turn off automaticaly."""
     }
 
     private fun clearData() {
-        for (series in chart.dataset.series) {
-            series.clear()
+        val tempChart = chart
+        if (tempChart != null) {
+            for (series in tempChart.dataset.series) {
+                series.clear()
+            }
         }
         oldCountMeasure = 0
         countMeasure = oldCountMeasure
-        chartView.repaint()
+        chartView?.repaint()
     }
 
     override fun currentDate(): Date {
@@ -1993,7 +1816,6 @@ System will turn off automaticaly."""
 
     companion object {
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
-        const val MESSAGE_INTERRUPT_ACTIONS = 123
         private const val TAG = "MainActivity"
     }
 }
