@@ -13,11 +13,9 @@ sealed class MainEvent {
     object ClearEditor: MainEvent()
     object ClearOutput: MainEvent()
     object ClearData: MainEvent()
-    object SendRequest: MainEvent()
-    class SendResponseToPowerCommandsFactory(val response: String): MainEvent()
     object DismissCoolingDialog: MainEvent()
     object IncCountMeasure: MainEvent()
     class SetReadingCount(val value: Int): MainEvent()
     class UpdateGraphData(val graphData: GraphData): MainEvent()
-    //class UpdateStartMeasureClickability(val isClickable: Boolean): MainEvent()
+    class ShowWaitForCoolingDialog(val message: String): MainEvent()
 }

@@ -7,8 +7,6 @@ import android.graphics.Color
 import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
@@ -117,7 +115,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
      */
     private var isReadIntent = false
 
-    private lateinit var handler: Handler
     private var isUsbConnected = false
 
     private var countMeasure = 0
@@ -156,7 +153,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         observeChartUpdates()
         observeEvents()
         observeButtonUpdates()
-        handler = Handler(Looper.getMainLooper())
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
@@ -193,7 +189,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     }
                 }
                 setPositiveButton("Select/Clear") { dialog, _ ->
-                    viewModel.clear()
+                    viewModel.clearCheckedOptions()
                     dialog.cancel()
                 }
                 setNegativeButton("Close") { dialog, _ -> dialog.cancel() }
@@ -302,15 +298,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         findDevice()
-        if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
-            EToCApplication.getInstance().isPreLooping = true
-            viewModel.waitForCooling()
-        }
     }
 
     private fun setPowerOnButtonListeners() {
-        EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")
-
         binding.buttonOn1.setOnClickListener { viewModel.onButton1Click() }
         binding.buttonOn1.setOnLongClickListener {
             showOnOffDialog(
@@ -627,8 +617,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.ClearEditor -> binding.editor.setText("")
                     is MainEvent.ClearOutput -> binding.output.text = ""
                     is MainEvent.ClearData -> clearData()
-                    is MainEvent.SendRequest -> sendRequest(handler)
-                    is MainEvent.SendResponseToPowerCommandsFactory -> handleResponse(event.response)
                     is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
                     is MainEvent.IncCountMeasure -> incCountMeasure()
                     is MainEvent.SetReadingCount -> readingCount = event.value
@@ -637,6 +625,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         chart = graphData.createChart()
                         chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this@MainActivity, chart)
                         initCharts()
+                    }
+                    is MainEvent.ShowWaitForCoolingDialog -> {
+                        dismissProgress()
+                        coolingDialog = Dialog(this@MainActivity).apply {
+                            requestWindowFeature(Window.FEATURE_NO_TITLE)
+                            setContentView(R.layout.layout_cooling)
+                            window!!.setBackgroundDrawableResource(android.R.color.transparent)
+                            (findViewById<View>(R.id.text) as TextView).text = event.message
+                            setCancelable(false)
+                            show()
+                        }
                     }
                 }
             }
@@ -891,7 +890,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         usbDevice?.close()
         usbDevice = null
         usbDeviceConnection.close()
-        handler.removeCallbacksAndMessages(null)
     }
 
     override fun onRestart() {
@@ -1512,126 +1510,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
         Utils.appendText(binding.output, "Rx: $data")
         binding.scrollView.smoothScrollTo(0, 0)
-
-        if (viewModel.isPowerPressed) {
-            handleResponse(responseForChecking)
-        } else {
-            val powerState = viewModel.powerCommandsFactory.currentPowerState()
-            if (powerState == PowerState.PRE_LOOPING) {
-                EToCApplication.getInstance().isPreLooping = false
-                viewModel.stopWaitForCooling()
-                viewModel.powerCommandsFactory.moveStateToNext()
-            }
-        }
-    }
-
-    private fun handleResponse(response: String) {
-        when (viewModel.powerCommandsFactory.currentPowerState()) {
-            PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
-                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
-                viewModel.powerCommandsFactory.moveStateToNext()
-                if (currentCommand?.hasSelectableResponses() == true) {
-                    if (currentCommand.isResponseCorrect(response)) {
-                        if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                            handler.postDelayed({
-                                if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                                    sendRequest(handler)
-                                }
-                            }, currentCommand.delay)
-                        }
-                    } else {
-                        val responseBuilder = java.lang.StringBuilder()
-                        for (possibleResponse in currentCommand.possibleResponses) {
-                            responseBuilder.append("\"$possibleResponse\" or ")
-                        }
-                        responseBuilder.delete(
-                            responseBuilder.length - 4, responseBuilder
-                                .length
-                        )
-                        showCustomisedToast("Wrong response: Got - \"${response}\".Expected - $responseBuilder")
-                        return
-                    }
-                } else if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    sendRequest(handler)
-                }
-                if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.ON) {
-                    viewModel.initPowerAccordToItState()
-                    viewModel.startSendingTemperatureOrCo2Requests()
-                }
-            }
-            PowerState.OFF_INTERRUPTING -> {
-                viewModel.stopSendingTemperatureOrCo2Requests()
-                viewModel.powerCommandsFactory.moveStateToNext()
-                val delayForPausing = viewModel.powerCommandsFactory.currentCommand()!!.delay
-                handler.postDelayed( {
-                    if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                        sendRequest(handler)
-                    }
-                }, delayForPausing * 2)
-            }
-            //we can get here only from local power factory
-            PowerState.OFF_STAGE1 -> {
-                val temperatureData = TemperatureData.parse(response)
-                if (temperatureData.isCorrect) {
-                    val curTemperature = temperatureData.temperature1
-                    if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
-                        viewModel.powerCommandsFactory.moveStateToNext()
-                    }
-                    viewModel.powerCommandsFactory.moveStateToNext()
-                    handler.postDelayed({
-                        if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                            sendRequest(handler)
-                        }
-                    }, viewModel.powerCommandsFactory.currentCommand()!!.delay)
-                }
-            }
-            PowerState.OFF_WAIT_FOR_COOLING -> {
-                val temperatureData = TemperatureData.parse(response)
-                if (temperatureData.isCorrect) {
-                    val curTemperature: Int = temperatureData.temperature1
-                    if (curTemperature <= EToCApplication.getInstance().borderCoolingTemperature) {
-                        viewModel.stopWaitForCooling()
-                        viewModel.powerCommandsFactory.moveStateToNext()
-                        handler.postDelayed({
-                            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                sendRequest(handler)
-                            }
-                        }, viewModel.powerCommandsFactory.currentCommand()!!.delay)
-                    }
-                }
-            }
-            PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
-                viewModel.powerCommandsFactory.moveStateToNext()
-                if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.OFF) {
-                    viewModel.initPowerAccordToItState()
-                    return
-                }
-                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
-                if (currentCommand?.hasSelectableResponses() == true) {
-                    if (currentCommand.isResponseCorrect(response)) {
-                        handler.postDelayed({
-                            if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                                sendRequest(handler)
-                            }
-                        }, currentCommand.delay)
-                    } else {
-                        val responseBuilder = java.lang.StringBuilder()
-                        for (possibleResponse in currentCommand.possibleResponses) {
-                            responseBuilder.append("\"$possibleResponse\" or ")
-                        }
-                        responseBuilder.delete(
-                            responseBuilder.length - 4, responseBuilder
-                                .length
-                        )
-                        showCustomisedToast("Wrong response: Got - \"response\".Expected - $responseBuilder")
-                        return
-                    }
-                }
-            }
-            else -> {
-                //do nothing
-            }
-        }
+        viewModel.onDataReceived(responseForChecking)
     }
 
     private fun incCountMeasure() {
@@ -1645,55 +1524,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     fun setUsbConnected(isUsbConnected: Boolean) {
         this.isUsbConnected = isUsbConnected
         invalidateOptionsMenu()
-    }
-
-    private fun sendRequest(mHandler: Handler) {
-        var powerState = viewModel.powerCommandsFactory.currentPowerState()
-        when (powerState) {
-            PowerState.OFF_INTERRUPTING -> {
-                handleResponse( response = "")
-            }
-            PowerState.OFF_WAIT_FOR_COOLING -> {
-                viewModel.waitForCooling()
-                dismissProgress()
-                coolingDialog = Dialog(this).apply {
-                    requestWindowFeature(Window.FEATURE_NO_TITLE)
-                    setContentView(R.layout.layout_cooling)
-                    window!!.setBackgroundDrawableResource(android.R.color.transparent)
-                    (findViewById<View>(R.id.text) as TextView).text =
-                        """  Cooling down.  Do not switch power off.  Please wait . . . ! ! !    
-System will turn off automaticaly."""
-                    setCancelable(false)
-                    show()
-                }
-            }
-            else -> {
-                val currentCommand = viewModel.powerCommandsFactory.currentCommand()
-                if (currentCommand != null) {
-                    sendCommand(currentCommand.command)
-                    if (!currentCommand.hasSelectableResponses()) {
-                        powerState = viewModel.powerCommandsFactory.nextPowerState()
-                        if (powerState !== PowerState.OFF && powerState !== PowerState.ON) {
-                            mHandler.postDelayed({
-                                val currentCommandNew = viewModel.powerCommandsFactory.currentCommand()
-                                var currentState = viewModel.powerCommandsFactory.currentPowerState()
-                                if (currentState !== PowerState.OFF && currentState !==
-                                    PowerState.ON
-                                ) {
-                                    if (currentCommand == currentCommandNew) {
-                                        viewModel.powerCommandsFactory.moveStateToNext()
-                                        currentState = viewModel.powerCommandsFactory.currentPowerState()
-                                        if (currentState !== PowerState.OFF && currentState !== PowerState.ON) {
-                                            sendRequest(mHandler)
-                                        }
-                                    }
-                                }
-                            }, currentCommand.delay)
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
@@ -1786,6 +1616,5 @@ System will turn off automaticaly."""
     companion object {
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         private const val TAG = "MainActivity"
-        const val FOLDER_SELECT_PROMPT = "folder_confirm"
     }
 }

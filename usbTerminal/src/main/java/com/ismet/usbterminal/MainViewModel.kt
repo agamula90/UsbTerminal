@@ -5,11 +5,15 @@ import android.graphics.PointF
 import android.os.Environment
 import android.os.SystemClock
 import android.preference.PreferenceManager
+import android.util.SparseArray
+import androidx.core.util.Pair
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
+import com.ismet.usbterminal.powercommands.FilePowerCommandsFactory
+import com.ismet.usbterminal.powercommands.LocalPowerCommandsFactory
 import com.ismet.usbterminal.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
@@ -46,8 +50,21 @@ class MainViewModel @Inject constructor(
     private val cacheFilesDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val app = application as EToCApplication
     private val prefs = PreferenceManager.getDefaultSharedPreferences(app)
-    val powerCommandsFactory: PowerCommandsFactory
+    private var lastTimePressed: Long = 0
+    private var isPowerPressed = false
+    private var borderCoolingTemperature = 80
+    private var isPreLooping = false
+    private var currentTemperatureRequest = prefs.getString(PrefConstants.ON2, "/5H750R")!!
+    private var shouldSendTemperatureRequest = true
+    private var readChartJob: Job? = null
+    private var sendTemperatureOrCo2Job: Job? = null
+    private var sendWaitForCoolingJob: Job? = null
+    private var readCommandsJob: Job? = null
+    private var chartDate: String = ""
+    private var subDirDate: String = ""
+    private var currentClearOptions = mutableSetOf<String>()
 
+    val powerCommandsFactory: PowerCommandsFactory
     val events = Channel<MainEvent>(Channel.UNLIMITED)
     val charts = MutableLiveData(List(MAX_CHARTS) { Chart(it, emptyList()) })
     val temperatureShift = handle.getLiveData("temperatureShift", 0)
@@ -59,21 +76,9 @@ class MainViewModel @Inject constructor(
     val buttonOn6Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 5))
     val powerProperties = handle.getLiveData("power", ButtonProperties.forPower())
     val maxY = handle.getLiveData("maxY",0)
-    private var lastTimePressed: Long = 0
-
-    private var shouldSendTemperatureRequest = true
-    private var readChartJob: Job? = null
-    private var sendTemperatureOrCo2Job: Job? = null
-    private var sendWaitForCoolingJob: Job? = null
-    private var readCommandsJob: Job? = null
     val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
-    private var chartDate: String = ""
-    private var subDirDate: String = ""
     val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
-    private var currentClearOptions = mutableSetOf<String>()
     val checkedClearOptions = List(allClearOptions.size) { false }
-    var isPowerPressed = false
-        private set
 
     init {
         val settingsFolder = File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
@@ -82,22 +87,110 @@ class MainViewModel @Inject constructor(
         if (settingsFolder.exists()) readSettingsFolder(settingsFolder)
         initPowerAccordToItState()
         initGraphData()
+        if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
+            isPreLooping = true
+            waitForCooling()
+        }
     }
 
     private fun createPowerCommandsFactory(settingsFolder: File): PowerCommandsFactory {
         val buttonPowerDataFile = File(settingsFolder, AppData.POWER_DATA)
-        var powerData: String? = ""
+        var powerData = ""
         if (buttonPowerDataFile.exists()) {
-            powerData = TextFileUtils.readTextFile(buttonPowerDataFile)
+            powerData = TextFileUtils.readTextFile(buttonPowerDataFile).orEmpty()
         }
-        return app.parseCommands(powerData)
+        return parseCommands(powerData)
+    }
+
+    private fun parseCommands(text: String): PowerCommandsFactory {
+        var text = text
+        text = text.replace("\r", "")
+        val rows = text.split("\n").toTypedArray().filterNot { it.isEmpty() }
+        val borderTemperatureString = "borderTemperature:"
+        val onString = "on:"
+        val offString = "off:"
+        val borderTemperatures: MutableList<String> = ArrayList()
+        val onCommands: MutableList<String> = ArrayList()
+        val offCommands: MutableList<String> = ArrayList()
+        val delimitedValues: List<String> = mutableListOf<String>().apply {
+            add(borderTemperatureString)
+            add(onString)
+            add(offString)
+        }
+        var currentList: MutableList<String>? = null
+        for (row in rows) {
+            val index = delimitedValues.indexOf(row)
+            if (index >= 0) {
+                currentList = when (index) {
+                    0 -> borderTemperatures
+                    1 -> onCommands
+                    2 -> offCommands
+                    else -> null
+                }
+            } else {
+                currentList?.add(row)
+            }
+        }
+        var powerCommandsFactory: PowerCommandsFactory = LocalPowerCommandsFactory(PowerState.PRE_LOOPING)
+        if (borderTemperatures.size != 1) {
+            return powerCommandsFactory
+        } else {
+            try {
+                borderCoolingTemperature = borderTemperatures[0].toInt()
+            } catch (e: NumberFormatException) {
+                e.printStackTrace()
+                return powerCommandsFactory
+            }
+            val onCommandsArr = SparseArray<PowerCommand>()
+            for (onCommand in onCommands) {
+                val parsedRow = parseCommand(onCommand)
+                if (parsedRow != null) {
+                    onCommandsArr.put(parsedRow.first, parsedRow.second)
+                } else {
+                    return powerCommandsFactory
+                }
+            }
+            val offCommandsArr = SparseArray<PowerCommand>()
+            for (offCommand in offCommands) {
+                val parsedRow = parseCommand(offCommand)
+                if (parsedRow != null) {
+                    offCommandsArr.put(parsedRow.first, parsedRow.second)
+                } else {
+                    return powerCommandsFactory
+                }
+            }
+            powerCommandsFactory = FilePowerCommandsFactory(PowerState.PRE_LOOPING, onCommandsArr, offCommandsArr)
+        }
+        return powerCommandsFactory
+    }
+
+    private fun parseCommand(text: String): Pair<Int, PowerCommand>? {
+        var possibleResponses = text.split(";").filterNot { it.isEmpty() }
+        val indexOfCommand: Int
+        return try {
+            indexOfCommand = possibleResponses[0].toInt()
+            val delay = possibleResponses[1].toLong()
+            val command = possibleResponses[2]
+            if (possibleResponses.size > 3) {
+                possibleResponses = possibleResponses.subList(3, possibleResponses.size)
+                Pair(indexOfCommand, PowerCommand(Command(command), delay, possibleResponses.toTypedArray()))
+            } else {
+                Pair(indexOfCommand, PowerCommand(Command(command), delay, emptyArray()))
+            }
+        } catch (e: NumberFormatException) {
+            e.printStackTrace()
+            null
+        } catch (e: IndexOutOfBoundsException) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun readSettingsFolder(settingsFolder: File) {
         val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
         if (button1DataFile.exists()) {
             val button1Data = TextFileUtils.readTextFile(button1DataFile)
-            if (!button1Data.isEmpty()) {
+            if (button1Data.isNotEmpty()) {
                 val values = button1Data.split(AppData.SPLIT_STRING).toTypedArray()
                 if (values.size == 4) {
                     val editor = prefs.edit()
@@ -112,7 +205,7 @@ class MainViewModel @Inject constructor(
         val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
         if (button2DataFile.exists()) {
             val button2Data = TextFileUtils.readTextFile(button2DataFile)
-            if (!button2Data.isEmpty()) {
+            if (button2Data.isNotEmpty()) {
                 val values = button2Data.split(AppData.SPLIT_STRING).toTypedArray()
                 if (values.size == 4) {
                     val editor = prefs.edit()
@@ -127,7 +220,7 @@ class MainViewModel @Inject constructor(
         val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
         if (button3DataFile.exists()) {
             val button3Data = TextFileUtils.readTextFile(button3DataFile)
-            if (!button3Data.isEmpty()) {
+            if (button3Data.isNotEmpty()) {
                 val values = button3Data.split(AppData.SPLIT_STRING).toTypedArray()
                 if (values.size == 4) {
                     val editor = prefs.edit()
@@ -215,7 +308,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun startSendingTemperatureOrCo2Requests() {
+    private fun startSendingTemperatureOrCo2Requests() {
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
@@ -223,7 +316,7 @@ class MainViewModel @Inject constructor(
                 if (shouldSendTemperatureRequest) {
                     events.send(MainEvent.WriteToUsb(Command("/5J5R")))
                     delay(350)
-                    events.send(MainEvent.WriteToUsb(Command(app.currentTemperatureRequest)))
+                    events.send(MainEvent.WriteToUsb(Command(currentTemperatureRequest)))
                 } else {
                     events.send(MainEvent.WriteToUsb(Command(CO2_REQUEST)))
                 }
@@ -232,29 +325,27 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun stopSendingTemperatureOrCo2Requests() {
+    private fun stopSendingTemperatureOrCo2Requests() {
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = null
     }
 
-    fun waitForCooling() {
-        val commandsFactory: PowerCommandsFactory = app.powerCommandsFactory
-
-        val command = if (app.isPreLooping) {
+    private fun waitForCooling() {
+        val command = if (isPreLooping) {
             PowerCommand(Command("/5J1R"), 1000)
         } else {
-            commandsFactory.currentCommand()!!
+            powerCommandsFactory.currentCommand()!!
         }
 
         sendWaitForCoolingJob?.cancel()
         sendWaitForCoolingJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                val message = if (app.isPreLooping) {
+                val message = if (isPreLooping) {
                     command.command
                 } else {
                     Command("/5H0000R")
                 }
-                val state = commandsFactory.currentPowerState()
+                val state = powerCommandsFactory.currentPowerState()
                 if (state != PowerState.OFF) {
                     events.send(MainEvent.WriteToUsb(message))
                 }
@@ -264,7 +355,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun stopWaitForCooling() {
+    private fun stopWaitForCooling() {
         sendWaitForCoolingJob?.cancel()
         sendWaitForCoolingJob = null
         events.offer(MainEvent.DismissCoolingDialog)
@@ -667,7 +758,7 @@ class MainViewModel @Inject constructor(
                     defaultValue = "/5H750R"
                     command = prefs.getString(PrefConstants.OFF2, "")!!
                 }
-                app.currentTemperatureRequest = prefs.getString(prefName, defaultValue)
+                currentTemperatureRequest = prefs.getString(prefName, defaultValue)!!
                 command
             }
             2, 5 -> {
@@ -742,7 +833,7 @@ class MainViewModel @Inject constructor(
                 prefName = PrefConstants.OFF2
                 defaultValue = "/5H0000R"
             }
-            EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
+            currentTemperatureRequest = prefs.getString(prefName, defaultValue)!!
 
             buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
                 text = persistedInfo.text,
@@ -823,7 +914,7 @@ class MainViewModel @Inject constructor(
                 prefName = PrefConstants.OFF2
                 defaultValue = "/5H0000R"
             }
-            EToCApplication.getInstance().currentTemperatureRequest = prefs.getString(prefName, defaultValue)
+            currentTemperatureRequest = prefs.getString(prefName, defaultValue)!!
 
             buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
                 text = persistedInfo.text,
@@ -904,7 +995,7 @@ class MainViewModel @Inject constructor(
         currentClearOptions.clear()
     }
 
-    fun clear() {
+    fun clearCheckedOptions() {
         val currentCharts = charts.value!!.toMutableList()
         if (currentClearOptions.contains("Tx")) {
             events.offer(MainEvent.ClearEditor)
@@ -955,8 +1046,10 @@ class MainViewModel @Inject constructor(
                 isPowerPressed = true
                 powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
                 powerCommandsFactory.moveStateToNext()
-                events.offer(MainEvent.SendRequest)
-                //simulateClick2();
+                viewModelScope.launch(Dispatchers.IO) {
+                    sendRequest()
+                    //simulateClick2();
+                }
             }
             PowerState.ON -> {
                 powerProperties.value = powerProperties.value!!.copy(isEnabled = false)
@@ -970,18 +1063,18 @@ class MainViewModel @Inject constructor(
                 isPowerPressed = true
                 powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
                 val isButton2Activated = buttonOn2Properties.value!!.isActivated
-                if (isButton2Activated) {
-                    onButton2Click()
-                    viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    if (isButton2Activated) {
+                        onButton2Click()
                         delay(1200)
                         powerCommandsFactory.moveStateToNext()
-                        events.send(MainEvent.SendRequest)
+                        sendRequest()
+                    } else {
+                        powerCommandsFactory.moveStateToNext()
+                        sendRequest()
                     }
-                } else {
-                    powerCommandsFactory.moveStateToNext()
-                    events.offer(MainEvent.SendRequest)
+                    //simulateClick1();
                 }
-                //simulateClick1();
             }
             else -> {
                 //do nothing
@@ -989,7 +1082,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun simulateClick2() = viewModelScope.launch(Dispatchers.IO) {
+    private suspend fun simulateClick2() {
         delay(800)
         val temperatureData = "@5,0(0,0,0,0),750,25,25,25,25"
         simulateResponse(temperatureData)
@@ -1003,7 +1096,7 @@ class MainViewModel @Inject constructor(
         simulateResponse("1ZR")
     }
 
-    private fun simulateClick1() = viewModelScope.launch(Dispatchers.IO) {
+    private suspend fun simulateClick1() {
         delay(3800)
         //temperature out of range
         var temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
@@ -1024,11 +1117,11 @@ class MainViewModel @Inject constructor(
         val notNullResponse = response.orEmpty()
 
         if (isPowerPressed) {
-            events.send(MainEvent.SendResponseToPowerCommandsFactory(notNullResponse))
+            handleResponse(notNullResponse)
         } else {
             val powerState = powerCommandsFactory.currentPowerState()
             if (powerState == PowerState.PRE_LOOPING) {
-                app.isPreLooping = false
+                isPreLooping = false
                 stopWaitForCooling()
                 powerCommandsFactory.moveStateToNext()
             }
@@ -1074,5 +1167,162 @@ class MainViewModel @Inject constructor(
             editor.apply()
         }
         events.offer(MainEvent.UpdateGraphData(GraphPopulatorUtils.createXYChart(duration, delay)))
+    }
+
+    //TODO check if should run on 1 thread or not?
+    private suspend fun sendRequest() {
+        var powerState = powerCommandsFactory.currentPowerState()
+        when (powerState) {
+            PowerState.OFF_INTERRUPTING -> {
+                handleResponse( response = "")
+            }
+            PowerState.OFF_WAIT_FOR_COOLING -> {
+                waitForCooling()
+                events.send(MainEvent.ShowWaitForCoolingDialog(
+                    message = """  Cooling down.  Do not switch power off.  Please wait . . . ! ! !    
+System will turn off automaticaly."""))
+            }
+            else -> {
+                val currentCommand = powerCommandsFactory.currentCommand()
+                if (currentCommand != null) {
+                    events.offer(MainEvent.WriteToUsb(currentCommand.command))
+                    if (!currentCommand.hasSelectableResponses()) {
+                        powerState = powerCommandsFactory.nextPowerState()
+                        if (powerState !== PowerState.OFF && powerState !== PowerState.ON) {
+                            delay(currentCommand.delay)
+                            val currentCommandNew = powerCommandsFactory.currentCommand()
+                            var currentState = powerCommandsFactory.currentPowerState()
+                            if (currentState !== PowerState.OFF && currentState !== PowerState.ON && currentCommand == currentCommandNew) {
+                                powerCommandsFactory.moveStateToNext()
+                                currentState = powerCommandsFactory.currentPowerState()
+                                if (currentState !== PowerState.OFF && currentState !== PowerState.ON) {
+                                    sendRequest()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun handleResponse(response: String) {
+        when (powerCommandsFactory.currentPowerState()) {
+            PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
+                val currentCommand = powerCommandsFactory.currentCommand()
+                powerCommandsFactory.moveStateToNext()
+                if (currentCommand?.hasSelectableResponses() == true) {
+                    if (currentCommand.isResponseCorrect(response)) {
+                        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                            delay(currentCommand.delay)
+                            if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                                sendRequest()
+                            }
+                        }
+                    } else {
+                        val responseBuilder = java.lang.StringBuilder()
+                        for (possibleResponse in currentCommand.possibleResponses) {
+                            responseBuilder.append("\"$possibleResponse\" or ")
+                        }
+                        responseBuilder.delete(
+                            responseBuilder.length - 4, responseBuilder
+                                .length
+                        )
+                        events.send(MainEvent.ShowToast(message = "Wrong response: Got - \"${response}\".Expected - $responseBuilder"))
+                        return
+                    }
+                } else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                    sendRequest()
+                }
+                if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
+                    initPowerAccordToItState()
+                    startSendingTemperatureOrCo2Requests()
+                }
+            }
+            PowerState.OFF_INTERRUPTING -> {
+                stopSendingTemperatureOrCo2Requests()
+                powerCommandsFactory.moveStateToNext()
+                val delayForPausing = powerCommandsFactory.currentCommand()!!.delay
+                delay(delayForPausing * 2)
+                if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                    sendRequest()
+                }
+            }
+            //we can get here only from local power factory
+            PowerState.OFF_STAGE1 -> {
+                val temperatureData = TemperatureData.parse(response)
+                if (temperatureData.isCorrect) {
+                    val curTemperature = temperatureData.temperature1
+                    if (curTemperature <= borderCoolingTemperature) {
+                        powerCommandsFactory.moveStateToNext()
+                    }
+                    powerCommandsFactory.moveStateToNext()
+                    delay(powerCommandsFactory.currentCommand()!!.delay)
+                    if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                        sendRequest()
+                    }
+                }
+            }
+            PowerState.OFF_WAIT_FOR_COOLING -> {
+                val temperatureData = TemperatureData.parse(response)
+                if (temperatureData.isCorrect) {
+                    val curTemperature: Int = temperatureData.temperature1
+                    if (curTemperature <= borderCoolingTemperature) {
+                        stopWaitForCooling()
+                        powerCommandsFactory.moveStateToNext()
+                        delay(powerCommandsFactory.currentCommand()!!.delay)
+                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                            sendRequest()
+                        }
+                    }
+                }
+            }
+            PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
+                powerCommandsFactory.moveStateToNext()
+                if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
+                    initPowerAccordToItState()
+                    return
+                }
+                val currentCommand = powerCommandsFactory.currentCommand()
+                if (currentCommand?.hasSelectableResponses() == true) {
+                    if (currentCommand.isResponseCorrect(response)) {
+                        delay(currentCommand.delay)
+                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                            sendRequest()
+                        }
+                    } else {
+                        val responseBuilder = java.lang.StringBuilder()
+                        for (possibleResponse in currentCommand.possibleResponses) {
+                            responseBuilder.append("\"$possibleResponse\" or ")
+                        }
+                        responseBuilder.delete(
+                            responseBuilder.length - 4, responseBuilder
+                                .length
+                        )
+                        events.send(MainEvent.ShowToast(message = "Wrong response: Got - \"response\".Expected - $responseBuilder"))
+                        return
+                    }
+                }
+            }
+            else -> {
+                //do nothing
+            }
+        }
+    }
+
+    fun onDataReceived(response: String) {
+        if (isPowerPressed) {
+            //TODO maybe it should run in 1 thread?
+            viewModelScope.launch(Dispatchers.IO) {
+                handleResponse(response)
+            }
+        } else {
+            val powerState = powerCommandsFactory.currentPowerState()
+            if (powerState == PowerState.PRE_LOOPING) {
+                isPreLooping = false
+                stopWaitForCooling()
+                powerCommandsFactory.moveStateToNext()
+            }
+        }
     }
 }
