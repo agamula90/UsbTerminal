@@ -298,11 +298,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         if (viewModel.powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
             EToCApplication.getInstance().isPreLooping = true
             viewModel.waitForCooling()
-
-            //TODO uncomment for simulating
-            /*Message message = mHandler.obtainMessage(EToCMainHandler.MESSAGE_SIMULATE_RESPONSE);
-			message.obj = "";
-			mHandler.sendMessageDelayed(message, 10800);*/
         }
     }
 

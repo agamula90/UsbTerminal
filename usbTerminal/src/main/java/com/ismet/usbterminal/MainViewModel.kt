@@ -711,15 +711,11 @@ class MainViewModel @Inject constructor(
             edit.apply()
             buttonOn1Properties.value = buttonOn1Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn4Properties.value = buttonOn4Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -750,15 +746,11 @@ class MainViewModel @Inject constructor(
 
             buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn5Properties.value = buttonOn5Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -777,15 +769,11 @@ class MainViewModel @Inject constructor(
             edit.apply()
             buttonOn3Properties.value = buttonOn3Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn6Properties.value = buttonOn6Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -804,15 +792,11 @@ class MainViewModel @Inject constructor(
             edit.apply()
             buttonOn1Properties.value = buttonOn1Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn4Properties.value = buttonOn4Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -843,15 +827,11 @@ class MainViewModel @Inject constructor(
 
             buttonOn2Properties.value = buttonOn2Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn5Properties.value = buttonOn5Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -870,15 +850,11 @@ class MainViewModel @Inject constructor(
             edit.apply()
             buttonOn3Properties.value = buttonOn3Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
             buttonOn6Properties.value = buttonOn6Properties.value!!.copy(
                 text = persistedInfo.text,
-                command = persistedInfo.command,
-                activatedText = persistedInfo.activatedText,
-                activatedCommand = persistedInfo.activatedCommand
+                activatedText = persistedInfo.activatedText
             )
         }
     }
@@ -968,7 +944,6 @@ class MainViewModel @Inject constructor(
         when (powerCommandsFactory.currentPowerState()) {
             PowerState.OFF -> {
                 powerProperties.value = powerProperties.value!!.copy(isEnabled = false)
-                //TODO
                 //make power on
                 //"/5H0000R" "respond as ->" "@5,0(0,0,0,0),750,25,25,25,25"
                 // 0.5 second wait -> repeat
@@ -981,12 +956,10 @@ class MainViewModel @Inject constructor(
                 powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
                 powerCommandsFactory.moveStateToNext()
                 events.offer(MainEvent.SendRequest)
-                //TODO uncomment for simulating
                 //simulateClick2();
             }
             PowerState.ON -> {
                 powerProperties.value = powerProperties.value!!.copy(isEnabled = false)
-                //TODO
                 //make power off
                 //interrupt all activities by software (mean measure process etc)
                 // 1 second wait ->
@@ -1008,7 +981,6 @@ class MainViewModel @Inject constructor(
                     powerCommandsFactory.moveStateToNext()
                     events.offer(MainEvent.SendRequest)
                 }
-                //TODO uncomment for simulating
                 //simulateClick1();
             }
             else -> {
@@ -1033,15 +1005,15 @@ class MainViewModel @Inject constructor(
 
     private fun simulateClick1() = viewModelScope.launch(Dispatchers.IO) {
         delay(3800)
-        //TODO temperature out of range
+        //temperature out of range
         var temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
         simulateResponse(temperatureData)
         delay(1200)
-        //TODO temperature out of range
+        //temperature out of range
         temperatureData = "@5,0(0,0,0,0),25,750,25,25,25"
         simulateResponse(temperatureData)
         delay(15000)
-        //TODO temperature in of range
+        //temperature in of range
         temperatureData = "@5,0(0,0,0,0),25,74,25,25,25"
         simulateResponse(temperatureData)
         delay(4000)
