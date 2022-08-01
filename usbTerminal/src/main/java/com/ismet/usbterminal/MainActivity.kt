@@ -5,7 +5,10 @@ import android.app.Dialog
 import android.content.*
 import android.graphics.Color
 import android.hardware.usb.UsbManager
-import android.os.*
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
@@ -30,8 +33,12 @@ import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
 import dagger.hilt.android.AndroidEntryPoint
-import de.neofonie.mobile.app.android.widget.crouton.Crouton
-import de.neofonie.mobile.app.android.widget.crouton.Style
+import de.keyboardsurfer.android.widget.crouton.Crouton
+import de.keyboardsurfer.android.widget.crouton.Style
+import fr.xgouchet.TedOpenActivity
+import fr.xgouchet.TedOpenRecentActivity
+import fr.xgouchet.TedSaveAsActivity
+import fr.xgouchet.TedSettingsActivity
 import fr.xgouchet.androidlib.data.FileUtils
 import fr.xgouchet.androidlib.ui.Toaster
 import fr.xgouchet.androidlib.ui.activity.ActivityDecorator
@@ -843,6 +850,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return R.drawable.file
     }
 
+    override fun getButtonBackground(): Int {
+        return R.drawable.button_drawable
+    }
+
     override fun onGraphAttached() {
         binding.marginLayout.setBackgroundColor(Color.BLACK)
         binding.exportedChartLayout.setBackgroundColor(Color.WHITE)
@@ -1084,7 +1095,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             Constants.MENU_ID_OPEN_CHART -> openFile()
             Constants.MENU_ID_OPEN_RECENT -> openRecentFile()
             Constants.MENU_ID_SETTINGS -> {
-                settingsActivity()
+                startActivity(Intent(this, TedSettingsActivity::class.java))
                 return true
             }
             Constants.MENU_ID_QUIT -> {
@@ -1361,19 +1372,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return didUndo
     }
 
-    /**
-     * Starts an activity to choose a file to open
-     */
     private fun openFile() {
-        val open = Intent()
-        open.setClass(applicationContext, TedOpenActivity::class.java)
-        // open = new Intent(ACTION_OPEN);
-        open.putExtra(Constants.EXTRA_REQUEST_CODE, Constants.REQUEST_OPEN)
-        try {
-            startActivityForResult(open, Constants.REQUEST_OPEN)
-        } catch (e: ActivityNotFoundException) {
-            Crouton.showText(this@MainActivity, R.string.toast_activity_open, Style.ALERT)
-        }
+        startActivityForResult(Intent(this, TedOpenActivity::class.java).apply {
+            putExtra(Constants.EXTRA_REQUEST_CODE, Constants.REQUEST_OPEN)
+        }, Constants.REQUEST_OPEN)
     }
 
     /**
@@ -1385,16 +1387,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             return
         }
 
-        val open = Intent()
-        open.setClass(this@MainActivity, TedOpenRecentActivity::class.java)
-        try {
-            startActivityForResult(open, Constants.REQUEST_OPEN)
-        } catch (e: ActivityNotFoundException) {
-            Crouton.showText(
-                this@MainActivity, R.string.toast_activity_open_recent,
-                Style.ALERT
-            )
-        }
+        startActivityForResult(Intent(this, TedOpenRecentActivity::class.java), Constants.REQUEST_OPEN)
     }
 
     /**
@@ -1438,26 +1431,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
      * then save the editor'd content
      */
     private fun saveContentAs() {
-        val saveAs = Intent()
-        saveAs.setClass(this, TedSaveAsActivity::class.java)
-        try {
-            startActivityForResult(saveAs, Constants.REQUEST_SAVE_AS)
-        } catch (e: ActivityNotFoundException) {
-            Crouton.showText(this, R.string.toast_activity_save_as, Style.ALERT)
-        }
-    }
-
-    /**
-     * Opens the settings activity
-     */
-    private fun settingsActivity() {
-        val settings = Intent()
-        settings.setClass(this, TedSettingsActivity::class.java)
-        try {
-            startActivity(settings)
-        } catch (e: ActivityNotFoundException) {
-            Crouton.showText(this, R.string.toast_activity_settings, Style.ALERT)
-        }
+        startActivityForResult(Intent(this, TedSaveAsActivity::class.java), Constants.REQUEST_SAVE_AS)
     }
 
     private fun setFilters() {
@@ -1812,5 +1786,6 @@ System will turn off automaticaly."""
     companion object {
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         private const val TAG = "MainActivity"
+        const val FOLDER_SELECT_PROMPT = "folder_confirm"
     }
 }

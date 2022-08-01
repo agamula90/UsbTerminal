@@ -19,8 +19,11 @@ public class GraphData {
 	}
 
     public XYChart createChart() {
-        String[] types = new String[]{CubicLineChart.TYPE, CubicLineChart.TYPE, CubicLineChart
-                .TYPE};
-        return new CombinedXYChart(seriesDataset, renderer, types);
+        CombinedXYChart.XYCombinedChartDef[] chartDefinitions = new CombinedXYChart.XYCombinedChartDef[] {
+                new CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 0),
+                new CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 1),
+                new CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 2)
+        };
+        return new CombinedXYChart(seriesDataset, renderer, chartDefinitions);
     }
 }

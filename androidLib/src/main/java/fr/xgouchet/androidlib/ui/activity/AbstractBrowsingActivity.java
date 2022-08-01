@@ -20,9 +20,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.neofonie.mobile.app.android.widget.crouton.Crouton;
-import de.neofonie.mobile.app.android.widget.crouton.Style;
-import fr.xgouchet.androidlib.R;
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
+import fr.xgouchet.R;
 import fr.xgouchet.androidlib.comparator.ComparatorFilesAlpha;
 import fr.xgouchet.androidlib.data.FileUtils;
 import fr.xgouchet.androidlib.ui.adapter.FileListAdapter;

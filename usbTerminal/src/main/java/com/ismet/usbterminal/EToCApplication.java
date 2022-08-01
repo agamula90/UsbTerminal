@@ -6,9 +6,9 @@ import android.util.SparseArray;
 import com.ismet.usbterminal.data.Command;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
-import com.ismet.usbterminal.mainscreen.powercommands.LocalPowerCommandsFactory;
-import com.ismet.usbterminal.mainscreen.powercommands.FilePowerCommandsFactory;
-import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory;
+import com.ismet.usbterminal.powercommands.LocalPowerCommandsFactory;
+import com.ismet.usbterminal.powercommands.FilePowerCommandsFactory;
+import com.ismet.usbterminal.powercommands.PowerCommandsFactory;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 
 import java.util.ArrayList;

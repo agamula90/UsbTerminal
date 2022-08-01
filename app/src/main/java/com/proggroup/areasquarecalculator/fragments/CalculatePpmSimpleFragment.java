@@ -26,8 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.BaseLoadTask;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
@@ -58,6 +56,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpmSimpleAdapter
 		.OnInfoFilledListener {
@@ -948,7 +949,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						protected void onPostExecute(Boolean aVoid) {
 							getActivity().getCurrentFocus().clearFocus();
 							if (!aVoid) {
-								Toast toast = Toast.makeText(getActivity(), "You select wrong " + "file", Toast
+								Toast toast = Toast.makeText(getActivity(), "You select wrong file", Toast
 										.LENGTH_LONG);
                                 ToastUtils.wrap(toast);
 								toast.show();

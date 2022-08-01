@@ -1,6 +1,7 @@
 package com.proggroup.areasquarecalculator.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -30,12 +31,11 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.itextpdf.text.DocumentException;
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
+import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.data.ReportData;
@@ -53,6 +53,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class BottomFragment extends Fragment implements OnProgressDismissable{
 
@@ -279,130 +282,121 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
             }
         });
 
-        loadPpmCurve.setOnClickListener(new View.OnClickListener() {
+        loadPpmCurve.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity().getBaseContext(), FileDialog.class);
+            intent.putExtra(FileDialog.START_PATH, Constants.BASE_DIRECTORY.getAbsolutePath());
+            intent.putExtra(FileDialog.ROOT_PATH, Constants.BASE_DIRECTORY.getAbsolutePath());
+            intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
 
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity().getBaseContext(), FileDialog.class);
-                intent.putExtra(FileDialog.START_PATH, Constants.BASE_DIRECTORY.getAbsolutePath());
-                intent.putExtra(FileDialog.ROOT_PATH, Constants.BASE_DIRECTORY.getAbsolutePath());
-                intent.putExtra(FileDialog.SELECTION_MODE, SelectionMode.MODE_OPEN);
+            IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
 
-                IntentFolderWrapUtils.wrapFolderForDrawables(getActivity(), intent);
+            intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
+            intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
 
-                intent.putExtra(FileDialog.FORMAT_FILTER, new String[]{"csv"});
-                intent.putExtra(FileDialog.CAN_SELECT_DIR, true);
-                intent.putExtra(FileDialog.FOLDER_SELECT_PROMPT, true);
-
-                startActivityForResult(intent, LOAD_PPM_AVG_VALUES_REQUEST_CODE);
-            }
+            startActivityForResult(intent, LOAD_PPM_AVG_VALUES_REQUEST_CODE);
         });
 
-        graph1.setOnClickListener(new View.OnClickListener() {
+        graph1.setOnClickListener(v -> {
+            Activity activity = getActivity();
 
-            @Override
-            public void onClick(View v) {
-                Activity activity = getActivity();
+            if (ppmPoints.isEmpty()) {
+                Toast toast =  Toast.makeText(getActivity(), "Please load CAL_Curve", Toast
+                        .LENGTH_LONG);
+                ToastUtils.wrap(toast);
+                        toast.show();
+                return;
+            }
 
-                if (ppmPoints.isEmpty()) {
-                    Toast toast =  Toast.makeText(getActivity(), "Please load CAL_Curve", Toast
-                            .LENGTH_LONG);
+            List<Float> ppmPoints = new ArrayList<>();
+            List<Float> avgSquarePoints = new ArrayList<>();
+            ppmPoints.addAll(BottomFragment.this.ppmPoints);
+            avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
+
+            ArrayList<String> ppmStrings = new ArrayList<>(ppmPoints.size());
+            ArrayList<String> squareStrings = new ArrayList<>(avgSquarePoints.size());
+
+            for (Float ppm : ppmPoints) {
+                ppmStrings.add(ppm.intValue() + "");
+            }
+            for (Float square : avgSquarePoints) {
+                squareStrings.add(FloatFormatter.format(square));
+            }
+
+            LibraryContentAttachable libraryContentAttachable = activity instanceof
+                    LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
+
+            if (libraryContentAttachable != null) {
+                LinearLayout viewGroup = libraryContentAttachable.graphContainer();
+
+                LineChart lineChart = new LineChart(activity);
+
+                int countPoints = squareStrings.size();
+
+                SparseArray<Float> squares = new SparseArray<>(countPoints);
+
+                for (int i = 0; i < countPoints; i++) {
+                    squares.put(Integer.parseInt(ppmStrings.get(i)), Float.parseFloat
+                            (squareStrings.get
+                                    (i)));
+                }
+
+                if (squares.size() < 2) {
+                    Toast toast =  Toast.makeText(getActivity(), "Please load Correct " +
+                            "Calibration Curve!",
+                            Toast.LENGTH_LONG);
                     ToastUtils.wrap(toast);
-                            toast.show();
+                    toast.show();
                     return;
                 }
 
-                List<Float> ppmPoints = new ArrayList<>();
-                List<Float> avgSquarePoints = new ArrayList<>();
-                ppmPoints.addAll(BottomFragment.this.ppmPoints);
-                avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
+                CurveFragment.initLine(lineChart, activity, squares);
 
-                ArrayList<String> ppmStrings = new ArrayList<>(ppmPoints.size());
-                ArrayList<String> squareStrings = new ArrayList<>(avgSquarePoints.size());
+                viewGroup.removeAllViews();
 
-                for (Float ppm : ppmPoints) {
-                    ppmStrings.add(ppm.intValue() + "");
-                }
-                for (Float square : avgSquarePoints) {
-                    squareStrings.add(FloatFormatter.format(square));
-                }
+                FrameLayout frameLayout = new FrameLayout(activity);
 
-                LibraryContentAttachable libraryContentAttachable = activity instanceof
-                        LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
+                        .LayoutParams.MATCH_PARENT, 60);
+                params.gravity = GravityCompat.END | Gravity.BOTTOM;
 
-                if (libraryContentAttachable != null) {
-                    LinearLayout viewGroup = libraryContentAttachable.graphContainer();
+                //View v1 = new View(activity);
+                //v1.setBackgroundColor(Color.BLACK);
 
-                    LineChart lineChart = new LineChart(activity);
+                //frameLayout.addView(v1, params);
 
-                    int countPoints = squareStrings.size();
+                LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams
+                        (ViewGroup
+                                .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams
+                                .MATCH_PARENT);
+                viewGroup.addView(frameLayout, containerParams);
 
-                    SparseArray<Float> squares = new SparseArray<>(countPoints);
+                frameLayout.addView(lineChart, new FrameLayout.LayoutParams(ViewGroup
+                        .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-                    for (int i = 0; i < countPoints; i++) {
-                        squares.put(Integer.parseInt(ppmStrings.get(i)), Float.parseFloat
-                                (squareStrings.get
-                                        (i)));
-                    }
+                TextView textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
+                textView.setTextColor(Color.BLACK);
+                textView.setText("ppm");
 
-                    if (squares.size() < 2) {
-                        Toast toast =  Toast.makeText(getActivity(), "Please load Correct " +
-                                "Calibration Curve!",
-                                Toast.LENGTH_LONG);
-                        ToastUtils.wrap(toast);
-                        toast.show();
-                        return;
-                    }
+                params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.gravity = GravityCompat.END | Gravity.BOTTOM;
+                params.rightMargin = 10;
+                params.bottomMargin = 20;
+                frameLayout.addView(textView, params);
 
-                    CurveFragment.initLine(lineChart, activity, squares);
+                textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
+                textView.setTextColor(Color.BLACK);
+                textView.setText("SAV");
 
-                    viewGroup.removeAllViews();
+                params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.leftMargin = 20;
+                params.topMargin = 20;
+                frameLayout.addView(textView, params);
 
-                    FrameLayout frameLayout = new FrameLayout(activity);
+                libraryContentAttachable.onGraphAttached();
 
-                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup
-                            .LayoutParams.MATCH_PARENT, 60);
-                    params.gravity = GravityCompat.END | Gravity.BOTTOM;
-
-                    //View v1 = new View(activity);
-                    //v1.setBackgroundColor(Color.BLACK);
-
-                    //frameLayout.addView(v1, params);
-
-                    LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams
-                            (ViewGroup
-                                    .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams
-                                    .MATCH_PARENT);
-                    viewGroup.addView(frameLayout, containerParams);
-
-                    frameLayout.addView(lineChart, new FrameLayout.LayoutParams(ViewGroup
-                            .LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-                    TextView textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
-                    textView.setTextColor(Color.BLACK);
-                    textView.setText("ppm");
-
-                    params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                    params.gravity = GravityCompat.END | Gravity.BOTTOM;
-                    params.rightMargin = 10;
-                    params.bottomMargin = 20;
-                    frameLayout.addView(textView, params);
-
-                    textView = new TextView(activity, null, R.style.TextViewDefaultStyle);
-                    textView.setTextColor(Color.BLACK);
-                    textView.setText("SAV");
-
-                    params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                    params.leftMargin = 20;
-                    params.topMargin = 20;
-                    frameLayout.addView(textView, params);
-
-                    libraryContentAttachable.onGraphAttached();
-
-                    lineChart.invalidate();
-                }
+                lineChart.invalidate();
             }
         });
 
@@ -483,104 +477,92 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
             }
         });
 
-        calculatePpmAuto.setOnClickListener(new View.OnClickListener() {
+        calculatePpmAuto.setOnClickListener(v -> {
 
-            @Override
-            public void onClick(View v) {
+            mDoPostLoadingCalculations = true;
+            File calFolder = CalculatePpmSimpleFragment.findNewestFolder(Constants
+                    .BASE_DIRECTORY, "CAL");
 
-                mDoPostLoadingCalculations = true;
-                File calFolder = CalculatePpmSimpleFragment.findNewestFolder(Constants
-                        .BASE_DIRECTORY, "CAL");
+            Activity activity = getActivity();
+            FrameLayout frameLayout = null;
 
-                Activity activity = getActivity();
-                FrameLayout frameLayout = null;
+            LibraryContentAttachable libraryContentAttachable = null;
 
-	            LibraryContentAttachable libraryContentAttachable = null;
-
-                if (activity instanceof LibraryContentAttachable) {
-	                libraryContentAttachable = (LibraryContentAttachable) activity;
-                    frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
-                }
-
-                createAutoTask = new CreateCalibrationCurveForAutoTask(new
-                        LoadGraphDataTask(activity, frameLayout, null, onGraphDataLoadedCallback),
-                        getActivity(), true);
-	            if(libraryContentAttachable != null) {
-		            createAutoTask.setOnProgressDismissable(libraryContentAttachable);
-	            }
-                //task.setIgnoreExistingCurves(true);
-	            createAutoTask.execute(calFolder);
+            if (activity instanceof LibraryContentAttachable) {
+                libraryContentAttachable = (LibraryContentAttachable) activity;
+                frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
             }
+
+            createAutoTask = new CreateCalibrationCurveForAutoTask(new
+                    LoadGraphDataTask(activity, frameLayout, null, onGraphDataLoadedCallback),
+                    getActivity(), true);
+            if(libraryContentAttachable != null) {
+                createAutoTask.setOnProgressDismissable(libraryContentAttachable);
+            }
+            //task.setIgnoreExistingCurves(true);
+            createAutoTask.execute(calFolder);
         });
 
-        mRealCalculationsCalculateAutoListener = new View.OnClickListener() {
+        mRealCalculationsCalculateAutoListener = v -> {
+            if (mAutoAvgPoint == null) {
+                Toast toast =  Toast.makeText(getActivity(), "Average point not filled",
+                        Toast.LENGTH_LONG);
+                ToastUtils.wrap(toast);
+                toast.show();
+                return;
+            } else {
+                avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
+            }
 
-            @Override
-            public void onClick(View v) {
-                if (mAutoAvgPoint == null) {
-                    Toast toast =  Toast.makeText(getActivity(), "Average point not filled",
-                            Toast.LENGTH_LONG);
+            float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
+            float value;
+
+            boolean isExpanded = false;
+
+            try {
+                List<Float> ppmPoints = new ArrayList<>();
+                List<Float> avgSquarePoints = new ArrayList<>();
+                ppmPoints.addAll(BottomFragment.this.ppmPoints);
+                avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
+
+                if(avgSquarePoints.get(avgSquarePoints.size() - 1) < avgValueY) {
+                    value = calculatePpmExpanded(ppmPoints, avgSquarePoints, avgValueY);
+                    isExpanded = true;
+                } else {
+                    isExpanded = false;
+                    value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints, avgSquarePoints);
+                }
+            } catch (Exception e) {
+                value = -1;
+            }
+
+            if (value == -1) {
+                Activity activity = getActivity();
+                Toast toast = Toast.makeText(activity, activity.getString(R.string
+                        .wrong_data), Toast
+                        .LENGTH_LONG);
+                ToastUtils.wrap(toast);
+                toast.show();
+            } else {
+                if(isExpanded) {
+                    Toast toast = Toast.makeText(getActivity(), createRatioString(avgSquarePoints.get
+                            (avgSquarePoints.size() - 1), value), Toast.LENGTH_LONG);
                     ToastUtils.wrap(toast);
                     toast.show();
-                    return;
                 } else {
-                    avgValueLoaded.setText(FloatFormatter.format(mAutoAvgPoint.avg()));
-                }
-
-                float avgValueY = Float.parseFloat(avgValueLoaded.getText().toString());
-                float value;
-
-	            boolean isExpanded = false;
-
-                try {
-                    List<Float> ppmPoints = new ArrayList<>();
-                    List<Float> avgSquarePoints = new ArrayList<>();
-                    ppmPoints.addAll(BottomFragment.this.ppmPoints);
-                    avgSquarePoints.addAll(BottomFragment.this.avgSquarePoints);
-
-	                if(avgSquarePoints.get(avgSquarePoints.size() - 1) < avgValueY) {
-		                value = calculatePpmExpanded(ppmPoints, avgSquarePoints, avgValueY);
-		                isExpanded = true;
-	                } else {
-		                isExpanded = false;
-		                value = CalculatePpmSimpleFragment.findPpmBySquare(avgValueY, ppmPoints, avgSquarePoints);
-	                }
-                } catch (Exception e) {
-                    value = -1;
-                }
-
-                if (value == -1) {
-                    Activity activity = getActivity();
-                    Toast toast = Toast.makeText(activity, activity.getString(R.string
-                            .wrong_data), Toast
-                            .LENGTH_LONG);
-                    ToastUtils.wrap(toast);
-                    toast.show();
-                } else {
-	                if(isExpanded) {
-                        Toast toast = Toast.makeText(getActivity(), createRatioString(avgSquarePoints.get
-		                        (avgSquarePoints.size() - 1), value), Toast.LENGTH_LONG);
-                        ToastUtils.wrap(toast);
-                        toast.show();
-	                } else {
-		                resultPpmLoaded.setText(FloatFormatter.format(value));
-	                }
+                    resultPpmLoaded.setText(FloatFormatter.format(value));
                 }
             }
         };
 
-        mClearRow2.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                resultPpmLoaded.setText("");
-                avgValueLoaded.setText("");
-                mAvgFiles = null;
-                mCurveFile = null;
-                ppmPoints.clear();
-                avgSquarePoints.clear();
-                fillAvgPointsLayout();
-            }
+        mClearRow2.setOnClickListener(v -> {
+            resultPpmLoaded.setText("");
+            avgValueLoaded.setText("");
+            mAvgFiles = null;
+            mCurveFile = null;
+            ppmPoints.clear();
+            avgSquarePoints.clear();
+            fillAvgPointsLayout();
         });
 
         initGraphDataLoadedCallback();
@@ -1006,14 +988,62 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
             resultPpmLoaded.setText("");
             switch (requestCode) {
                 case LOAD_PPM_AVG_VALUES_REQUEST_CODE:
-                    mDoPostLoadingCalculations = false;
-                    Activity activity = getActivity();
-                    FrameLayout frameLayout = null;
-                    if (activity instanceof LibraryContentAttachable) {
-                        frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
+                    String path = data.getStringExtra(FileDialog.RESULT_PATH);
+                    File selectedFile = new File(path);
+                    if (selectedFile.isDirectory()) {
+                        Context context = getActivity();
+                        FrameLayout frameLayout = ((LibraryContentAttachable) context).getFrameLayout();
+                        AlertDialog dialog = new AlertDialog.Builder(context)
+                                .setNeutralButton(getResources().getString(R.string.no), (dialogInterface, which) -> dialogInterface.dismiss())
+                                .setPositiveButton(getResources().getString(R.string.yes), (dialogInterface, which) -> {
+                                    CreateCalibrationCurveForAutoTask task = new CreateCalibrationCurveForAutoTask(new UrlChangeable() {
+
+                                        @Override
+                                        public String getUrl() {
+                                            return null;
+                                        }
+
+                                        @Override
+                                        public void setUrl(String url) {
+
+                                        }
+
+                                        @Override
+                                        public void execute() {
+
+                                        }
+
+                                        @Override
+                                        public FrameLayout getFrameLayout() {
+                                            return frameLayout;
+                                        }
+
+                                        @Override
+                                        public void setProgressBar(View progressBar) {
+
+                                        }
+                                    }, context, true);
+                                    task.setIgnoreExistingCurves(true);
+                                    task.setCalibrationCurveCreatedListener(file -> {
+                                        dialogInterface.dismiss();
+                                        loadPpmAverageValues(file.getAbsolutePath());
+                                    });
+                                    task.execute(selectedFile);
+                                }).setMessage(getResources().getString(R.string.do_you_want_to_create_curve)).create();
+                        dialog.show();
+                        View decorView = dialog.getWindow().getDecorView();
+                        ((TextView) decorView.findViewById(android.R.id.message)).setGravity
+                                (Gravity.CENTER);
+
+                        Button button3 = ((Button) decorView.findViewById(android.R.id.button3));
+                        button3.setTextColor(Color.BLACK);
+                        button3.setBackgroundResource(R.drawable.button_drawable);
+                        Button button1 = ((Button) decorView.findViewById(android.R.id.button1));
+                        button1.setTextColor(Color.BLACK);
+                        button1.setBackgroundResource(R.drawable.button_drawable);
+                    } else {
+                        loadPpmAverageValues(path);
                     }
-                    new LoadGraphDataTask(getActivity(), frameLayout, data.getStringExtra
-                            (FileDialog.RESULT_PATH), onGraphDataLoadedCallback).execute();
                     break;
                 case MES_SELECT_FOLDER:
                     mDoPostLoadingCalculations = true;
@@ -1022,6 +1052,16 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                     break;
             }
         }
+    }
+
+    private void loadPpmAverageValues(String filePath) {
+        mDoPostLoadingCalculations = false;
+        Activity activity = getActivity();
+        FrameLayout frameLayout = null;
+        if (activity instanceof LibraryContentAttachable) {
+            frameLayout = ((LibraryContentAttachable) activity).getFrameLayout();
+        }
+        new LoadGraphDataTask(getActivity(), frameLayout, filePath, onGraphDataLoadedCallback).execute();
     }
 
 	@Override

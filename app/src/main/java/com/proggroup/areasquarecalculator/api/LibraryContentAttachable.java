@@ -22,6 +22,8 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
 
 	int getFileDrawable();
 
+    int getButtonBackground();
+
 	FrameLayout getFrameLayout();
 
     //TODO can't use binding here

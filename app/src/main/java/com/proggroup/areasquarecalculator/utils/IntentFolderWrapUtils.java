@@ -3,8 +3,9 @@ package com.proggroup.areasquarecalculator.utils;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.lamerman.FileDialog;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
+
+import fr.xgouchet.FileDialog;
 
 public class IntentFolderWrapUtils {
 

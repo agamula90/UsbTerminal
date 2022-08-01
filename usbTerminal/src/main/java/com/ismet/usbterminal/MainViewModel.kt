@@ -10,7 +10,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.mainscreen.powercommands.PowerCommandsFactory
+import com.ismet.usbterminal.powercommands.PowerCommandsFactory
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.R

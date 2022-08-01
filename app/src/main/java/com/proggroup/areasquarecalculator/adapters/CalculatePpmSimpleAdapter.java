@@ -20,8 +20,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
@@ -39,6 +37,9 @@ import com.proggroup.squarecalculations.DocParser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
@@ -360,8 +361,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 							return;
 						}
 
-						Intent intent = new Intent(fragment.getActivity().getBaseContext(),
-								FileDialog.class);
+						Intent intent = new Intent(fragment.getActivity().getBaseContext(), FileDialog.class);
 
 						File mesFolder = Constants.BASE_DIRECTORY;
 

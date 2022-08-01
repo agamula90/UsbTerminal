@@ -9,7 +9,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import fr.xgouchet.androidlib.R;
+import fr.xgouchet.R;
 import fr.xgouchet.androidlib.common.MiscUtils;
 
 /**

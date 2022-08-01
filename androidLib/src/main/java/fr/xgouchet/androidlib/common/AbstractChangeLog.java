@@ -8,7 +8,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
-import fr.xgouchet.androidlib.R;
+import fr.xgouchet.R;
 
 /**
  *
