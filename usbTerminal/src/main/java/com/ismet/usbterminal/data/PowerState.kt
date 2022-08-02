@@ -16,6 +16,6 @@ enum class PowerState {
     OFF_WAIT_FOR_COOLING,// = 9
     OFF_FINISHING,// = 10
     OFF_RUNNING,// = 15
-    PRE_LOOPING,// = 16
+    INITIAL,// = 16
     OFF;// = 11
 }

@@ -13,90 +13,54 @@ class FilePowerCommandsFactory(
     var indexInRunning = 0
         private set
 
-    override fun moveStateToNext(): Boolean {
-        val isFinalState: Boolean
-        when (powerState) {
-            PowerState.ON -> {
-                indexInRunning = 0
-                val powerCommand = offCommands.valueAt(0)
-                powerState = when (powerCommand.command.toString()) {
-                    START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
-                    INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
-                    else -> PowerState.OFF_RUNNING
-                }
-                if (indexInRunning == offCommands.size()) {
-                    isFinalState = true
-                    powerState = PowerState.OFF
-                } else {
-                    isFinalState = false
-                }
-            }
-            PowerState.OFF_RUNNING, PowerState.OFF_INTERRUPTING, PowerState.OFF_WAIT_FOR_COOLING -> {
-                indexInRunning++
-                if (indexInRunning == offCommands.size()) {
-                    isFinalState = true
-                    indexInRunning = 0
-                    powerState = PowerState.OFF
-                    return isFinalState
-                } else {
-                    isFinalState = false
-                }
-                val powerCommand = currentCommand()
-                powerState = when(powerCommand?.command?.toString()) {
-                    null -> PowerState.OFF_RUNNING
-                    START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
-                    INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
-                    else -> PowerState.OFF_RUNNING
-                }
-            }
-            PowerState.OFF -> {
-                indexInRunning = 0
-                if (indexInRunning == onCommands.size()) {
-                    isFinalState = true
-                    powerState = PowerState.ON
-                } else {
-                    powerState = PowerState.ON_RUNNING
-                    isFinalState = false
-                }
-            }
-            PowerState.ON_RUNNING -> {
-                indexInRunning++
-                if (indexInRunning == onCommands.size()) {
-                    isFinalState = true
-                    indexInRunning = 0
-                    powerState = PowerState.ON
-                } else {
-                    isFinalState = false
-                }
-            }
-            PowerState.PRE_LOOPING -> {
-                powerState = PowerState.OFF
-                isFinalState = false
-            }
-            else -> isFinalState = false
-        }
-        return isFinalState
+    override fun moveStateToNext() {
+        val newState = getNextPowerState()
+        changeIndexInRunning()
+        powerState = newState
     }
 
-    override fun nextPowerState(): PowerState {
-        if (currentPowerState() == PowerState.PRE_LOOPING) {
-            return PowerState.OFF
-        }
-        val curState = currentPowerState()
-        moveStateToNext()
-        val newState = currentPowerState()
-        if (newState == PowerState.OFF) {
-            indexInRunning = offCommands.size() - 1
-        } else if (newState == PowerState.ON) {
-            indexInRunning = onCommands.size() - 1
-        } else {
-            indexInRunning--
-            if (indexInRunning == -1) {
-                indexInRunning = 0
+    override fun nextPowerState(): PowerState = getNextPowerState()
+
+    private fun getNextPowerState() = when {
+        powerState == PowerState.ON -> {
+            val powerCommand = offCommands.valueAt(0)
+            when (powerCommand.command.toString()) {
+                START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
+                INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
+                else -> PowerState.OFF_RUNNING
             }
         }
-        powerState = curState
-        return newState
+        powerState in arrayOf(PowerState.OFF_RUNNING, PowerState.OFF_INTERRUPTING, PowerState.OFF_WAIT_FOR_COOLING) && indexInRunning == offCommands.size() - 1 -> {
+            PowerState.OFF
+        }
+        powerState in arrayOf(PowerState.OFF_RUNNING, PowerState.OFF_INTERRUPTING, PowerState.OFF_WAIT_FOR_COOLING) -> {
+            val powerCommand = currentCommand()
+            when(powerCommand?.command?.toString()) {
+                null -> PowerState.OFF_RUNNING
+                START_COOLING -> PowerState.OFF_WAIT_FOR_COOLING
+                INTERRUPT_SOFTWARE_ACTIONS -> PowerState.OFF_INTERRUPTING
+                else -> PowerState.OFF_RUNNING
+            }
+        }
+        powerState == PowerState.OFF -> PowerState.ON_RUNNING
+        powerState == PowerState.ON_RUNNING && indexInRunning == onCommands.size() - 1 -> {
+            PowerState.ON
+        }
+        powerState == PowerState.INITIAL -> PowerState.OFF
+        else -> powerState
+    }
+
+    private fun changeIndexInRunning() {
+        indexInRunning = when(powerState) {
+            PowerState.ON, PowerState.OFF -> 0
+            PowerState.OFF_RUNNING, PowerState.OFF_INTERRUPTING, PowerState.OFF_WAIT_FOR_COOLING -> {
+                if (indexInRunning == offCommands.size() - 1) 0 else indexInRunning + 1
+            }
+            PowerState.ON_RUNNING -> {
+                if (indexInRunning == onCommands.size() - 1) 0 else indexInRunning + 1
+            }
+            else -> indexInRunning
+        }
     }
 
     override fun currentCommand(): PowerCommand? = when (powerState) {

@@ -27,84 +27,30 @@ class LocalPowerCommandsFactory(
         this[PowerState.OFF_WAIT_FOR_COOLING] = PowerCommand(Command("/5H0000R"), 1000)
     }
     
-    override fun moveStateToNext(): Boolean {
-        val isFinalState: Boolean
-        when (powerState) {
-            PowerState.ON_STAGE1 -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE1_REPEAT
-            }
-            PowerState.ON_STAGE1_REPEAT -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE2B
-            }
-            PowerState.ON_STAGE2B -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE2
-            }
-            PowerState.ON_STAGE2 -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE3A
-            }
-            PowerState.ON_STAGE3A -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE3B
-            }
-            PowerState.ON_STAGE3B -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE3
-            }
-            PowerState.ON_STAGE3 -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE4
-            }
-            PowerState.ON_STAGE4 -> {
-                isFinalState = true
-                powerState = PowerState.ON
-            }
-            PowerState.ON -> {
-                isFinalState = false
-                powerState = PowerState.OFF_INTERRUPTING
-            }
-            PowerState.OFF_INTERRUPTING -> {
-                isFinalState = false
-                powerState = PowerState.OFF_STAGE1
-            }
-            PowerState.OFF_STAGE1 -> {
-                isFinalState = false
-                powerState = PowerState.OFF_WAIT_FOR_COOLING
-            }
-            PowerState.OFF_WAIT_FOR_COOLING -> {
-                isFinalState = false
-                powerState = PowerState.OFF_FINISHING
-            }
-            PowerState.OFF_FINISHING -> {
-                isFinalState = true
-                powerState = PowerState.OFF
-            }
-            PowerState.OFF -> {
-                isFinalState = false
-                powerState = PowerState.ON_STAGE1
-            }
-            PowerState.PRE_LOOPING -> {
-                powerState = PowerState.OFF
-                isFinalState = false
-            }
-            else -> isFinalState = false
-        }
-        return isFinalState
+    override fun moveStateToNext() {
+        powerState = getNextPowerState()
     }
 
-    override fun nextPowerState(): PowerState {
-        if (currentPowerState() == PowerState.PRE_LOOPING) {
-            return PowerState.OFF
-        }
-        val curState = currentPowerState()
-        moveStateToNext()
-        val newState = currentPowerState()
-        powerState = curState
-        return newState
+    private fun getNextPowerState() = when (powerState) {
+        PowerState.ON_STAGE1 -> PowerState.ON_STAGE1_REPEAT
+        PowerState.ON_STAGE1_REPEAT -> PowerState.ON_STAGE2B
+        PowerState.ON_STAGE2B -> PowerState.ON_STAGE2
+        PowerState.ON_STAGE2 -> PowerState.ON_STAGE3A
+        PowerState.ON_STAGE3A -> PowerState.ON_STAGE3B
+        PowerState.ON_STAGE3B -> PowerState.ON_STAGE3
+        PowerState.ON_STAGE3 -> PowerState.ON_STAGE4
+        PowerState.ON_STAGE4 -> PowerState.ON
+        PowerState.ON -> PowerState.OFF_INTERRUPTING
+        PowerState.OFF_INTERRUPTING -> PowerState.OFF_STAGE1
+        PowerState.OFF_STAGE1 -> PowerState.OFF_WAIT_FOR_COOLING
+        PowerState.OFF_WAIT_FOR_COOLING -> PowerState.OFF_FINISHING
+        PowerState.OFF_FINISHING -> PowerState.OFF
+        PowerState.OFF -> PowerState.ON_STAGE1
+        PowerState.INITIAL -> PowerState.OFF
+        else -> powerState
     }
+
+    override fun nextPowerState(): PowerState = getNextPowerState()
 
     override fun currentCommand(): PowerCommand? = onCommands[powerState] ?: offCommands[powerState]
 

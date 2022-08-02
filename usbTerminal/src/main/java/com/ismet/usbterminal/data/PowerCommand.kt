@@ -5,7 +5,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 class PowerCommand(val command: Command, val delay: Long, val possibleResponses: Array<String> = emptyArray()): Parcelable {
-    fun hasSelectableResponses(): Boolean {
+    fun hasResponses(): Boolean {
         return possibleResponses.isNotEmpty()
     }
 

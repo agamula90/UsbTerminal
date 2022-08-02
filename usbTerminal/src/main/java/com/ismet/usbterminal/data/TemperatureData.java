@@ -21,7 +21,7 @@ public class TemperatureData {
             return temperatureData;
         }
         value = value.substring(1);
-        String splitCommas[] = value.split(",");
+        String[] splitCommas = value.split(",");
         if (splitCommas.length != 10) {
 	        temperatureData.wrongPosition = 1;
             return temperatureData;
@@ -29,7 +29,7 @@ public class TemperatureData {
         try {
 	        temperatureData.wrongPosition = 2;
             temperatureData.mFirstDogValue = Integer.parseInt(splitCommas[0]);
-            String splitBracket[] = splitCommas[1].split("\\(");
+            String[] splitBracket = splitCommas[1].split("\\(");
             if (splitBracket.length != 2) {
 	            temperatureData.wrongPosition = 3;
                 throw new NumberFormatException();
@@ -65,6 +65,8 @@ public class TemperatureData {
 	        temperatureData.wrongPosition = 13;
             //temperatureData.mTemperature4 = Integer.parseInt(splitCommas[9]);
         } catch (NumberFormatException e) {
+            return temperatureData;
+        } catch (IndexOutOfBoundsException e) {
             return temperatureData;
         }
 	    temperatureData.wrongPosition = 0;

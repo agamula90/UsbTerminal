@@ -69,11 +69,11 @@ class MainViewModel @Inject constructor(
     val charts = MutableLiveData(List(MAX_CHARTS) { Chart(it, emptyList()) })
     val temperatureShift = handle.getLiveData("temperatureShift", 0)
     val buttonOn1Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 0))
-    val buttonOn2Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 1))
-    val buttonOn3Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 2))
-    val buttonOn4Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 3))
-    val buttonOn5Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 4))
-    val buttonOn6Properties = handle.getLiveData("buttonOn1", ButtonProperties.byButtonIndex(prefs, 5))
+    val buttonOn2Properties = handle.getLiveData("buttonOn2", ButtonProperties.byButtonIndex(prefs, 1))
+    val buttonOn3Properties = handle.getLiveData("buttonOn3", ButtonProperties.byButtonIndex(prefs, 2))
+    val buttonOn4Properties = handle.getLiveData("buttonOn4", ButtonProperties.byButtonIndex(prefs, 3))
+    val buttonOn5Properties = handle.getLiveData("buttonOn5", ButtonProperties.byButtonIndex(prefs, 4))
+    val buttonOn6Properties = handle.getLiveData("buttonOn6", ButtonProperties.byButtonIndex(prefs, 5))
     val powerProperties = handle.getLiveData("power", ButtonProperties.forPower())
     val maxY = handle.getLiveData("maxY",0)
     val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
@@ -87,10 +87,8 @@ class MainViewModel @Inject constructor(
         if (settingsFolder.exists()) readSettingsFolder(settingsFolder)
         initPowerAccordToItState()
         initGraphData()
-        if (powerCommandsFactory.currentPowerState() == PowerState.PRE_LOOPING) {
-            isPreLooping = true
-            waitForCooling()
-        }
+        isPreLooping = true
+        waitForCooling()
     }
 
     private fun createPowerCommandsFactory(settingsFolder: File): PowerCommandsFactory {
@@ -131,7 +129,7 @@ class MainViewModel @Inject constructor(
                 currentList?.add(row)
             }
         }
-        var powerCommandsFactory: PowerCommandsFactory = LocalPowerCommandsFactory(PowerState.PRE_LOOPING)
+        var powerCommandsFactory: PowerCommandsFactory = LocalPowerCommandsFactory(PowerState.INITIAL)
         if (borderTemperatures.size != 1) {
             return powerCommandsFactory
         } else {
@@ -159,7 +157,7 @@ class MainViewModel @Inject constructor(
                     return powerCommandsFactory
                 }
             }
-            powerCommandsFactory = FilePowerCommandsFactory(PowerState.PRE_LOOPING, onCommandsArr, offCommandsArr)
+            powerCommandsFactory = FilePowerCommandsFactory(PowerState.INITIAL, onCommandsArr, offCommandsArr)
         }
         return powerCommandsFactory
     }
@@ -1120,7 +1118,7 @@ class MainViewModel @Inject constructor(
             handleResponse(notNullResponse)
         } else {
             val powerState = powerCommandsFactory.currentPowerState()
-            if (powerState == PowerState.PRE_LOOPING) {
+            if (powerState == PowerState.INITIAL) {
                 isPreLooping = false
                 stopWaitForCooling()
                 powerCommandsFactory.moveStateToNext()
@@ -1132,7 +1130,7 @@ class MainViewModel @Inject constructor(
         val text: String
         val background: Int
         when (powerCommandsFactory.currentPowerState()) {
-            PowerState.OFF, PowerState.PRE_LOOPING -> {
+            PowerState.OFF, PowerState.INITIAL -> {
                 text = prefs.getString(PrefConstants.POWER_OFF_NAME, PrefConstants.POWER_OFF_NAME_DEFAULT)!!
                 background = R.drawable.power_off_drawable
             }
@@ -1171,136 +1169,109 @@ class MainViewModel @Inject constructor(
 
     //TODO check if should run on 1 thread or not?
     private suspend fun sendRequest() {
-        var powerState = powerCommandsFactory.currentPowerState()
-        when (powerState) {
-            PowerState.OFF_INTERRUPTING -> {
-                handleResponse( response = "")
+        val currentCommand = powerCommandsFactory.currentCommand()
+        val powerState = powerCommandsFactory.currentPowerState()
+        val nextPowerState = powerCommandsFactory.nextPowerState()
+        when {
+            powerState == PowerState.OFF_INTERRUPTING -> {
+                handleResponse(response = "")
             }
-            PowerState.OFF_WAIT_FOR_COOLING -> {
+            powerState == PowerState.OFF_WAIT_FOR_COOLING -> {
                 waitForCooling()
                 events.send(MainEvent.ShowWaitForCoolingDialog(
                     message = """  Cooling down.  Do not switch power off.  Please wait . . . ! ! !    
 System will turn off automaticaly."""))
             }
+            currentCommand == null -> {
+                //ignore
+            }
+            currentCommand.hasResponses() || nextPowerState in arrayOf(PowerState.ON, PowerState.OFF) -> {
+                events.send(MainEvent.WriteToUsb(currentCommand.command))
+            }
             else -> {
-                val currentCommand = powerCommandsFactory.currentCommand()
-                if (currentCommand != null) {
-                    events.offer(MainEvent.WriteToUsb(currentCommand.command))
-                    if (!currentCommand.hasSelectableResponses()) {
-                        powerState = powerCommandsFactory.nextPowerState()
-                        if (powerState !== PowerState.OFF && powerState !== PowerState.ON) {
-                            delay(currentCommand.delay)
-                            val currentCommandNew = powerCommandsFactory.currentCommand()
-                            var currentState = powerCommandsFactory.currentPowerState()
-                            if (currentState !== PowerState.OFF && currentState !== PowerState.ON && currentCommand == currentCommandNew) {
-                                powerCommandsFactory.moveStateToNext()
-                                currentState = powerCommandsFactory.currentPowerState()
-                                if (currentState !== PowerState.OFF && currentState !== PowerState.ON) {
-                                    sendRequest()
-                                }
-                            }
-                        }
-                    }
-                }
+                events.send(MainEvent.WriteToUsb(currentCommand.command))
+                delay(currentCommand.delay)
+                powerCommandsFactory.moveStateToNext()
+                sendRequest()
             }
         }
     }
 
     private suspend fun handleResponse(response: String) {
-        when (powerCommandsFactory.currentPowerState()) {
+        val previousPowerState = powerCommandsFactory.currentPowerState()
+        val temperatureData = TemperatureData.parse(response)
+        if (previousPowerState !in arrayOf(PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING,
+                PowerState.OFF_INTERRUPTING, PowerState.OFF_STAGE1, PowerState.OFF_WAIT_FOR_COOLING, PowerState.OFF_RUNNING, PowerState.OFF_FINISHING) ||
+            (previousPowerState == PowerState.OFF_WAIT_FOR_COOLING && (!temperatureData.isCorrect || temperatureData.temperature1 > borderCoolingTemperature)) ||
+            (previousPowerState == PowerState.OFF_STAGE1 && !temperatureData.isCorrect)) {
+            return
+        }
+        if (previousPowerState == PowerState.OFF_STAGE1 && temperatureData.temperature1 <= borderCoolingTemperature) {
+            powerCommandsFactory.moveStateToNext()
+        }
+        var currentCommand = powerCommandsFactory.currentCommand()
+        powerCommandsFactory.moveStateToNext()
+        val powerState = powerCommandsFactory.currentPowerState()
+        if (previousPowerState !in arrayOf(PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING)) {
+            currentCommand = powerCommandsFactory.currentCommand()
+        }
+
+        when (previousPowerState) {
             PowerState.ON_STAGE1, PowerState.ON_STAGE1_REPEAT, PowerState.ON_STAGE3A, PowerState.ON_STAGE3B, PowerState.ON_STAGE2B, PowerState.ON_STAGE2, PowerState.ON_STAGE3, PowerState.ON_STAGE4, PowerState.ON_RUNNING -> {
-                val currentCommand = powerCommandsFactory.currentCommand()
-                powerCommandsFactory.moveStateToNext()
-                if (currentCommand?.hasSelectableResponses() == true) {
-                    if (currentCommand.isResponseCorrect(response)) {
-                        if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                            delay(currentCommand.delay)
-                            if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                                sendRequest()
-                            }
-                        }
-                    } else {
-                        val responseBuilder = java.lang.StringBuilder()
-                        for (possibleResponse in currentCommand.possibleResponses) {
-                            responseBuilder.append("\"$possibleResponse\" or ")
-                        }
-                        responseBuilder.delete(
-                            responseBuilder.length - 4, responseBuilder
-                                .length
-                        )
-                        events.send(MainEvent.ShowToast(message = "Wrong response: Got - \"${response}\".Expected - $responseBuilder"))
-                        return
+                when {
+                    currentCommand?.hasResponses() != true && powerState != PowerState.ON -> sendRequest()
+                    currentCommand?.hasResponses() != true -> {
+                        initPowerAccordToItState()
+                        startSendingTemperatureOrCo2Requests()
                     }
-                } else if (powerCommandsFactory.currentPowerState() != PowerState.ON) {
-                    sendRequest()
-                }
-                if (powerCommandsFactory.currentPowerState() == PowerState.ON) {
-                    initPowerAccordToItState()
-                    startSendingTemperatureOrCo2Requests()
+                    !currentCommand.isResponseCorrect(response) -> {
+                        events.send(MainEvent.ShowToast(message = buildWrongResponseMessage(response, currentCommand)))
+                    }
+                    powerState != PowerState.ON -> {
+                        delay(currentCommand.delay)
+                        sendRequest()
+                    }
+                    else -> {
+                        initPowerAccordToItState()
+                        startSendingTemperatureOrCo2Requests()
+                    }
                 }
             }
             PowerState.OFF_INTERRUPTING -> {
                 stopSendingTemperatureOrCo2Requests()
-                powerCommandsFactory.moveStateToNext()
-                val delayForPausing = powerCommandsFactory.currentCommand()!!.delay
-                delay(delayForPausing * 2)
-                if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
+                delay(currentCommand!!.delay * 2)
+                if (powerState != PowerState.OFF) {
                     sendRequest()
                 }
             }
             //we can get here only from local power factory
             PowerState.OFF_STAGE1 -> {
-                val temperatureData = TemperatureData.parse(response)
-                if (temperatureData.isCorrect) {
-                    val curTemperature = temperatureData.temperature1
-                    if (curTemperature <= borderCoolingTemperature) {
-                        powerCommandsFactory.moveStateToNext()
-                    }
-                    powerCommandsFactory.moveStateToNext()
-                    delay(powerCommandsFactory.currentCommand()!!.delay)
-                    if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                        sendRequest()
-                    }
+                delay(currentCommand!!.delay)
+                if (powerState != PowerState.OFF) {
+                    sendRequest()
                 }
             }
             PowerState.OFF_WAIT_FOR_COOLING -> {
-                val temperatureData = TemperatureData.parse(response)
-                if (temperatureData.isCorrect) {
-                    val curTemperature: Int = temperatureData.temperature1
-                    if (curTemperature <= borderCoolingTemperature) {
-                        stopWaitForCooling()
-                        powerCommandsFactory.moveStateToNext()
-                        delay(powerCommandsFactory.currentCommand()!!.delay)
-                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                            sendRequest()
-                        }
-                    }
+                stopWaitForCooling()
+                delay(currentCommand!!.delay)
+                if (powerState != PowerState.OFF) {
+                    sendRequest()
                 }
             }
             PowerState.OFF_RUNNING, PowerState.OFF_FINISHING -> {
-                powerCommandsFactory.moveStateToNext()
-                if (powerCommandsFactory.currentPowerState() == PowerState.OFF) {
-                    initPowerAccordToItState()
-                    return
-                }
-                val currentCommand = powerCommandsFactory.currentCommand()
-                if (currentCommand?.hasSelectableResponses() == true) {
-                    if (currentCommand.isResponseCorrect(response)) {
+                when {
+                    powerState == PowerState.OFF -> {
+                        initPowerAccordToItState()
+                    }
+                    currentCommand?.hasResponses() != true -> {
+                        //ignore
+                    }
+                    currentCommand.isResponseCorrect(response) -> {
                         delay(currentCommand.delay)
-                        if (powerCommandsFactory.currentPowerState() != PowerState.OFF) {
-                            sendRequest()
-                        }
-                    } else {
-                        val responseBuilder = java.lang.StringBuilder()
-                        for (possibleResponse in currentCommand.possibleResponses) {
-                            responseBuilder.append("\"$possibleResponse\" or ")
-                        }
-                        responseBuilder.delete(
-                            responseBuilder.length - 4, responseBuilder
-                                .length
-                        )
-                        events.send(MainEvent.ShowToast(message = "Wrong response: Got - \"response\".Expected - $responseBuilder"))
-                        return
+                        sendRequest()
+                    }
+                    else -> {
+                        events.send(MainEvent.ShowToast(message = buildWrongResponseMessage(response, currentCommand)))
                     }
                 }
             }
@@ -1308,6 +1279,18 @@ System will turn off automaticaly."""))
                 //do nothing
             }
         }
+    }
+
+    private fun buildWrongResponseMessage(response: String, command: PowerCommand): String {
+        val responseBuilder = StringBuilder()
+        for (possibleResponse in command.possibleResponses) {
+            responseBuilder.append("\"$possibleResponse\" or ")
+        }
+        responseBuilder.delete(
+            responseBuilder.length - 4, responseBuilder
+                .length
+        )
+        return "Wrong response: Got - \"$response\".Expected - $responseBuilder"
     }
 
     fun onDataReceived(response: String) {
@@ -1318,7 +1301,7 @@ System will turn off automaticaly."""))
             }
         } else {
             val powerState = powerCommandsFactory.currentPowerState()
-            if (powerState == PowerState.PRE_LOOPING) {
+            if (powerState == PowerState.INITIAL) {
                 isPreLooping = false
                 stopWaitForCooling()
                 powerCommandsFactory.moveStateToNext()
