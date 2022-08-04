@@ -7,7 +7,6 @@ sealed class MainEvent {
     class ShowToast(val message: String): MainEvent()
     class WriteToUsb(val data: Command): MainEvent()
     object InvokeAutoCalculations: MainEvent()
-    class UpdateTimerRunning(val isRunning: Boolean): MainEvent()
     object IncReadingCount: MainEvent()
     object SendCommandsFromEditor: MainEvent()
     object ClearEditor: MainEvent()

@@ -4,7 +4,6 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.PointF
-import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
@@ -67,9 +66,9 @@ fun TextView.append(command: Command) {
         if (index != countLines - 1) {
             s
         } else {
-            val index = s.indexOf("\n")
-            if (index != -1) {
-                s.substring(0, index)
+            val firstIndexOfNewLineCharacter = s.indexOf("\n")
+            if (firstIndexOfNewLineCharacter != -1) {
+                s.substring(0, firstIndexOfNewLineCharacter)
             } else {
                 s
             }

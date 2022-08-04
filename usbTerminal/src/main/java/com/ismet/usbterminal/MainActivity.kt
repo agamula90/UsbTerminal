@@ -119,7 +119,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private var countMeasure = 0
     private var oldCountMeasure = 0
-    var isTimerRunning = false
     var readingCount = 0
         private set
 
@@ -171,7 +170,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             handled
         }
         binding.buttonClear.setOnClickListener {
-            if (isTimerRunning) {
+            if (viewModel.isMeasuring) {
                 showCustomisedToast("Timer is running. Please wait")
                 return@setOnClickListener
             }
@@ -202,7 +201,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
                     return@setOnClickListener
                 }
-                if (isTimerRunning) {
+                if (viewModel.isMeasuring) {
                     showCustomisedToast("Timer is running. Please wait")
                     return@setOnClickListener
                 }
@@ -611,7 +610,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
                     is MainEvent.WriteToUsb -> sendCommand(event.data)
                     is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
-                    is MainEvent.UpdateTimerRunning -> isTimerRunning = event.isRunning
                     is MainEvent.IncReadingCount -> incReadingCount()
                     is MainEvent.SendCommandsFromEditor -> sendCommandsFromEditor()
                     is MainEvent.ClearEditor -> binding.editor.setText("")
@@ -1483,10 +1481,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     refreshOldCountMeasure()
                 }
                 viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
-                if (isTimerRunning) {
+                if (viewModel.isMeasuring) {
                     currentSeries.add(readingCount.toDouble(), co2.toDouble())
                     chartView?.repaint()
-                    viewModel.cacheBytesFromUsb(bytes)
                 }
                 if (co2 == 10000) {
                     showCustomisedToast("Dilute sample")
@@ -1510,7 +1507,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
         Utils.appendText(binding.output, "Rx: $data")
         binding.scrollView.smoothScrollTo(0, 0)
-        viewModel.onDataReceived(responseForChecking)
+        viewModel.onDataReceived(responseForChecking, bytes)
     }
 
     private fun incCountMeasure() {

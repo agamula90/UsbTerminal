@@ -1,10 +1,9 @@
 package com.ismet.usbterminal
 
-import android.app.Application
+import android.content.SharedPreferences
 import android.graphics.PointF
 import android.os.Environment
 import android.os.SystemClock
-import android.preference.PreferenceManager
 import android.util.SparseArray
 import androidx.core.util.Pair
 import androidx.lifecycle.MutableLiveData
@@ -12,6 +11,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
+import com.ismet.usbterminal.di.AccessoryCommunicationDispatcher
+import com.ismet.usbterminal.di.CacheAccessoryOutputOnMeasureDispatcher
 import com.ismet.usbterminal.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.powercommands.LocalPowerCommandsFactory
 import com.ismet.usbterminal.powercommands.PowerCommandsFactory
@@ -28,7 +29,6 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 const val CHART_INDEX_UNSELECTED = -1
@@ -44,12 +44,11 @@ private val DATE_TIME_FORMAT = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    application: Application,
+    @AccessoryCommunicationDispatcher private val accessoryCommunicationDispatcher: CoroutineDispatcher,
+    @CacheAccessoryOutputOnMeasureDispatcher private val cacheDispatcher: CoroutineDispatcher,
+    private val prefs: SharedPreferences,
     handle: SavedStateHandle
 ): ViewModel() {
-    private val cacheFilesDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val app = application as EToCApplication
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(app)
     private var lastTimePressed: Long = 0
     private var isPowerPressed = false
     private var borderCoolingTemperature = 80
@@ -79,6 +78,7 @@ class MainViewModel @Inject constructor(
     val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
     val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
     val checkedClearOptions = List(allClearOptions.size) { false }
+    var isMeasuring = false
 
     init {
         val settingsFolder = File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
@@ -306,6 +306,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    //send periodically with 2 seconds delay
     private fun startSendingTemperatureOrCo2Requests() {
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = viewModelScope.launch(Dispatchers.IO) {
@@ -327,6 +328,16 @@ class MainViewModel @Inject constructor(
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = null
     }
+
+    // request -> response
+    // 5j1r is checking for controller availability
+    // 5j1r is also for power off command
+    // /5j1r -> 5j001
+    // power is connected
+    // 5j5r -> 5j101
+    // 5h commands for heater
+    //after power is on, heater button clicked
+    //change to green if 5,0(0,0,0) if 1st zero received in response
 
     private fun waitForCooling() {
         val command = if (isPreLooping) {
@@ -376,34 +387,20 @@ class MainViewModel @Inject constructor(
         isUseRecentDirectory: Boolean,
         checkedRadioButtonIndex: Int
     ): Boolean {
-        val isValidationFailed = when {
-            delay == "" || duration == "" -> {
-                events.offer(MainEvent.ShowToast("Please enter all values"))
-                true
-            }
-            delay.toInt() == 0 || duration.toInt() == 0 -> {
-                events.offer(MainEvent.ShowToast("zero is not allowed"))
-                true
-            }
-            isKnownPpm && knownPpm == "" -> {
-                events.offer(MainEvent.ShowToast("Please enter ppm values"))
-                true
-            }
-            userComment == "" -> {
-                events.offer(MainEvent.ShowToast("Please enter comments"))
-                true
-            }
-            volume == "" -> {
-                events.offer(MainEvent.ShowToast("Please enter volume values"))
-                true
-            }
-            editorText == "" && checkedRadioButtonIndex == -1 -> {
-                events.offer(MainEvent.ShowToast("Please enter command"))
-                true
-            }
-            else -> false
+        val errorMessage = when {
+            delay == "" || duration == "" -> "Please enter all values"
+            delay.toInt() == 0 || duration.toInt() == 0 -> "zero is not allowed"
+            isKnownPpm && knownPpm == "" -> "Please enter ppm values"
+            userComment == "" -> "Please enter comments"
+            volume == "" -> "Please enter volume values"
+            editorText == "" && checkedRadioButtonIndex == -1 -> "Please enter command"
+            else -> null
         }
-        if (isValidationFailed) return false
+        if (errorMessage != null) {
+            events.offer(MainEvent.ShowToast(errorMessage))
+            return false
+        }
+        isMeasuring = true
         val edit = prefs.edit()
         if (isKnownPpm) {
             val kppm = knownPpm.toInt()
@@ -583,7 +580,7 @@ class MainViewModel @Inject constructor(
                 }
 
                 startSendingTemperatureOrCo2Requests()
-                events.send(MainEvent.UpdateTimerRunning(false))
+                isMeasuring = false
                 events.send(MainEvent.ShowToast("Timer Stopped"))
             }
         } else {
@@ -600,7 +597,6 @@ class MainViewModel @Inject constructor(
                 events.send(MainEvent.WriteToUsb(Command(simpleCommands[i])))
             }
         }
-        events.send(MainEvent.UpdateTimerRunning(true))
 
         val len = future / delay
         var count: Long = 0
@@ -620,70 +616,65 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun cacheBytesFromUsb(bytes: ByteArray) = viewModelScope.launch {
-        withContext(cacheFilesDispatcher) {
-            val strH = String.format(
-                "%02X%02X", bytes[3],
-                bytes[4]
-            )
-            val co2 = strH.toInt(16)
-            val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
-            val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
-            val volume = "_" + if (volumeValue == -1) "" else "" +
-                    volumeValue
-            val ppmPrefix = if (ppm == -1) {
-                "_"
-            } else {
-                "_$ppm"
+    private fun cacheBytesFromUsbWhenMeasurePressed(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
+        val strH = String.format("%02X%02X", bytes[3], bytes[4])
+        val co2 = strH.toInt(16)
+        val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
+        val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
+        val volume = "_" + if (volumeValue == -1) "" else "" +
+                volumeValue
+        val ppmPrefix = if (ppm == -1) {
+            "_"
+        } else {
+            "_$ppm"
+        }
+        val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
+        val fileName: String
+        val dirName: String
+        val subDirName: String
+        if (ppmPrefix == "_") {
+            dirName = AppData.MES_FOLDER_NAME
+            fileName = "MES_" + chartDate +
+                    volume + "_R" + (currentChartIndex.value!! + 1) + "" +
+                    ".csv"
+            subDirName = "MES_" + subDirDate + "_" +
+                    str_uc
+        } else {
+            dirName = AppData.CAL_FOLDER_NAME
+            fileName = ("CAL_" + chartDate +
+                    volume + ppmPrefix + "_R" + (currentChartIndex.value!! + 1)
+                    + ".csv")
+            subDirName = "CAL_" + subDirDate + "_" +
+                    str_uc
+        }
+        try {
+            var dir = File(Environment.getExternalStorageDirectory(), dirName)
+            if (!dir.exists()) {
+                dir.mkdirs()
             }
-            val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
-            val fileName: String
-            val dirName: String
-            val subDirName: String
-            if (ppmPrefix == "_") {
-                dirName = AppData.MES_FOLDER_NAME
-                fileName = "MES_" + chartDate +
-                        volume + "_R" + (currentChartIndex.value!! + 1) + "" +
-                        ".csv"
-                subDirName = "MES_" + subDirDate + "_" +
-                        str_uc
-            } else {
-                dirName = AppData.CAL_FOLDER_NAME
-                fileName = ("CAL_" + chartDate +
-                        volume + ppmPrefix + "_R" + (currentChartIndex.value!! + 1)
-                        + ".csv")
-                subDirName = "CAL_" + subDirDate + "_" +
-                        str_uc
+            dir = File(dir, subDirName)
+            if (!dir.exists()) {
+                dir.mkdir()
             }
-            try {
-                var dir = File(Environment.getExternalStorageDirectory(), dirName)
-                if (!dir.exists()) {
-                    dir.mkdirs()
-                }
-                dir = File(dir, subDirName)
-                if (!dir.exists()) {
-                    dir.mkdir()
-                }
-                val formatter = SimpleDateFormat("mm:ss.S", Locale.ENGLISH)
-                val file = File(dir, fileName)
-                if (!file.exists()) {
-                    file.createNewFile()
-                }
-                val preFormattedTime = formatter.format(Date())
-                val arr = preFormattedTime.split("\\.").toTypedArray()
-                var formattedTime = ""
-                if (arr.size == 1) {
-                    formattedTime = arr[0] + ".0"
-                } else if (arr.size == 2) {
-                    formattedTime = arr[0] + "." + arr[1].substring(0, 1)
-                }
-                val fos = FileOutputStream(file, true)
-                val writer = BufferedWriter(OutputStreamWriter(fos))
-                writer.write("$formattedTime,$co2\n")
-                writer.close()
-            } catch (e: Exception) {
-                e.printStackTrace()
+            val formatter = SimpleDateFormat("mm:ss.S", Locale.ENGLISH)
+            val file = File(dir, fileName)
+            if (!file.exists()) {
+                file.createNewFile()
             }
+            val preFormattedTime = formatter.format(Date())
+            val arr = preFormattedTime.split("\\.").toTypedArray()
+            var formattedTime = ""
+            if (arr.size == 1) {
+                formattedTime = arr[0] + ".0"
+            } else if (arr.size == 2) {
+                formattedTime = arr[0] + "." + arr[1].substring(0, 1)
+            }
+            val fos = FileOutputStream(file, true)
+            val writer = BufferedWriter(OutputStreamWriter(fos))
+            writer.write("$formattedTime,$co2\n")
+            writer.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -735,7 +726,7 @@ class MainViewModel @Inject constructor(
 
         val command = when(index) {
             0, 3 -> {
-                var command = "" //"/5H1000R";
+                val command: String //"/5H1000R";
                 if (!isActivated) {
                     command = prefs.getString(PrefConstants.ON1, "")!!
                 } else {
@@ -744,7 +735,8 @@ class MainViewModel @Inject constructor(
                 command
             }
             1, 4 -> {
-                var command = "" //"/5H1000R";
+                //this is heater
+                val command: String //"/5H1000R";
                 val defaultValue: String
                 val prefName: String
                 if (!isActivated) {
@@ -1293,7 +1285,10 @@ System will turn off automaticaly."""))
         return "Wrong response: Got - \"$response\".Expected - $responseBuilder"
     }
 
-    fun onDataReceived(response: String) {
+    fun onDataReceived(response: String, bytes: ByteArray) {
+        if (bytes.size == 7 && isMeasuring) {
+            cacheBytesFromUsbWhenMeasurePressed(bytes)
+        }
         if (isPowerPressed) {
             //TODO maybe it should run in 1 thread?
             viewModelScope.launch(Dispatchers.IO) {
