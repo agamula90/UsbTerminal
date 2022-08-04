@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.Environment
+import android.os.IBinder
 import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
@@ -21,6 +22,8 @@ import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.ismet.usb.UsbAccessory
+import com.ismet.usb.UsbEmitter
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.utils.GraphPopulatorUtils
 import com.ismet.usbterminal.utils.Utils
@@ -54,6 +57,7 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : BaseAttachableActivity(), TextWatcher {
@@ -127,11 +131,30 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     var chartView: GraphicalView? = null
     var chart: XYChart? = null
     private lateinit var usbDeviceConnection: UsbDeviceConnection
+
+    @Inject
+    lateinit var usbEmitter: UsbEmitter
+
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
     private var reportDate: Date? = null
     private lateinit var binding: LayoutEditorUpdatedBinding
     private var coolingDialog: Dialog? = null
+
+    private var usbAccessory: UsbAccessory? = null
+    private var isSendServiceConnected = false
+    private val sendToAccessoryConnection = object: ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            isSendServiceConnected = true
+            if (service != null) {
+                usbAccessory = UsbAccessory.Stub.asInterface(service)
+            }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isSendServiceConnected = false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -151,6 +174,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.CENTER_HORIZONTAL, 0)
         observeChartUpdates()
         observeEvents()
+        observeUsbEvents()
         observeButtonUpdates()
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
@@ -297,6 +321,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         findDevice()
+        establishMockedConnections()
+    }
+
+    private fun establishMockedConnections() {
+        val intent = Intent("com.ismet.usb.accessory").apply { `package` = "com.ismet.usb" }
+        bindService(intent, sendToAccessoryConnection, Context.BIND_AUTO_CREATE)
     }
 
     private fun setPowerOnButtonListeners() {
@@ -603,8 +633,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         tempChartView.repaint()
     }
 
+    private fun observeUsbEvents() {
+        lifecycleScope.launchWhenResumed {
+            for (event in usbEmitter.readEvents) {
+                if (event == null) {
+                    Log.e("Oops", "null received")
+                } else {
+                    onDataReceived(event)
+                }
+            }
+        }
+    }
+
     private fun observeEvents() {
         lifecycleScope.launchWhenResumed {
+
             for (event in viewModel.events) {
                 when(event) {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
@@ -866,7 +909,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun sendCommand(command: Command) {
-        usbDevice?.write(command.byteArray)
+        if (usbDevice != null) {
+            usbDevice?.write(command.byteArray)
+        } else {
+            usbAccessory?.setToUsb(command.byteArray)
+        }
         //if(Utils.isPullStateNone()) {
         binding.output.append(command)
         binding.scrollView.smoothScrollTo(0, 0)
@@ -888,6 +935,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         usbDevice?.close()
         usbDevice = null
         usbDeviceConnection.close()
+        if (isSendServiceConnected) {
+            unbindService(sendToAccessoryConnection)
+        }
     }
 
     override fun onRestart() {

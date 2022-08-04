@@ -3,6 +3,7 @@ package com.ismet.usbterminal.di
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
+import com.ismet.usb.UsbEmitter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,8 +18,14 @@ import java.util.concurrent.Executors
 object LocalModule {
 
     @Provides
-    @AccessoryCommunicationDispatcher
-    fun provideAccessoryCommuncationDispatcher(): CoroutineDispatcher {
+    @AccessoryOperationDispatcher(operationType = "read")
+    fun provideReadAccessoryDispatcher(): CoroutineDispatcher {
+        return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    }
+
+    @Provides
+    @AccessoryOperationDispatcher(operationType = "write")
+    fun provideWriteAccessoryDispatcher(): CoroutineDispatcher {
         return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     }
 
@@ -32,4 +39,7 @@ object LocalModule {
     fun provideSharedPrefs(@ApplicationContext context: Context): SharedPreferences {
         return PreferenceManager.getDefaultSharedPreferences(context)
     }
+
+    @Provides
+    fun provideUsbEmitter() = UsbEmitter()
 }

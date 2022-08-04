@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.graphics.PointF
 import android.os.Environment
 import android.os.SystemClock
+import android.util.Log
 import android.util.SparseArray
 import androidx.core.util.Pair
 import androidx.lifecycle.MutableLiveData
@@ -11,7 +12,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.di.AccessoryCommunicationDispatcher
+import com.ismet.usbterminal.di.AccessoryOperationDispatcher
 import com.ismet.usbterminal.di.CacheAccessoryOutputOnMeasureDispatcher
 import com.ismet.usbterminal.powercommands.FilePowerCommandsFactory
 import com.ismet.usbterminal.powercommands.LocalPowerCommandsFactory
@@ -30,6 +31,7 @@ import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import javax.inject.Named
 
 const val CHART_INDEX_UNSELECTED = -1
 private const val SEND_TEMPERATURE_OR_CO2_DELAY = 1000L
@@ -44,7 +46,8 @@ private val DATE_TIME_FORMAT = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @AccessoryCommunicationDispatcher private val accessoryCommunicationDispatcher: CoroutineDispatcher,
+    @AccessoryOperationDispatcher(operationType = "read") private val readDispatcher: CoroutineDispatcher,
+    @AccessoryOperationDispatcher(operationType = "write") private val writeDispatcher: CoroutineDispatcher,
     @CacheAccessoryOutputOnMeasureDispatcher private val cacheDispatcher: CoroutineDispatcher,
     private val prefs: SharedPreferences,
     handle: SavedStateHandle

@@ -4,4 +4,4 @@ import javax.inject.Qualifier
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class AccessoryCommunicationDispatcher
+annotation class AccessoryOperationDispatcher(val operationType: String)
