@@ -17,11 +17,15 @@ import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.viewModels
+import androidx.core.os.bundleOf
 import androidx.core.view.forEachIndexed
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.ismet.usb.UsbAccessory
 import com.ismet.usb.UsbEmitter
 import com.ismet.usbterminal.data.*
@@ -909,6 +913,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun sendCommand(command: Command) {
+        Firebase.analytics.logEvent(
+            FirebaseAnalytics.Event.SCREEN_VIEW,
+            bundleOf(
+                FirebaseAnalytics.Param.SCREEN_NAME to "app",
+                FirebaseAnalytics.Param.SCREEN_CLASS to command.byteArray.decodeToString()
+            )
+        )
         if (usbDevice != null) {
             usbDevice?.write(command.byteArray)
         } else {
@@ -1488,6 +1499,13 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun onDataReceived(bytes: ByteArray) {
+        Firebase.analytics.logEvent(
+            FirebaseAnalytics.Event.SCREEN_VIEW,
+            bundleOf(
+                FirebaseAnalytics.Param.SCREEN_NAME to "usb",
+                FirebaseAnalytics.Param.SCREEN_CLASS to bytes.decodeToString()
+            )
+        )
         var data: String
         val responseForChecking: String
         if (bytes.size == 7) {
