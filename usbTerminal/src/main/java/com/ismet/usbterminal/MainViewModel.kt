@@ -343,6 +343,7 @@ class MainViewModel @Inject constructor(
     //change to green if 5,0(0,0,0) if 1st zero received in response
     //Cooling command check temperature, if it's ok, then go next, otherwise wait...
     //InterruptActions do nothing, go next
+    //power command - first do, then delay
 
     private fun waitForCooling() {
         val command = if (isPreLooping) {
