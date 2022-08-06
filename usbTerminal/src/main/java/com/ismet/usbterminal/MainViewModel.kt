@@ -344,7 +344,7 @@ class MainViewModel @Inject constructor(
     //Cooling command check temperature, if it's ok, then go next, otherwise wait...
     //InterruptActions do nothing, go next
     //power command - first do, then delay
-
+    //maybe loop only for lines with no response
     private fun waitForCooling() {
         val command = if (isPreLooping) {
             PowerCommand(Command("/5J1R"), 1000)
