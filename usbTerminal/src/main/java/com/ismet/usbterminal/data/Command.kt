@@ -9,8 +9,7 @@ class Command(val text: String): Parcelable {
 
     @IgnoredOnParcel
     val byteArray: ByteArray = when(text) {
-        "", "\n" -> ByteArray(0)
-        "\r" -> "\r".toByteArray()
+        "", "\n", "\r" -> ByteArray(0)
         else -> {
             val tempText = text
                 .replace("\r", "")
@@ -29,7 +28,7 @@ class Command(val text: String): Parcelable {
                 }
                 bytes
             } else {
-                text.toByteArray() + "\r".toByteArray()
+                text.encodeToByteArray()
             }
         }
     }

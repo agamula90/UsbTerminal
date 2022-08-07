@@ -1124,7 +1124,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun initPowerAccordToItState() {
+    private fun initPowerAccordToItState() {
         val text: String
         val background: Int
         when (powerCommandsFactory.currentPowerState()) {
@@ -1138,17 +1138,19 @@ class MainViewModel @Inject constructor(
             }
             else -> {
                 isPowerPressed = false
-                powerProperties.value = powerProperties.value!!.copy(isEnabled = true)
+                powerProperties.postValue(powerProperties.value!!.copy(isEnabled = true))
                 return
             }
         }
         isPowerPressed = false
-        powerProperties.value = powerProperties.value!!.copy(
-            isEnabled = true,
-            text = text,
-            activatedText = text,
-            alpha = 1f,
-            background = background
+        powerProperties.postValue(
+            powerProperties.value!!.copy(
+                isEnabled = true,
+                text = text,
+                activatedText = text,
+                alpha = 1f,
+                background = background
+            )
         )
     }
 

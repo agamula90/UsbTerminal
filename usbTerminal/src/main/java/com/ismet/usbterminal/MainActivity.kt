@@ -8,6 +8,7 @@ import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.Environment
 import android.os.IBinder
+import android.os.RemoteException
 import android.preference.PreferenceManager
 import android.text.Editable
 import android.text.TextUtils
@@ -37,6 +38,7 @@ import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
+import com.squareup.moshi.Moshi
 import dagger.hilt.android.AndroidEntryPoint
 import de.keyboardsurfer.android.widget.crouton.Crouton
 import de.keyboardsurfer.android.widget.crouton.Style
@@ -52,6 +54,7 @@ import fr.xgouchet.texteditor.common.RecentFiles
 import fr.xgouchet.texteditor.common.Settings
 import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
+import kotlinx.coroutines.delay
 import org.achartengine.GraphicalView
 import org.achartengine.chart.XYChart
 import org.achartengine.model.XYSeries
@@ -138,6 +141,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     @Inject
     lateinit var usbEmitter: UsbEmitter
+
+    @Inject
+    lateinit var moshi: Moshi
 
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
@@ -329,7 +335,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun establishMockedConnections() {
-        val intent = Intent("com.ismet.usb.accessory").apply { `package` = "com.ismet.usb" }
+        val intent = Intent("com.ismet.usb.accessory").apply { `package` = "com.ismet.usbaccessory" }
         bindService(intent, sendToAccessoryConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -912,18 +918,22 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
+    private var lastCommand: Command? = null
+    private var lastSendTime: Long = 0
+
     private fun sendCommand(command: Command) {
-        Firebase.analytics.logEvent(
-            FirebaseAnalytics.Event.SCREEN_VIEW,
-            bundleOf(
-                FirebaseAnalytics.Param.SCREEN_NAME to "app",
-                FirebaseAnalytics.Param.SCREEN_CLASS to command.byteArray.decodeToString()
-            )
-        )
         if (usbDevice != null) {
             usbDevice?.write(command.byteArray)
         } else {
-            usbAccessory?.setToUsb(command.byteArray)
+            val newLastSendTime = System.currentTimeMillis()
+            if (newLastSendTime - lastSendTime > 1000) {
+                try {
+                    usbAccessory?.setToUsb(command.byteArray)
+                } catch (_: RemoteException) {
+                    //ignore
+                }
+                lastSendTime = newLastSendTime
+            }
         }
         //if(Utils.isPullStateNone()) {
         binding.output.append(command)
@@ -949,6 +959,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         if (isSendServiceConnected) {
             unbindService(sendToAccessoryConnection)
         }
+        Log.e("Oops", "host killed")
     }
 
     override fun onRestart() {
@@ -1498,12 +1509,17 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         registerReceiver(usbReceiver, filter)
     }
 
+    private fun createLogEvent(response: ByteArray): ResponseLogEvent {
+        val request = lastCommand?.byteArray?.decodeToString() ?: "None"
+        return ResponseLogEvent(request, response.decodeToString())
+    }
+
     private fun onDataReceived(bytes: ByteArray) {
         Firebase.analytics.logEvent(
             FirebaseAnalytics.Event.SCREEN_VIEW,
             bundleOf(
-                FirebaseAnalytics.Param.SCREEN_NAME to "usb",
-                FirebaseAnalytics.Param.SCREEN_CLASS to bytes.decodeToString()
+                FirebaseAnalytics.Param.SCREEN_NAME to "responses",
+                FirebaseAnalytics.Param.SCREEN_CLASS to moshi.adapter(ResponseLogEvent::class.java).toJson(createLogEvent(bytes))
             )
         )
         var data: String
