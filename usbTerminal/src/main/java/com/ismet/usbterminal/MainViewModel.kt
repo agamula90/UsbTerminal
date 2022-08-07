@@ -312,7 +312,7 @@ class MainViewModel @Inject constructor(
     //send periodically with 2 seconds delay
     private fun startSendingTemperatureOrCo2Requests() {
         sendTemperatureOrCo2Job?.cancel()
-        sendTemperatureOrCo2Job = viewModelScope.launch(Dispatchers.IO) {
+        sendTemperatureOrCo2Job = viewModelScope.launch(writeDispatcher) {
             while (isActive) {
                 shouldSendTemperatureRequest = !shouldSendTemperatureRequest
                 if (shouldSendTemperatureRequest) {
@@ -353,7 +353,7 @@ class MainViewModel @Inject constructor(
         }
 
         sendWaitForCoolingJob?.cancel()
-        sendWaitForCoolingJob = viewModelScope.launch(Dispatchers.IO) {
+        sendWaitForCoolingJob = viewModelScope.launch(writeDispatcher) {
             while (isActive) {
                 val message = if (isPreLooping) {
                     command.command
@@ -783,7 +783,7 @@ class MainViewModel @Inject constructor(
             }
             val isActivated = buttonProperties.value!!.isActivated
             val background = if (!isActivated) R.drawable.button_drawable else R.drawable.power_on_drawable
-            buttonProperties.value = buttonProperties.value!!.copy(alpha = 1f, background = background)
+            buttonProperties.postValue(buttonProperties.value!!.copy(alpha = 1f, background = background))
         }
     }
 
@@ -1042,7 +1042,7 @@ class MainViewModel @Inject constructor(
                 isPowerPressed = true
                 powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
                 powerCommandsFactory.moveStateToNext()
-                viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch(writeDispatcher) {
                     sendRequest()
                     //simulateClick2();
                 }
@@ -1059,7 +1059,7 @@ class MainViewModel @Inject constructor(
                 isPowerPressed = true
                 powerProperties.value = powerProperties.value!!.copy(alpha = 0.6f)
                 val isButton2Activated = buttonOn2Properties.value!!.isActivated
-                viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch(writeDispatcher) {
                     if (isButton2Activated) {
                         onButton2Click()
                         delay(1200)
@@ -1298,8 +1298,7 @@ System will turn off automaticaly."""))
             cacheBytesFromUsbWhenMeasurePressed(bytes)
         }
         if (isPowerPressed) {
-            //TODO maybe it should run in 1 thread?
-            viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(readDispatcher) {
                 handleResponse(response)
             }
         } else {

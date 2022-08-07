@@ -919,20 +919,16 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private var lastCommand: Command? = null
-    private var lastSendTime: Long = 0
 
     private fun sendCommand(command: Command) {
+        lastCommand = command
         if (usbDevice != null) {
             usbDevice?.write(command.byteArray)
         } else {
-            val newLastSendTime = System.currentTimeMillis()
-            if (newLastSendTime - lastSendTime > 1000) {
-                try {
-                    usbAccessory?.setToUsb(command.byteArray)
-                } catch (_: RemoteException) {
-                    //ignore
-                }
-                lastSendTime = newLastSendTime
+            try {
+                usbAccessory?.setToUsb(command.byteArray)
+            } catch (_: RemoteException) {
+                //ignore
             }
         }
         //if(Utils.isPullStateNone()) {
