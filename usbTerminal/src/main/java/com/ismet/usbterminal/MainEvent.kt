@@ -17,4 +17,5 @@ sealed class MainEvent {
     class SetReadingCount(val value: Int): MainEvent()
     class UpdateGraphData(val graphData: GraphData): MainEvent()
     class ShowWaitForCoolingDialog(val message: String): MainEvent()
+    class ShowCorruptionDialog(val message: String): MainEvent()
 }

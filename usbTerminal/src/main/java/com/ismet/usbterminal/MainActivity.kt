@@ -1,15 +1,13 @@
 package com.ismet.usbterminal
 
+import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.hardware.usb.UsbManager
-import android.os.Bundle
-import android.os.Environment
-import android.os.IBinder
-import android.os.RemoteException
-import android.preference.PreferenceManager
+import android.os.*
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
@@ -35,6 +33,7 @@ import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
+import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
 import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
@@ -54,7 +53,6 @@ import fr.xgouchet.texteditor.common.RecentFiles
 import fr.xgouchet.texteditor.common.Settings
 import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
-import kotlinx.coroutines.delay
 import org.achartengine.GraphicalView
 import org.achartengine.chart.XYChart
 import org.achartengine.model.XYSeries
@@ -133,6 +131,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     var readingCount = 0
         private set
 
+    @Inject
     lateinit var prefs: SharedPreferences
     lateinit var currentSeries: XYSeries
     var chartView: GraphicalView? = null
@@ -169,7 +168,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = LayoutEditorUpdatedBinding.bind(findViewById(R.id.content_main))
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
         Settings.updateFromPreferences(
             getSharedPreferences(
                 Constants.PREFERENCES_NAME,
@@ -232,7 +230,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             alert.show()
         }
         binding.buttonMeasure.setOnClickListener { measure ->
-                if (viewModel.powerCommandsFactory.currentPowerState() != PowerState.ON) {
+                if (!viewModel.powerProperties.value!!.isActivated) {
                     return@setOnClickListener
                 }
                 if (viewModel.isMeasuring) {
@@ -268,9 +266,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         it.editDuration.setText(duration.toString())
                         it.editVolume.setText(volume.toString())
                         it.editUserComment.setText(user_comment)
-                        it.commandsEditText1.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME1, PrefConstants.MEASURE_FILE_NAME1_DEFAULT))
-                        it.commandsEditText2.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME2, PrefConstants.MEASURE_FILE_NAME2_DEFAULT))
-                        it.commandsEditText3.setText(prefs.getString(PrefConstants.MEASURE_FILE_NAME3, PrefConstants.MEASURE_FILE_NAME3_DEFAULT))
+                        it.commandsEditText1.setText(viewModel.measureFileNames[0])
+                        it.commandsEditText2.setText(viewModel.measureFileNames[1])
+                        it.commandsEditText3.setText(viewModel.measureFileNames[2])
                         if (kppm != -1) {
                             it.editKnownPpm.setText(kppm.toString())
                         }
@@ -345,20 +343,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             showOnOffDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on = prefs.getString(PrefConstants.ON1, "")
-                    val str_off = prefs.getString(PrefConstants.OFF1, "")
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME1,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME1,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button1Savable = viewModel.buttonOn1Properties.value!!.savable
+                    it.editOn.setText(button1Savable.command)
+                    it.editOff.setText(button1Savable.activatedCommand)
+                    it.editOn1.setText(button1Savable.text)
+                    it.editOff1.setText(button1Savable.activatedText)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
@@ -366,7 +355,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     val text = localBinding.editOn1.text.toString()
                     val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton1PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, activatedText, activatedCommand)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -382,20 +371,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             showOnOffDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME2,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME2,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    val str_on = prefs.getString(PrefConstants.ON2, "")
-                    val str_off = prefs.getString(PrefConstants.OFF2, "")
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button2Savable = viewModel.buttonOn2Properties.value!!.savable
+                    it.editOn.setText(button2Savable.command)
+                    it.editOff.setText(button2Savable.activatedCommand)
+                    it.editOn1.setText(button2Savable.text)
+                    it.editOff1.setText(button2Savable.activatedText)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
@@ -403,7 +383,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     val text = localBinding.editOn1.text.toString()
                     val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton2PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, activatedText, activatedCommand)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -419,20 +399,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             showOnOffDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME3,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME3,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    val str_on = prefs.getString(PrefConstants.ON3, "")
-                    val str_off = prefs.getString(PrefConstants.OFF3, "")
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button3Savable = viewModel.buttonOn3Properties.value!!.savable
+                    it.editOn.setText(button3Savable.command)
+                    it.editOff.setText(button3Savable.activatedCommand)
+                    it.editOn1.setText(button3Savable.text)
+                    it.editOff1.setText(button3Savable.activatedText)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
@@ -440,7 +411,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     val text = localBinding.editOn1.text.toString()
                     val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton3PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, activatedText, activatedCommand)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -453,31 +424,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         binding.buttonOn3.setOnClickListener { viewModel.onButton4Click() }
         binding.buttonOn3.setOnLongClickListener {
-            showOnOffDialog(
+            showCommandDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on = prefs.getString(PrefConstants.ON1, "")
-                    val str_off = prefs.getString(PrefConstants.OFF1, "")
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME1,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME1,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button4Savable = viewModel.buttonOn4Properties.value!!.savable
+                    it.editOn.setText(button4Savable.command)
+                    it.editOn1.setText(button4Savable.text)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
-                    val activatedCommand = localBinding.editOff.text.toString()
                     val text = localBinding.editOn1.text.toString()
-                    val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton4PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, text, command)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -490,31 +448,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         binding.buttonOn4.setOnClickListener { viewModel.onButton5Click() }
         binding.buttonOn4.setOnLongClickListener {
-            showOnOffDialog(
+            showCommandDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME2,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME2,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    val str_on = prefs.getString(PrefConstants.ON2, "")
-                    val str_off = prefs.getString(PrefConstants.OFF2, "")
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button5Savable = viewModel.buttonOn3Properties.value!!.savable
+                    it.editOn.setText(button5Savable.command)
+                    it.editOn1.setText(button5Savable.text)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
-                    val activatedCommand = localBinding.editOff.text.toString()
                     val text = localBinding.editOn1.text.toString()
-                    val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton5PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, text, command)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -527,31 +472,18 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         binding.buttonOn5.setOnClickListener { viewModel.onButton6Click() }
         binding.buttonOn5.setOnLongClickListener {
-            showOnOffDialog(
+            showCommandDialog(
                 init = {
                     changeTextsForButtons(it)
-                    val str_on_name = prefs.getString(
-                        PrefConstants.ON_NAME3,
-                        PrefConstants.ON_NAME_DEFAULT
-                    )
-                    val str_off_name = prefs.getString(
-                        PrefConstants.OFF_NAME3,
-                        PrefConstants.OFF_NAME_DEFAULT
-                    )
-                    val str_on = prefs.getString(PrefConstants.ON3, "")
-                    val str_off = prefs.getString(PrefConstants.OFF3, "")
-                    it.editOn.setText(str_on)
-                    it.editOff.setText(str_off)
-                    it.editOn1.setText(str_on_name)
-                    it.editOff1.setText(str_off_name)
+                    val button6Savable = viewModel.buttonOn6Properties.value!!.savable
+                    it.editOn.setText(button6Savable.command)
+                    it.editOn1.setText(button6Savable.text)
                 },
                 okClick = { localBinding, dialog ->
                     val command = localBinding.editOn.text.toString()
-                    val activatedCommand = localBinding.editOff.text.toString()
                     val text = localBinding.editOn1.text.toString()
-                    val activatedText = localBinding.editOff1.text.toString()
                     val isSuccess = viewModel.changeButton6PersistedInfo(
-                        PersistedInfo(text, command, activatedText, activatedCommand)
+                        FileSavable(text, command, text, command)
                     )
                     if (!isSuccess) {
                         showCustomisedToast("Please enter all values")
@@ -579,6 +511,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         binding.txtOn1.text = "Button State1 Name: "
         binding.txtOff.text = "${addTextBuilder}Command 2: "
         binding.txtOff1.text = "Button State2 Name: "
+    }
+
+    private fun changeTextsForButtons(binding: LayoutDialogOneCommandBinding) {
+        val addTextBuilder = StringBuilder()
+        for (i in 0..8) {
+            addTextBuilder.append(' ')
+        }
+        binding.txtOn.text = "${addTextBuilder}Command: "
+        binding.txtOn1.text = "Button State Name: "
     }
 
     private fun findDevice() {
@@ -696,7 +637,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private fun observeButtonUpdates() {
         viewModel.buttonOn1Properties.observe(this) {
             binding.buttonOn1.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -705,7 +646,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.buttonOn2Properties.observe(this) {
             binding.buttonOn2.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -714,7 +655,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.buttonOn3Properties.observe(this) {
             binding.buttonPpm.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -723,7 +664,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.buttonOn4Properties.observe(this) {
             binding.buttonOn3.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -732,7 +673,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.buttonOn5Properties.observe(this) {
             binding.buttonOn4.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -741,7 +682,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.buttonOn6Properties.observe(this) {
             binding.buttonOn5.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
@@ -750,114 +691,22 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         viewModel.powerProperties.observe(this) {
             binding.power.apply {
-                text = if (it.isActivated) it.activatedText else it.text
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
                 isActivated = it.isActivated
                 isEnabled = it.isEnabled
                 setBackgroundResource(it.background)
             }
         }
-    }
-
-    @Throws(IOException::class)
-    private fun savePreferencesToLocalData() {
-        val settingsFolder =
-            File(Environment.getExternalStorageDirectory(), AppData.SYSTEM_SETTINGS_FOLDER_NAME)
-        if (!settingsFolder.exists()) {
-            settingsFolder.mkdir()
+        viewModel.measureProperties.observe(this) {
+            binding.buttonMeasure.apply {
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
+            }
         }
-        val preferences = prefs
-        val button1DataFile = File(settingsFolder, AppData.BUTTON1_DATA)
-        button1DataFile.createNewFile()
-        val button1DataBuilder = StringBuilder()
-        button1DataBuilder.append(
-            preferences.getString(
-                PrefConstants.ON_NAME1,
-                PrefConstants.ON_NAME_DEFAULT
-            )
-        )
-        button1DataBuilder.append(AppData.SPLIT_STRING)
-        button1DataBuilder.append(
-            preferences.getString(
-                PrefConstants.OFF_NAME1,
-                PrefConstants.OFF_NAME_DEFAULT
-            )
-        )
-        button1DataBuilder.append(AppData.SPLIT_STRING)
-        button1DataBuilder.append(preferences.getString(PrefConstants.ON1, ""))
-        button1DataBuilder.append(AppData.SPLIT_STRING)
-        button1DataBuilder.append(preferences.getString(PrefConstants.OFF1, ""))
-        TextFileUtils.writeTextFile(button1DataFile.absolutePath, button1DataBuilder.toString())
-        val button2DataFile = File(settingsFolder, AppData.BUTTON2_DATA)
-        button2DataFile.createNewFile()
-        val button2DataBuilder = StringBuilder()
-        button2DataBuilder.append(
-            preferences.getString(
-                PrefConstants.ON_NAME2,
-                PrefConstants.ON_NAME_DEFAULT
-            )
-        )
-        button2DataBuilder.append(AppData.SPLIT_STRING)
-        button2DataBuilder.append(
-            preferences.getString(
-                PrefConstants.OFF_NAME2,
-                PrefConstants.OFF_NAME_DEFAULT
-            )
-        )
-        button2DataBuilder.append(AppData.SPLIT_STRING)
-        button2DataBuilder.append(preferences.getString(PrefConstants.ON2, ""))
-        button2DataBuilder.append(AppData.SPLIT_STRING)
-        button2DataBuilder.append(preferences.getString(PrefConstants.OFF2, ""))
-        TextFileUtils.writeTextFile(button2DataFile.absolutePath, button2DataBuilder.toString())
-        val button3DataFile = File(settingsFolder, AppData.BUTTON3_DATA)
-        button2DataFile.createNewFile()
-        val button3DataBuilder = StringBuilder()
-        button3DataBuilder.append(
-            preferences.getString(
-                PrefConstants.ON_NAME3,
-                PrefConstants.ON_NAME_DEFAULT
-            )
-        )
-        button3DataBuilder.append(AppData.SPLIT_STRING)
-        button3DataBuilder.append(
-            preferences.getString(
-                PrefConstants.OFF_NAME3,
-                PrefConstants.OFF_NAME_DEFAULT
-            )
-        )
-        button3DataBuilder.append(AppData.SPLIT_STRING)
-        button3DataBuilder.append(preferences.getString(PrefConstants.ON3, ""))
-        button3DataBuilder.append(AppData.SPLIT_STRING)
-        button3DataBuilder.append(preferences.getString(PrefConstants.OFF3, ""))
-        TextFileUtils.writeTextFile(button3DataFile.absolutePath, button3DataBuilder.toString())
-
-        val measureDefaultFilesFile = File(settingsFolder, AppData.MEASURE_DEFAULT_FILES)
-        measureDefaultFilesFile.createNewFile()
-        val measureDefaultFilesBuilder = StringBuilder()
-        measureDefaultFilesBuilder.append(
-            preferences.getString(
-                PrefConstants.MEASURE_FILE_NAME1,
-                PrefConstants.MEASURE_FILE_NAME1_DEFAULT
-            )
-        )
-        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING)
-        measureDefaultFilesBuilder.append(
-            preferences.getString(
-                PrefConstants.MEASURE_FILE_NAME2,
-                PrefConstants.MEASURE_FILE_NAME2_DEFAULT
-            )
-        )
-        measureDefaultFilesBuilder.append(AppData.SPLIT_STRING)
-        measureDefaultFilesBuilder.append(
-            preferences.getString(
-                PrefConstants.MEASURE_FILE_NAME3,
-                PrefConstants.MEASURE_FILE_NAME3_DEFAULT
-            )
-        )
-        TextFileUtils.writeTextFile(
-            measureDefaultFilesFile.absolutePath,
-            measureDefaultFilesBuilder.toString()
-        )
     }
 
     override fun getFragmentContainerId(): Int {
@@ -970,6 +819,28 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
         isReadIntent = false
         binding.editor.updateFromSettings()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+            && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when(requestCode) {
+            STORAGE_PERMISSION_CODE -> {
+                val indexOfWritePermission = permissions.indexOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                if (indexOfWritePermission == -1 || grantResults[indexOfWritePermission] != PackageManager.PERMISSION_GRANTED) {
+                    showCustomisedToast("Please grant storage permission in order to use app")
+                    finish()
+                }
+                viewModel.observeAppSettingsDirectoryUpdates()
+            }
+        }
     }
 
     override fun onPause() {
@@ -1470,7 +1341,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     override fun finish() {
         try {
             Crouton.clearCroutonsForActivity(this)
-            savePreferencesToLocalData()
         } catch (e: Exception) {
             e.printStackTrace()
             showCustomisedToast(e.message!!)
@@ -1608,7 +1478,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             TemperatureData.parse(text).also { temperatureData ->
                 if (temperatureData.isCorrect) {
                     val updateRunnable = Runnable {
-                        binding.temperature.text = (temperatureData.temperature1 + viewModel.temperatureShift.value!!).toString()
+                        binding.temperature.text = (temperatureData.temperature1 + viewModel.accessorySettings.value!!.temperatureUiOffset).toString()
                     }
                     updateRunnable.run()
                 } else {
@@ -1693,5 +1563,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     companion object {
         private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         private const val TAG = "MainActivity"
+        private const val STORAGE_PERMISSION_CODE = 1
     }
 }

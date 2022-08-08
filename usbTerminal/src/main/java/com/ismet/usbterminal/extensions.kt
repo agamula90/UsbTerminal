@@ -13,6 +13,7 @@ import com.ismet.usbterminal.data.Command
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
+import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
 import org.achartengine.model.XYSeries
 import java.util.regex.Pattern
 
@@ -40,6 +41,26 @@ fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (
     init(binding)
     val dialog = it.apply {
         setTitle("Set On/Off commands")
+        setView(binding.root)
+        setPositiveButton(R.string.ui_save) { dialog, _ ->
+            dialog.hideSoftInput()
+            okClick(binding, dialog)
+        }
+        setNegativeButton(R.string.ui_cancel) { dialog, _ ->
+            dialog.hideSoftInput()
+            dialog.cancel()
+        }
+    }.create()
+    dialog.show()
+    dialog
+}
+
+fun Context.showCommandDialog(init: (LayoutDialogOneCommandBinding) -> Unit, okClick: (LayoutDialogOneCommandBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
+    val inflater = LayoutInflater.from(this)
+    val binding = LayoutDialogOneCommandBinding.inflate(inflater)
+    init(binding)
+    val dialog = it.apply {
+        setTitle("Set command")
         setView(binding.root)
         setPositiveButton(R.string.ui_save) { dialog, _ ->
             dialog.hideSoftInput()
