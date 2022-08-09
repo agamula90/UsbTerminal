@@ -28,8 +28,6 @@ import com.google.firebase.ktx.Firebase
 import com.ismet.usb.UsbAccessory
 import com.ismet.usb.UsbEmitter
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.utils.GraphPopulatorUtils
-import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
@@ -149,6 +147,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private var reportDate: Date? = null
     private lateinit var binding: LayoutEditorUpdatedBinding
     private var coolingDialog: Dialog? = null
+    private var corruptionDialog: Dialog? = null
 
     private var usbAccessory: UsbAccessory? = null
     private var isSendServiceConnected = false
@@ -560,7 +559,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
             }
             if (charts.all { it.points.isEmpty() }) {
-                GraphPopulatorUtils.clearYTextLabels(tempChart.renderer)
+                tempChart.renderer.resetLabelValues()
             }
             tempChartView.repaint()
         }
@@ -577,7 +576,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
         }
         if (charts.all { it.points.isEmpty() }) {
-            GraphPopulatorUtils.clearYTextLabels(tempChart.renderer)
+            tempChart.renderer.resetLabelValues()
         }
         tempChart.renderer.yAxisMax = maxOf(0.0, tempChart.renderer.yAxisMax)
         currentSeries = tempChart.dataset.getSeriesAt(0)
@@ -602,7 +601,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             for (event in viewModel.events) {
                 when(event) {
                     is MainEvent.ShowToast -> showCustomisedToast(event.message)
-                    is MainEvent.WriteToUsb -> sendCommand(event.data)
+                    is MainEvent.WriteToUsb -> sendCommand(event.command)
                     is MainEvent.InvokeAutoCalculations -> invokeAutoCalculations()
                     is MainEvent.IncReadingCount -> incReadingCount()
                     is MainEvent.SendCommandsFromEditor -> sendCommandsFromEditor()
@@ -612,10 +611,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
                     is MainEvent.IncCountMeasure -> incCountMeasure()
                     is MainEvent.SetReadingCount -> readingCount = event.value
-                    is MainEvent.UpdateGraphData -> {
-                        val graphData = event.graphData
-                        chart = graphData.createChart()
-                        chartView = GraphPopulatorUtils.attachXYChartIntoLayout(this@MainActivity, chart)
+                    is MainEvent.SetCombinedChart -> {
+                        chart = event.combinedXYChart
+                        chartView = chart?.attach(binding, toolbar)
                         initCharts()
                     }
                     is MainEvent.ShowWaitForCoolingDialog -> {
@@ -629,9 +627,26 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                             show()
                         }
                     }
+                    is MainEvent.ShowCorruptionDialog -> {
+                        showCorruptionDialog(event.message)
+                    }
+                    is MainEvent.DismissCorruptionDialog -> {
+                        corruptionDialog?.dismiss()
+                        corruptionDialog = null
+                    }
                 }
             }
         }
+    }
+
+    private fun showCorruptionDialog(message: String) {
+        corruptionDialog?.dismiss()
+        corruptionDialog = AlertDialog.Builder(this)
+            .setTitle("Few files are corrupted")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("OK") {_, _ -> finish()}
+            .show()
     }
 
     private fun observeButtonUpdates() {
@@ -707,6 +722,15 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 setBackgroundResource(it.background)
             }
         }
+        viewModel.sendProperties.observe(this) {
+            binding.buttonSend.apply {
+                text = if (it.isActivated) it.savable.activatedText else it.savable.text
+                alpha = it.alpha
+                isActivated = it.isActivated
+                isEnabled = it.isEnabled
+                setBackgroundResource(it.background)
+            }
+        }
     }
 
     override fun getFragmentContainerId(): Int {
@@ -767,31 +791,29 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
     }
 
-    private var lastCommand: Command? = null
+    private var lastCommand: String? = null
 
-    private fun sendCommand(command: Command) {
+    private fun sendCommand(command: String) {
         lastCommand = command
         if (usbDevice != null) {
-            usbDevice?.write(command.byteArray)
+            usbDevice?.write(command.encodeToByteArrayEnhanced())
         } else {
             try {
-                usbAccessory?.setToUsb(command.byteArray)
+                usbAccessory?.setToUsb(command.encodeToByteArrayEnhanced())
             } catch (_: RemoteException) {
                 //ignore
             }
         }
-        //if(Utils.isPullStateNone()) {
-        binding.output.append(command)
+        binding.output.append(isRead = false, command = command)
         binding.scrollView.smoothScrollTo(0, 0)
-        //}
     }
 
     private fun sendCommandsFromEditor() {
-        val lines = binding.editor.text.toString().split("\n").map { Command(it) }
-        if (lines.size == 1 && lines[0].text.isEmpty()) {
-            sendCommand(Command("\r"))
+        val editorText = binding.editor.text.toString()
+        if (editorText.isEmpty()) {
+            viewModel.startSendingTemperatureOrCo2Requests()
         } else {
-            lines.forEach(this::sendCommand)
+            editorText.split("\n").forEach(this::sendCommand)
         }
     }
 
@@ -983,13 +1005,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             ), false
         )
 
-        // if ((!mReadOnly) && Settings.UNDO) {
-        // showMenuItemAsAction(menu.findItem(MENU_ID_UNDO),
-        // R.drawable.ic_menu_undo, MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        // }
-
-        // showMenuItemAsAction(menu.findItem(MENU_ID_SEARCH),
-        // R.drawable.ic_menu_search);
         if (isUsbConnected) {
             ActivityDecorator.showMenuItemAsAction(
                 menu.findItem(Constants.MENU_ID_CONNECT_DISCONNECT),
@@ -1047,29 +1062,20 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
-        if (Settings.UNDO && !isInUndo && watcher != null) watcher!!.beforeChange(
-            s,
-            start,
-            count,
-            after
-        )
+    override fun beforeTextChanged(oldText: CharSequence, start: Int, length: Int, newLength: Int) {
+        if (Settings.UNDO && !isInUndo) {
+            watcher?.beforeChange(oldText, start, length, newLength)
+        }
     }
 
-    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-        if (isInUndo) return
-        if (Settings.UNDO && !isInUndo && watcher != null) watcher!!.afterChange(
-            s,
-            start,
-            before,
-            count
-        )
+    override fun onTextChanged(newText: CharSequence, start: Int, oldLength: Int, newLength: Int) {
+        if (Settings.UNDO && !isInUndo) {
+            watcher?.afterChange(newText, start, oldLength, newLength)
+        }
     }
 
     override fun afterTextChanged(s: Editable) {
-        if (!isDirty) {
-            isDirty = true
-        }
+        if (!isDirty) isDirty = true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
@@ -1353,7 +1359,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
      * then save it , else invoke the [MainActivity.saveContentAs] method
      */
     private fun saveContent() {
-        if (currentFilePath == null || currentFilePath!!.isEmpty()) {
+        if (currentFilePath.isNullOrEmpty()) {
             saveContentAs()
         } else {
             doSaveFile(currentFilePath)
@@ -1376,8 +1382,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun createLogEvent(response: ByteArray): ResponseLogEvent {
-        val request = lastCommand?.byteArray?.decodeToString() ?: "None"
-        return ResponseLogEvent(request, response.decodeToString())
+        val request = lastCommand ?: "None"
+        return ResponseLogEvent(request, response.decodeToStringEnhanced())
     }
 
     private fun onDataReceived(bytes: ByteArray) {
@@ -1388,31 +1394,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 FirebaseAnalytics.Param.SCREEN_CLASS to moshi.adapter(ResponseLogEvent::class.java).toJson(createLogEvent(bytes))
             )
         )
-        var data: String
-        val responseForChecking: String
-        if (bytes.size == 7) {
-            if (String.format("%02X", bytes[0]) == "FE" && String.format("%02X", bytes[1]) == "44") {
-                var strHex = ""
-                for (b in bytes) {
-                    strHex += String.format("%02X-", b)
-                }
-                val end = strHex.length - 1
-                data = strHex.substring(0, end)
-                val strH = String.format(
-                    "%02X%02X", bytes[3],
-                    bytes[4]
-                )
-                val co2 = strH.toInt(16)
-                val tempChart = chart ?: return
+        val periodicResponse = bytes.decodeToPeriodicResponse()
+        val data = when(periodicResponse) {
+            is PeriodicResponse.Temperature -> {
+                periodicResponse.toString()
+            }
+            is PeriodicResponse.Co2 -> {
+                val tempChart = chart!!
                 val yMax: Int = tempChart.renderer.yAxisMax.toInt()
-                if (co2 >= yMax) {
+                if (periodicResponse.value >= yMax) {
                     tempChart.renderer.yAxisMax = if (currentSeries.itemCount == 0) {
-                        (3 * co2).toDouble()
+                        (3 * periodicResponse.value).toDouble()
                     } else {
-                        (co2 + co2 * 15 / 100f).toDouble()
+                        (periodicResponse.value + periodicResponse.value * 15 / 100f).toDouble()
                     }
                 }
-
                 // auto
                 val delay = prefs.getInt(PrefConstants.DELAY, 2)
                 val duration = prefs.getInt(PrefConstants.DURATION, 3)
@@ -1432,32 +1428,21 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
                 if (viewModel.isMeasuring) {
-                    currentSeries.add(readingCount.toDouble(), co2.toDouble())
+                    currentSeries.add(readingCount.toDouble(), periodicResponse.value.toDouble())
                     chartView?.repaint()
                 }
-                if (co2 == 10000) {
+                if (periodicResponse.value == 10000) {
                     showCustomisedToast("Dilute sample")
                 }
-                data += "\nCO2: $co2 ppm"
-                refreshTextAccordToSensor(false, co2.toString())
-                responseForChecking = co2.toString()
-            } else {
-                data = String(bytes)
-                data = data.replace("\r", "")
-                data = data.replace("\n", "")
-                responseForChecking = data
+                periodicResponse.toString()
             }
-        } else {
-            data = String(bytes)
-            data = data.replace("\r", "")
-            data = data.replace("\n", "")
-            refreshTextAccordToSensor(true, data)
-            responseForChecking = data
+            else -> bytes.decodeToString()
         }
+        if (periodicResponse != null) refreshTextAccordToSensor(periodicResponse)
 
-        Utils.appendText(binding.output, "Rx: $data")
+        binding.output.append(isRead = true, data)
         binding.scrollView.smoothScrollTo(0, 0)
-        viewModel.onDataReceived(responseForChecking, bytes)
+        viewModel.onDataReceived(bytes)
     }
 
     private fun incCountMeasure() {
@@ -1473,20 +1458,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         invalidateOptionsMenu()
     }
 
-    private fun refreshTextAccordToSensor(isTemperature: Boolean, text: String?) {
-        if (isTemperature) {
-            TemperatureData.parse(text).also { temperatureData ->
-                if (temperatureData.isCorrect) {
-                    val updateRunnable = Runnable {
-                        binding.temperature.text = (temperatureData.temperature1 + viewModel.accessorySettings.value!!.temperatureUiOffset).toString()
-                    }
-                    updateRunnable.run()
-                } else {
-                    binding.temperature.text = temperatureData.wrongPosition.toString()
-                }
-            }
-        } else {
-            binding.co2.text = text
+    private fun refreshTextAccordToSensor(periodicResponse: PeriodicResponse) = when(periodicResponse) {
+        is PeriodicResponse.Temperature -> {
+            binding.temperature.text = (periodicResponse.value + viewModel.accessorySettings.value!!.temperatureUiOffset).toString()
+        }
+        is PeriodicResponse.Co2 -> {
+            binding.co2.text = periodicResponse.value.toString()
         }
     }
 
@@ -1556,7 +1533,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     override fun reportFolders(): String {
-        return File(Environment.getExternalStorageDirectory(), AppData.REPORT_FOLDER_NAME)
+        return File(Environment.getExternalStorageDirectory(), REPORT_DIRECTORY)
             .absolutePath
     }
 

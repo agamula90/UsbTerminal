@@ -69,6 +69,19 @@ data class ButtonProperties(
             isActivated = false,
             isEnabled = false
         )
+
+        fun forSend() = ButtonProperties(
+            alpha = 1f,
+            savable = FileSavable(
+                text = "Send",
+                command = "",
+                activatedText = "Send",
+                activatedCommand = ""
+            ),
+            background = R.drawable.button_drawable,
+            isActivated = false,
+            isEnabled = false
+        )
     }
 }
 

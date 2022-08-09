@@ -13,7 +13,7 @@ class AccessorySettings(
     val temperature: String,
     val co2: String,
     val syncPeriod: Int,
-    val offCommands: List<String>,
+    val off: Off,
     val temperatureUiOffset: Int
 ): Parcelable {
     companion object {
@@ -25,7 +25,7 @@ class AccessorySettings(
             co2 = "(FE-44-00-08-02-9F-25)",
             temperatureUiOffset = 0,
             syncPeriod = 1000,
-            offCommands = listOf("Cooling", "InterruptActions", "/5J1R")
+            off = Off("/5J1R", coolingPeriod = 1000)
         )
     }
 }
@@ -39,4 +39,11 @@ class Ping(val command: String, val delay: Int): Parcelable
 class On(
     val command: String,
     val acceptedResponses: List<String>
+): Parcelable
+
+@Parcelize
+@JsonClass(generateAdapter = true)
+class Off(
+    val command: String,
+    val coolingPeriod: Int? = null
 ): Parcelable

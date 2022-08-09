@@ -8,13 +8,13 @@ import android.graphics.PointF
 import android.os.Build
 import android.os.Environment
 import android.os.FileObserver
-import android.os.SystemClock
-import androidx.lifecycle.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.di.AccessoryOperationDispatcher
 import com.ismet.usbterminal.di.CacheAccessoryOutputOnMeasureDispatcher
-import com.ismet.usbterminal.utils.GraphPopulatorUtils
-import com.ismet.usbterminal.utils.Utils
 import com.ismet.usbterminalnew.R
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +46,12 @@ private const val DELIMITER = "_"
 private const val MAX_CHARTS = 3
 private const val DEFAULT_BUTTON_TEXT = "Command1"
 private const val DEFAULT_BUTTON_ACTIVATED_TEXT = "Command2"
+private const val CAL_DIRECTORY = "AEToC_CAL_Files"
+private const val MES_DIRECTORY = "AEToC_MES_Files"
+const val REPORT_DIRECTORY = "AEToC_Report_Files"
+
+//TODO change to 0 when usb simulation not needed
+private const val SIMULATION_DELAY = 200
 
 val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
 private val DATE_TIME_FORMAT = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
@@ -60,11 +66,9 @@ class MainViewModel @Inject constructor(
     handle: SavedStateHandle,
     @ApplicationContext val context: Context
 ): ViewModel() {
-    private var lastTimePressed: Long = 0
     private var shouldSendTemperatureRequest = true
     private var readChartJob: Job? = null
     private var sendTemperatureOrCo2Job: Job? = null
-    private var sendWaitForCoolingJob: Job? = null
     private var readCommandsJob: Job? = null
     private var chartDate: String = ""
     private var subDirDate: String = ""
@@ -86,9 +90,10 @@ class MainViewModel @Inject constructor(
     val buttonOn6Properties = handle.getLiveData<ButtonProperties?>("buttonOn6")
     val powerProperties = handle.getLiveData("power", ButtonProperties.forPower())
     val measureProperties = handle.getLiveData("measure", ButtonProperties.forMeasure())
+    val sendProperties = handle.getLiveData("send", ButtonProperties.forSend())
     private val allButtonProperties = listOf(
         buttonOn1Properties, buttonOn2Properties, buttonOn3Properties, buttonOn4Properties, buttonOn5Properties,
-        buttonOn6Properties, powerProperties, measureProperties
+        buttonOn6Properties, powerProperties, measureProperties, sendProperties
     )
     val maxY = handle.getLiveData("maxY",0)
     val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
@@ -98,9 +103,9 @@ class MainViewModel @Inject constructor(
     var fileObserver: FileObserver? = null
     private var onAccessorySettingsChanged: (AccessorySettings) -> Unit = {}
     private var pingJob: Job? = null
-    private var isPowerInProgress = false
     private var isPowerWaitForLastResponse = false
     private var pendingAccessorySettings: AccessorySettings? = null
+    private var currentTemperature = 0
 
     init {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
@@ -108,7 +113,7 @@ class MainViewModel @Inject constructor(
         ) {
             observeAppSettingsDirectoryUpdates()
         }
-        initGraphData()
+        readCombinedXyChart()
     }
 
     fun observeAppSettingsDirectoryUpdates() {
@@ -120,7 +125,7 @@ class MainViewModel @Inject constructor(
         checkAppSettings()
     }
 
-    private fun getFileObservationMask() = FileObserver.CREATE or FileObserver.MODIFY or FileObserver.DELETE
+    private fun getFileObservationMask() = FileObserver.CREATE or FileObserver.MODIFY or FileObserver.MOVED_TO or FileObserver.DELETE
 
     private fun checkAppSettings(path: String? = null) {
         val corruptedFiles = mutableListOf<String>()
@@ -137,14 +142,14 @@ class MainViewModel @Inject constructor(
 
                 val oldAccessorySettings = accessorySettings.value
                 val newAccessorySettings = moshi.adapter(AccessorySettings::class.java)
-                    .fromJson(accessoryDirectory.readText())!!
+                    .fromJson(accessoryDirectory.readTextEnhanced())!!
                 if (oldAccessorySettings == null) {
-                    accessorySettings.value = newAccessorySettings
-                    startPing()
+                    accessorySettings.postValue(newAccessorySettings)
+                    startPing(newAccessorySettings)
                 } else if (accessorySettings.value != newAccessorySettings) {
                     onAccessorySettingsChanged = { newSettings ->
-                        accessorySettings.value = newSettings
-                        startPing()
+                        accessorySettings.postValue(newSettings)
+                        startPing(newSettings)
                     }
                     onPowerOffClick(newAccessorySettings)
                 }
@@ -167,7 +172,7 @@ class MainViewModel @Inject constructor(
                     savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
                     savable.save(false)
                 }
-                val content = file.readText().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = file.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 4)
                 val buttonPropertiesLiveData = when(file.name) {
                     BUTTON1 -> buttonOn1Properties
@@ -175,7 +180,7 @@ class MainViewModel @Inject constructor(
                     else -> buttonOn3Properties
                 }
                 savable = FileSavable(content[0], content[2], content[1], content[3], file.name)
-                buttonPropertiesLiveData.value = ButtonProperties.getButtonChangeable(savable)
+                buttonPropertiesLiveData.postValue(ButtonProperties.getButtonChangeable(savable))
             } catch (_: Exception) {
                 corruptedFiles.add(file.name)
             }
@@ -194,7 +199,7 @@ class MainViewModel @Inject constructor(
                     val savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
                     savable.save(true)
                 }
-                val content = file.readText().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = file.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 2)
                 val buttonPropertiesLiveData = when(file.name) {
                     BUTTON4 -> buttonOn4Properties
@@ -203,7 +208,7 @@ class MainViewModel @Inject constructor(
                 }
                 val text = content[0]
                 val command = content[1]
-                buttonPropertiesLiveData.value = ButtonProperties.getButtonStatic(text, command, file.name)
+                buttonPropertiesLiveData.postValue(ButtonProperties.getButtonStatic(text, command, file.name))
             } catch (_: Exception) {
                 corruptedFiles.add(file.name)
             }
@@ -221,7 +226,7 @@ class MainViewModel @Inject constructor(
                         """.trimIndent()
                     )
                 }
-                val content = measurementFile.readText().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = measurementFile.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 3)
                 measureFileNames = content
             } catch (_: Exception) {
@@ -230,15 +235,18 @@ class MainViewModel @Inject constructor(
         }
         if (corruptedFiles.isNotEmpty()) {
             events.offer(MainEvent.ShowCorruptionDialog("Files ${corruptedFiles.joinToString(separator = ",")} are corrupted. Please, fix them..."))
+        } else {
+            events.offer(MainEvent.DismissCorruptionDialog)
         }
     }
 
-    private fun startPing() {
-        val ping = accessorySettings.value!!.ping
+    private fun startPing(accessorySettings: AccessorySettings) {
+        if (pingJob != null) return
+        val ping = accessorySettings.ping
         pingJob = viewModelScope.launch(writeDispatcher) {
             while (isActive) {
-                events.send(MainEvent.WriteToUsb(Command(ping.command)))
-                delay(ping.delay.toLong())
+                events.send(MainEvent.WriteToUsb(ping.command))
+                delay(ping.delay)
             }
         }
     }
@@ -283,18 +291,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun startSendingTemperatureOrCo2Requests() {
+    fun startSendingTemperatureOrCo2Requests() {
         val accessorySettings = accessorySettings.value!!
         sendTemperatureOrCo2Job?.cancel()
         sendTemperatureOrCo2Job = viewModelScope.launch(writeDispatcher) {
             while (isActive) {
                 shouldSendTemperatureRequest = !shouldSendTemperatureRequest
                 if (shouldSendTemperatureRequest) {
-                    events.send(MainEvent.WriteToUsb(Command(accessorySettings.temperature)))
+                    events.send(MainEvent.WriteToUsb(accessorySettings.temperature))
                 } else {
-                    events.send(MainEvent.WriteToUsb(Command(accessorySettings.co2)))
+                    events.send(MainEvent.WriteToUsb(accessorySettings.co2))
                 }
-                delay(accessorySettings.syncPeriod / 2L)
+                delay(accessorySettings.syncPeriod / 2)
             }
         }
     }
@@ -304,27 +312,19 @@ class MainViewModel @Inject constructor(
         sendTemperatureOrCo2Job = null
     }
 
-    // request -> response
-    // 5j1r is checking for controller availability
-    // 5j1r is also for power off command
-    // /5j1r -> 5j001
-    // power is connected
-    // 5j5r -> 5j101
-    // 5h commands for heater
-    //after power is on, heater button clicked
-    //change to green if 5,0(0,0,0) if 1st zero received in response
-    //Cooling command check temperature, if it's ok, then go next, otherwise wait...
-    //InterruptActions do nothing, go next
-    //power command - first do, then delay
-    //wait for any response if there is no possible responses
-    private fun waitForCooling() {
-
-    }
-
-    private fun stopWaitForCooling() {
-        sendWaitForCoolingJob?.cancel()
-        sendWaitForCoolingJob = null
-        events.offer(MainEvent.DismissCoolingDialog)
+    private fun waitForCooling(accessorySettings: AccessorySettings) = viewModelScope.launch(writeDispatcher) {
+        events.send(MainEvent.ShowWaitForCoolingDialog(message = """
+            Cooling down.  Do not switch power off.  Please wait . . . ! ! !
+            System will turn off automaticaly.
+            """.trimIndent())
+        )
+        while (currentTemperature > accessorySettings.borderTemperature) {
+            events.send(MainEvent.WriteToUsb(accessorySettings.temperature))
+            delay(accessorySettings.off.coolingPeriod!!)
+        }
+        events.send(MainEvent.DismissCoolingDialog)
+        isPowerWaitForLastResponse = true
+        events.send(MainEvent.WriteToUsb(accessorySettings.off.command))
     }
 
     // return true if operation can succeed, false otherwise
@@ -357,6 +357,7 @@ class MainViewModel @Inject constructor(
             events.offer(MainEvent.ShowToast(errorMessage))
             return false
         }
+        stopSendingTemperatureOrCo2Requests()
         isMeasuring = true
         val edit = prefs.edit()
         if (isKnownPpm) {
@@ -372,10 +373,10 @@ class MainViewModel @Inject constructor(
         edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, isKnownPpm)
         val intDuration = duration.toInt()
         val intDelay = delay.toInt()
-        val graphData = when(countMeasure) {
+        val combinedXYChart = when(countMeasure) {
             0 -> {
                 setCurrentChartIndex(0)
-                GraphPopulatorUtils.createXYChart(intDuration, intDelay)
+                createXyCombinedChart(intDuration, intDelay)
             }
             else -> null
         }
@@ -383,14 +384,14 @@ class MainViewModel @Inject constructor(
         edit.putInt(PrefConstants.DELAY, intDelay)
         edit.putInt(PrefConstants.DURATION, intDuration)
         edit.apply()
-        val future = (intDuration * 60 * 1000).toLong()
-        val delay_timer = (intDelay * 1000).toLong()
+        val future = intDuration * 60 * 1000
+        val delay_timer = intDelay * 1000
 
         val currentChartIndex: Int
         val readingCount: Int
         val charts = charts.value!!
         when {
-            graphData != null || charts[0].points.isEmpty() -> {
+            combinedXYChart != null || charts[0].points.isEmpty() -> {
                 currentChartIndex = 0
                 readingCount = 0
             }
@@ -412,7 +413,7 @@ class MainViewModel @Inject constructor(
 
         val newMeasureFiles = listOf(editText1Text, editText2Text, editText3Text)
 
-        if (graphData != null) events.offer(MainEvent.UpdateGraphData(graphData))
+        if (combinedXYChart != null) events.offer(MainEvent.SetCombinedChart(combinedXYChart))
         if (checkedRadioButtonIndex == -1) {
             readCommandsFromText(
                 text = editorText,
@@ -444,18 +445,18 @@ class MainViewModel @Inject constructor(
     private fun readCommandsFromFile(
         file: File,
         shouldUseRecentDirectory: Boolean,
-        runningTime: Long,
-        oneLoopTime: Long,
+        runningTime: Int,
+        oneLoopTime: Int,
         newMeasureFiles: List<String>
     ) {
-        readCommandsFromText(file.readText(), shouldUseRecentDirectory, runningTime, oneLoopTime, newMeasureFiles)
+        readCommandsFromText(file.readTextEnhanced(), shouldUseRecentDirectory, runningTime, oneLoopTime, newMeasureFiles)
     }
 
     private fun readCommandsFromText(
         text: String?,
         shouldUseRecentDirectory: Boolean,
-        runningTime: Long,
-        oneLoopTime: Long,
+        runningTime: Int,
+        oneLoopTime: Int,
         newMeasureFiles: List<String>
     ) {
         if (text != null && text.isNotEmpty()) {
@@ -478,14 +479,8 @@ class MainViewModel @Inject constructor(
                         lineNos = lineNos.replace("\n", "")
                         lineNos = lineNos.replace("\r", "")
                         lineNos = lineNos.trim { it <= ' ' }
-                        val line1 = lineNos.substring(
-                            0, lineNos.length
-                                    / 2
-                        )
-                        val line2 = lineNos.substring(
-                            lineNos.length / 2,
-                            lineNos.length
-                        )
+                        val line1 = lineNos.substring(0, lineNos.length / 2)
+                        val line2 = lineNos.substring(lineNos.length / 2, lineNos.length)
                         loopcmd1Idx = line1.toInt() - 1
                         loopcmd2Idx = line2.toInt() - 1
                     } else if (command == "autoppm") {
@@ -509,7 +504,7 @@ class MainViewModel @Inject constructor(
                     val ppm = prefs.getInt(PrefConstants.KPPM, -1)
                     //cal directory
                     if (ppm != -1) {
-                        val directory = File(Environment.getExternalStorageDirectory(), AppData.CAL_FOLDER_NAME)
+                        val directory = File(Environment.getExternalStorageDirectory(), CAL_DIRECTORY)
                         val directoriesInside = directory.listFiles { pathname -> pathname.isDirectory }
                         if (directoriesInside != null && directoriesInside.isNotEmpty()) {
                             var recentDir: File? = null
@@ -554,13 +549,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun processChart(future: Long, delay: Long, simpleCommands: List<String>, loopCommands: List<String>) {
+    private suspend fun processChart(future: Int, delay: Int, simpleCommands: List<String>, loopCommands: List<String>) {
         for (i in simpleCommands.indices) {
             if (simpleCommands[i].contains("delay")) {
-                val delayC = simpleCommands[i].replace("delay", "").trim { it <= ' ' }.toLong()
+                val delayC = simpleCommands[i].replace("delay", "").trim { it <= ' ' }.toInt()
                 delay(delayC)
             } else {
-                events.send(MainEvent.WriteToUsb(Command(simpleCommands[i])))
+                events.send(MainEvent.WriteToUsb(simpleCommands[i]))
             }
         }
 
@@ -569,11 +564,11 @@ class MainViewModel @Inject constructor(
         if (loopCommands.isNotEmpty()) {
             while (count < len) {
                 events.send(MainEvent.IncReadingCount)
-                events.send(MainEvent.WriteToUsb(Command(loopCommands[0])))
+                events.send(MainEvent.WriteToUsb(loopCommands[0]))
                 val half_delay = delay / 2
                 delay(half_delay)
                 if (loopCommands.size > 1) {
-                    events.send(MainEvent.WriteToUsb(Command(loopCommands[1])))
+                    events.send(MainEvent.WriteToUsb(loopCommands[1]))
                     delay(half_delay)
                 }
 
@@ -599,14 +594,14 @@ class MainViewModel @Inject constructor(
         val dirName: String
         val subDirName: String
         if (ppmPrefix == "_") {
-            dirName = AppData.MES_FOLDER_NAME
+            dirName = MES_DIRECTORY
             fileName = "MES_" + chartDate +
                     volume + "_R" + (currentChartIndex.value!! + 1) + "" +
                     ".csv"
             subDirName = "MES_" + subDirDate + "_" +
                     str_uc
         } else {
-            dirName = AppData.CAL_FOLDER_NAME
+            dirName = CAL_DIRECTORY
             fileName = ("CAL_" + chartDate +
                     volume + ppmPrefix + "_R" + (currentChartIndex.value!! + 1)
                     + ".csv")
@@ -662,7 +657,7 @@ class MainViewModel @Inject constructor(
         }
         stopSendingTemperatureOrCo2Requests()
         val command = if (currentButtonProperties.value!!.isActivated) currentButtonProperties.value!!.savable.activatedCommand else currentButtonProperties.value!!.savable.command
-        events.offer(MainEvent.WriteToUsb(Command(command)))
+        events.offer(MainEvent.WriteToUsb(command))
     }
 
     // true if success, false otherwise
@@ -703,7 +698,7 @@ class MainViewModel @Inject constructor(
             }
         }
         stopSendingTemperatureOrCo2Requests()
-        events.offer(MainEvent.WriteToUsb(Command(currentButtonProperties.value!!.savable.command)))
+        events.offer(MainEvent.WriteToUsb(currentButtonProperties.value!!.savable.command))
     }
 
     fun changeButton4PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
@@ -727,12 +722,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun onSendClick() {
-        val nowTime = SystemClock.uptimeMillis()
-        val timeElapsed = Utils.elapsedTimeForSendRequest(nowTime, lastTimePressed)
-        if (timeElapsed) {
-            lastTimePressed = nowTime
-            stopSendingTemperatureOrCo2Requests()
-        }
+        stopSendingTemperatureOrCo2Requests()
         events.offer(MainEvent.SendCommandsFromEditor)
     }
 
@@ -780,21 +770,21 @@ class MainViewModel @Inject constructor(
             currentCharts[0] = currentCharts[0].copy(points = emptyList())
             val tempFilePath = currentCharts[0].tempFilePath
             if (tempFilePath != null) {
-                Utils.deleteFiles(tempFilePath, "_R1")
+                clearChartDirectories(tempFilePath, "_R1")
             }
         }
         if (currentClearOptions.contains("Chart 2")) {
             currentCharts[1] = currentCharts[1].copy(points = emptyList())
             val tempFilePath = currentCharts[1].tempFilePath
             if (tempFilePath != null) {
-                Utils.deleteFiles(tempFilePath, "_R2")
+                clearChartDirectories(tempFilePath, "_R2")
             }
         }
         if (currentClearOptions.contains("Chart 3")) {
             currentCharts[2] = currentCharts[2].copy(points = emptyList())
             val tempFilePath = currentCharts[2].tempFilePath
             if (tempFilePath != null) {
-                Utils.deleteFiles(tempFilePath, "_R3")
+                clearChartDirectories(tempFilePath, "_R3")
             }
         }
         if (currentClearOptions.contains("New Measure")) {
@@ -804,21 +794,51 @@ class MainViewModel @Inject constructor(
         charts.value = currentCharts
     }
 
-    //interrupt actions = cancel all running jobs
+    private fun clearChartDirectories(chartDate: String, chartIndex: String) {
+        val mesDirectory = File(Environment.getExternalStorageDirectory(), MES_DIRECTORY)
+        mesDirectory.deleteChartFiles(chartDate, chartIndex)
+        val calDirectory = File(Environment.getExternalStorageDirectory(), CAL_DIRECTORY)
+        calDirectory.deleteChartFiles(chartDate, chartIndex)
+    }
+
+    private fun File.deleteChartFiles(chartDate: String, chartIndex: String) {
+        val subDirectories = listFiles { file -> file != null && file.isDirectory } ?: return
+        for (subDirectory in subDirectories) {
+            val chartFiles = subDirectory.listFiles { _, name ->
+                name != null && name.contains(chartDate) && name.contains(chartIndex)
+            } ?: continue
+            chartFiles.forEach(File::delete)
+        }
+    }
+
     fun onPowerClick() = when(powerProperties.value!!.isActivated) {
         true -> onPowerOffClick()
         else -> onPowerOnClick()
     }
 
     private fun onPowerOnClick() {
-        TODO("implement power on")
+        powerProperties.value = powerProperties.value!!.copy(isEnabled = false, alpha = 0.6f)
+        isPowerWaitForLastResponse = true
+        events.offer(MainEvent.WriteToUsb(accessorySettings.value!!.on.command))
     }
 
-    private fun onPowerOffClick(accessorySettings: AccessorySettings? = null) {
-        pendingAccessorySettings = accessorySettings
+    private fun onPowerOffClick(newAccessorySettings: AccessorySettings? = null) {
+        stopSendingTemperatureOrCo2Requests()
+        readChartJob?.cancel()
+        readChartJob = null
+        readCommandsJob?.cancel()
+        readCommandsJob = null
+        pendingAccessorySettings = newAccessorySettings
+        val accessorySettings = accessorySettings.value!!
+        if (accessorySettings.off.coolingPeriod != null) {
+            waitForCooling(accessorySettings)
+        } else {
+            isPowerWaitForLastResponse = true
+            events.offer(MainEvent.WriteToUsb(accessorySettings.off.command))
+        }
     }
 
-    private fun initGraphData() {
+    private fun readCombinedXyChart() {
         val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
         val duration = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
         if (!prefs.contains(PrefConstants.DELAY)) {
@@ -828,29 +848,16 @@ class MainViewModel @Inject constructor(
             editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
             editor.apply()
         }
-        events.offer(MainEvent.UpdateGraphData(GraphPopulatorUtils.createXYChart(duration, delay)))
+        events.offer(MainEvent.SetCombinedChart(createXyCombinedChart(duration, delay)))
     }
 
-    private suspend fun handleResponse(response: String) {
-        val borderCoolingTemperature = accessorySettings.value!!.borderTemperature
-        TODO("handle response from usb")
+    private fun handleMeasuringResponse(bytes: ByteArray) {
+        TODO("handle measuring")
     }
 
-    private fun buildWrongResponseMessage(response: String, command: PowerCommand): String {
-        val responseBuilder = StringBuilder()
-        for (possibleResponse in command.possibleResponses) {
-            responseBuilder.append("\"$possibleResponse\" or ")
-        }
-        responseBuilder.delete(
-            responseBuilder.length - 4, responseBuilder
-                .length
-        )
-        return "Wrong response: Got - \"$response\".Expected - $responseBuilder"
-    }
-
-    fun onDataReceived(response: String, bytes: ByteArray) {
+    fun onDataReceived(bytes: ByteArray) {
         when {
-            pingJob?.isActive == true -> {
+            pingJob != null -> {
                 pingJob?.cancel()
                 pingJob = null
                 powerProperties.value = powerProperties.value!!.copy(isEnabled = true, background = R.drawable.power_off_drawable)
@@ -861,24 +868,15 @@ class MainViewModel @Inject constructor(
                 for (buttonProperties in allButtonProperties) {
                     buttonProperties.value = buttonProperties.value!!.copy(isEnabled = true)
                 }
-                //TODO if response is correct
-                if (true) {
-                    changeableButtonClickedProperties!!.value = previousClickedProperties.copy(
-                        alpha = 1f,
-                        isActivated = !previousClickedProperties.isActivated,
-                        background = when (previousClickedProperties.isActivated) {
-                            true -> R.drawable.button_drawable
-                            false -> R.drawable.power_on_drawable
-                        },
-                        isEnabled = true
-                    )
-                } else {
-                    changeableButtonClickedProperties!!.value = previousClickedProperties.copy(
-                        alpha = 1f,
-                        isEnabled = true
-                    )
-                    //TODO show message about wrong response
-                }
+                changeableButtonClickedProperties!!.value = previousClickedProperties.copy(
+                    alpha = 1f,
+                    isActivated = !previousClickedProperties.isActivated,
+                    background = when (previousClickedProperties.isActivated) {
+                        true -> R.drawable.button_drawable
+                        false -> R.drawable.power_on_drawable
+                    },
+                    isEnabled = true
+                )
                 changeableButtonClickedProperties = null
                 startSendingTemperatureOrCo2Requests()
             }
@@ -891,9 +889,9 @@ class MainViewModel @Inject constructor(
             }
             !powerProperties.value!!.isActivated && isPowerWaitForLastResponse -> {
                 isPowerWaitForLastResponse = false
-                isPowerInProgress = false
-                //TODO check last response, if it's ok, then
-                if (true) {
+                val onResponses = accessorySettings.value!!.on.acceptedResponses
+                val response = bytes.decodeToStringEnhanced()
+                if (onResponses.contains(response)) {
                     for (buttonProperties in allButtonProperties) {
                         buttonProperties.value = buttonProperties.value!!.copy(isEnabled = true)
                     }
@@ -905,47 +903,45 @@ class MainViewModel @Inject constructor(
                     )
                     startSendingTemperatureOrCo2Requests()
                 } else {
+                    events.offer(MainEvent.ShowToast(
+                        message = "Wrong response: Got - \"$response\".Expected - ${onResponses.joinToString(separator = " or ") {"\"$it\""}}")
+                    )
                     powerProperties.value = powerProperties.value!!.copy(alpha = 1f, isEnabled = true)
                 }
             }
             isPowerWaitForLastResponse -> {
                 isPowerWaitForLastResponse = false
-                isPowerInProgress = false
-                //TODO check last response, if it's ok, then
-                if (true) {
-                    for (buttonProperties in allButtonProperties) {
-                        buttonProperties.value = buttonProperties.value!!.copy(isEnabled = false)
-                    }
-                    powerProperties.value = powerProperties.value!!.copy(
-                        alpha = 1f,
-                        isActivated = false,
-                        background = R.drawable.power_off_drawable,
-                        isEnabled = true
-                    )
-                    if (pendingAccessorySettings != null) {
-                        onAccessorySettingsChanged.invoke(pendingAccessorySettings!!)
-                        onAccessorySettingsChanged = {}
-                        pendingAccessorySettings = null
-                    }
-                } else {
-                    for (buttonProperties in allButtonProperties) {
-                        buttonProperties.value = buttonProperties.value!!.copy(isEnabled = true, alpha = 1f)
-                    }
-                    startSendingTemperatureOrCo2Requests()
+                for (buttonProperties in allButtonProperties) {
+                    buttonProperties.value = buttonProperties.value!!.copy(isEnabled = false)
+                }
+                powerProperties.value = powerProperties.value!!.copy(
+                    alpha = 1f,
+                    isActivated = false,
+                    background = R.drawable.power_off_drawable,
+                    isEnabled = true
+                )
+                if (pendingAccessorySettings != null) {
+                    onAccessorySettingsChanged.invoke(pendingAccessorySettings!!)
+                    onAccessorySettingsChanged = {}
+                    pendingAccessorySettings = null
                 }
             }
-            bytes.size == 7 && isMeasuring -> {
-                cacheBytesFromUsbWhenMeasurePressed(bytes)
-                viewModelScope.launch(readDispatcher) {
-                    handleResponse(response)
+            isMeasuring -> {
+                val periodicResponse = bytes.decodeToPeriodicResponse()
+                if (periodicResponse is PeriodicResponse.Co2) {
+                    cacheBytesFromUsbWhenMeasurePressed(bytes)
                 }
+                handleMeasuringResponse(bytes)
             }
             else -> {
-                viewModelScope.launch(readDispatcher) {
-                    handleResponse(response)
-                }
+                val temperature = bytes.decodeToPeriodicResponse() as? PeriodicResponse.Temperature ?: return
+                currentTemperature = temperature.value
             }
         }
+    }
+
+    private suspend fun delay(timeout: Int) {
+        delay(timeout.toLong() + SIMULATION_DELAY)
     }
 
     override fun onCleared() {
