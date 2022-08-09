@@ -30,6 +30,7 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer
 import org.achartengine.renderer.XYSeriesRenderer
 import java.io.File
 
+//TODO use api 'com.github.PhilJay:MPAndroidChart:v2.1.5' instead
 fun XYSeries.set(points: List<PointF>) {
     val pointsToAdd = points.toMutableList()
     val pointIndexesToRemove = mutableListOf<Int>()

@@ -252,6 +252,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun readChart(filePath: String) {
+        val shouldStartPing = pingJob?.isActive == true
+        pingJob?.cancel()
+        pingJob = null
+        val shouldStartTemperatureCo2Requests = sendTemperatureOrCo2Job?.isActive == true
+        stopSendingTemperatureOrCo2Requests()
         readChartJob?.cancel()
         val currentCharts = charts.value!!.toMutableList()
         val newChartIndex = currentCharts.indexOfFirst { it.canBeRestoredFromFilePath(filePath) }
@@ -288,6 +293,8 @@ class MainViewModel @Inject constructor(
                 }
             }
             events.send(MainEvent.ShowToast("File reading done"))
+            if (shouldStartPing) startPing(accessorySettings.value!!)
+            if (shouldStartTemperatureCo2Requests) startSendingTemperatureOrCo2Requests()
         }
     }
 

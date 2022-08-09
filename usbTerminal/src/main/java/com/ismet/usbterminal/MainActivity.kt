@@ -179,10 +179,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
         titleView.setTextColor(Color.WHITE)
         (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.CENTER_HORIZONTAL, 0)
-        observeChartUpdates()
+        observeChartEvents()
         observeEvents()
         observeUsbEvents()
-        observeButtonUpdates()
+        observeButtonEvents()
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
@@ -543,7 +543,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
     }
 
-    private fun observeChartUpdates() {
+    private fun observeChartEvents() {
         viewModel.maxY.observe(this) {
             //TODO remove max, move all maxY changes to vm
             val tempChart = chart
@@ -649,7 +649,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             .show()
     }
 
-    private fun observeButtonUpdates() {
+    private fun observeButtonEvents() {
         viewModel.buttonOn1Properties.observe(this) {
             binding.buttonOn1.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
