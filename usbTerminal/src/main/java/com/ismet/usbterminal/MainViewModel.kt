@@ -25,6 +25,8 @@ import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.NoSuchElementException
+import kotlin.math.max
 
 const val CHART_INDEX_UNSELECTED = -1
 const val APPLICATION_SETTINGS = "AEToC_SYS_Files"
@@ -43,18 +45,19 @@ const val BUTTON_FILE_FORMAT_DELIMITER = ";"
 private const val DATE_FORMAT = "yyyyMMdd"
 private const val TIME_FORMAT = "HHmmss"
 private const val DELIMITER = "_"
-private const val MAX_CHARTS = 3
 private const val DEFAULT_BUTTON_TEXT = "Command1"
 private const val DEFAULT_BUTTON_ACTIVATED_TEXT = "Command2"
 private const val CAL_DIRECTORY = "AEToC_CAL_Files"
 private const val MES_DIRECTORY = "AEToC_MES_Files"
 const val REPORT_DIRECTORY = "AEToC_Report_Files"
+private const val DEFAULT_MAX_X = 9f
+private const val DEFAULT_MAX_Y = 10f
 
 //TODO change to 0 when usb simulation not needed
 private const val SIMULATION_DELAY = 200
 
-val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
-private val DATE_TIME_FORMAT = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
+private val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
+val DATE_TIME_FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -79,7 +82,13 @@ class MainViewModel @Inject constructor(
     private set
 
     val events = Channel<MainEvent>(Channel.UNLIMITED)
-    val charts = MutableLiveData(List(MAX_CHARTS) { Chart(it, emptyList()) })
+    val charts = MutableLiveData(
+        Charts(
+            charts = List(3) { Chart(it, emptyList()) },
+            maxX = DEFAULT_MAX_X,
+            maxY = DEFAULT_MAX_Y
+        )
+    )
     private val applicationSettingsDirectory = File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS)
     val accessorySettings = handle.getLiveData<AccessorySettings?>("accessorySettings")
     val buttonOn1Properties = handle.getLiveData<ButtonProperties?>("buttonOn1")
@@ -95,8 +104,7 @@ class MainViewModel @Inject constructor(
         buttonOn1Properties, buttonOn2Properties, buttonOn3Properties, buttonOn4Properties, buttonOn5Properties,
         buttonOn6Properties, powerProperties, measureProperties, sendProperties
     )
-    val maxY = handle.getLiveData("maxY",0)
-    val currentChartIndex = handle.getLiveData("currentChartIndex", 0)
+    private var currentChartIndex = 0
     val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
     val checkedClearOptions = List(allClearOptions.size) { false }
     var isMeasuring = false
@@ -258,7 +266,8 @@ class MainViewModel @Inject constructor(
         val shouldStartTemperatureCo2Requests = sendTemperatureOrCo2Job?.isActive == true
         stopSendingTemperatureOrCo2Requests()
         readChartJob?.cancel()
-        val currentCharts = charts.value!!.toMutableList()
+        val charts = charts.value!!
+        val currentCharts = charts.charts.toMutableList()
         val newChartIndex = currentCharts.indexOfFirst { it.canBeRestoredFromFilePath(filePath) }
 
         if (newChartIndex == CHART_INDEX_UNSELECTED) {
@@ -270,26 +279,25 @@ class MainViewModel @Inject constructor(
         readChartJob = viewModelScope.launch(Dispatchers.IO) {
             val file = File(filePath)
             val lines = file.readLines()
-            var startX = maxOf(1, (lines.size + 1) * currentCharts[newChartIndex].id)
-            var newMaxY = maxY.value!!
+            var startX = lines.size * currentCharts[newChartIndex].id
+            var newMaxY = charts.maxY
             val newChartPoints = mutableListOf<PointF>()
             for (line in lines) {
                 if (line.isNotEmpty()) {
                     val arr = line.split(",").toTypedArray()
                     val co2 = arr[1].toDouble()
-                    startX++
                     if (co2 >= newMaxY) {
                         newMaxY = if (newChartPoints.isEmpty()) {
-                            (3 * co2).toInt()
+                            (3 * co2.toFloat())
                         } else {
-                            (co2 + co2 * 15 / 100f).toInt()
+                            (co2 + co2 * 15 / 100f).toFloat()
                         }
                     }
                     newChartPoints.add(PointF(startX.toFloat(), co2.toFloat()))
                     delay(50)
-                    maxY.postValue(newMaxY)
                     currentCharts[newChartIndex] = currentCharts[newChartIndex].copy(points = newChartPoints)
-                    charts.postValue(currentCharts)
+                    this@MainViewModel.charts.postValue(charts.copy(charts = currentCharts, maxY = newMaxY))
+                    startX++
                 }
             }
             events.send(MainEvent.ShowToast("File reading done"))
@@ -380,33 +388,25 @@ class MainViewModel @Inject constructor(
         edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, isKnownPpm)
         val intDuration = duration.toInt()
         val intDelay = delay.toInt()
-        val combinedXYChart = when(countMeasure) {
-            0 -> {
-                setCurrentChartIndex(0)
-                createXyCombinedChart(intDuration, intDelay)
-            }
-            else -> null
-        }
         events.offer(MainEvent.IncCountMeasure)
         edit.putInt(PrefConstants.DELAY, intDelay)
         edit.putInt(PrefConstants.DURATION, intDuration)
         edit.apply()
         val future = intDuration * 60 * 1000
-        val delay_timer = intDelay * 1000
-
+        val oneLoopTime = intDelay * 1000
         val currentChartIndex: Int
         val readingCount: Int
-        val charts = charts.value!!
+        val oldCharts = charts.value!!.charts
         when {
-            combinedXYChart != null || charts[0].points.isEmpty() -> {
+            countMeasure == 0 || oldCharts[0].points.isEmpty() -> {
                 currentChartIndex = 0
                 readingCount = 0
             }
-            charts[1].points.isEmpty() -> {
+            oldCharts[1].points.isEmpty() -> {
                 currentChartIndex = 1
                 readingCount = intDuration * 60 / intDelay
             }
-            charts[2].points.isEmpty() -> {
+            oldCharts[2].points.isEmpty() -> {
                 currentChartIndex = 2
                 readingCount = intDuration * 60
             }
@@ -417,16 +417,21 @@ class MainViewModel @Inject constructor(
         }
         if (currentChartIndex != -1) setCurrentChartIndex(currentChartIndex)
         if (readingCount != -1) events.offer(MainEvent.SetReadingCount(readingCount))
-
         val newMeasureFiles = listOf(editText1Text, editText2Text, editText3Text)
-
-        if (combinedXYChart != null) events.offer(MainEvent.SetCombinedChart(combinedXYChart))
+        if (countMeasure == 0) {
+            val maxX = 3f * (intDuration * 60 / intDelay)
+            charts.value = Charts(
+                charts = List(3) { Chart(it + 1, emptyList())},
+                maxX = maxX,
+                maxY = DEFAULT_MAX_Y
+            )
+        }
         if (checkedRadioButtonIndex == -1) {
             readCommandsFromText(
                 text = editorText,
                 shouldUseRecentDirectory = isUseRecentDirectory,
                 runningTime = future,
-                oneLoopTime = delay_timer,
+                oneLoopTime = oneLoopTime,
                 newMeasureFiles = newMeasureFiles
             )
             return true
@@ -443,7 +448,7 @@ class MainViewModel @Inject constructor(
             file = File(File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS), filePath),
             shouldUseRecentDirectory = isUseRecentDirectory,
             runningTime = future,
-            oneLoopTime = delay_timer,
+            oneLoopTime = oneLoopTime,
             newMeasureFiles = newMeasureFiles
         )
         return true
@@ -603,14 +608,14 @@ class MainViewModel @Inject constructor(
         if (ppmPrefix == "_") {
             dirName = MES_DIRECTORY
             fileName = "MES_" + chartDate +
-                    volume + "_R" + (currentChartIndex.value!! + 1) + "" +
+                    volume + "_R" + (currentChartIndex + 1) + "" +
                     ".csv"
             subDirName = "MES_" + subDirDate + "_" +
                     str_uc
         } else {
             dirName = CAL_DIRECTORY
             fileName = ("CAL_" + chartDate +
-                    volume + ppmPrefix + "_R" + (currentChartIndex.value!! + 1)
+                    volume + ppmPrefix + "_R" + (currentChartIndex + 1)
                     + ".csv")
             subDirName = "CAL_" + subDirDate + "_" +
                     str_uc
@@ -736,21 +741,21 @@ class MainViewModel @Inject constructor(
     fun onCurrentChartWasModified(wasModified: Boolean) {
         val currentDate = Date()
         if (wasModified) {
-            chartDate = DATE_TIME_FORMAT.format(currentDate)
-            charts.value!![currentChartIndex.value!!].tempFilePath = chartDate
+            chartDate = FORMATTER.format(currentDate)
+            charts.value!!.charts[currentChartIndex].tempFilePath = chartDate
         }
         if (subDirDate.isEmpty()) {
-            subDirDate = DATE_TIME_FORMAT.format(currentDate)
+            subDirDate = FORMATTER.format(currentDate)
         }
     }
 
-    fun reset() {
+    private fun resetFilePaths() {
         subDirDate = ""
-        charts.value!!.forEach { it.tempFilePath = null }
+        charts.value!!.charts.forEach { it.tempFilePath = null }
     }
 
     fun setCurrentChartIndex(index: Int) {
-        currentChartIndex.value = index
+        currentChartIndex = index
     }
 
     fun addClearOption(option: String) {
@@ -766,7 +771,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun clearCheckedOptions() {
-        val currentCharts = charts.value!!.toMutableList()
+        val currentCharts = charts.value!!.charts.toMutableList()
         if (currentClearOptions.contains("Tx")) {
             events.offer(MainEvent.ClearEditor)
         }
@@ -795,10 +800,17 @@ class MainViewModel @Inject constructor(
             }
         }
         if (currentClearOptions.contains("New Measure")) {
-            reset()
+            resetFilePaths()
             events.offer(MainEvent.ClearData)
         }
-        charts.value = currentCharts
+        val maxY = currentCharts.maxOf {
+            try {
+                it.points.maxOf { it.y }
+            } catch (_: NoSuchElementException) {
+                DEFAULT_MAX_Y
+            }
+        }
+        charts.value = charts.value!!.copy(charts = currentCharts, maxY = maxY)
     }
 
     private fun clearChartDirectories(chartDate: String, chartIndex: String) {
@@ -855,7 +867,7 @@ class MainViewModel @Inject constructor(
             editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
             editor.apply()
         }
-        events.offer(MainEvent.SetCombinedChart(createXyCombinedChart(duration, delay)))
+        charts.value = charts.value!!.copy(maxX = 3f * (duration * 60 / delay))
     }
 
     private fun handleMeasuringResponse(bytes: ByteArray) {
@@ -949,6 +961,27 @@ class MainViewModel @Inject constructor(
 
     private suspend fun delay(timeout: Int) {
         delay(timeout.toLong() + SIMULATION_DELAY)
+    }
+
+    fun isCurrentChartEmpty() = charts.value!!.charts[currentChartIndex].points.isEmpty()
+
+    fun addPointToCurrentChart(point: PointF) {
+        val oldCharts = charts.value!!
+        val newCharts = oldCharts.charts.toMutableList()
+        newCharts[currentChartIndex] = newCharts[currentChartIndex].copy(points = newCharts[currentChartIndex].points + point)
+        charts.value = oldCharts.copy(charts = newCharts, maxY = max(oldCharts.maxY, point.y))
+    }
+
+    fun resetCharts() {
+        charts.value = Charts(
+            charts = List(3) { Chart(it, emptyList()) },
+            maxX = DEFAULT_MAX_X,
+            maxY = DEFAULT_MAX_Y
+        )
+    }
+
+    fun setMaxY(maxY: Float) {
+        charts.value = charts.value!!.copy(maxY = maxY)
     }
 
     override fun onCleared() {

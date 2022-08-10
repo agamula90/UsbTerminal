@@ -10,6 +10,7 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.utils.Utils;
 import com.proggroup.areasquarecalculator.R;
 
+//TODO fix chart marker view
 public class ChartMarkerView extends MarkerView {
 
 	private TextView tvContent;
@@ -29,10 +30,10 @@ public class ChartMarkerView extends MarkerView {
 			tvContent.setText("" + Utils.formatNumber(ce.getHigh(), 0, true));
 		} else {
 
-			tvContent.setText("" + Utils.formatNumber(e.getVal(), 0, true));
+			//tvContent.setText("" + Utils.formatNumber(e.getVal(), 0, true));
 		}
 	}
-
+/*
 	@Override
 	public int getXOffset() {
 		// this will center the marker-view horizontally
@@ -44,4 +45,5 @@ public class ChartMarkerView extends MarkerView {
 		// this will center the marker-view vertically
 		return -getHeight();
 	}
+ */
 }

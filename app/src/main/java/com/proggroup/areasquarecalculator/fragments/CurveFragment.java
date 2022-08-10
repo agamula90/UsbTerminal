@@ -13,7 +13,9 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.BarLineChartBase;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -22,6 +24,8 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.renderer.XAxisRenderer;
+import com.github.mikephil.charting.renderer.XAxisRendererRadarChart;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.views.ChartMarkerView;
@@ -29,7 +33,7 @@ import com.proggroup.areasquarecalculator.views.ChartMarkerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CurveFragment extends Fragment implements OnChartValueSelectedListener {
+public class CurveFragment extends Fragment {
 
 	private static final String PPMS_TAG = "ppms";
 
@@ -54,19 +58,6 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		args.putStringArrayList(SQUARES_TAG, squareStrings);
 		fragment.setArguments(args);
 		return fragment;
-	}
-
-	private static int gcd(int a, int b, int less) {
-		while (b > 0) {
-			int temp = b;
-			b = a % b;
-			a = temp;
-			if (a < less) {
-				a = less;
-				break;
-			}
-		}
-		return a;
 	}
 
 	@Override
@@ -210,166 +201,68 @@ public class CurveFragment extends Fragment implements OnChartValueSelectedListe
 		});
 	}
 
-	public static void initLine(LineChart mLineChart, Activity activity, SparseArray<Float>
+	public static void initLine(LineChart lineChart, Activity activity, SparseArray<Float>
 			 squares) {
-		//mLineChart.setOnChartValueSelectedListener(this);
         //0, 50, 50, 0
-		mLineChart.setExtraOffsets(30, 40, 60, 10);
-		mLineChart.setDrawGridBackground(false);
-		mLineChart.setDoubleTapToZoomEnabled(false);
+		lineChart.setExtraOffsets(30, 40, 60, 10);
+		lineChart.setDrawGridBackground(false);
+		lineChart.setDoubleTapToZoomEnabled(false);
+		lineChart.getDescription().setEnabled(false);
+		lineChart.setTouchEnabled(true);
+		lineChart.setDragEnabled(true);
+		lineChart.setScaleEnabled(true);
+		lineChart.setPinchZoom(true);
 
-		// no description text
-		mLineChart.setDescription("");
-		mLineChart.setNoDataTextDescription("You need to provide data for the chart.");
-
-		// enable touch gestures
-		mLineChart.setTouchEnabled(true);
-
-		// enable scaling and dragging
-		mLineChart.setDragEnabled(true);
-		mLineChart.setScaleEnabled(true);
-
-		// if disabled, scaling can be done on x- and y-axis separately
-		mLineChart.setPinchZoom(true);
-
-
-		// create a custom MarkerView (extend MarkerView) and specify the layout
-		// to use for it
-		ChartMarkerView mv = new ChartMarkerView(activity, R.layout.chart_marer_view);
-
-		// set the marker to the chart
-		mLineChart.setMarkerView(mv);
-
-		XAxis xAxis = mLineChart.getXAxis();
-		xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-		xAxis.setDrawGridLines(false);
-		xAxis.setTextSize(12f);
-		xAxis.setLabelsToSkip(0);
+        int xMin = squares.keyAt(0);
+        int xMax = squares.keyAt(squares.size() - 1);
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setTextSize(12f);
         xAxis.setEnabled(true);
+        xAxis.setAxisMinimum(xMin);
+        xAxis.setAxisMaximum(xMax);
+        xAxis.setLabelCount(squares.size() + 1, true);
+		ChartMarkerView mv = new ChartMarkerView(activity, R.layout.chart_marer_view);
+		lineChart.setMarker(mv);
 
-		setData(mLineChart, squares);
+        List<Entry> chartEntries = new ArrayList();
+        for (int i = 0; i < squares.size(); i++) {
+            float square = squares.valueAt(i);
+            if (square >= 0) {
+                chartEntries.add(new Entry(square, squares.keyAt(i) - xMin));
+            }
+        }
 
-		YAxis leftAxis = mLineChart.getAxisLeft();
+        LineDataSet set = new LineDataSet(chartEntries, null/*"Square values"*/);
+        set.setHighLightColor(Color.GREEN);
+        set.setColor(Color.BLACK);
+        set.setCircleColor(Color.BLACK);
+        set.setLineWidth(2f);
+        set.setCircleRadius(4f);
+        set.setDrawCircleHole(false);
+        set.setValueTextSize(12f);
+        set.setFillAlpha(65);
+        set.setFillColor(Color.BLACK);
+        set.setDrawFilled(false);
+        set.setDrawCircleHole(true);
+        lineChart.setData(new LineData(set));
+
+		YAxis leftAxis = lineChart.getAxisLeft();
 		leftAxis.setEnabled(true);
         leftAxis.setDrawGridLines(false);
         leftAxis.setDrawLabels(false);
         leftAxis.setDrawTopYLabelEntry(true);
-		mLineChart.getAxisRight().setEnabled(false);
-
-		leftAxis.setAxisMaxValue(squares.valueAt(squares.size() - 1) + 100);
-		leftAxis.setAxisMinValue(squares.valueAt(0) - 100);
-		leftAxis.setStartAtZero(true);
-
-		// limit lines are drawn behind data (and not on top)
+		leftAxis.setAxisMaximum(squares.valueAt(squares.size() - 1) + 100);
+		leftAxis.setAxisMaximum(squares.valueAt(0) - 100);
+        //TODO this conflicts with setaxisminimum call, maybe we'll want set draw sero line call
+		//leftAxis.setStartAtZero(true);
 		leftAxis.setDrawLimitLinesBehindData(true);
+        lineChart.getAxisRight().setEnabled(false);
 
-		mLineChart.invalidate();
-
-		// get the legend (only possible after setting data)
-		Legend l = mLineChart.getLegend();
+		lineChart.invalidate();
+		Legend l = lineChart.getLegend();
 		l.setForm(Legend.LegendForm.LINE);
         l.setEnabled(false);
-	}
-
-	private static void setData(LineChart mLineChart, SparseArray<Float> squares) {
-
-		ArrayList<String> xVals = new ArrayList<>();
-
-		int xMin = squares.keyAt(0);
-		int xMax = squares.keyAt(squares.size() - 1);
-
-		int j = 0;
-		int nextKey;
-
-		List<Integer> indexes = new ArrayList<>(squares.size());
-
-		int gcd = squares.keyAt(1) - squares.keyAt(0);
-
-		int minGcd = (squares.keyAt(squares.size() - 1) - squares.keyAt(0)) / (5 * squares.size());
-
-		for (int i = 1; i < squares.size() - 1; i++) {
-			gcd = gcd(gcd, squares.keyAt(i + 1) - squares.keyAt(i), minGcd);
-		}
-
-      /*  for (int i = 0; i < squares.size() - 1; i++) {
-            int currentKey = squares.keyAt(i);
-            nextKey = squares.keyAt(i + 1);
-            if(nextKey - currentKey > gcd) {
-                int countValues = (int) ((nextKey - currentKey) / (float) gcd) - 1;
-                for (int k = 0; k < countValues; k++) {
-                    squares.put(currentKey + (k + 1) * gcd, -1f);
-                }
-            }
-        }*/
-
-        nextKey = squares.keyAt(0);
-
-		for (int i = xMin; i < xMax; i += gcd) {
-			if (i >= nextKey) {
-				j++;
-				xVals.add(i + "");
-				nextKey = squares.keyAt(j);
-                if(squares.valueAt(j - 1) >= 0) {
-                    indexes.add(xVals.size() - 1);
-                } else {
-                    indexes.add(-1);
-                }
-			} else {
-				//xVals.add(i + "");
-				xVals.add("");
-			}
-		}
-
-		xVals.add(xMax + "");
-		indexes.add(xVals.size() - 1);
-
-		for (int i = 0, k = 0; i < xVals.size(); i++) {
-			if (!xVals.get(i).isEmpty()) {
-				xVals.set(i, squares.keyAt(k++) + "");
-			}
-		}
-
-		ArrayList<Entry> yVals = new ArrayList<Entry>();
-
-		for (int i = 0; i < squares.size(); i++) {
-            if(indexes.get(i) >= 0) {
-                yVals.add(new Entry(squares.valueAt(i), indexes.get(i)));
-            }
-		}
-
-		// create a dataset and give it a type
-		LineDataSet set1 = new LineDataSet(yVals, null/*"Square values"*/);
-        set1.setHighLightColor(Color.GREEN);
-		set1.setColor(Color.BLACK);
-		set1.setCircleColor(Color.BLACK);
-		set1.setLineWidth(2f);
-		set1.setCircleSize(4f);
-		set1.setDrawCircleHole(false);
-		set1.setValueTextSize(12f);
-		set1.setFillAlpha(65);
-		set1.setFillColor(Color.BLACK);
-		set1.setDrawFilled(false);
-		set1.setDrawCircleHole(true);
-
-		ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
-		dataSets.add(set1); // add the datasets
-
-		// create a data object with the datasets
-		LineData data = new LineData(xVals, dataSets);
-
-		// set data
-		mLineChart.setData(data);
-	}
-
-	@Override
-	public void onValueSelected(Entry e, int dataSetIndex, Highlight h) {
-
-		int a = 10;
-		int b = a + 1;
-	}
-
-	@Override
-	public void onNothingSelected() {
-
 	}
 }

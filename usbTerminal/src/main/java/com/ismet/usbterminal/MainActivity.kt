@@ -6,6 +6,7 @@ import android.app.Dialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.PointF
 import android.hardware.usb.UsbManager
 import android.os.*
 import android.text.Editable
@@ -51,14 +52,10 @@ import fr.xgouchet.texteditor.common.RecentFiles
 import fr.xgouchet.texteditor.common.Settings
 import fr.xgouchet.texteditor.common.TextFileUtils
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
-import org.achartengine.GraphicalView
-import org.achartengine.chart.XYChart
-import org.achartengine.model.XYSeries
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
-import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -131,9 +128,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     @Inject
     lateinit var prefs: SharedPreferences
-    lateinit var currentSeries: XYSeries
-    var chartView: GraphicalView? = null
-    var chart: XYChart? = null
     private lateinit var usbDeviceConnection: UsbDeviceConnection
 
     @Inject
@@ -167,6 +161,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = LayoutEditorUpdatedBinding.bind(findViewById(R.id.content_main))
+        binding.showBottomViews()
+        binding.chart.init()
         Settings.updateFromPreferences(
             getSharedPreferences(
                 Constants.PREFERENCES_NAME,
@@ -179,10 +175,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         val titleView = actionBar.customView.findViewById<View>(R.id.title) as TextView
         titleView.setTextColor(Color.WHITE)
         (titleView.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.CENTER_HORIZONTAL, 0)
-        observeChartEvents()
         observeEvents()
         observeUsbEvents()
         observeButtonEvents()
+        viewModel.charts.observe(this) { binding.chart.set(it) }
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
@@ -236,12 +232,11 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     showCustomisedToast("Timer is running. Please wait")
                     return@setOnClickListener
                 }
-                val arrSeries = chart!!.dataset.series
                 var isChart1Clear = true
                 var isChart2Clear = true
                 var isChart3Clear = true
-                for ((i, series) in arrSeries.withIndex()) {
-                    if (series.itemCount > 0) {
+                for ((i, series) in viewModel.charts.value!!.charts.withIndex()) {
+                    if (series.points.isNotEmpty()) {
                         when (i) {
                             0 -> isChart1Clear = false
                             1 -> isChart2Clear = false
@@ -543,46 +538,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         }
     }
 
-    private fun observeChartEvents() {
-        viewModel.maxY.observe(this) {
-            //TODO remove max, move all maxY changes to vm
-            val tempChart = chart
-            if (tempChart != null) {
-                tempChart.renderer.yAxisMax = maxOf(it.toDouble(), tempChart.renderer.yAxisMax)
-            }
-            chartView?.repaint()
-        }
-        viewModel.charts.observe(this) { charts ->
-            val tempChart = chart ?: return@observe
-            val tempChartView = chartView ?: return@observe
-            for (modelChart in charts) {
-                tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
-            }
-            if (charts.all { it.points.isEmpty() }) {
-                tempChart.renderer.resetLabelValues()
-            }
-            tempChartView.repaint()
-        }
-        viewModel.currentChartIndex.observe(this) { index ->
-            chart?.dataset?.getSeriesAt(index)?.let { currentSeries = it }
-        }
-    }
-
-    private fun initCharts() {
-        val charts = viewModel.charts.value!!
-        val tempChart = chart!!
-        val tempChartView = chartView!!
-        for (modelChart in charts) {
-            tempChart.dataset.getSeriesAt(modelChart.id).set(modelChart.points)
-        }
-        if (charts.all { it.points.isEmpty() }) {
-            tempChart.renderer.resetLabelValues()
-        }
-        tempChart.renderer.yAxisMax = maxOf(0.0, tempChart.renderer.yAxisMax)
-        currentSeries = tempChart.dataset.getSeriesAt(0)
-        tempChartView.repaint()
-    }
-
     private fun observeUsbEvents() {
         lifecycleScope.launchWhenResumed {
             for (event in usbEmitter.readEvents) {
@@ -611,11 +566,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
                     is MainEvent.IncCountMeasure -> incCountMeasure()
                     is MainEvent.SetReadingCount -> readingCount = event.value
-                    is MainEvent.SetCombinedChart -> {
-                        chart = event.combinedXYChart
-                        chartView = chart?.attach(binding, toolbar)
-                        initCharts()
-                    }
                     is MainEvent.ShowWaitForCoolingDialog -> {
                         dismissProgress()
                         coolingDialog = Dialog(this@MainActivity).apply {
@@ -1400,15 +1350,12 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 periodicResponse.toString()
             }
             is PeriodicResponse.Co2 -> {
-                val tempChart = chart!!
-                val yMax: Int = tempChart.renderer.yAxisMax.toInt()
-                if (periodicResponse.value >= yMax) {
-                    tempChart.renderer.yAxisMax = if (currentSeries.itemCount == 0) {
-                        (3 * periodicResponse.value).toDouble()
-                    } else {
-                        (periodicResponse.value + periodicResponse.value * 15 / 100f).toDouble()
-                    }
+                val maxY = if (viewModel.isCurrentChartEmpty()) {
+                    (3f * periodicResponse.value)
+                } else {
+                    (periodicResponse.value + periodicResponse.value * 15 / 100f)
                 }
+                viewModel.setMaxY(maxY)
                 // auto
                 val delay = prefs.getInt(PrefConstants.DELAY, 2)
                 val duration = prefs.getInt(PrefConstants.DURATION, 3)
@@ -1428,8 +1375,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
                 if (viewModel.isMeasuring) {
-                    currentSeries.add(readingCount.toDouble(), periodicResponse.value.toDouble())
-                    chartView?.repaint()
+                    viewModel.addPointToCurrentChart(PointF(readingCount.toFloat(), periodicResponse.value.toFloat()))
                 }
                 if (periodicResponse.value == 10000) {
                     showCustomisedToast("Dilute sample")
@@ -1477,15 +1423,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun clearData() {
-        val tempChart = chart
-        if (tempChart != null) {
-            for (series in tempChart.dataset.series) {
-                series.clear()
-            }
-        }
         oldCountMeasure = 0
         countMeasure = oldCountMeasure
-        chartView?.repaint()
+        viewModel.resetCharts()
     }
 
     override fun currentDate(): Date {
@@ -1494,7 +1434,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     override fun reportDateString(): String {
         reportDate = Date()
-        return FORMATTER.format(reportDate!!)
+        return DATE_TIME_FORMATTER.format(reportDate!!)
     }
 
     override fun sampleId(): String? {
@@ -1518,7 +1458,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     override fun dateString(): String {
-        return FORMATTER.format(reportDate!!)
+        return DATE_TIME_FORMATTER.format(reportDate!!)
     }
 
     override fun writeReport(reportHtml: String, fileName: String) {
@@ -1538,7 +1478,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     companion object {
-        private val FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
         private const val TAG = "MainActivity"
         private const val STORAGE_PERMISSION_CODE = 1
     }

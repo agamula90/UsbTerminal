@@ -282,11 +282,17 @@
                     android:paddingStart="4dp"
                     android:paddingEnd="@dimen/layout_margin_default">
 
-                    <LinearLayout
-                        android:id="@+id/chart"
+                    <View
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical" />
+                        android:layout_marginStart="20dp"
+                        android:layout_marginBottom="15dp"
+                        android:background="@android:color/white" />
+
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
 
                     <LinearLayout
                         android:id="@+id/margin_layout"

@@ -4,14 +4,18 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Legend.LegendForm
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.ismet.usbterminal.data.Charts
 import com.ismet.usbterminal.data.PeriodicResponse
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
@@ -19,34 +23,17 @@ import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
 import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils
-import org.achartengine.GraphicalView
-import org.achartengine.chart.AbstractChart
-import org.achartengine.chart.CombinedXYChart
-import org.achartengine.chart.CubicLineChart
-import org.achartengine.chart.PointStyle
-import org.achartengine.model.XYMultipleSeriesDataset
-import org.achartengine.model.XYSeries
-import org.achartengine.renderer.XYMultipleSeriesRenderer
-import org.achartengine.renderer.XYSeriesRenderer
 import java.io.File
 
-//TODO use api 'com.github.PhilJay:MPAndroidChart:v2.1.5' instead
-fun XYSeries.set(points: List<PointF>) {
-    val pointsToAdd = points.toMutableList()
-    val pointIndexesToRemove = mutableListOf<Int>()
-    for (i in 0 until itemCount) {
-        val x = getX(i).toFloat()
-        val y = getY(i).toFloat()
-        val currentPoint = PointF(x, y)
-        val isPointExist = pointsToAdd.remove(currentPoint)
-        if (!isPointExist) pointIndexesToRemove.add(i)
+fun LineChart.set(charts: Charts) {
+    axisLeft.axisMaximum = charts.maxY
+    xAxis.axisMaximum = charts.maxX
+    for (chart in charts.charts) {
+        (data.dataSets[chart.id] as LineDataSet).values = chart.points.map { Entry(it.x, it.y) }
     }
-    for (pointIndex in pointIndexesToRemove.reversed()) {
-        remove(pointIndex)
-    }
-    for (point in pointsToAdd) {
-        add(point.x.toDouble(), point.y.toDouble())
-    }
+    data.notifyDataChanged()
+    notifyDataSetChanged()
+    invalidate()
 }
 
 fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (LayoutDialogOnOffBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
@@ -169,119 +156,62 @@ fun ByteArray.decodeToStringEnhanced(): String {
     return periodicResponse?.toString() ?: decodeToString()
 }
 
-fun XYMultipleSeriesRenderer.resetLabelValues() {
-    yAxisMin = 0.0
-    yAxisMax = 10.0
+fun LineChart.init() {
+    description.isEnabled = false
+    setTouchEnabled(false)
+    setDrawGridBackground(false)
+    isDragEnabled = false
+    setScaleEnabled(false)
+    setPinchZoom(false)
+    val color = Color.rgb(136, 136, 136)
+    xAxis.apply {
+        gridColor = color
+        setLabelCount(4, true)
+        position = XAxis.XAxisPosition.BOTTOM
+        axisMinimum = 0f
+        axisMaximum = 9f
+        textColor = Color.WHITE
+    }
+    axisRight.isEnabled = false
+    axisLeft.apply {
+        gridColor = color
+        setLabelCount(9, true)
+        axisMinimum = 0f
+        axisMaximum = 10f
+        textColor = Color.WHITE
+    }
+
+    val dataSets = listOf(Color.BLACK, Color.RED, Color.BLUE).map { createDataSet(it) }
+    data = LineData(dataSets)
+
+    legend.form = LegendForm.NONE
+    legend.setDrawInside(true)
 }
 
-fun createXyCombinedChart(minutes: Int, seconds: Int): CombinedXYChart {
-    val titles = arrayOf("ppm", "ppm", "ppm")
-
-    val colors = intArrayOf(Color.BLACK, Color.RED, Color.BLUE)
-    val renderer = XYMultipleSeriesRenderer()
-    for (color in colors) {
-        val r = XYSeriesRenderer()
-        r.color = color
-        r.pointStyle = PointStyle.CIRCLE
-        r.lineWidth = 1.5f
-        r.isFillPoints = false
-        r.isDisplayChartValues = false
-        renderer.addSeriesRenderer(r)
-    }
-    renderer.pointSize = 0f
-
-    val xLabels = IntArray(4)
-    var m = 0
-    for (i in 0..3) {
-        xLabels[i] = m
-        m += minutes
-    }
-
-    var j = 0
-    for (xLabel in xLabels) {
-        if (xLabel == 0) {
-            renderer.addXTextLabel(j.toDouble(), "")
-        } else {
-            renderer.addXTextLabel(j.toDouble(), "" + xLabel)
-        }
-        j += minutes * 60 / seconds
-    }
-
-    val maxX: Double = (3 * (minutes * 60 / seconds)).toDouble()
-
-    renderer.apply {
-        chartTitle = ""
-        xTitle = "minutes"
-        yTitle = "ppm"
-        xAxisMin = 0.0
-        xAxisMax = maxX
-        resetLabelValues()
-        axesColor = Color.LTGRAY
-        labelsColor = Color.WHITE
-        setXLabels(0)
-        yLabels = 15
-        labelsTextSize = 13f
-        setShowGrid(true)
-        setShowCustomTextGrid(true)
-        setGridColor(Color.rgb(136, 136, 136))
-        backgroundColor = Color.WHITE
-        isApplyBackgroundColor = true
-        margins = intArrayOf(0, 60, 0, 0)
-        xLabelsAlign = Paint.Align.RIGHT
-        setYLabelsAlign(Paint.Align.RIGHT)
-        setYLabelsColor(0, Color.rgb(0, 171, 234))
-        yLabelsVerticalPadding = -15f
-        xLabelsPadding = -5f
-        isZoomButtonsVisible = false
-        setZoomEnabled(false, false)
-        setPanEnabled(false, false)
-        isZoomButtonsVisible = false
-        isShowLegend = false
-        isShowLabels = true
-    }
-
-    val dataset = XYMultipleSeriesDataset()
-    for (title in titles) {
-        val series = XYSeries(title, 0)
-        dataset.addSeries(series)
-    }
-
-    renderer.scale = 1f
-    val chartDefinitions = arrayOf(
-        CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 0),
-        CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 1),
-        CombinedXYChart.XYCombinedChartDef(CubicLineChart.TYPE, 2)
-    )
-    return CombinedXYChart(dataset, renderer, chartDefinitions)
+private fun createDataSet(lineColor: Int) = LineDataSet(ArrayList(), null).apply {
+    mode = LineDataSet.Mode.CUBIC_BEZIER
+    //maybe need to set cubic intensity
+    cubicIntensity = 0.05f
+    setDrawIcons(false)
+    color = lineColor
+    setDrawCircles(false)
+    setDrawValues(false)
+    lineWidth = 1.5f
 }
 
-fun AbstractChart.attach(binding: LayoutEditorUpdatedBinding, toolbar: View): GraphicalView {
-    val topContainer = binding.topContainer
+fun LayoutEditorUpdatedBinding.showBottomViews() {
+    val topContainer = topContainer
     val minHeight = topContainer.minimumHeight
 
     if (minHeight == 0) {
-        val textBelow = binding.scrollBelowText
+        val textBelow = scrollBelowText
         AutoExpandKeyboardUtils.expand(
-            binding.root.context,
+            root.context,
             topContainer,
-            binding.bottomFragment,
+            bottomFragment,
             toolbar,
             textBelow
         )
-        binding.allChartsLayout.layoutParams.height = topContainer.minimumHeight
+        allChartsLayout.layoutParams.height = topContainer.minimumHeight
     }
-
-    val chartView = GraphicalView(binding.root.context, this)
-    binding.chart.apply {
-        removeAllViews()
-        addView(
-            chartView,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        )
-    }
-    chartView.repaint()
-    return chartView
 }
