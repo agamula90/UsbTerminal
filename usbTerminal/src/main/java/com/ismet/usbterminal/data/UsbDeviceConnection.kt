@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbManager
-import android.util.Log
 import com.felhr.usbserial.UsbSerialDevice
 import java.io.Closeable
 

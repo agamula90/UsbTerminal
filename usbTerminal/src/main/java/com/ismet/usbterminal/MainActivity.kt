@@ -33,7 +33,7 @@ import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
-import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
+import com.ismet.usbterminalnew.databinding.LayoutMainBinding
 import com.proggroup.areasquarecalculator.activities.BaseAttachableActivity
 import com.proggroup.areasquarecalculator.utils.ToastUtils
 import com.squareup.moshi.Moshi
@@ -139,7 +139,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private var usbDevice: UsbDevice? = null
     private val viewModel: MainViewModel by viewModels()
     private var reportDate: Date? = null
-    private lateinit var binding: LayoutEditorUpdatedBinding
+    private lateinit var binding: LayoutMainBinding
     private var coolingDialog: Dialog? = null
     private var corruptionDialog: Dialog? = null
 
@@ -160,7 +160,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = LayoutEditorUpdatedBinding.bind(findViewById(R.id.content_main))
+        binding = LayoutMainBinding.bind(findViewById(R.id.content_main))
         binding.showBottomViews()
         binding.chart.init()
         Settings.updateFromPreferences(
@@ -704,7 +704,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     override fun getLayoutId(): Int {
-        return R.layout.layout_editor_updated
+        return R.layout.layout_main
     }
 
     override fun getFirstFragment(): Fragment {

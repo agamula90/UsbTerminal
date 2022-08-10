@@ -1,9 +1,7 @@
-package com.ismet.usbterminal;
+package com.ismet.usbterminal
 
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
-
-import dagger.hilt.android.HiltAndroidApp;
+import dagger.hilt.android.HiltAndroidApp
+import com.proggroup.areasquarecalculator.InterpolationCalculatorApp
 
 @HiltAndroidApp
-public class EToCApplication extends InterpolationCalculatorApp {
-}
+class EToCApplication : InterpolationCalculatorApp()

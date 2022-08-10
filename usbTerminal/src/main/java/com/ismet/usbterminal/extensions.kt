@@ -18,10 +18,7 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.ismet.usbterminal.data.Charts
 import com.ismet.usbterminal.data.PeriodicResponse
 import com.ismet.usbterminalnew.R
-import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
-import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
-import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
-import com.ismet.usbterminalnew.databinding.LayoutEditorUpdatedBinding
+import com.ismet.usbterminalnew.databinding.*
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils
 import java.io.File
 
@@ -199,7 +196,7 @@ private fun createDataSet(lineColor: Int) = LineDataSet(ArrayList(), null).apply
     lineWidth = 1.5f
 }
 
-fun LayoutEditorUpdatedBinding.showBottomViews() {
+fun LayoutMainBinding.showBottomViews() {
     val topContainer = topContainer
     val minHeight = topContainer.minimumHeight
 

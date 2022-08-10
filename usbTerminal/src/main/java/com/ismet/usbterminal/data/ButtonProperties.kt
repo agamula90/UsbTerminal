@@ -100,19 +100,11 @@ class FileSavable(
     }
 
     fun save(ignoreActivated: Boolean) {
-        val content = when(ignoreActivated) {
-            true -> """
-            $text$BUTTON_FILE_FORMAT_DELIMITER
-            $command
-            """.trimIndent()
-            false ->
-                """
-            $text$BUTTON_FILE_FORMAT_DELIMITER
-            $activatedText$BUTTON_FILE_FORMAT_DELIMITER
-            $command$BUTTON_FILE_FORMAT_DELIMITER
-            $activatedCommand
-            """.trimIndent()
+        val listToBeingSave = when(ignoreActivated) {
+            true -> listOf(text, command)
+            false -> listOf(text, activatedText, command, activatedCommand)
         }
+        val content = listToBeingSave.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
         File(File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS), fileName).writeText(content)
     }
 }

@@ -650,7 +650,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
             avgPointsLayout.addView(tv);
         }
 
-        if (mAvgFiles != null) {
+        if (mAvgFiles != null && mAvgFiles.length != 0) {
             tv = new TextView(getActivity());
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen
                     .edit_text_size_default));
@@ -694,7 +694,6 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                         .edit_text_size_default));
                 tv.setText("\"" + file.getName() + "\"  ");
                 tv.setTextColor(Color.WHITE);
-
                 avgPointsLayout.addView(tv);
             } else {
                 File parentFile = mAvgFiles[0].getParentFile();

@@ -7,18 +7,19 @@ import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.CandleEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.utils.MPPointF;
 import com.github.mikephil.charting.utils.Utils;
 import com.proggroup.areasquarecalculator.R;
 
-//TODO fix chart marker view
 public class ChartMarkerView extends MarkerView {
 
-	private TextView tvContent;
+	private final TextView tvContent;
+    private MPPointF offset;
 
 	public ChartMarkerView(Context context, int layoutResource) {
 		super(context, layoutResource);
 
-		tvContent = (TextView) findViewById(R.id.tvContent);
+		tvContent = findViewById(R.id.tvContent);
 	}
 
 	@Override
@@ -29,21 +30,18 @@ public class ChartMarkerView extends MarkerView {
 
 			tvContent.setText("" + Utils.formatNumber(ce.getHigh(), 0, true));
 		} else {
-
-			//tvContent.setText("" + Utils.formatNumber(e.getVal(), 0, true));
+            tvContent.setText("" + Utils.formatNumber(e.getY(), 0, true));
 		}
 	}
-/*
-	@Override
-	public int getXOffset() {
-		// this will center the marker-view horizontally
-		return -(getWidth() / 2);
-	}
 
-	@Override
-	public int getYOffset() {
-		// this will center the marker-view vertically
-		return -getHeight();
-	}
- */
+    @Override
+    public MPPointF getOffsetForDrawingAtPoint(float posX, float posY) {
+        return offset;
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        offset = MPPointF.getInstance((left - right) / 2f, (top - bottom));
+    }
 }

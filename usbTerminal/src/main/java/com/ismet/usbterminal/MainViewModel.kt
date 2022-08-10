@@ -61,8 +61,8 @@ val DATE_TIME_FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @AccessoryOperationDispatcher(operationType = "read") private val readDispatcher: CoroutineDispatcher,
-    @AccessoryOperationDispatcher(operationType = "write") private val writeDispatcher: CoroutineDispatcher,
+    @AccessoryOperationDispatcher() private val readDispatcher: CoroutineDispatcher,
+    @AccessoryOperationDispatcher() private val writeDispatcher: CoroutineDispatcher,
     @CacheAccessoryOutputOnMeasureDispatcher private val cacheDispatcher: CoroutineDispatcher,
     private val prefs: SharedPreferences,
     private val moshi: Moshi,
@@ -870,8 +870,9 @@ class MainViewModel @Inject constructor(
         charts.value = charts.value!!.copy(maxX = 3f * (duration * 60 / delay))
     }
 
+    //TODO handle measuring response
     private fun handleMeasuringResponse(bytes: ByteArray) {
-        TODO("handle measuring")
+
     }
 
     fun onDataReceived(bytes: ByteArray) {

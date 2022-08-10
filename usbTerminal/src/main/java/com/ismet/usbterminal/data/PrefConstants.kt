@@ -1,23 +1,14 @@
-package com.ismet.usbterminal.data;
+package com.ismet.usbterminal.data
 
-public class PrefConstants {
-    private PrefConstants() {
-    }
-
-    public static final String DELAY = "delay";
-
-    public static final int DELAY_DEFAULT = 2;
-
-    public static final String DURATION = "duration";
-
-    public static final int DURATION_DEFAULT = 3;
-
-    public static final String VOLUME = "volume";
-
-    public static final int VOLUME_DEFAULT = 20;
-
-    public static final String KPPM = "kppm";
-    public static final String USER_COMMENT = "uc";
-    public static final String IS_AUTO = "isauto";
-    public static final String SAVE_AS_CALIBRATION = "save_as_calibration";
+object PrefConstants {
+    const val DELAY = "delay"
+    const val DELAY_DEFAULT = 2
+    const val DURATION = "duration"
+    const val DURATION_DEFAULT = 3
+    const val VOLUME = "volume"
+    const val VOLUME_DEFAULT = 20
+    const val KPPM = "kppm"
+    const val USER_COMMENT = "uc"
+    const val IS_AUTO = "isauto"
+    const val SAVE_AS_CALIBRATION = "save_as_calibration"
 }
