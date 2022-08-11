@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.di.UsbWriteDispatcher
 import com.ismet.usbterminal.di.CacheCo2ValuesDispatcher
+import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,9 +49,6 @@ private const val DEFAULT_BUTTON_TEXT = "Command1"
 private const val DEFAULT_BUTTON_ACTIVATED_TEXT = "Command2"
 private const val DEFAULT_MAX_X = 9f
 private const val DEFAULT_MAX_Y = 10f
-
-//TODO change to 0 when usb simulation not needed
-private const val SIMULATION_DELAY = 200
 
 private val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
 val DATE_TIME_FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
@@ -276,13 +274,10 @@ class MainViewModel @Inject constructor(
             for (line in lines) {
                 if (line.isNotEmpty()) {
                     val arr = line.split(",").toTypedArray()
-                    val co2 = arr[1].toDouble()
-                    if (co2 >= newMaxY) {
-                        newMaxY = if (newChartPoints.isEmpty()) {
-                            (3 * co2.toFloat())
-                        } else {
-                            (co2 + co2 * 15 / 100f).toFloat()
-                        }
+                    val co2 = arr[1].toInt()
+                    val potentialMaxY = co2.toFloat(newChartPoints.isEmpty())
+                    if (potentialMaxY >= newMaxY) {
+                        newMaxY = potentialMaxY
                     }
                     newChartPoints.add(PointF(startX.toFloat(), co2.toFloat()))
                     delay(50)
@@ -774,9 +769,9 @@ class MainViewModel @Inject constructor(
             resetFilePaths()
             events.offer(MainEvent.ClearData)
         }
-        val maxY = currentCharts.maxOf {
+        val maxY = currentCharts.maxOf { chart ->
             try {
-                it.points.maxOf { it.y }
+                chart.points.maxOf { it.y.toInt() }.toFloat(isChartEmpty = false)
             } catch (_: NoSuchElementException) {
                 DEFAULT_MAX_Y
             }
@@ -923,7 +918,7 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun delay(timeout: Int) {
-        delay(timeout.toLong() + SIMULATION_DELAY)
+        delay(timeout.toLong() + BuildConfig.WRITE_TO_USB_DELAY)
     }
 
     fun isCurrentChartEmpty() = charts.value!!.charts[currentChartIndex].points.isEmpty()
@@ -932,7 +927,7 @@ class MainViewModel @Inject constructor(
         val oldCharts = charts.value!!
         val newCharts = oldCharts.charts.toMutableList()
         newCharts[currentChartIndex] = newCharts[currentChartIndex].copy(points = newCharts[currentChartIndex].points + point)
-        charts.value = oldCharts.copy(charts = newCharts, maxY = max(oldCharts.maxY, point.y))
+        charts.value = oldCharts.copy(charts = newCharts, maxY = max(oldCharts.maxY, point.y.toInt().toFloat(isChartEmpty = false)))
     }
 
     fun resetCharts() {
@@ -941,6 +936,12 @@ class MainViewModel @Inject constructor(
             maxX = DEFAULT_MAX_X,
             maxY = DEFAULT_MAX_Y
         )
+    }
+
+    private fun Int.toFloat(isChartEmpty: Boolean): Float = if (isChartEmpty) {
+        (3 * toFloat())
+    } else {
+        (this + this * 15 / 100f)
     }
 
     fun setMaxY(maxY: Float) {

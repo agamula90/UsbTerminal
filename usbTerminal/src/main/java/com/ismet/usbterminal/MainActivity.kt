@@ -1350,12 +1350,6 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 periodicResponse.toString()
             }
             is PeriodicResponse.Co2 -> {
-                val maxY = if (viewModel.isCurrentChartEmpty()) {
-                    (3f * periodicResponse.value)
-                } else {
-                    (periodicResponse.value + periodicResponse.value * 15 / 100f)
-                }
-                viewModel.setMaxY(maxY)
                 // auto
                 val delay = prefs.getInt(PrefConstants.DELAY, 2)
                 val duration = prefs.getInt(PrefConstants.DURATION, 3)

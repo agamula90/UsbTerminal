@@ -32,8 +32,13 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
+            buildConfigField "int", "WRITE_TO_USB_DELAY", "200"
             minifyEnabled false
+        }
+        release {
+            buildConfigField "int", "WRITE_TO_USB_DELAY", "0"
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
