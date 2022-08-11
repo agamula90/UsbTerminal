@@ -197,7 +197,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             handled
         }
         binding.buttonClear.setOnClickListener {
-            if (viewModel.isMeasuring) {
+            if (viewModel.isCo2Measuring) {
                 showCustomisedToast("Timer is running. Please wait")
                 return@setOnClickListener
             }
@@ -228,7 +228,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 if (!viewModel.powerProperties.value!!.isActivated) {
                     return@setOnClickListener
                 }
-                if (viewModel.isMeasuring) {
+                if (viewModel.isCo2Measuring) {
                     showCustomisedToast("Timer is running. Please wait")
                     return@setOnClickListener
                 }
@@ -290,7 +290,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                         editorBinding.radioGroup.forEachIndexed { index, view ->
                             if (view.id == checkedId) checkedRadioButtonIndex = index
                         }
-                        if (viewModel.measure(
+                        if (viewModel.measureCo2Values(
                                 delay = delay,
                                 duration = duration,
                                 isKnownPpm = isKnownPpm,
@@ -1374,7 +1374,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                     refreshOldCountMeasure()
                 }
                 viewModel.onCurrentChartWasModified(wasModified = shouldInitDate)
-                if (viewModel.isMeasuring) {
+                if (viewModel.isCo2Measuring) {
                     viewModel.addPointToCurrentChart(PointF(readingCount.toFloat(), periodicResponse.value.toFloat()))
                 }
                 if (periodicResponse.value == 10000) {
@@ -1473,8 +1473,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     override fun reportFolders(): String {
-        return File(Environment.getExternalStorageDirectory(), REPORT_DIRECTORY)
-            .absolutePath
+        return DirectoryType.REPORT.getDirectory().absolutePath
     }
 
     companion object {

@@ -129,12 +129,19 @@ fun String.encodeToByteArrayEnhanced(): ByteArray {
     return bytesEncoded.map { it.toInt(radix = 16).toByte() }.toByteArray()
 }
 
-private val temperaturePattern = "^@\\d+,\\d+(\\d+,\\d+,\\d+,\\d+),\\d+,\\d+,\\d+,\\d+,\\d+$".toRegex()
+private val temperaturePattern = "^@\\d+,\\d+\\(\\d+,\\d+,\\d+,\\d+\\),\\d+,\\d+,\\d+,\\d+,\\d+$".toRegex()
 
 fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
-    this.size == 7 && this[0].toString(radix = 16) == "FE" && this[1].toString(radix = 16) == "44" -> {
+    this.size == 7 && this[0] == 0xFE.toByte() && this[1] == 0x44.toByte() -> {
         PeriodicResponse.Co2(
-            response = joinToString(separator = "-") { it.toString(radix = 16) },
+            response = joinToString(separator = "-") {
+                val value = (0xFF and it.toInt()).toString(radix = 16)
+                if (value.length != 2) {
+                    "0" + value.uppercase()
+                } else {
+                    value.uppercase()
+                }
+            },
             value = String.format("%02X%02X", this[3], this[4]).toInt(radix = 16)
         )
     }
@@ -145,6 +152,8 @@ fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
     }
     else -> null
 }
+
+//@5,0(0,0,0,0),180,25,25,25,25
 
 fun File.readTextEnhanced(): String = readText().replace("\r", "")
 

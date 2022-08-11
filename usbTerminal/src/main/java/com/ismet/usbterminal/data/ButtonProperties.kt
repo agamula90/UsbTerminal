@@ -1,9 +1,7 @@
 package com.ismet.usbterminal.data
 
-import android.os.Environment
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
-import com.ismet.usbterminal.APPLICATION_SETTINGS
 import com.ismet.usbterminal.BUTTON_FILE_FORMAT_DELIMITER
 import com.ismet.usbterminalnew.R
 import kotlinx.parcelize.Parcelize
@@ -49,7 +47,7 @@ data class ButtonProperties(
             savable = FileSavable(
                 text = "power on",
                 command = "",
-                activatedText = "power on",
+                activatedText = "power off",
                 activatedCommand = ""
             ),
             background = R.drawable.button_drawable,
@@ -105,6 +103,6 @@ class FileSavable(
             false -> listOf(text, activatedText, command, activatedCommand)
         }
         val content = listToBeingSave.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
-        File(File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS), fileName).writeText(content)
+        File(DirectoryType.APPLICATION_SETTINGS.getDirectory(), fileName).writeText(content)
     }
 }

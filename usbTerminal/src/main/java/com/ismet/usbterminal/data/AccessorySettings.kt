@@ -24,7 +24,7 @@ class AccessorySettings(
             temperature = "/5H750R",
             co2 = "(FE-44-00-08-02-9F-25)",
             temperatureUiOffset = 0,
-            syncPeriod = 1000,
+            syncPeriod = 2000,
             off = Off("/5J1R", coolingPeriod = 1000)
         )
     }

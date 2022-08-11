@@ -6,7 +6,6 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.os.Build
-import android.os.Environment
 import android.os.FileObserver
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -22,6 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.*
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -29,7 +29,6 @@ import kotlin.NoSuchElementException
 import kotlin.math.max
 
 const val CHART_INDEX_UNSELECTED = -1
-const val APPLICATION_SETTINGS = "AEToC_SYS_Files"
 private const val ACCESSORY_SETTINGS = "AccessorySettings.json"
 private const val BUTTON1 = "Button1.txt"
 private const val BUTTON2 = "Button2.txt"
@@ -47,9 +46,6 @@ private const val TIME_FORMAT = "HHmmss"
 private const val DELIMITER = "_"
 private const val DEFAULT_BUTTON_TEXT = "Command1"
 private const val DEFAULT_BUTTON_ACTIVATED_TEXT = "Command2"
-private const val CAL_DIRECTORY = "AEToC_CAL_Files"
-private const val MES_DIRECTORY = "AEToC_MES_Files"
-const val REPORT_DIRECTORY = "AEToC_Report_Files"
 private const val DEFAULT_MAX_X = 9f
 private const val DEFAULT_MAX_Y = 10f
 
@@ -58,6 +54,7 @@ private const val SIMULATION_DELAY = 200
 
 private val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
 val DATE_TIME_FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
+private val CO2_TIME_FORMAT = SimpleDateFormat("mm:ss", Locale.ENGLISH)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -89,7 +86,7 @@ class MainViewModel @Inject constructor(
             maxY = DEFAULT_MAX_Y
         )
     )
-    private val applicationSettingsDirectory = File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS)
+    private val applicationSettingsDirectory = DirectoryType.APPLICATION_SETTINGS.getDirectory()
     val accessorySettings = handle.getLiveData<AccessorySettings?>("accessorySettings")
     val buttonOn1Properties = handle.getLiveData<ButtonProperties?>("buttonOn1")
     val buttonOn2Properties = handle.getLiveData<ButtonProperties?>("buttonOn2")
@@ -107,7 +104,7 @@ class MainViewModel @Inject constructor(
     private var currentChartIndex = 0
     val allClearOptions = listOf("New Measure", "Tx", "LM", "Chart 1", "Chart 2", "Chart 3")
     val checkedClearOptions = List(allClearOptions.size) { false }
-    var isMeasuring = false
+    var isCo2Measuring = false
     var fileObserver: FileObserver? = null
     private var onAccessorySettingsChanged: (AccessorySettings) -> Unit = {}
     private var pingJob: Job? = null
@@ -143,8 +140,7 @@ class MainViewModel @Inject constructor(
                 if (!accessoryDirectory.exists()) {
                     accessoryDirectory.createNewFile()
                     accessoryDirectory.writeText(
-                        moshi.adapter(AccessorySettings::class.java)
-                            .toJson(AccessorySettings.getDefault())
+                        moshi.adapter(AccessorySettings::class.java).toJson(AccessorySettings.getDefault())
                     )
                 }
 
@@ -227,11 +223,7 @@ class MainViewModel @Inject constructor(
                 if (!measurementFile.exists()) {
                     measurementFile.createNewFile()
                     measurementFile.writeText(
-                        """
-                        $MEASUREMENT1_FILE_NAME$BUTTON_FILE_FORMAT_DELIMITER
-                        $MEASUREMENT2_FILE_NAME$BUTTON_FILE_FORMAT_DELIMITER
-                        $MEASUREMENT3_FILE_NAME
-                        """.trimIndent()
+                        listOf(MEASUREMENT1_FILE_NAME, MEASUREMENT2_FILE_NAME, MEASUREMENT3_FILE_NAME).joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
                     )
                 }
                 val content = measurementFile.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
@@ -242,7 +234,7 @@ class MainViewModel @Inject constructor(
             }
         }
         if (corruptedFiles.isNotEmpty()) {
-            events.offer(MainEvent.ShowCorruptionDialog("Files ${corruptedFiles.joinToString(separator = ",")} are corrupted. Please, fix them..."))
+            events.offer(MainEvent.ShowCorruptionDialog("Files ${corruptedFiles.joinToString(separator = ", ")} are corrupted. Please, fix them..."))
         } else {
             events.offer(MainEvent.DismissCorruptionDialog)
         }
@@ -343,7 +335,7 @@ class MainViewModel @Inject constructor(
     }
 
     // return true if operation can succeed, false otherwise
-    fun measure(
+    fun measureCo2Values(
         delay: String,
         duration: String,
         isKnownPpm: Boolean,
@@ -373,7 +365,7 @@ class MainViewModel @Inject constructor(
             return false
         }
         stopSendingTemperatureOrCo2Requests()
-        isMeasuring = true
+        isCo2Measuring = true
         val edit = prefs.edit()
         if (isKnownPpm) {
             val kppm = knownPpm.toInt()
@@ -445,7 +437,7 @@ class MainViewModel @Inject constructor(
         }
 
         readCommandsFromFile(
-            file = File(File(Environment.getExternalStorageDirectory(), APPLICATION_SETTINGS), filePath),
+            file = File(DirectoryType.APPLICATION_SETTINGS.getDirectory(), filePath),
             shouldUseRecentDirectory = isUseRecentDirectory,
             runningTime = future,
             oneLoopTime = oneLoopTime,
@@ -472,10 +464,7 @@ class MainViewModel @Inject constructor(
         newMeasureFiles: List<String>
     ) {
         if (text != null && text.isNotEmpty()) {
-            stopSendingTemperatureOrCo2Requests()
-            val commands: Array<String>
-            val delimiter = "\n"
-            commands = text.split(delimiter).toTypedArray()
+            val commands = text.split("\n").toTypedArray()
             val simpleCommands: MutableList<String> = ArrayList()
             val loopCommands: MutableList<String> = ArrayList()
             var isLoop = false
@@ -516,7 +505,7 @@ class MainViewModel @Inject constructor(
                     val ppm = prefs.getInt(PrefConstants.KPPM, -1)
                     //cal directory
                     if (ppm != -1) {
-                        val directory = File(Environment.getExternalStorageDirectory(), CAL_DIRECTORY)
+                        val directory = DirectoryType.CALCULATIONS.getDirectory()
                         val directoriesInside = directory.listFiles { pathname -> pathname.isDirectory }
                         if (directoriesInside != null && directoriesInside.isNotEmpty()) {
                             var recentDir: File? = null
@@ -550,13 +539,14 @@ class MainViewModel @Inject constructor(
                     events.send(MainEvent.InvokeAutoCalculations)
                 }
 
-                startSendingTemperatureOrCo2Requests()
-                isMeasuring = false
+                isCo2Measuring = false
                 events.send(MainEvent.ShowToast("Timer Stopped"))
                 val measurementFile = File(applicationSettingsDirectory, MEASUREMENT)
                 measurementFile.writeText(newMeasureFiles.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER))
+                startSendingTemperatureOrCo2Requests()
             }
         } else {
+            startSendingTemperatureOrCo2Requests()
             events.offer(MainEvent.ShowToast("File not found"))
         }
     }
@@ -577,11 +567,11 @@ class MainViewModel @Inject constructor(
             while (count < len) {
                 events.send(MainEvent.IncReadingCount)
                 events.send(MainEvent.WriteToUsb(loopCommands[0]))
-                val half_delay = delay / 2
-                delay(half_delay)
+                val halfDelay = delay / 2
+                delay(halfDelay)
                 if (loopCommands.size > 1) {
                     events.send(MainEvent.WriteToUsb(loopCommands[1]))
-                    delay(half_delay)
+                    delay(halfDelay)
                 }
 
                 count++
@@ -589,68 +579,50 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun cacheBytesFromUsbWhenMeasurePressed(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
-        val strH = String.format("%02X%02X", bytes[3], bytes[4])
-        val co2 = strH.toInt(16)
-        val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
-        val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
-        val volume = "_" + if (volumeValue == -1) "" else "" +
-                volumeValue
-        val ppmPrefix = if (ppm == -1) {
-            "_"
-        } else {
-            "_$ppm"
-        }
-        val str_uc: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
-        val fileName: String
-        val dirName: String
-        val subDirName: String
-        if (ppmPrefix == "_") {
-            dirName = MES_DIRECTORY
-            fileName = "MES_" + chartDate +
-                    volume + "_R" + (currentChartIndex + 1) + "" +
-                    ".csv"
-            subDirName = "MES_" + subDirDate + "_" +
-                    str_uc
-        } else {
-            dirName = CAL_DIRECTORY
-            fileName = ("CAL_" + chartDate +
-                    volume + ppmPrefix + "_R" + (currentChartIndex + 1)
-                    + ".csv")
-            subDirName = "CAL_" + subDirDate + "_" +
-                    str_uc
-        }
+    private fun cacheCo2ValuesToFile(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
         try {
-            var dir = File(Environment.getExternalStorageDirectory(), dirName)
+            val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
+            val directoryType = if (ppm == -1) DirectoryType.MEASUREMENT else DirectoryType.CALCULATIONS
+            var dir = directoryType.getDirectory()
             if (!dir.exists()) {
                 dir.mkdirs()
             }
+            val userComment: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
+            val subDirName = directoryType.encodedName + DELIMITER + subDirDate + DELIMITER + userComment
             dir = File(dir, subDirName)
             if (!dir.exists()) {
                 dir.mkdir()
             }
-            val formatter = SimpleDateFormat("mm:ss.S", Locale.ENGLISH)
+            val ppmPart = (if (ppm == -1) "" else DELIMITER + ppm) + DELIMITER + "R"
+            val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
+            val volume = DELIMITER + if (volumeValue == -1) "" else "" + volumeValue
+            val fileName = directoryType.encodedName + DELIMITER + chartDate + volume + ppmPart + (currentChartIndex + 1) + ".csv"
             val file = File(dir, fileName)
             if (!file.exists()) {
                 file.createNewFile()
             }
-            val preFormattedTime = formatter.format(Date())
-            val arr = preFormattedTime.split("\\.").toTypedArray()
-            var formattedTime = ""
-            if (arr.size == 1) {
-                formattedTime = arr[0] + ".0"
-            } else if (arr.size == 2) {
-                formattedTime = arr[0] + "." + arr[1].substring(0, 1)
-            }
-            val fos = FileOutputStream(file, true)
-            val writer = BufferedWriter(OutputStreamWriter(fos))
-            writer.write("$formattedTime,$co2\n")
-            writer.close()
+            val formattedTime = CO2_TIME_FORMAT.formatEnhanced(Date())
+            val strH = String.format("%02X%02X", bytes[3], bytes[4])
+            val co2 = strH.toInt(16)
+            file.appendText("$formattedTime,$co2\n")
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    private fun DateFormat.formatEnhanced(date: Date, countDigitsInMillis: Int = 1): String {
+        require(countDigitsInMillis in 0..3)
+        if (countDigitsInMillis == 0) return format(date)
+        val millis = date.time - (date.time / 1000) * 1000
+        val countDigitsToCut = 3 - countDigitsInMillis
+        val powerOf10 = 10.pow(countDigitsToCut)
+        return format(date) + "." + (millis - (millis / powerOf10) * powerOf10)
+    }
+
+    private fun Int.pow(exponent: Int) = when {
+        exponent <= 1 -> this
+        else -> List(exponent) { this }.reduce { power, value -> power * value }
+    }
     fun onButton1Click() {
         onChangeableClick(0)
     }
@@ -782,21 +754,21 @@ class MainViewModel @Inject constructor(
             currentCharts[0] = currentCharts[0].copy(points = emptyList())
             val tempFilePath = currentCharts[0].tempFilePath
             if (tempFilePath != null) {
-                clearChartDirectories(tempFilePath, "_R1")
+                clearChartDirectories(tempFilePath, "${DELIMITER}R1")
             }
         }
         if (currentClearOptions.contains("Chart 2")) {
             currentCharts[1] = currentCharts[1].copy(points = emptyList())
             val tempFilePath = currentCharts[1].tempFilePath
             if (tempFilePath != null) {
-                clearChartDirectories(tempFilePath, "_R2")
+                clearChartDirectories(tempFilePath, "${DELIMITER}R2")
             }
         }
         if (currentClearOptions.contains("Chart 3")) {
             currentCharts[2] = currentCharts[2].copy(points = emptyList())
             val tempFilePath = currentCharts[2].tempFilePath
             if (tempFilePath != null) {
-                clearChartDirectories(tempFilePath, "_R3")
+                clearChartDirectories(tempFilePath, "${DELIMITER}R3")
             }
         }
         if (currentClearOptions.contains("New Measure")) {
@@ -814,10 +786,8 @@ class MainViewModel @Inject constructor(
     }
 
     private fun clearChartDirectories(chartDate: String, chartIndex: String) {
-        val mesDirectory = File(Environment.getExternalStorageDirectory(), MES_DIRECTORY)
-        mesDirectory.deleteChartFiles(chartDate, chartIndex)
-        val calDirectory = File(Environment.getExternalStorageDirectory(), CAL_DIRECTORY)
-        calDirectory.deleteChartFiles(chartDate, chartIndex)
+        DirectoryType.MEASUREMENT.getDirectory().deleteChartFiles(chartDate, chartIndex)
+        DirectoryType.CALCULATIONS.getDirectory().deleteChartFiles(chartDate, chartIndex)
     }
 
     private fun File.deleteChartFiles(chartDate: String, chartIndex: String) {
@@ -868,11 +838,6 @@ class MainViewModel @Inject constructor(
             editor.apply()
         }
         charts.value = charts.value!!.copy(maxX = 3f * (duration * 60 / delay))
-    }
-
-    //TODO handle measuring response
-    private fun handleMeasuringResponse(bytes: ByteArray) {
-
     }
 
     fun onDataReceived(bytes: ByteArray) {
@@ -946,12 +911,10 @@ class MainViewModel @Inject constructor(
                     pendingAccessorySettings = null
                 }
             }
-            isMeasuring -> {
-                val periodicResponse = bytes.decodeToPeriodicResponse()
-                if (periodicResponse is PeriodicResponse.Co2) {
-                    cacheBytesFromUsbWhenMeasurePressed(bytes)
+            isCo2Measuring -> {
+                if (bytes.decodeToPeriodicResponse() is PeriodicResponse.Co2) {
+                    cacheCo2ValuesToFile(bytes)
                 }
-                handleMeasuringResponse(bytes)
             }
             else -> {
                 val temperature = bytes.decodeToPeriodicResponse() as? PeriodicResponse.Temperature ?: return
