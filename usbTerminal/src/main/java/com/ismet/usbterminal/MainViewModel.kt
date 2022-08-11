@@ -407,7 +407,7 @@ class MainViewModel @Inject constructor(
         if (countMeasure == 0) {
             val maxX = 3f * (intDuration * 60 / intDelay)
             charts.value = Charts(
-                charts = List(3) { Chart(it + 1, emptyList())},
+                charts = List(3) { Chart(it, emptyList())},
                 maxX = maxX,
                 maxY = DEFAULT_MAX_Y
             )
@@ -493,7 +493,7 @@ class MainViewModel @Inject constructor(
                 }
             }
             readCommandsJob?.cancel()
-            readCommandsJob = viewModelScope.launch(Dispatchers.IO) {
+            readCommandsJob = viewModelScope.launch(writeDispatcher) {
                 delay(300)
                 if (shouldUseRecentDirectory) {
                     val ppm = prefs.getInt(PrefConstants.KPPM, -1)
@@ -609,8 +609,7 @@ class MainViewModel @Inject constructor(
         if (countDigitsInMillis == 0) return format(date)
         val millis = date.time - (date.time / 1000) * 1000
         val countDigitsToCut = 3 - countDigitsInMillis
-        val powerOf10 = 10.pow(countDigitsToCut)
-        return format(date) + "." + (millis - (millis / powerOf10) * powerOf10)
+        return format(date) + "." + (millis / 10.pow(countDigitsToCut))
     }
 
     private fun Int.pow(exponent: Int) = when {
@@ -921,8 +920,6 @@ class MainViewModel @Inject constructor(
         delay(timeout.toLong() + BuildConfig.WRITE_TO_USB_DELAY)
     }
 
-    fun isCurrentChartEmpty() = charts.value!!.charts[currentChartIndex].points.isEmpty()
-
     fun addPointToCurrentChart(point: PointF) {
         val oldCharts = charts.value!!
         val newCharts = oldCharts.charts.toMutableList()
@@ -942,10 +939,6 @@ class MainViewModel @Inject constructor(
         (3 * toFloat())
     } else {
         (this + this * 15 / 100f)
-    }
-
-    fun setMaxY(maxY: Float) {
-        charts.value = charts.value!!.copy(maxY = maxY)
     }
 
     override fun onCleared() {
