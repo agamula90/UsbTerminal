@@ -12,8 +12,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ismet.usbterminal.data.*
-import com.ismet.usbterminal.di.AccessoryOperationDispatcher
-import com.ismet.usbterminal.di.CacheAccessoryOutputOnMeasureDispatcher
+import com.ismet.usbterminal.di.UsbWriteDispatcher
+import com.ismet.usbterminal.di.CacheCo2ValuesDispatcher
 import com.ismet.usbterminalnew.R
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -58,9 +58,8 @@ private val CO2_TIME_FORMAT = SimpleDateFormat("mm:ss", Locale.ENGLISH)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @AccessoryOperationDispatcher() private val readDispatcher: CoroutineDispatcher,
-    @AccessoryOperationDispatcher() private val writeDispatcher: CoroutineDispatcher,
-    @CacheAccessoryOutputOnMeasureDispatcher private val cacheDispatcher: CoroutineDispatcher,
+    @UsbWriteDispatcher() private val writeDispatcher: CoroutineDispatcher,
+    @CacheCo2ValuesDispatcher private val cacheDispatcher: CoroutineDispatcher,
     private val prefs: SharedPreferences,
     private val moshi: Moshi,
     handle: SavedStateHandle,

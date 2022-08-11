@@ -21,22 +21,15 @@ object LocalModule {
 
     @Provides
     @Singleton
-    @AccessoryOperationDispatcher(operationType = "read")
-    fun provideReadAccessoryDispatcher(): CoroutineDispatcher {
+    @UsbWriteDispatcher
+    fun provideUsbWriteDispatcher(): CoroutineDispatcher {
         return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     }
 
     @Provides
     @Singleton
-    @AccessoryOperationDispatcher(operationType = "write")
-    fun provideWriteAccessoryDispatcher(): CoroutineDispatcher {
-        return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    }
-
-    @Provides
-    @Singleton
-    @CacheAccessoryOutputOnMeasureDispatcher
-    fun provideCacheAccessoryOutputOnMeasureDispatcher(): CoroutineDispatcher {
+    @CacheCo2ValuesDispatcher
+    fun provideCacheC02ValuesDispatcher(): CoroutineDispatcher {
         return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     }
 
