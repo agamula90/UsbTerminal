@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import kotlin.NoSuchElementException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 
 const val CHART_INDEX_UNSELECTED = -1
@@ -56,8 +58,9 @@ private val CO2_TIME_FORMAT = SimpleDateFormat("mm:ss", Locale.ENGLISH)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @UsbWriteDispatcher() private val writeDispatcher: CoroutineDispatcher,
-    @CacheCo2ValuesDispatcher private val cacheDispatcher: CoroutineDispatcher,
+    @UsbWriteDispatcher private val writeDispatcher: CoroutineContext,
+    @CacheCo2ValuesDispatcher private val cacheDispatcher: CoroutineContext,
+    private val exceptionHandler: CoroutineExceptionHandler,
     private val prefs: SharedPreferences,
     private val moshi: Moshi,
     handle: SavedStateHandle,
@@ -110,6 +113,7 @@ class MainViewModel @Inject constructor(
     private var currentTemperature = 0
 
     init {
+        Thread.setDefaultUncaughtExceptionHandler { t, e -> exceptionHandler.handleException(EmptyCoroutineContext, e) }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {

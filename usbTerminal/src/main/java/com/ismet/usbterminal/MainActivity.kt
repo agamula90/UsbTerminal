@@ -160,6 +160,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DirectoryType.CRASHES.getDirectory().mkdirs()
         binding = LayoutMainBinding.bind(findViewById(R.id.content_main))
         binding.showBottomViews()
         binding.chart.init()
