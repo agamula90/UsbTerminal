@@ -51,8 +51,6 @@ android {
 dependencies {
     implementation 'com.github.felHR85:UsbSerial:6.1.0'
     implementation project(':app')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
 
     kapt "com.google.dagger:hilt-compiler:$hilt_version"

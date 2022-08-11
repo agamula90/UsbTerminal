@@ -31,8 +31,7 @@ import com.proggroup.areasquarecalculator.db.SquarePointHelper;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
-import com.proggroup.squarecalculations.DocParser;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -141,7 +140,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 				List<PointF> points = mPointHelper.getPoints(squareId);
 				if (!points.isEmpty()) {
-					squareValues.get(i).set(j, CalculateUtils.calculateSquare(points));
+					squareValues.get(i).set(j, CalculateExtensionsKt.calculateSquare(points));
 					squareTexts.get(i).set(j, squareValues.get(i).get(j) == 0 ? "" :
 							FloatFormatter.format(squareValues.get(i).get(j)));
 				}
@@ -489,12 +488,12 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 		List<Float> squares = squareValues.get(row);
 		File f = new File(path);
 
-		float newSquare = CalculateUtils.calculateSquare(f);
+		float newSquare = CalculateExtensionsKt.calculateSquare(f);
 		if (newSquare < 0f) {
 			return false;
 		}
 
-		squares.set(column, CalculateUtils.calculateSquare(f));
+		squares.set(column, CalculateExtensionsKt.calculateSquare(f));
 		squareTexts.get(row).set(column, squareValues.get(row).get(column) == 0f ? "" :
 				FloatFormatter.format(squares.get(column)));
 
@@ -521,7 +520,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 		long squareId = squarePointHelper.getSquarePointIds(avgPointIds.get(row)).get(column);
 
-		List<PointF> points = DocParser.parse(f);
+		List<PointF> points = CalculateExtensionsKt.readPoints(f);
 
 		List<PointF> dbPoints = mPointHelper.getPoints(squareId);
 		if (dbPoints.isEmpty()) {

@@ -1,39 +1,24 @@
-package com.proggroup.areasquarecalculator.views;
+package com.proggroup.areasquarecalculator.views
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.util.AttributeSet;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.FrameLayout
+import kotlin.math.min
 
-public class SquareLayout extends FrameLayout {
+class SquareLayout @JvmOverloads constructor(
+    context: Context?,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : FrameLayout(context!!, attrs, defStyleAttr) {
 
-    public SquareLayout(Context context) {
-        this(context, null);
-    }
-
-    public SquareLayout(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public SquareLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-        int squareLen = width;
-        if(squareLen == 0) {
-            squareLen = height;
-        } else if (height < squareLen) {
-            squareLen = height;
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val width = measuredWidth
+        val height = measuredHeight
+        val size = when (width) {
+            0 -> height
+            else -> min(width, height)
         }
-        super.onMeasure(MeasureSpec.makeMeasureSpec(squareLen, MeasureSpec.EXACTLY), MeasureSpec
-                .makeMeasureSpec(squareLen, MeasureSpec.EXACTLY));
+        setMeasuredDimension(size, size)
     }
 }

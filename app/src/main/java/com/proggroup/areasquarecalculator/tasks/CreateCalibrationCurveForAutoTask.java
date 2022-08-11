@@ -19,7 +19,7 @@ import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.io.IOException;
@@ -229,7 +229,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 
 			List<File> curveFiles = mCurveFiles.valueAt(i);
 			for (File file : curveFiles) {
-				float square = CalculateUtils.calculateSquare(file);
+				float square = CalculateExtensionsKt.calculateSquare(file);
 				if (square < 0f) {
 					fileWrongIndex = ppmValue;
 					publishProgress(100);

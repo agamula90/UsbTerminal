@@ -17,7 +17,7 @@ import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 
@@ -69,7 +69,7 @@ public class CalculateSquareAreaFragment extends Fragment {
 				File mInputFile = new File(pathToFile);
 
 				if (mInputFile.exists()) {
-					float res = CalculateUtils.calculateSquare(mInputFile);
+					float res = CalculateExtensionsKt.calculateSquare(mInputFile);
 					//res = CalculateUtils.calculateSquareDeterminant(mInputFile);
 					//res = CalculateUtils.calculateSquareDeterminantParallel(mInputFile);
 					mResult.setText(FloatFormatter.format(res));

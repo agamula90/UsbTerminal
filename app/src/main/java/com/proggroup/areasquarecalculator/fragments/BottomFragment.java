@@ -45,7 +45,7 @@ import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ReportCreator;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -851,7 +851,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                         }
 
                         if (newestCalFile1 != null) {
-                            float square1 = CalculateUtils.calculateSquare(newestCalFile1);
+                            float square1 = CalculateExtensionsKt.calculateSquare(newestCalFile1);
                             if (square1 == -1) {
 	                            Toast toast = Toast.makeText(getActivity(), "Chart #1 can not be " +
 			                            "calculated. Please rerecord it.", Toast.LENGTH_LONG);
@@ -869,7 +869,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                                     //mClearRow2.performClick();
                                     return;
                                 }
-                                float square2 = CalculateUtils.calculateSquare(newestCalFile2);
+                                float square2 = CalculateExtensionsKt.calculateSquare(newestCalFile2);
                                 if (square2 == -1) {
 	                                Toast toast = Toast.makeText(getActivity(), "Chart #2 can " +
 			                                "not be calculated. Please rerecord it.", Toast
@@ -888,7 +888,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                                         //mClearRow2.performClick();
                                         return;
                                     }
-                                    float square3 = CalculateUtils.calculateSquare(newestCalFile3);
+                                    float square3 = CalculateExtensionsKt.calculateSquare(newestCalFile3);
                                     if (square3 == -1) {
 	                                    Toast toast = Toast.makeText(getActivity(), "Chart #3 can" +
 			                                    " not be calculated. Please rerecord it.", Toast
@@ -927,7 +927,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
         List<Float> correctSquares = new ArrayList<>(files.size());
         List<File> correctFiles = new ArrayList<>();
         for (File file : files) {
-            float square1 = CalculateUtils.calculateSquare(file);
+            float square1 = CalculateExtensionsKt.calculateSquare(file);
             if (square1 > 0) {
                 correctSquares.add(square1);
                 correctFiles.add(file);
@@ -948,7 +948,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
     }
 
     private boolean handleCsvFileMesSelected(File csvFile) {
-        final float square1 = CalculateUtils.calculateSquare(csvFile);
+        final float square1 = CalculateExtensionsKt.calculateSquare(csvFile);
         if (square1 > 0) {
             mAutoAvgPoint = new AvgPoint(new ArrayList<Float>() {{
                 add(square1);
