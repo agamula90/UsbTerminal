@@ -20,7 +20,7 @@ class AccessorySettings(
         fun getDefault() = AccessorySettings(
             borderTemperature = 200,
             ping = Ping("/5J1R", 300),
-            on = On("/5J5R", listOf("@5J101 ")),
+            on = On("/5J5R", listOf("@5J101")),
             temperature = "/5H750R",
             co2 = "(FE-44-00-08-02-9F-25)",
             temperatureUiOffset = 0,

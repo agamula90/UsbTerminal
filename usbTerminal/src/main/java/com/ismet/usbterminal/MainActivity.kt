@@ -530,7 +530,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             close()
             usbDevice = null
         } else {
-            readCallback = OnDataReceivedCallback { onDataReceived(it) }
+            readCallback = OnDataReceivedCallback {
+                val trimmedResponse = it.copyOfRange(0, it.size - 1)
+                runOnUiThread { onDataReceived(trimmedResponse) }
+            }
         }
     }
 
