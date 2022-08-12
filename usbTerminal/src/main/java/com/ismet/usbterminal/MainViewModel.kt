@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.os.Build
 import android.os.FileObserver
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -44,15 +45,12 @@ private const val MEASUREMENT1_FILE_NAME = "MScript1.txt"
 private const val MEASUREMENT2_FILE_NAME = "MScript2.txt"
 private const val MEASUREMENT3_FILE_NAME = "MScript3.txt"
 const val BUTTON_FILE_FORMAT_DELIMITER = ";"
-private const val DATE_FORMAT = "yyyyMMdd"
-private const val TIME_FORMAT = "HHmmss"
 private const val DELIMITER = "_"
 private const val DEFAULT_BUTTON_TEXT = "Command1"
 private const val DEFAULT_BUTTON_ACTIVATED_TEXT = "Command2"
 private const val DEFAULT_MAX_X = 9f
 private const val DEFAULT_MAX_Y = 10f
 
-private val FORMATTER = SimpleDateFormat("${DATE_FORMAT}${DELIMITER}${TIME_FORMAT}")
 val DATE_TIME_FORMATTER = SimpleDateFormat("MM.dd.yyyy HH:mm:ss")
 private val CO2_TIME_FORMAT = SimpleDateFormat("mm:ss", Locale.ENGLISH)
 
@@ -61,6 +59,7 @@ class MainViewModel @Inject constructor(
     @UsbWriteDispatcher private val writeDispatcher: CoroutineContext,
     @CacheCo2ValuesDispatcher private val cacheDispatcher: CoroutineContext,
     private val exceptionHandler: CoroutineExceptionHandler,
+    private val fileNameDateTimeFormatter: SimpleDateFormat,
     private val prefs: SharedPreferences,
     private val moshi: Moshi,
     handle: SavedStateHandle,
@@ -87,6 +86,12 @@ class MainViewModel @Inject constructor(
         )
     )
     private val applicationSettingsDirectory = DirectoryType.APPLICATION_SETTINGS.getDirectory()
+    private val fileObservationEvents: List<Int> = listOf(
+        FileObserver.CREATE,
+        FileObserver.MODIFY,
+        FileObserver.MOVED_TO,
+        FileObserver.DELETE
+    )
     val accessorySettings = handle.getLiveData<AccessorySettings?>("accessorySettings")
     val buttonOn1Properties = handle.getLiveData<ButtonProperties?>("buttonOn1")
     val buttonOn2Properties = handle.getLiveData<ButtonProperties?>("buttonOn2")
@@ -113,9 +118,13 @@ class MainViewModel @Inject constructor(
     private var currentTemperature = 0
 
     init {
-        Thread.setDefaultUncaughtExceptionHandler { t, e -> exceptionHandler.handleException(EmptyCoroutineContext, e) }
+        if (!BuildConfig.DEBUG) {
+            Thread.setDefaultUncaughtExceptionHandler { _, e ->
+                exceptionHandler.handleException(EmptyCoroutineContext, e)
+            }
+        }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {
             observeAppSettingsDirectoryUpdates()
         }
@@ -123,15 +132,15 @@ class MainViewModel @Inject constructor(
     }
 
     fun observeAppSettingsDirectoryUpdates() {
-        fileObserver = object: FileObserver(applicationSettingsDirectory, getFileObservationMask()) {
+        fileObserver = object: FileObserver(applicationSettingsDirectory.absolutePath) {
             override fun onEvent(event: Int, path: String?) {
-                checkAppSettings(path)
+                if (event in fileObservationEvents) {
+                    checkAppSettings(path)
+                }
             }
         }.also { it.startWatching() }
         checkAppSettings()
     }
-
-    private fun getFileObservationMask() = FileObserver.CREATE or FileObserver.MODIFY or FileObserver.MOVED_TO or FileObserver.DELETE
 
     private fun checkAppSettings(path: String? = null) {
         val corruptedFiles = mutableListOf<String>()
@@ -516,7 +525,7 @@ class MainViewModel @Inject constructor(
                             val tokenizer = StringTokenizer(name, DELIMITER)
                             tokenizer.nextToken()
                             // format of directory name is:
-                            // MES/CAL + ${DELIMITER} + ${DATE_FORMAT} + ${DELIMITER} + ${TIME_FORMAT} +
+                            // MES/CAL + ${DELIMITER} + ${fileNameDateTimeFormatter} +
                             // ${DELIMITER} + ${USER_COMMENT}
                             val date = tokenizer.nextToken()
                             val time = tokenizer.nextToken()
@@ -710,11 +719,11 @@ class MainViewModel @Inject constructor(
     fun onCurrentChartWasModified(wasModified: Boolean) {
         val currentDate = Date()
         if (wasModified) {
-            chartDate = FORMATTER.format(currentDate)
+            chartDate = fileNameDateTimeFormatter.format(currentDate)
             charts.value!!.charts[currentChartIndex].tempFilePath = chartDate
         }
         if (subDirDate.isEmpty()) {
-            subDirDate = FORMATTER.format(currentDate)
+            subDirDate = fileNameDateTimeFormatter.format(currentDate)
         }
     }
 

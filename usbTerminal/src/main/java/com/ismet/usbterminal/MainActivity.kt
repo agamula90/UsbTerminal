@@ -17,6 +17,7 @@ import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.forEachIndexed
 import androidx.core.view.isVisible
@@ -793,7 +794,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         isReadIntent = false
         binding.editor.updateFromSettings()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-            && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+            && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE)
         }
