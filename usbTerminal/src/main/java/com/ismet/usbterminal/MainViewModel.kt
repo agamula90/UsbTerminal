@@ -148,6 +148,7 @@ class MainViewModel @Inject constructor(
             try {
                 val accessoryDirectory = File(applicationSettingsDirectory, ACCESSORY_SETTINGS)
                 if (!accessoryDirectory.exists()) {
+                    accessoryDirectory.parentFile?.mkdirs()
                     accessoryDirectory.createNewFile()
                     accessoryDirectory.writeText(
                         moshi.adapter(AccessorySettings::class.java).toJson(AccessorySettings.getDefault())
@@ -444,7 +445,7 @@ class MainViewModel @Inject constructor(
         }
 
         readCommandsFromFile(
-            file = File(DirectoryType.APPLICATION_SETTINGS.getDirectory(), filePath),
+            file = File(applicationSettingsDirectory, filePath),
             shouldUseRecentDirectory = isUseRecentDirectory,
             runningTime = future,
             oneLoopTime = oneLoopTime,
