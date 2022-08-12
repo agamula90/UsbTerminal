@@ -531,8 +531,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             usbDevice = null
         } else {
             readCallback = OnDataReceivedCallback {
-                val trimmedResponse = it.copyOfRange(0, it.size - 1)
-                runOnUiThread { onDataReceived(trimmedResponse) }
+                runOnUiThread { onDataReceived(it) }
             }
         }
     }
@@ -745,7 +744,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private fun sendCommand(command: String) {
         lastCommand = command
         if (usbDevice != null) {
-            usbDevice?.write(command.encodeToByteArrayEnhanced() + "\r".encodeToByteArray())
+            usbDevice?.write(command.encodeToByteArrayEnhanced())
         } else {
             try {
                 usbAccessory?.setToUsb(command.encodeToByteArrayEnhanced())

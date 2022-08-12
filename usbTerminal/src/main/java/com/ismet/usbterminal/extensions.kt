@@ -17,6 +17,7 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.ismet.usbterminal.data.Charts
 import com.ismet.usbterminal.data.PeriodicResponse
+import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.*
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils
@@ -124,7 +125,12 @@ fun View.showMeasureDialog(init: (LayoutDialogMeasureBinding) -> Unit, okClick: 
 }
 
 fun String.encodeToByteArrayEnhanced(): ByteArray {
-    if (!startsWith("(") || !endsWith(")")) return encodeToByteArray()
+    if (!startsWith("(") || !endsWith(")")) {
+        return when {
+            BuildConfig.DEBUG -> encodeToByteArray()
+            else -> encodeToByteArray() + "\r".encodeToByteArray()
+        }
+    }
     val bytesEncoded = substring(1, lastIndex).split("-")
     return bytesEncoded.map { it.toInt(radix = 16).toByte() }.toByteArray()
 }
@@ -145,6 +151,11 @@ fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
             value = String.format("%02X%02X", this[3], this[4]).toInt(radix = 16)
         )
     }
+    BuildConfig.DEBUG -> getNotRawPeriodicResponse()
+    else -> copyOfRange(0, size - 1).getNotRawPeriodicResponse()
+}
+
+private fun ByteArray.getNotRawPeriodicResponse(): PeriodicResponse? = when {
     decodeToString().matches(temperaturePattern) -> {
         val response = decodeToString()
         val temperatureParts = response.split(",")
@@ -153,13 +164,15 @@ fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
     else -> null
 }
 
-//@5,0(0,0,0,0),180,25,25,25,25
-
 fun File.readTextEnhanced(): String = readText().replace("\r", "")
 
 fun ByteArray.decodeToStringEnhanced(): String {
     val periodicResponse = decodeToPeriodicResponse()
-    return periodicResponse?.toString() ?: decodeToString()
+    if (periodicResponse != null) return periodicResponse.toString()
+    return when {
+        BuildConfig.DEBUG -> decodeToString()
+        else -> copyOfRange(0, size - 1).decodeToString()
+    }
 }
 
 fun LineChart.init() {
