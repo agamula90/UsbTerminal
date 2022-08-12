@@ -742,7 +742,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     private fun sendCommand(command: String) {
         lastCommand = command
         if (usbDevice != null) {
-            usbDevice?.write(command.encodeToByteArrayEnhanced())
+            usbDevice?.write(command.encodeToByteArrayEnhanced() + "\r".encodeToByteArray())
         } else {
             try {
                 usbAccessory?.setToUsb(command.encodeToByteArrayEnhanced())

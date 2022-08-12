@@ -8,7 +8,7 @@ enum class DirectoryType(val encodedName: String) {
     CALCULATIONS("CAL"),
     REPORT("Report"),
     APPLICATION_SETTINGS("SYS"),
-    MISCELLANEOUS("Miscellaneous");
+    TEMPORARY("Temp");
 
     fun getDirectory() = File(Environment.getExternalStorageDirectory(), "AEToC_${encodedName}_Files")
 }

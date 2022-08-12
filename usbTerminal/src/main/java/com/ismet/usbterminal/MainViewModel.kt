@@ -595,7 +595,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun cacheCo2ValuesToFile(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
+    private suspend fun cacheCo2ValuesToFile(bytes: ByteArray) {
         try {
             val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
             val directoryType = if (ppm == -1) DirectoryType.MEASUREMENT else DirectoryType.CALCULATIONS
@@ -855,7 +855,7 @@ class MainViewModel @Inject constructor(
         charts.value = charts.value!!.copy(maxX = 3f * (duration * 60 / delay))
     }
 
-    fun onDataReceived(bytes: ByteArray) {
+    fun onDataReceived(bytes: ByteArray) = viewModelScope.launch(Dispatchers.Main) {
         when {
             pingJob != null -> {
                 pingJob?.cancel()
@@ -928,11 +928,13 @@ class MainViewModel @Inject constructor(
             }
             isCo2Measuring -> {
                 if (bytes.decodeToPeriodicResponse() is PeriodicResponse.Co2) {
-                    cacheCo2ValuesToFile(bytes)
+                    withContext(cacheDispatcher) {
+                        cacheCo2ValuesToFile(bytes)
+                    }
                 }
             }
             else -> {
-                val temperature = bytes.decodeToPeriodicResponse() as? PeriodicResponse.Temperature ?: return
+                val temperature = bytes.decodeToPeriodicResponse() as? PeriodicResponse.Temperature ?: return@launch
                 currentTemperature = temperature.value
             }
         }
@@ -959,7 +961,7 @@ class MainViewModel @Inject constructor(
 
     private fun getCacheResponseFile(): File {
         val dateTimeFormatted = fileNameDateTimeFormatter.format(responseLogsDate)
-        return File(DirectoryType.MISCELLANEOUS.getDirectory(), "sesion_at_$dateTimeFormatted.txt")
+        return File(DirectoryType.TEMPORARY.getDirectory(), "sesion_at_$dateTimeFormatted.txt")
     }
 
     fun cacheResponseLog(responseLogEvent: ResponseLogEvent, createNewFile: Boolean = false) {

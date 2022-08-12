@@ -45,7 +45,7 @@ object LocalModule {
     @Provides
     @Singleton
     fun provideExceptionHandler(formatter: SimpleDateFormat): CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        throwable.printStackTrace(PrintStream(File(DirectoryType.MISCELLANEOUS.getDirectory(), "crash_at_${formatter.format(Date())}.txt")))
+        throwable.printStackTrace(PrintStream(File(DirectoryType.TEMPORARY.getDirectory(), "crash_at_${formatter.format(Date())}.txt")))
     }
 
     @Provides
