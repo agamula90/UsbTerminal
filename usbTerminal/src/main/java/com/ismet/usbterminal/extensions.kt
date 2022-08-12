@@ -206,17 +206,15 @@ private fun createDataSet(lineColor: Int) = LineDataSet(ArrayList(), null).apply
 }
 
 fun LayoutMainBinding.showBottomViews() {
-    val topContainer = topContainer
     val minHeight = topContainer.minimumHeight
 
     if (minHeight == 0) {
-        val textBelow = scrollBelowText
         AutoExpandKeyboardUtils.expand(
             root.context,
             topContainer,
-            bottomFragment,
             toolbar,
-            textBelow
+            bottomFragment,
+            scrollBelowText
         )
         allChartsLayout.layoutParams.height = topContainer.minimumHeight
     }

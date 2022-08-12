@@ -579,6 +579,16 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
         }
 
         fillAvgPointsLayout();
+        notifyOnBottomFragmentAttachedEvent();
+    }
+
+    private void notifyOnBottomFragmentAttachedEvent() {
+        Activity activity = getActivity();
+        LibraryContentAttachable libraryContentAttachable = activity instanceof
+                LibraryContentAttachable ? (LibraryContentAttachable) activity : null;
+        if (libraryContentAttachable != null) {
+            libraryContentAttachable.onBottomFragmentAttached();
+        }
     }
 
 	private String createRatioString(float firstValue, float lastValue) {

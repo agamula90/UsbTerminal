@@ -18,15 +18,11 @@ import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.forEachIndexed
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.ktx.Firebase
 import com.ismet.usb.UsbAccessory
 import com.ismet.usb.UsbEmitter
 import com.ismet.usbterminal.data.*
@@ -161,9 +157,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DirectoryType.CRASHES.getDirectory().mkdirs()
         binding = LayoutMainBinding.bind(findViewById(R.id.content_main))
-        binding.showBottomViews()
         binding.chart.init()
         Settings.updateFromPreferences(
             getSharedPreferences(
@@ -811,7 +805,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 if (indexOfWritePermission == -1 || grantResults[indexOfWritePermission] != PackageManager.PERMISSION_GRANTED) {
                     showCustomisedToast("Please grant storage permission in order to use app")
                     finish()
+                    return
                 }
+                viewModel.initRequiredDirectories()
                 viewModel.observeAppSettingsDirectoryUpdates()
             }
         }
@@ -1339,13 +1335,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun onDataReceived(bytes: ByteArray) {
-        Firebase.analytics.logEvent(
-            FirebaseAnalytics.Event.SCREEN_VIEW,
-            bundleOf(
-                FirebaseAnalytics.Param.SCREEN_NAME to "responses",
-                FirebaseAnalytics.Param.SCREEN_CLASS to moshi.adapter(ResponseLogEvent::class.java).toJson(createLogEvent(bytes))
-            )
-        )
+        val logEvent = createLogEvent(bytes)
+        viewModel.cacheResponseLog(logEvent)
         val periodicResponse = bytes.decodeToPeriodicResponse()
         val data = when(periodicResponse) {
             is PeriodicResponse.Temperature -> {
@@ -1470,6 +1461,10 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     override fun reportFolders(): String {
         return DirectoryType.REPORT.getDirectory().absolutePath
+    }
+
+    override fun onBottomFragmentAttached() {
+        binding.showBottomViews()
     }
 
     companion object {

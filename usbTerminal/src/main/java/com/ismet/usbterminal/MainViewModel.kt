@@ -116,6 +116,7 @@ class MainViewModel @Inject constructor(
     private var isPowerWaitForLastResponse = false
     private var pendingAccessorySettings: AccessorySettings? = null
     private var currentTemperature = 0
+    private var responseLogsDate = Date()
 
     init {
         if (!BuildConfig.DEBUG) {
@@ -126,9 +127,17 @@ class MainViewModel @Inject constructor(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {
+            initRequiredDirectories()
             observeAppSettingsDirectoryUpdates()
         }
         readCombinedXyChart()
+    }
+
+    fun initRequiredDirectories() {
+        for (directoryType in DirectoryType.values()) {
+            directoryType.getDirectory().mkdirs()
+        }
+        getCacheResponseFile().createNewFile()
     }
 
     fun observeAppSettingsDirectoryUpdates() {
@@ -146,18 +155,17 @@ class MainViewModel @Inject constructor(
         val corruptedFiles = mutableListOf<String>()
         if (path == null || path == ACCESSORY_SETTINGS) {
             try {
-                val accessoryDirectory = File(applicationSettingsDirectory, ACCESSORY_SETTINGS)
-                if (allowToCreateSettingFiles && !accessoryDirectory.exists()) {
-                    accessoryDirectory.parentFile?.mkdirs()
-                    accessoryDirectory.createNewFile()
-                    accessoryDirectory.writeText(
+                val accessorySettingsFile = File(applicationSettingsDirectory, ACCESSORY_SETTINGS)
+                if (allowToCreateSettingFiles && !accessorySettingsFile.exists()) {
+                    accessorySettingsFile.createNewFile()
+                    accessorySettingsFile.writeText(
                         moshi.adapter(AccessorySettings::class.java).toJson(AccessorySettings.getDefault())
                     )
                 }
 
                 val oldAccessorySettings = accessorySettings.value
                 val newAccessorySettings = moshi.adapter(AccessorySettings::class.java)
-                    .fromJson(accessoryDirectory.readTextEnhanced())!!
+                    .fromJson(accessorySettingsFile.readTextEnhanced())!!
                 if (oldAccessorySettings == null) {
                     accessorySettings.postValue(newAccessorySettings)
                     startPing(newAccessorySettings)
@@ -947,6 +955,20 @@ class MainViewModel @Inject constructor(
             maxX = DEFAULT_MAX_X,
             maxY = DEFAULT_MAX_Y
         )
+    }
+
+    private fun getCacheResponseFile(): File {
+        val dateTimeFormatted = fileNameDateTimeFormatter.format(responseLogsDate)
+        return File(DirectoryType.MISCELLANEOUS.getDirectory(), "sesion_at_$dateTimeFormatted.txt")
+    }
+
+    fun cacheResponseLog(responseLogEvent: ResponseLogEvent, createNewFile: Boolean = false) {
+        var file = getCacheResponseFile()
+        if (createNewFile) {
+            responseLogsDate = Date()
+            file = getCacheResponseFile().also { it.createNewFile() }
+        }
+        file.appendText(moshi.adapter(ResponseLogEvent::class.java).toJson(responseLogEvent) + "\n")
     }
 
     private fun Int.toFloat(isChartEmpty: Boolean): Float = if (isChartEmpty) {

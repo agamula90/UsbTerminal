@@ -34,4 +34,6 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
     void onGraphDetached();
 
 	String toolbarTitle();
+
+    void onBottomFragmentAttached();
 }
