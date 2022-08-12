@@ -135,19 +135,19 @@ class MainViewModel @Inject constructor(
         fileObserver = object: FileObserver(applicationSettingsDirectory.absolutePath) {
             override fun onEvent(event: Int, path: String?) {
                 if (event in fileObservationEvents) {
-                    checkAppSettings(path)
+                    checkAppSettings(allowToCreateSettingFiles = false, path)
                 }
             }
         }.also { it.startWatching() }
-        checkAppSettings()
+        checkAppSettings(allowToCreateSettingFiles = true)
     }
 
-    private fun checkAppSettings(path: String? = null) {
+    private fun checkAppSettings(allowToCreateSettingFiles: Boolean, path: String? = null) {
         val corruptedFiles = mutableListOf<String>()
         if (path == null || path == ACCESSORY_SETTINGS) {
             try {
                 val accessoryDirectory = File(applicationSettingsDirectory, ACCESSORY_SETTINGS)
-                if (!accessoryDirectory.exists()) {
+                if (allowToCreateSettingFiles && !accessoryDirectory.exists()) {
                     accessoryDirectory.parentFile?.mkdirs()
                     accessoryDirectory.createNewFile()
                     accessoryDirectory.writeText(
@@ -182,7 +182,7 @@ class MainViewModel @Inject constructor(
         for (file in buttonChangeableFiles) {
             try {
                 var savable: FileSavable
-                if (!file.exists()) {
+                if (allowToCreateSettingFiles && !file.exists()) {
                     file.createNewFile()
                     savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
                     savable.save(false)
@@ -209,7 +209,7 @@ class MainViewModel @Inject constructor(
         }.map { File(applicationSettingsDirectory, it) }
         for (file in buttonStaticFiles) {
             try {
-                if (!file.exists()) {
+                if (allowToCreateSettingFiles && !file.exists()) {
                     file.createNewFile()
                     val savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
                     savable.save(true)
@@ -231,7 +231,7 @@ class MainViewModel @Inject constructor(
         if (path == null || path == MEASUREMENT) {
             val measurementFile = File(applicationSettingsDirectory, MEASUREMENT)
             try {
-                if (!measurementFile.exists()) {
+                if (allowToCreateSettingFiles && !measurementFile.exists()) {
                     measurementFile.createNewFile()
                     measurementFile.writeText(
                         listOf(MEASUREMENT1_FILE_NAME, MEASUREMENT2_FILE_NAME, MEASUREMENT3_FILE_NAME).joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
