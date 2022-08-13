@@ -3,27 +3,36 @@ package com.ismet.usbterminal
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.get
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Legend.LegendForm
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.ismet.usbterminal.data.Charts
 import com.ismet.usbterminal.data.PeriodicResponse
+import com.ismet.usbterminal.data.PrefConstants
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.*
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils
 import java.io.File
+import kotlin.math.roundToInt
 
-fun LineChart.set(charts: Charts) {
+fun LineChart.set(chartHelperPaint: Paint, charts: Charts) {
     axisLeft.axisMaximum = charts.maxY
     xAxis.axisMaximum = charts.maxX
     for (chart in charts.charts) {
@@ -32,6 +41,14 @@ fun LineChart.set(charts: Charts) {
     data.notifyDataChanged()
     notifyDataSetChanged()
     invalidate()
+    post {
+        val parentView = (parent as ViewGroup)
+        val backgroundView = parentView[parentView.indexOfChild(this) - 1]
+        val backgroundMarginStart = axisLeft.getRequiredWidthSpace(chartHelperPaint)
+        val backgroundLayoutParams = backgroundView.layoutParams as FrameLayout.LayoutParams
+        backgroundLayoutParams.marginStart = backgroundMarginStart.toInt()
+        backgroundView.layoutParams = backgroundLayoutParams
+    }
 }
 
 fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (LayoutDialogOnOffBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
@@ -175,8 +192,9 @@ fun ByteArray.decodeToStringEnhanced(): String {
     }
 }
 
-fun LineChart.init() {
+fun LineChart.init(prefs: SharedPreferences) {
     description.isEnabled = false
+    minOffset = 0f
     setTouchEnabled(false)
     setDrawGridBackground(false)
     isDragEnabled = false
@@ -186,13 +204,23 @@ fun LineChart.init() {
     xAxis.apply {
         gridColor = color
         setLabelCount(4, true)
+        valueFormatter = object: ValueFormatter() {
+            override fun getAxisLabel(value: Float, axis: AxisBase?): String = when(value){
+                0f -> ""
+                else -> (value * ((labelCount - 1) / axisMaximum) * prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)).roundToInt().toString()
+            }
+        }
         position = XAxis.XAxisPosition.BOTTOM
         axisMinimum = 0f
         axisMaximum = 9f
         textColor = Color.WHITE
+        yOffset = 0f
+        setAvoidFirstLastClipping(true)
     }
     axisRight.isEnabled = false
+    setClipValuesToContent(true)
     axisLeft.apply {
+        xOffset = 0f
         gridColor = color
         setLabelCount(9, true)
         axisMinimum = 0f
@@ -205,6 +233,23 @@ fun LineChart.init() {
 
     legend.form = LegendForm.NONE
     legend.setDrawInside(true)
+    post {
+        val parentView = (parent as ViewGroup)
+        val backgroundView = parentView[parentView.indexOfChild(this) - 1]
+        val backgroundLayoutParams = backgroundView.layoutParams as FrameLayout.LayoutParams
+        val backgroundMarginBottom = xAxis.mLabelHeight
+        backgroundLayoutParams.apply {
+            bottomMargin = (backgroundMarginBottom * 1.5f).toInt()
+            topMargin = backgroundMarginBottom / 2
+        }
+        backgroundView.layoutParams = backgroundLayoutParams
+        val chartLayoutParams = layoutParams as FrameLayout.LayoutParams
+        chartLayoutParams.apply {
+            topMargin = backgroundMarginBottom / 2
+            bottomMargin = backgroundMarginBottom / 2
+        }
+        layoutParams = chartLayoutParams
+    }
 }
 
 private fun createDataSet(lineColor: Int) = LineDataSet(ArrayList(), null).apply {

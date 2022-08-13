@@ -280,19 +280,19 @@
                     android:layout_weight="2"
                     android:gravity="end"
                     android:paddingStart="4dp"
-                    android:paddingEnd="@dimen/layout_margin_default">
+                    android:paddingEnd="@dimen/layout_margin_default"
+                    android:clipChildren="false">
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginBottom="15dp"
-                        android:background="@android:color/white" />
+                        android:background="@android:color/white"/>
 
                     <com.github.mikephil.charting.charts.LineChart
                         android:id="@+id/chart"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"/>
 
                     <LinearLayout
                         android:id="@+id/margin_layout"

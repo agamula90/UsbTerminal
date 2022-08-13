@@ -6,6 +6,7 @@ import android.app.Dialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PointF
 import android.hardware.usb.UsbManager
 import android.os.*
@@ -142,6 +143,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private var usbAccessory: UsbAccessory? = null
     private var isSendServiceConnected = false
+    private val chartHelperPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
     private val sendToAccessoryConnection = object: ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             isSendServiceConnected = true
@@ -158,7 +161,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = LayoutMainBinding.bind(findViewById(R.id.content_main))
-        binding.chart.init()
+        binding.chart.init(prefs)
         Settings.updateFromPreferences(
             getSharedPreferences(
                 Constants.PREFERENCES_NAME,
@@ -174,7 +177,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
         observeEvents()
         observeUsbEvents()
         observeButtonEvents()
-        viewModel.charts.observe(this) { binding.chart.set(it) }
+        viewModel.charts.observe(this) { binding.chart.set(chartHelperPaint, it) }
         isReadIntent = true
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
