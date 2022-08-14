@@ -562,6 +562,7 @@ class MainViewModel @Inject constructor(
                 startSendingTemperatureOrCo2Requests()
             }
         } else {
+            isCo2Measuring = false
             startSendingTemperatureOrCo2Requests()
             events.offer(MainEvent.ShowToast("File not found"))
         }
