@@ -30,9 +30,9 @@ repositories {
 }
 
 dependencies {
-    compile project(':androidLib')
-    compile files('libs/usbserial.jar')
-    compile 'org.ejml:all:0.28'
-    compile 'com.github.PhilJay:MPAndroidChart:v2.1.5'
-    compile project(':app')
+    api project(':androidLib')
+    implementation files('libs/usbserial.jar')
+    implementation 'org.ejml:all:0.28'
+    implementation 'com.github.PhilJay:MPAndroidChart:v2.1.5'
+    api project(':app')
 }
