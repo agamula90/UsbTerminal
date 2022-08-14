@@ -8,7 +8,7 @@ import android.os.Message;
 import android.view.Window;
 import android.widget.TextView;
 
-import com.ismet.usbterminalnew.R;
+import com.ismet.usbterminal.R;
 import com.ismet.usbterminal.data.PowerCommand;
 import com.ismet.usbterminal.data.PowerState;
 import com.ismet.usbterminal.mainscreen.EToCMainHandler;

@@ -6,7 +6,7 @@ import android.graphics.Paint;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.ismet.usbterminalnew.R;
+import com.ismet.usbterminal.R;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils;
 

@@ -1,6 +1,6 @@
 package fr.xgouchet.texteditor.common;
 
-import com.ismet.usbterminalnew.R;
+import com.ismet.usbterminal.R;
 
 import fr.xgouchet.androidlib.common.AbstractChangeLog;
 

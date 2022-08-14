@@ -35,9 +35,6 @@ import static fr.xgouchet.texteditor.common.Constants.REQUEST_FONT;
 import static fr.xgouchet.texteditor.common.Constants.REQUEST_HOME_PAGE;
 import static fr.xgouchet.texteditor.common.Constants.TAG;
 
-import com.ismet.usbterminalnew.BuildConfig;
-import com.ismet.usbterminalnew.R;
-
 @SuppressWarnings("deprecation")
 public class TedSettingsActivity extends PreferenceActivity implements
 		OnSharedPreferenceChangeListener {

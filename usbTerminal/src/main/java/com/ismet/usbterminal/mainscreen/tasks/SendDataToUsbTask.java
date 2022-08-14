@@ -3,7 +3,7 @@ package com.ismet.usbterminal.mainscreen.tasks;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Environment;
-import androidx.core.util.Pair;
+import android.support.v4.util.Pair;
 import android.widget.Toast;
 
 import com.ismet.usbterminal.data.AppData;

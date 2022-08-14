@@ -28,7 +28,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
-import com.ismet.usbterminalnew.R;
 
 import java.util.ArrayList;
 import java.util.List;

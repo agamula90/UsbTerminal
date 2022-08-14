@@ -1,6 +1,6 @@
 package com.ismet.usbterminal;
 
-import androidx.core.util.Pair;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.util.SparseArray;
 

@@ -5,7 +5,7 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import com.ismet.usbterminalnew.R;
+import com.ismet.usbterminal.R;
 import com.ismet.usbterminal.mainscreen.EToCMainActivity;
 
 public class AlertDialogTwoButtonsCreator {

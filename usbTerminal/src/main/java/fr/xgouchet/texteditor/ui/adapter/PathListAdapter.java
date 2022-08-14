@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.ismet.usbterminalnew.R;
+import com.ismet.usbterminal.R;
 
 import java.util.ArrayList;
 

@@ -169,7 +169,7 @@ public class FileDialog extends ListActivity {
 			public void onClick(View v) {
 				if (selectedFile != null) {
 					if (mIsPromptWhenSelectDirectory && selectedFile.isDirectory()) {
-						androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app
+						android.support.v7.app.AlertDialog dialog = new android.support.v7.app
 								.AlertDialog.Builder(FileDialog.this).setNeutralButton
 								(getResources().getString(R.string.no), new DialogInterface
 										.OnClickListener() {
@@ -479,7 +479,7 @@ public class FileDialog extends ListActivity {
 		}
 
 		if (mIsInsideSearchFolder) {
-			androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog
+			android.support.v7.app.AlertDialog dialog = new android.support.v7.app.AlertDialog
 					.Builder(this).setNeutralButton(getResources().getString(R.string
 					.select_folder_for_auto), new DialogInterface.OnClickListener() {
 
