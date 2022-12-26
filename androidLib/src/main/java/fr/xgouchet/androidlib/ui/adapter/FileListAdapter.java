@@ -15,7 +15,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.List;
 
-import fr.xgouchet.androidlib.R;
+import fr.xgouchet.R;
 import fr.xgouchet.androidlib.common.UIUtils;
 import fr.xgouchet.androidlib.data.FileUtils;
 

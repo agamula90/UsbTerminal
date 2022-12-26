@@ -1,8 +1,0 @@
-repositories {
-    maven { url "https://jitpack.io" }
-}
-
-dependencies {
-    compile 'org.ejml:all:0.28'
-    compile 'com.github.PhilJay:MPAndroidChart:v2.1.5'
-}

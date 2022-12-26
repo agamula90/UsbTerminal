@@ -1,6 +1,4 @@
 <resources>
-    <string name="location">Location</string>
-    <string name="cant_read_folder">folder can\'t be read!</string>
     <string name="nnew">New</string>
     <string name="select">Select</string>
     <string name="file_name">File name:</string>
@@ -19,9 +17,6 @@
 
     <string name="select_file">Select file</string>
 
-    <string name="select_folder_for_auto">Select the folder</string>
-    <string name="select_file_for_calculations">Select csv file</string>
-    <string name="select_option_to_continue">Select option to continue</string>
     <string name="do_you_want_to_create_curve">Do you want to create curve from files
         inside?</string>
     <string name="yes">Yes</string>

@@ -19,7 +19,7 @@ import com.proggroup.areasquarecalculator.api.UrlChangeable;
 import com.proggroup.areasquarecalculator.data.Constants;
 import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	private SparseArray<List<File>> mCurveFiles;
 
 	private View progressLayout;
-	private View progressBar;
+	private ProgressBar progressBar;
 
 	private boolean mIsIgnoreExistingCurves;
 
@@ -61,14 +61,13 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	public void dismiss() {
 		if(onProgressDismissable != null && progressBar != null) {
 			onProgressDismissable.onProgressDismissed(progressBar);
-			detachProgress(progressBar);
+			detachProgress(progressLayout);
 			progressBar = null;
 		}
 	}
 
 	public static void detachProgress(View progressBar) {
 		if (progressBar != null) {
-			progressBar.setVisibility(View.GONE);
 			((ViewGroup) progressBar.getParent()).removeView(progressBar);
 		}
 	}
@@ -106,7 +105,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 
 			wrapLayout.addView(textView, textParams);
 
-			ProgressBar progressBar = new ProgressBar(frameLayout.getContext(), null, android.R
+			progressBar = new ProgressBar(frameLayout.getContext(), null, android.R
 					.attr.progressBarStyleHorizontal);
 			progressBar.setIndeterminate(false);
 			progressBar.setMax(100);
@@ -230,7 +229,7 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 
 			List<File> curveFiles = mCurveFiles.valueAt(i);
 			for (File file : curveFiles) {
-				float square = CalculateUtils.calculateSquare(file);
+				float square = CalculateExtensionsKt.calculateSquare(file);
 				if (square < 0f) {
 					fileWrongIndex = ppmValue;
 					publishProgress(100);
@@ -336,7 +335,6 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	protected void onPostExecute(File file) {
 		super.onPostExecute(file);
 		if (file != null) {
-
 			if (mCalibrationCurveCreatedListener != null) {
 				if(progressBar != null) {
 					detachProgress(progressLayout);
@@ -358,7 +356,6 @@ public class CreateCalibrationCurveForAutoTask extends AsyncTask<File, Integer, 
 	}
 
 	public interface CalibrationCurveCreatedListener {
-
 		void onCalibrationCurveCreated(File calibrationCurveFile);
 	}
 }

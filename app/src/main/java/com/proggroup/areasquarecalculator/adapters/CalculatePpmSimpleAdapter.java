@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -20,8 +20,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
@@ -33,12 +31,14 @@ import com.proggroup.areasquarecalculator.db.SquarePointHelper;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
-import com.proggroup.squarecalculations.DocParser;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
@@ -140,7 +140,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 				List<PointF> points = mPointHelper.getPoints(squareId);
 				if (!points.isEmpty()) {
-					squareValues.get(i).set(j, CalculateUtils.calculateSquare(points));
+					squareValues.get(i).set(j, CalculateExtensionsKt.calculateSquare(points));
 					squareTexts.get(i).set(j, squareValues.get(i).get(j) == 0 ? "" :
 							FloatFormatter.format(squareValues.get(i).get(j)));
 				}
@@ -360,8 +360,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 							return;
 						}
 
-						Intent intent = new Intent(fragment.getActivity().getBaseContext(),
-								FileDialog.class);
+						Intent intent = new Intent(fragment.getActivity().getBaseContext(), FileDialog.class);
 
 						File mesFolder = Constants.BASE_DIRECTORY;
 
@@ -489,12 +488,12 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 		List<Float> squares = squareValues.get(row);
 		File f = new File(path);
 
-		float newSquare = CalculateUtils.calculateSquare(f);
+		float newSquare = CalculateExtensionsKt.calculateSquare(f);
 		if (newSquare < 0f) {
 			return false;
 		}
 
-		squares.set(column, CalculateUtils.calculateSquare(f));
+		squares.set(column, CalculateExtensionsKt.calculateSquare(f));
 		squareTexts.get(row).set(column, squareValues.get(row).get(column) == 0f ? "" :
 				FloatFormatter.format(squares.get(column)));
 
@@ -521,7 +520,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 
 		long squareId = squarePointHelper.getSquarePointIds(avgPointIds.get(row)).get(column);
 
-		List<PointF> points = DocParser.parse(f);
+		List<PointF> points = CalculateExtensionsKt.readPoints(f);
 
 		List<PointF> dbPoints = mPointHelper.getPoints(squareId);
 		if (dbPoints.isEmpty()) {

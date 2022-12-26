@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,15 +13,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class CalculateSquareAreaFragment extends Fragment {
 
@@ -68,7 +69,7 @@ public class CalculateSquareAreaFragment extends Fragment {
 				File mInputFile = new File(pathToFile);
 
 				if (mInputFile.exists()) {
-					float res = CalculateUtils.calculateSquare(mInputFile);
+					float res = CalculateExtensionsKt.calculateSquare(mInputFile);
 					//res = CalculateUtils.calculateSquareDeterminant(mInputFile);
 					//res = CalculateUtils.calculateSquareDeterminantParallel(mInputFile);
 					mResult.setText(FloatFormatter.format(res));

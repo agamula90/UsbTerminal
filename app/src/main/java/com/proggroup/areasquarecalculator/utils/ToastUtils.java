@@ -17,10 +17,12 @@ public class ToastUtils {
     public static void wrap(Toast toast) {
         View view = toast.getView();
 
-	    TextView textView = ((TextView) view.findViewById(android.R.id.message));
-	    textView.setTextColor(Color.BLACK);
-	    textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        view.setBackgroundResource(R.drawable.toast_drawable);
+        if (view != null) {
+            TextView textView = view.findViewById(android.R.id.message);
+            textView.setTextColor(Color.BLACK);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            view.setBackgroundResource(R.drawable.toast_drawable);
+        }
         toast.setGravity(Gravity.CENTER, 0, 0);
     }
 }

@@ -1,7 +1,8 @@
 package com.proggroup.areasquarecalculator.api;
 
-import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.DrawerLayout;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
+
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
@@ -11,6 +12,7 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
 
 	int getFragmentContainerId();
 
+    //TODO can't use binding here
 	DrawerLayout getDrawerLayout();
 
 	int getToolbarId();
@@ -21,8 +23,11 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
 
 	int getFileDrawable();
 
+    int getButtonBackground();
+
 	FrameLayout getFrameLayout();
 
+    //TODO can't use binding here
 	LinearLayout graphContainer();
 
     void onGraphAttached();
@@ -30,4 +35,6 @@ public interface LibraryContentAttachable extends ReportAttachable, OnProgressDi
     void onGraphDetached();
 
 	String toolbarTitle();
+
+    void onBottomFragmentAttached();
 }

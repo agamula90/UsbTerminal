@@ -5,21 +5,21 @@
     android:orientation="horizontal" >
 
     <Button
-        android:id="@+id/buttonOk"
+        android:id="@+id/buttonCancel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/ui_ok" />
+        android:text="@string/ui_cancel" />
 
     <View
         android:layout_width="@dimen/dialog_buttons_margin"
         android:layout_height="match_parent" />
 
     <Button
-        android:id="@+id/buttonCancel"
+        android:id="@+id/buttonOk"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/ui_cancel" />
+        android:text="@string/ui_ok" />
 
 </LinearLayout>

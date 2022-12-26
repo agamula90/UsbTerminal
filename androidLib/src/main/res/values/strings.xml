@@ -32,4 +32,80 @@
     <!--  -->
     <string name="ui_additional_licences">Additional Licences</string>
 
+
+    <!-- Titles -->
+    <string name="title_editor" translatable="false">EToC</string><!--  - %1$s -->
+
+    <string name="title_editor_dirty" translatable="false">Usb Terminal - %1$s *</string>
+    <string name="title_editor_readonly" translatable="false">Usb Terminal - [%1$s]</string>
+    <string name="title_save_as" translatable="false">Usb Terminal - Save as ... </string>
+    <string name="title_open_recent" translatable="false">Usb Terminal - Open Recent</string>
+    <string name="title_settings" translatable="false">Usb Terminal - Settings </string>
+    <string name="title_about" translatable="false">Usb Terminal - About ... </string>
+    <string name="title_font" translatable="false">Usb Terminal - Text Font </string>
+
+    <!-- Config screen strings -->
+    <string name="config_cat_display" translatable="false">Display</string>
+    <string name="config_cat_other" translatable="false">Other</string>
+    <string name="config_cat_save" translatable="false">Saving</string>
+    <string name="config_cat_undo" translatable="false">Undo</string>
+    <string name="config_cat_search" translatable="false">Search</string>
+    <string name="config_cat_misc" translatable="false">Miscellaneous</string>
+    <string name="config_title_line_numbers" translatable="false">Show line numbers</string>
+    <string name="config_title_word_wrap" translatable="false">Word wrap</string>
+    <string name="config_title_font" translatable="false">Change text font</string>
+    <string name="config_title_text_size" translatable="false">Text size</string>
+    <string name="config_title_color_theme" translatable="false">Color theme</string>
+    <string name="config_title_end_of_lines" translatable="false">End of lines</string>
+    <string name="config_title_max_recent" translatable="false">Maximum recent files</string>
+    <string name="config_title_search_wrap" translatable="false">Search wrap</string>
+    <string name="config_title_search_match_case" translatable="false">Search match case</string>
+    <string name="config_title_encoding" translatable="false">Encoding</string>
+    <string name="config_title_scroll_fling" translatable="false">Fling to scroll faster</string>
+    <string name="config_title_allow_undo_stack" translatable="false">Allow undo</string>
+    <string name="config_title_max_undo_stack" translatable="false">Maximum undo history</string>
+    <string name="config_title_back_to_undo" translatable="false">Use the back button to undo previous modifications</string>
+    <string name="config_title_use_home_page" translatable="false">Use a default file</string>
+    <string name="config_title_auto_save" translatable="false">Auto Save</string>
+    <string name="config_title_auto_save_overwrite" translatable="false">Overwrite existing files</string>
+    <string name="config_summary_auto_save" translatable="false">Automatically saves the file being ediUsb Terminal when the app goes in background</string>
+    <string name="config_summary_line_numbers" translatable="false">Display the line number at the left of the page</string>
+    <string name="config_summary_word_wrap" translatable="false">Lines will break in new lines if they are too wide for the screen</string>
+    <string name="config_summary_scroll_fling" translatable="false">Uncheck if you have performance issues</string>
+    <string name="config_summary_use_home_page" translatable="false">Select a file to open when you launch Usb Terminal from your home screen</string>
+    <string name="config_summary_auto_save_overwrite_on" translatable="false">Auto save will overwrite existing files</string>
+    <string name="config_summary_auto_save_overwrite_off" translatable="false">Auto save will only work with new files</string>
+
+    <!-- Options Menu in Usb Terminal -->
+    <string name="menu_connect" translatable="false">Disconnected</string>
+    <string name="menu_disconnect" translatable="false">Connected</string>
+    <string name="menu_new" translatable="false">New</string>
+    <string name="menu_open" translatable="false">Open</string>
+    <string name="menu_open_chart" translatable="false">Open Chart</string>
+    <string name="menu_open_recent" translatable="false">Recent files</string>
+    <string name="menu_save" translatable="false">Save</string>
+    <string name="menu_save_as" translatable="false">Save as</string>
+    <string name="menu_settings" translatable="false">Settings</string>
+    <string name="menu_search" translatable="false">Search</string>
+    <string name="menu_undo" translatable="false">Undo</string>
+    <string name="menu_quit" translatable="false">Quit</string>
+
+    <!-- Misc UI strings -->
+    <string name="ui_save_text" translatable="false">"Do you want to save your document? \nAny unsaved changes will be lost. "</string>
+    <string name="ui_save" translatable="false">Save</string>
+    <string name="ui_delete" translatable="false">Delete</string>
+    <string name="ui_no_save" translatable="false">"Don't save"</string>
+    <string name="ui_hint_file_name" translatable="false">File name</string>
+    <string name="ui_hint_search" translatable="false">Search</string>
+    <string name="ui_art_licence" translatable="false">Artistic Licence</string>
+    <string name="ui_force_read_only" translatable="false">Open as read only</string>
+
+    <!-- Misc Strings -->
+    <string name="lorem_ipsum" translatable="false">"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porttitor neque semper sem fermentum pretium. Sed pharetra dui faucibus massa malesuada in condimentum mi gravida."</string>
+
+    <string name="location" translatable="false">Location</string>
+    <string name="select_folder_for_auto" translatable="false">Select the folder</string>
+    <string name="select_file_for_calculations" translatable="false">Select csv file</string>
+    <string name="select_option_to_continue" translatable="false">Select option to continue</string>
+    <string name="cant_read_folder" translatable="false">folder can\'t be read!</string>
 </resources>

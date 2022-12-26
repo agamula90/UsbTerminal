@@ -8,10 +8,12 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -27,8 +29,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lamerman.FileDialog;
-import com.lamerman.SelectionMode;
 import com.proggroup.areasquarecalculator.BaseLoadTask;
 import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
@@ -48,7 +48,7 @@ import com.proggroup.areasquarecalculator.utils.CalculatePpmUtils;
 import com.proggroup.areasquarecalculator.utils.FloatFormatter;
 import com.proggroup.areasquarecalculator.utils.IntentFolderWrapUtils;
 import com.proggroup.areasquarecalculator.utils.ToastUtils;
-import com.proggroup.squarecalculations.CalculateUtils;
+import com.proggroup.CalculateExtensionsKt;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -59,6 +59,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import fr.xgouchet.FileDialog;
+import fr.xgouchet.SelectionMode;
 
 public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpmSimpleAdapter
 		.OnInfoFilledListener {
@@ -770,7 +773,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 	private boolean handleDirectoryMesSelected(List<File> files) {
 		List<Float> correctSquares = new ArrayList<>(files.size());
 		for (File file : files) {
-			float square1 = CalculateUtils.calculateSquare(file);
+			float square1 = CalculateExtensionsKt.calculateSquare(file);
 			if (square1 > 0) {
 				correctSquares.add(square1);
 			}
@@ -785,7 +788,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 	}
 
 	private boolean handleCsvFileMesSelected(File csvFile) {
-		final float square1 = CalculateUtils.calculateSquare(csvFile);
+		final float square1 = CalculateExtensionsKt.calculateSquare(csvFile);
 		if (square1 > 0) {
 			mAutoAvgPoint = new AvgPoint(new ArrayList<Float>() {{
 				add(square1);
@@ -949,7 +952,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						protected void onPostExecute(Boolean aVoid) {
 							getActivity().getCurrentFocus().clearFocus();
 							if (!aVoid) {
-								Toast toast = Toast.makeText(getActivity(), "You select wrong " + "file", Toast
+								Toast toast = Toast.makeText(getActivity(), "You select wrong file", Toast
 										.LENGTH_LONG);
                                 ToastUtils.wrap(toast);
 								toast.show();
@@ -1158,7 +1161,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					}
 
 					if (newestCalFile1 != null) {
-						float square1 = CalculateUtils.calculateSquare(newestCalFile1);
+						float square1 = CalculateExtensionsKt.calculateSquare(newestCalFile1);
 						if (square1 == -1) {
                             Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 									.LENGTH_LONG);
@@ -1172,7 +1175,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 								mClearRow2.performClick();
 								return;
 							}
-							float square2 = CalculateUtils.calculateSquare(newestCalFile2);
+							float square2 = CalculateExtensionsKt.calculateSquare(newestCalFile2);
 							if (square2 == -1) {
                                 Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating", Toast
 										.LENGTH_LONG);
@@ -1187,7 +1190,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 									mClearRow2.performClick();
 									return;
 								}
-								float square3 = CalculateUtils.calculateSquare(newestCalFile3);
+								float square3 = CalculateExtensionsKt.calculateSquare(newestCalFile3);
 								if (square3 == -1) {
                                     Toast toast = Toast.makeText(getActivity(), "Wrong files for calculating",
 											Toast.LENGTH_LONG);
