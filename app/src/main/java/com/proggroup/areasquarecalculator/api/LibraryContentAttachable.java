@@ -1,7 +1,8 @@
 package com.proggroup.areasquarecalculator.api;
 
-import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.DrawerLayout;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
+
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
