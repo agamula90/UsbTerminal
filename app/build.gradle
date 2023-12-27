@@ -30,7 +30,7 @@ dependencies {
     api 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     api 'com.itextpdf:itextpdf:5.5.8'
     api "androidx.activity:activity-ktx:1.8.2"
-    api project(':androidLib')
+    api project(':externalFileManager')
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
 }
