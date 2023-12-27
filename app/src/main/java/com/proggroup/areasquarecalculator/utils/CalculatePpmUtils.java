@@ -1,12 +1,13 @@
 package com.proggroup.areasquarecalculator.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Pair;
 import android.view.Gravity;
 import android.widget.Toast;
 
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
+import com.proggroup.areasquarecalculator.AttachableApplication;
 import com.proggroup.areasquarecalculator.adapters.CalculatePpmSimpleAdapter;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Project;
@@ -97,13 +98,13 @@ public class CalculatePpmUtils {
 	 * @param path       Path to folder for save values.
 	 * @return Result: true - for success, false - for fail.
 	 */
-	public static boolean saveAvgValuesToFile(CalculatePpmSimpleAdapter adapter, int numColumns,
-			String path, boolean save0Ppm) {
+	public static boolean saveAvgValuesToFile(Activity activity, CalculatePpmSimpleAdapter adapter, int numColumns,
+											  String path, boolean save0Ppm) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream
 					(path)));
 
-			SQLiteHelper helper = InterpolationCalculatorApp.getInstance().getSqLiteHelper();
+			SQLiteHelper helper = ((AttachableApplication)activity.getApplication()).getSqLiteHelper();
 			int numRows = adapter.getCount() / numColumns - 1;
 			SQLiteDatabase writeDb = helper.getWritableDatabase();
 			Project project = new ProjectHelper(writeDb).getProjects().get(0);

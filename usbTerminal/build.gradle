@@ -2,19 +2,20 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
-    id 'dagger.hilt.android.plugin'
+    id 'com.google.dagger.hilt.android'
     id 'kotlin-parcelize'
 }
 
 android {
-    compileSdkVersion 30
+    namespace 'com.ismet.usbterminalnew'
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.ismet.usbterminalnew"
         versionName "2.0"
         versionCode 2
         minSdkVersion 17
-        targetSdkVersion 30
+        targetSdk 34
     }
 
     compileOptions {
@@ -27,6 +28,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        aidl true
     }
 
     buildTypes {
@@ -41,21 +43,29 @@ android {
         }
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17
+    }
+}
+
+kapt {
+    correctErrorTypes true
 }
 
 dependencies {
     implementation 'com.github.felHR85:UsbSerial:6.1.0'
     implementation project(':app')
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
+    implementation (project(":storage"))
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
 
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
     implementation "com.google.dagger:hilt-android:$hilt_version"
-    implementation "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.0"
-    implementation "com.squareup.moshi:moshi:1.13.0"
-    kapt "com.squareup.moshi:moshi-kotlin-codegen:1.13.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.2"
+    implementation "com.squareup.moshi:moshi:1.14.0"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:1.14.0"
 }

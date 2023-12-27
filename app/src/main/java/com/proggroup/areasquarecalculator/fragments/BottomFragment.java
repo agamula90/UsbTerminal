@@ -32,7 +32,7 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.itextpdf.text.DocumentException;
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
+import com.proggroup.areasquarecalculator.AttachableApplication;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
@@ -568,8 +568,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
 
         initGraphDataLoadedCallback();
 
-        InterpolationCalculatorApp interpolationCalculatorApp = InterpolationCalculatorApp
-                .getInstance();
+        AttachableApplication interpolationCalculatorApp = (AttachableApplication) requireActivity().getApplication();
         if (interpolationCalculatorApp.getPpmPoints() != null) {
             ppmPoints = interpolationCalculatorApp.getPpmPoints();
             avgSquarePoints = interpolationCalculatorApp.getAvgSquarePoints();
@@ -802,8 +801,7 @@ public class BottomFragment extends Fragment implements OnProgressDismissable{
                         .this.ppmPoints);
                 List<Float> avgSquarePoints = new ArrayList<>(BottomFragment
                         .this.avgSquarePoints);
-                InterpolationCalculatorApp interpolationCalculatorApp = InterpolationCalculatorApp
-                        .getInstance();
+                AttachableApplication interpolationCalculatorApp = (AttachableApplication) requireActivity().getApplication();
                 interpolationCalculatorApp.setAvgSquarePoints(avgSquarePoints);
                 interpolationCalculatorApp.setPpmPoints(ppmPoints);
 

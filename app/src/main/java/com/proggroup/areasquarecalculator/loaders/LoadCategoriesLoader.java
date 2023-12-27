@@ -1,10 +1,10 @@
 package com.proggroup.areasquarecalculator.loaders;
 
+import android.content.Context;
 import android.content.res.Resources;
 
 import androidx.loader.content.AsyncTaskLoader;
 
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 
 import java.util.ArrayList;
@@ -14,8 +14,8 @@ public class LoadCategoriesLoader extends AsyncTaskLoader<List<String>> {
 
 	private List<String> res;
 
-	public LoadCategoriesLoader() {
-		super(InterpolationCalculatorApp.getInstance().getApplicationContext());
+	public LoadCategoriesLoader(Context context) {
+		super(context.getApplicationContext());
 	}
 
 	@Override

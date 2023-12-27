@@ -24,6 +24,9 @@ import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.ismet.storage.BaseDirectory
+import com.ismet.storage.Directory
+import com.ismet.storage.DirectoryType
 import com.ismet.usb.UsbAccessory
 import com.ismet.usb.UsbEmitter
 import com.ismet.usbterminal.data.*
@@ -59,6 +62,10 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : BaseAttachableActivity(), TextWatcher {
+
+    @Inject
+    @BaseDirectory
+    lateinit var baseDirectory: String
 
     private val usbReceiver: BroadcastReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -602,6 +609,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
 
     private fun observeButtonEvents() {
         viewModel.buttonOn1Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonOn1.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -611,6 +619,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         viewModel.buttonOn2Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonOn2.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -620,6 +629,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         viewModel.buttonOn3Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonPpm.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -629,6 +639,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         viewModel.buttonOn4Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonOn3.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -638,6 +649,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         viewModel.buttonOn5Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonOn4.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -647,6 +659,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
             }
         }
         viewModel.buttonOn6Properties.observe(this) {
+            if (it == null) return@observe
             binding.buttonOn5.apply {
                 text = if (it.isActivated) it.savable.activatedText else it.savable.text
                 alpha = it.alpha
@@ -814,6 +827,9 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
                 }
                 viewModel.initRequiredDirectories()
                 viewModel.observeAppSettingsDirectoryUpdates()
+            }
+            else -> {
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults)
             }
         }
     }
@@ -1410,7 +1426,7 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     private fun invokeAutoCalculations() {
-        supportFragmentManager.findFragmentById(R.id.bottom_fragment)!!.view!!.findViewById<View>(R.id.calculate_ppm_auto)
+        supportFragmentManager.findFragmentById(R.id.bottom_fragment)!!.requireView().findViewById<View>(R.id.calculate_ppm_auto)
             .performClick()
     }
 
@@ -1465,7 +1481,8 @@ class MainActivity : BaseAttachableActivity(), TextWatcher {
     }
 
     override fun reportFolders(): String {
-        return DirectoryType.REPORT.getDirectory().absolutePath
+        //TODO refactor for new api
+        return File(baseDirectory, DirectoryType.REPORT.getDirectoryName()).absolutePath
     }
 
     override fun onBottomFragmentAttached() {

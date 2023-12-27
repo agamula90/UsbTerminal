@@ -3,8 +3,8 @@ package com.ismet.usbterminal.di
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
+import com.ismet.storage.DirectoryType
 import com.ismet.usb.UsbEmitter
-import com.ismet.usbterminal.data.DirectoryType
 import com.ismet.usbterminalnew.BuildConfig
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -15,7 +15,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
-import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
@@ -44,8 +43,14 @@ object LocalModule {
 
     @Provides
     @Singleton
-    fun provideExceptionHandler(formatter: SimpleDateFormat): CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        throwable.printStackTrace(PrintStream(File(DirectoryType.TEMPORARY.getDirectory(), "crash_at_${formatter.format(Date())}.txt")))
+    fun provideExceptionHandler(
+        file: com.ismet.storage.File,
+        formatter: SimpleDateFormat
+    ): CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        val printStream = file.print(
+            DirectoryType.TEMPORARY.getDirectoryName() + File.separator + "crash_at_${formatter.format(Date())}.txt"
+        )
+        printStream?.let { throwable.printStackTrace(it) } ?: throwable.printStackTrace()
     }
 
     @Provides

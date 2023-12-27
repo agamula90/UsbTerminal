@@ -12,6 +12,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ismet.storage.BaseDirectory
+import com.ismet.storage.Directory
+import com.ismet.storage.DirectoryType
 import com.ismet.usbterminal.data.*
 import com.ismet.usbterminal.di.UsbWriteDispatcher
 import com.ismet.usbterminal.di.CacheCo2ValuesDispatcher
@@ -63,7 +66,10 @@ class MainViewModel @Inject constructor(
     private val prefs: SharedPreferences,
     private val moshi: Moshi,
     handle: SavedStateHandle,
-    @ApplicationContext val context: Context
+    @ApplicationContext val context: Context,
+    @BaseDirectory private val baseDirectory: String,
+    private val directory: Directory,
+    private val file: com.ismet.storage.File
 ): ViewModel() {
     private var shouldSendTemperatureRequest = true
     private var readChartJob: Job? = null
@@ -72,8 +78,8 @@ class MainViewModel @Inject constructor(
     private var chartDate: String = ""
     private var subDirDate: String = ""
     private var currentClearOptions = mutableSetOf<String>()
-    private var changeableButtonClickedProperties: MutableLiveData<ButtonProperties?>? = null
-    private var sendAndForgetButtonClickedProperties: MutableLiveData<ButtonProperties?>? = null
+    private var changeableButtonClickedProperties: MutableLiveData<out ButtonProperties?>? = null
+    private var sendAndForgetButtonClickedProperties: MutableLiveData<out ButtonProperties?>? = null
     var measureFileNames: List<String> = emptyList()
     private set
 
@@ -85,7 +91,7 @@ class MainViewModel @Inject constructor(
             maxY = DEFAULT_MAX_Y
         )
     )
-    private val applicationSettingsDirectory = DirectoryType.APPLICATION_SETTINGS.getDirectory()
+    private val applicationSettingsDirectoryPath = DirectoryType.APPLICATION_SETTINGS.getDirectoryName()
     private val fileObservationEvents: List<Int> = listOf(
         FileObserver.CREATE,
         FileObserver.MODIFY,
@@ -125,7 +131,7 @@ class MainViewModel @Inject constructor(
             }
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {
             initRequiredDirectories()
             observeAppSettingsDirectoryUpdates()
@@ -135,13 +141,14 @@ class MainViewModel @Inject constructor(
 
     fun initRequiredDirectories() {
         for (directoryType in DirectoryType.values()) {
-            directoryType.getDirectory().mkdirs()
+            directory.createRecursively(directoryType.getDirectoryName())
         }
-        getCacheResponseFile().createNewFile()
+        getCacheResponsePath().also { file.create(it) }
     }
 
     fun observeAppSettingsDirectoryUpdates() {
-        fileObserver = object: FileObserver(applicationSettingsDirectory.absolutePath) {
+        //TODO remove for local tests
+        fileObserver = object: FileObserver(baseDirectory + File.separator + applicationSettingsDirectoryPath) {
             override fun onEvent(event: Int, path: String?) {
                 if (event in fileObservationEvents) {
                     checkAppSettings(allowToCreateSettingFiles = false, path)
@@ -151,21 +158,25 @@ class MainViewModel @Inject constructor(
         checkAppSettings(allowToCreateSettingFiles = true)
     }
 
+    fun String.fileName(): String {
+        return substringAfterLast(File.separatorChar)
+    }
+
     private fun checkAppSettings(allowToCreateSettingFiles: Boolean, path: String? = null) {
         val corruptedFiles = mutableListOf<String>()
         if (path == null || path == ACCESSORY_SETTINGS) {
             try {
-                val accessorySettingsFile = File(applicationSettingsDirectory, ACCESSORY_SETTINGS)
-                if (allowToCreateSettingFiles && !accessorySettingsFile.exists()) {
-                    accessorySettingsFile.createNewFile()
-                    accessorySettingsFile.writeText(
+                val accessorySettingsFilePath = applicationSettingsDirectoryPath + File.separator + ACCESSORY_SETTINGS
+                if (allowToCreateSettingFiles && !file.exists(accessorySettingsFilePath)) {
+                    file.create(accessorySettingsFilePath)
+                    file.write(accessorySettingsFilePath,
                         moshi.adapter(AccessorySettings::class.java).toJson(AccessorySettings.getDefault())
                     )
                 }
 
                 val oldAccessorySettings = accessorySettings.value
                 val newAccessorySettings = moshi.adapter(AccessorySettings::class.java)
-                    .fromJson(accessorySettingsFile.readTextEnhanced())!!
+                    .fromJson(accessorySettingsFilePath.readTextEnhanced(file))!!
                 if (oldAccessorySettings == null) {
                     accessorySettings.postValue(newAccessorySettings)
                     startPing(newAccessorySettings)
@@ -186,26 +197,26 @@ class MainViewModel @Inject constructor(
             BUTTON2 -> listOf(BUTTON2)
             BUTTON3 -> listOf(BUTTON3)
             else -> emptyList()
-        }.map { File(applicationSettingsDirectory, it) }
-        for (file in buttonChangeableFiles) {
+        }.map { applicationSettingsDirectoryPath + File.separator + it }
+        for (filePath in buttonChangeableFiles) {
             try {
                 var savable: FileSavable
-                if (allowToCreateSettingFiles && !file.exists()) {
-                    file.createNewFile()
-                    savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
-                    savable.save(false)
+                if (allowToCreateSettingFiles && !file.exists(filePath)) {
+                    file.create(filePath)
+                    savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", filePath.fileName())
+                    savable.save(file, false)
                 }
-                val content = file.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = filePath.readTextEnhanced(file).split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 4)
-                val buttonPropertiesLiveData = when(file.name) {
+                val buttonPropertiesLiveData = when(filePath.fileName()) {
                     BUTTON1 -> buttonOn1Properties
                     BUTTON2 -> buttonOn2Properties
                     else -> buttonOn3Properties
                 }
-                savable = FileSavable(content[0], content[2], content[1], content[3], file.name)
+                savable = FileSavable(content[0], content[2], content[1], content[3], filePath.fileName())
                 buttonPropertiesLiveData.postValue(ButtonProperties.getButtonChangeable(savable))
             } catch (_: Exception) {
-                corruptedFiles.add(file.name)
+                corruptedFiles.add(filePath.fileName())
             }
         }
         val buttonStaticFiles = when(path) {
@@ -214,48 +225,48 @@ class MainViewModel @Inject constructor(
             BUTTON5 -> listOf(BUTTON5)
             BUTTON6 -> listOf(BUTTON6)
             else -> emptyList()
-        }.map { File(applicationSettingsDirectory, it) }
-        for (file in buttonStaticFiles) {
+        }.map { applicationSettingsDirectoryPath + File.separator + it }
+        for (filePath in buttonStaticFiles) {
             try {
-                if (allowToCreateSettingFiles && !file.exists()) {
-                    file.createNewFile()
-                    val savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", file.name)
-                    savable.save(true)
+                if (allowToCreateSettingFiles && !file.exists(filePath)) {
+                    file.create(filePath)
+                    val savable = FileSavable(DEFAULT_BUTTON_TEXT, "", DEFAULT_BUTTON_ACTIVATED_TEXT, "", filePath.fileName())
+                    savable.save(file, true)
                 }
-                val content = file.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = filePath.readTextEnhanced(file).split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 2)
-                val buttonPropertiesLiveData = when(file.name) {
+                val buttonPropertiesLiveData = when(filePath.fileName()) {
                     BUTTON4 -> buttonOn4Properties
                     BUTTON5 -> buttonOn5Properties
                     else -> buttonOn6Properties
                 }
                 val text = content[0]
                 val command = content[1]
-                buttonPropertiesLiveData.postValue(ButtonProperties.getButtonStatic(text, command, file.name))
+                buttonPropertiesLiveData.postValue(ButtonProperties.getButtonStatic(text, command, filePath.fileName()))
             } catch (_: Exception) {
-                corruptedFiles.add(file.name)
+                corruptedFiles.add(filePath.fileName())
             }
         }
         if (path == null || path == MEASUREMENT) {
-            val measurementFile = File(applicationSettingsDirectory, MEASUREMENT)
+            val measurementFilePath = applicationSettingsDirectoryPath + File.separator + MEASUREMENT
             try {
-                if (allowToCreateSettingFiles && !measurementFile.exists()) {
-                    measurementFile.createNewFile()
-                    measurementFile.writeText(
+                if (allowToCreateSettingFiles && !file.exists(measurementFilePath)) {
+                    file.create(measurementFilePath)
+                    file.write(measurementFilePath,
                         listOf(MEASUREMENT1_FILE_NAME, MEASUREMENT2_FILE_NAME, MEASUREMENT3_FILE_NAME).joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
                     )
                 }
-                val content = measurementFile.readTextEnhanced().split(BUTTON_FILE_FORMAT_DELIMITER)
+                val content = measurementFilePath.readTextEnhanced(file).split(BUTTON_FILE_FORMAT_DELIMITER)
                 require(content.size == 3)
                 measureFileNames = content
             } catch (_: Exception) {
-                corruptedFiles.add(measurementFile.name)
+                corruptedFiles.add(measurementFilePath.fileName())
             }
         }
         if (corruptedFiles.isNotEmpty()) {
-            events.offer(MainEvent.ShowCorruptionDialog("Files ${corruptedFiles.joinToString(separator = ", ")} are corrupted. Please, fix them..."))
+            events.trySend(MainEvent.ShowCorruptionDialog("Files ${corruptedFiles.joinToString(separator = ", ")} are corrupted. Please, fix them..."))
         } else {
-            events.offer(MainEvent.DismissCorruptionDialog)
+            events.trySend(MainEvent.DismissCorruptionDialog)
         }
     }
 
@@ -271,6 +282,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun readChart(filePath: String) {
+        //allow only for paths within "base directory hierarchy"
+        if (!filePath.startsWith(baseDirectory)) {
+            return
+        }
+
         val shouldStartPing = pingJob?.isActive == true
         pingJob?.cancel()
         pingJob = null
@@ -282,14 +298,16 @@ class MainViewModel @Inject constructor(
         val newChartIndex = currentCharts.indexOfFirst { it.canBeRestoredFromFilePath(filePath) }
 
         if (newChartIndex == CHART_INDEX_UNSELECTED) {
-            // events.offer(MainEvent.ShowToast("Required Log files not available"))
+            // events.trySend(MainEvent.ShowToast("Required Log files not available"))
             readChartJob = null
             return
         }
 
         readChartJob = viewModelScope.launch(Dispatchers.IO) {
-            val file = File(filePath)
-            val lines = file.readLines()
+            //-1 = without Files.delimiter
+            val subPath = filePath.substringAfter(baseDirectory).substring(1)
+            val fileContent = subPath.readTextEnhanced(file)
+            val lines = fileContent.split("\n")
             var startX = lines.size * currentCharts[newChartIndex].id
             var newMaxY = charts.maxY
             val newChartPoints = mutableListOf<PointF>()
@@ -377,7 +395,7 @@ class MainViewModel @Inject constructor(
             else -> null
         }
         if (errorMessage != null) {
-            events.offer(MainEvent.ShowToast(errorMessage))
+            events.trySend(MainEvent.ShowToast(errorMessage))
             return false
         }
         stopSendingTemperatureOrCo2Requests()
@@ -396,7 +414,7 @@ class MainViewModel @Inject constructor(
         edit.putBoolean(PrefConstants.SAVE_AS_CALIBRATION, isKnownPpm)
         val intDuration = duration.toInt()
         val intDelay = delay.toInt()
-        events.offer(MainEvent.IncCountMeasure)
+        events.trySend(MainEvent.IncCountMeasure)
         edit.putInt(PrefConstants.DELAY, intDelay)
         edit.putInt(PrefConstants.DURATION, intDuration)
         edit.apply()
@@ -424,7 +442,7 @@ class MainViewModel @Inject constructor(
             }
         }
         if (currentChartIndex != -1) setCurrentChartIndex(currentChartIndex)
-        if (readingCount != -1) events.offer(MainEvent.SetReadingCount(readingCount))
+        if (readingCount != -1) events.trySend(MainEvent.SetReadingCount(readingCount))
         val newMeasureFiles = listOf(editText1Text, editText2Text, editText3Text)
         if (countMeasure == 0) {
             val maxX = 3f * (intDuration * 60 / intDelay)
@@ -452,8 +470,8 @@ class MainViewModel @Inject constructor(
             else -> throw IllegalArgumentException("Can't handle chart index")
         }
 
-        readCommandsFromFile(
-            file = File(applicationSettingsDirectory, filePath),
+        readCommandsFromPath(
+            filePath = applicationSettingsDirectoryPath + File.separator + filePath,
             shouldUseRecentDirectory = isUseRecentDirectory,
             runningTime = future,
             oneLoopTime = oneLoopTime,
@@ -462,14 +480,14 @@ class MainViewModel @Inject constructor(
         return true
     }
 
-    private fun readCommandsFromFile(
-        file: File,
+    private fun readCommandsFromPath(
+        filePath: String,
         shouldUseRecentDirectory: Boolean,
         runningTime: Int,
         oneLoopTime: Int,
         newMeasureFiles: List<String>
     ) {
-        readCommandsFromText(file.readTextEnhanced(), shouldUseRecentDirectory, runningTime, oneLoopTime, newMeasureFiles)
+        readCommandsFromText(filePath.readTextEnhanced(file), shouldUseRecentDirectory, runningTime, oneLoopTime, newMeasureFiles)
     }
 
     private fun readCommandsFromText(
@@ -521,16 +539,16 @@ class MainViewModel @Inject constructor(
                     val ppm = prefs.getInt(PrefConstants.KPPM, -1)
                     //cal directory
                     if (ppm != -1) {
-                        val directory = DirectoryType.CALCULATIONS.getDirectory()
-                        val directoriesInside = directory.listFiles { pathname -> pathname.isDirectory }
-                        if (directoriesInside != null && directoriesInside.isNotEmpty()) {
-                            var recentDir: File? = null
+                        val calculationsDirectoryPath = DirectoryType.CALCULATIONS.getDirectoryName()
+                        val directoriesInside = directory.listSubDirectoryPaths(calculationsDirectoryPath)
+                        if (directoriesInside.isNotEmpty()) {
+                            var recentDir: String? = null
                             for (dir in directoriesInside) {
-                                if (recentDir == null || dir.lastModified() > recentDir.lastModified()) {
+                                if (recentDir == null || directory.lastModified(dir) > directory.lastModified(recentDir)) {
                                     recentDir = dir
                                 }
                             }
-                            val name = recentDir!!.name
+                            val name = recentDir!!.fileName()
                             val tokenizer = StringTokenizer(name, DELIMITER)
                             tokenizer.nextToken()
                             // format of directory name is:
@@ -557,14 +575,14 @@ class MainViewModel @Inject constructor(
 
                 isCo2Measuring = false
                 events.send(MainEvent.ShowToast("Timer Stopped"))
-                val measurementFile = File(applicationSettingsDirectory, MEASUREMENT)
-                measurementFile.writeText(newMeasureFiles.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER))
+                val measurementFilePath = applicationSettingsDirectoryPath + File.separator + MEASUREMENT
+                file.write(measurementFilePath, newMeasureFiles.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER))
                 startSendingTemperatureOrCo2Requests()
             }
         } else {
             isCo2Measuring = false
             startSendingTemperatureOrCo2Requests()
-            events.offer(MainEvent.ShowToast("File not found"))
+            events.trySend(MainEvent.ShowToast("File not found"))
         }
     }
 
@@ -596,32 +614,32 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun cacheCo2ValuesToFile(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
+    private fun cacheCo2Values(bytes: ByteArray) = viewModelScope.launch(cacheDispatcher) {
         try {
             val ppm: Int = prefs.getInt(PrefConstants.KPPM, -1)
             val directoryType = if (ppm == -1) DirectoryType.MEASUREMENT else DirectoryType.CALCULATIONS
-            var dir = directoryType.getDirectory()
-            if (!dir.exists()) {
-                dir.mkdirs()
+            var dir = directoryType.getDirectoryName()
+            if (!directory.exists(dir)) {
+                directory.createRecursively(dir)
             }
             val userComment: String = prefs.getString(PrefConstants.USER_COMMENT, "")!!
             val subDirName = directoryType.encodedName + DELIMITER + subDirDate + DELIMITER + userComment
-            dir = File(dir, subDirName)
-            if (!dir.exists()) {
-                dir.mkdir()
+            dir = dir + File.separator + subDirName
+            if (!directory.exists(dir)) {
+                directory.createRecursively(dir)
             }
             val ppmPart = (if (ppm == -1) "" else DELIMITER + ppm) + DELIMITER + "R"
             val volumeValue: Int = prefs.getInt(PrefConstants.VOLUME, -1)
             val volume = DELIMITER + if (volumeValue == -1) "" else "" + volumeValue
             val fileName = directoryType.encodedName + DELIMITER + chartDate + volume + ppmPart + (currentChartIndex + 1) + ".csv"
-            val file = File(dir, fileName)
-            if (!file.exists()) {
-                file.createNewFile()
+            val filePath = dir + File.separator + fileName
+            if (!file.exists(filePath)) {
+                file.create(filePath)
             }
             val formattedTime = CO2_TIME_FORMAT.formatEnhanced(Date())
             val strH = String.format("%02X%02X", bytes[3], bytes[4])
             val co2 = strH.toInt(16)
-            file.appendText("$formattedTime,$co2\n")
+            file.append(filePath, "$formattedTime,$co2\n")
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -657,12 +675,12 @@ class MainViewModel @Inject constructor(
         }
         stopSendingTemperatureOrCo2Requests()
         val command = if (currentButtonProperties.value!!.isActivated) currentButtonProperties.value!!.savable.activatedCommand else currentButtonProperties.value!!.savable.command
-        events.offer(MainEvent.WriteToUsb(command))
+        events.trySend(MainEvent.WriteToUsb(command))
     }
 
     // true if success, false otherwise
     fun changeButton1PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn1Properties.value!!.savable.fileName).save(false)
+        if (this) fileSavable.withName(buttonOn1Properties.value!!.savable.fileName).save(file, false)
     }
 
     fun onButton2Click() {
@@ -670,7 +688,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun changeButton2PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn2Properties.value!!.savable.fileName).save(false)
+        if (this) fileSavable.withName(buttonOn2Properties.value!!.savable.fileName).save(file, false)
     }
 
     fun onButton3Click() {
@@ -678,7 +696,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun changeButton3PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn3Properties.value!!.savable.fileName).save(false)
+        if (this) fileSavable.withName(buttonOn3Properties.value!!.savable.fileName).save(file, false)
     }
 
     fun onButton4Click() {
@@ -698,11 +716,11 @@ class MainViewModel @Inject constructor(
             }
         }
         stopSendingTemperatureOrCo2Requests()
-        events.offer(MainEvent.WriteToUsb(currentButtonProperties.value!!.savable.command))
+        events.trySend(MainEvent.WriteToUsb(currentButtonProperties.value!!.savable.command))
     }
 
     fun changeButton4PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn4Properties.value!!.savable.fileName).save(true)
+        if (this) fileSavable.withName(buttonOn4Properties.value!!.savable.fileName).save(file, true)
     }
 
     fun onButton5Click() {
@@ -710,7 +728,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun changeButton5PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn5Properties.value!!.savable.fileName).save(true)
+        if (this) fileSavable.withName(buttonOn5Properties.value!!.savable.fileName).save(file, true)
     }
 
     fun onButton6Click() {
@@ -718,12 +736,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun changeButton6PersistedInfo(fileSavable: FileSavable): Boolean = fileSavable.isValid().apply {
-        if (this) fileSavable.withName(buttonOn6Properties.value!!.savable.fileName).save(true)
+        if (this) fileSavable.withName(buttonOn6Properties.value!!.savable.fileName).save(file, true)
     }
 
     fun onSendClick() {
         stopSendingTemperatureOrCo2Requests()
-        events.offer(MainEvent.SendCommandsFromEditor)
+        events.trySend(MainEvent.SendCommandsFromEditor)
     }
 
     fun onCurrentChartWasModified(wasModified: Boolean) {
@@ -761,10 +779,10 @@ class MainViewModel @Inject constructor(
     fun clearCheckedOptions() {
         val currentCharts = charts.value!!.charts.toMutableList()
         if (currentClearOptions.contains("Tx")) {
-            events.offer(MainEvent.ClearEditor)
+            events.trySend(MainEvent.ClearEditor)
         }
         if (currentClearOptions.contains("LM")) {
-            events.offer(MainEvent.ClearOutput)
+            events.trySend(MainEvent.ClearOutput)
         }
         if (currentClearOptions.contains("Chart 1")) {
             currentCharts[0] = currentCharts[0].copy(points = emptyList())
@@ -789,7 +807,7 @@ class MainViewModel @Inject constructor(
         }
         if (currentClearOptions.contains("New Measure")) {
             resetFilePaths()
-            events.offer(MainEvent.ClearData)
+            events.trySend(MainEvent.ClearData)
         }
         val maxY = currentCharts.maxOf { chart ->
             try {
@@ -802,17 +820,17 @@ class MainViewModel @Inject constructor(
     }
 
     private fun clearChartDirectories(chartDate: String, chartIndex: String) {
-        DirectoryType.MEASUREMENT.getDirectory().deleteChartFiles(chartDate, chartIndex)
-        DirectoryType.CALCULATIONS.getDirectory().deleteChartFiles(chartDate, chartIndex)
+        DirectoryType.MEASUREMENT.getDirectoryName().deleteChartFiles(chartDate, chartIndex)
+        DirectoryType.CALCULATIONS.getDirectoryName().deleteChartFiles(chartDate, chartIndex)
     }
 
-    private fun File.deleteChartFiles(chartDate: String, chartIndex: String) {
-        val subDirectories = listFiles { file -> file != null && file.isDirectory } ?: return
+    private fun String.deleteChartFiles(chartDate: String, chartIndex: String) {
+        val subDirectories = directory.listSubDirectoryPaths(this)
         for (subDirectory in subDirectories) {
-            val chartFiles = subDirectory.listFiles { _, name ->
-                name != null && name.contains(chartDate) && name.contains(chartIndex)
-            } ?: continue
-            chartFiles.forEach(File::delete)
+            val chartFiles = directory.listFilesByNameTemplate(subDirectory) { name ->
+                name.contains(chartDate) && name.contains(chartIndex)
+            }
+            chartFiles.forEach { file.delete(it) }
         }
     }
 
@@ -824,7 +842,7 @@ class MainViewModel @Inject constructor(
     private fun onPowerOnClick() {
         powerProperties.value = powerProperties.value!!.copy(isEnabled = false, alpha = 0.6f)
         isPowerWaitForLastResponse = true
-        events.offer(MainEvent.WriteToUsb(accessorySettings.value!!.on.command))
+        events.trySend(MainEvent.WriteToUsb(accessorySettings.value!!.on.command))
     }
 
     private fun onPowerOffClick(newAccessorySettings: AccessorySettings? = null) {
@@ -839,7 +857,7 @@ class MainViewModel @Inject constructor(
             waitForCooling(accessorySettings)
         } else {
             isPowerWaitForLastResponse = true
-            events.offer(MainEvent.WriteToUsb(accessorySettings.off.command))
+            events.trySend(MainEvent.WriteToUsb(accessorySettings.off.command))
         }
     }
 
@@ -904,7 +922,7 @@ class MainViewModel @Inject constructor(
                     )
                     startSendingTemperatureOrCo2Requests()
                 } else {
-                    events.offer(MainEvent.ShowToast(
+                    events.trySend(MainEvent.ShowToast(
                         message = "Wrong response: Got - \"$response\".Expected - ${onResponses.joinToString(separator = " or ") {"\"$it\""}}")
                     )
                     powerProperties.value = powerProperties.value!!.copy(alpha = 1f, isEnabled = true)
@@ -929,7 +947,7 @@ class MainViewModel @Inject constructor(
             }
             isCo2Measuring -> {
                 if (bytes.decodeToPeriodicResponse() is PeriodicResponse.Co2) {
-                    cacheCo2ValuesToFile(bytes)
+                    cacheCo2Values(bytes)
                 }
             }
             else -> {
@@ -958,18 +976,18 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    private fun getCacheResponseFile(): File {
+    private fun getCacheResponsePath(): String {
         val dateTimeFormatted = fileNameDateTimeFormatter.format(responseLogsDate)
-        return File(DirectoryType.TEMPORARY.getDirectory(), "sesion_at_$dateTimeFormatted.txt")
+        return DirectoryType.TEMPORARY.getDirectoryName() + File.separator + "sesion_at_$dateTimeFormatted.txt"
     }
 
     fun cacheResponseLog(responseLogEvent: ResponseLogEvent, createNewFile: Boolean = false) = viewModelScope.launch(cacheDispatcher) {
-        var file = getCacheResponseFile()
+        var cacheResponseFilePath = getCacheResponsePath()
         if (createNewFile) {
             responseLogsDate = Date()
-            file = getCacheResponseFile().also { it.createNewFile() }
+            cacheResponseFilePath = getCacheResponsePath().also { file.create(it) }
         }
-        file.appendText(moshi.adapter(ResponseLogEvent::class.java).toJson(responseLogEvent) + "\n")
+        file.append(cacheResponseFilePath, moshi.adapter(ResponseLogEvent::class.java).toJson(responseLogEvent) + "\n")
     }
 
     private fun Int.toFloat(isChartEmpty: Boolean): Float = if (isChartEmpty) {

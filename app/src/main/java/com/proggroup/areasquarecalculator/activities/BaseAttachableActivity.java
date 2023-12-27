@@ -1,6 +1,7 @@
 package com.proggroup.areasquarecalculator.activities;
 
 import android.annotation.TargetApi;
+import android.app.Application;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -17,7 +18,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
+import com.proggroup.areasquarecalculator.AttachableApplication;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
 import com.proggroup.areasquarecalculator.api.OnProgressDismissable;
@@ -63,8 +64,11 @@ public abstract class BaseAttachableActivity extends AppCompatActivity implement
 	@Override
 	public void finish() {
 		super.finish();
-		InterpolationCalculatorApp.getInstance().setPpmPoints(null);
-		InterpolationCalculatorApp.getInstance().setAvgSquarePoints(null);
+		Application application = getApplication();
+		if (application instanceof AttachableApplication attachableApplication) {
+			attachableApplication.setPpmPoints(null);
+			attachableApplication.setAvgSquarePoints(null);
+		}
 	}
 
     @Override

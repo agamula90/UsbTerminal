@@ -15,7 +15,7 @@ class UsbHostService : Service() {
 
     private val binder = object: UsbHost.Stub() {
         override fun getFromUsb(values: ByteArray?) {
-            usbEmitter.readEvents.offer(values)
+            usbEmitter.readEvents.trySend(values)
         }
     }
 

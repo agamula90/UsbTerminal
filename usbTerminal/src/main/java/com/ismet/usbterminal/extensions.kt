@@ -181,7 +181,10 @@ private fun ByteArray.getNotRawPeriodicResponse(): PeriodicResponse? = when {
     else -> null
 }
 
-fun File.readTextEnhanced(): String = readText().replace("\r", "")
+/*
+ * read text from sub path, specified by string
+ */
+fun String.readTextEnhanced(file: com.ismet.storage.File): String = file.read(this).replace("\r", "")
 
 fun ByteArray.decodeToStringEnhanced(): String {
     val periodicResponse = decodeToPeriodicResponse()

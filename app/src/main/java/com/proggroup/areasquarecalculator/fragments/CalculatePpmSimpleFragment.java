@@ -29,8 +29,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.proggroup.areasquarecalculator.AttachableApplication;
 import com.proggroup.areasquarecalculator.BaseLoadTask;
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.adapters.CalculatePpmSimpleAdapter;
 import com.proggroup.areasquarecalculator.api.LibraryContentAttachable;
@@ -373,8 +373,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 		avgPointsLayout.addView(tv);
 		graph1.setVisibility(View.GONE);
 
-		InterpolationCalculatorApp interpolationCalculatorApp = InterpolationCalculatorApp
-				.getInstance();
+		AttachableApplication interpolationCalculatorApp = (AttachableApplication) requireActivity().getApplication();
 		if (interpolationCalculatorApp.getPpmPoints() != null) {
 			ppmPoints = interpolationCalculatorApp.getPpmPoints();
 			avgSquarePoints = interpolationCalculatorApp.getAvgSquarePoints();
@@ -518,8 +517,8 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 
 			@Override
 			public void onClick(View v) {
-				SQLiteDatabase database = InterpolationCalculatorApp.getInstance().getSqLiteHelper
-						().getWritableDatabase();
+				SQLiteDatabase database = ((AttachableApplication) v.getContext().getApplicationContext())
+						.getSqLiteHelper().getWritableDatabase();
 				mAvgPointHelper.clear();
 				mSquarePointHelper.clear();
 				new PointHelper(database).clear();
@@ -529,8 +528,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 						CalculatePpmSimpleFragment.this, mAvgPointHelper, mSquarePointHelper,
 						mPointHelper, initAdapterDataAndHelpersFromDatabase(false));
 
-				SharedPreferences prefs = InterpolationCalculatorApp.getInstance()
-						.getSharedPreferences();
+				SharedPreferences prefs = ((AttachableApplication)v.getContext().getApplicationContext()).getSharedPreferences();
 				prefs.edit().remove(PrefConstants.INFO_IS_READY).apply();
 
 				initLayouts();
@@ -679,7 +677,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 	 * Init layout accord to data.
 	 */
 	private void initLayouts() {
-		SharedPreferences prefs = InterpolationCalculatorApp.getInstance().getSharedPreferences();
+		SharedPreferences prefs = ((AttachableApplication)requireActivity().getApplication()).getSharedPreferences();
 
 		if (prefs.contains(PrefConstants.INFO_IS_READY)) {
 			calculatePpmLayout.setVisibility(View.VISIBLE);
@@ -699,7 +697,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 	 * @return List of id's average square points.
 	 */
 	private List<Long> initAdapterDataAndHelpersFromDatabase(boolean isCreatingHelpers) {
-		SQLiteHelper helper = InterpolationCalculatorApp.getInstance().getSqLiteHelper();
+		SQLiteHelper helper = ((AttachableApplication)requireActivity().getApplication()).getSqLiteHelper();
 		SQLiteDatabase mDatabase = helper.getWritableDatabase();
 
 		if (isCreatingHelpers) {
@@ -747,7 +745,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 	 */
 	private void fillPpmAndSquaresFromDatabase(List<Float> ppmPoints, List<Float>
 			avgSquarePoints) {
-		SQLiteHelper helper = InterpolationCalculatorApp.getInstance().getSqLiteHelper();
+		SQLiteHelper helper = ((AttachableApplication)requireActivity().getApplication()).getSqLiteHelper();
 		SQLiteDatabase writeDb = helper.getWritableDatabase();
 		Project project = new ProjectHelper(writeDb).getProjects().get(0);
 		AvgPointHelper helper1 = new AvgPointHelper(writeDb, project);
@@ -898,7 +896,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 												e.printStackTrace();
 											}
 
-											return CalculatePpmUtils.saveAvgValuesToFile(adapter,
+											return CalculatePpmUtils.saveAvgValuesToFile(requireActivity(), adapter,
 													7, pathFile.getAbsolutePath(), isChecked);
 										}
 
@@ -1009,7 +1007,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 
 	@Override
 	public void onInfoFilled() {
-		InterpolationCalculatorApp.getInstance().getSharedPreferences().edit().putBoolean
+		((AttachableApplication)requireActivity().getApplication()).getSharedPreferences().edit().putBoolean
 				(PrefConstants.INFO_IS_READY, true).apply();
 		calculatePpmLayout.setVisibility(View.VISIBLE);
 		buttonsLayout.setVisibility(View.VISIBLE);
@@ -1077,8 +1075,7 @@ public class CalculatePpmSimpleFragment extends Fragment implements CalculatePpm
 					.this.ppmPoints);
 			List<Float> avgSquarePoints = new ArrayList<>(CalculatePpmSimpleFragment
 					.this.avgSquarePoints);
-			InterpolationCalculatorApp interpolationCalculatorApp = InterpolationCalculatorApp
-					.getInstance();
+			AttachableApplication interpolationCalculatorApp = (AttachableApplication) requireActivity().getApplication();
 			interpolationCalculatorApp.setAvgSquarePoints(avgSquarePoints);
 			interpolationCalculatorApp.setPpmPoints(ppmPoints);
 			graph1.setVisibility(View.VISIBLE);

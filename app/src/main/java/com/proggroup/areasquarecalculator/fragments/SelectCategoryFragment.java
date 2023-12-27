@@ -34,7 +34,7 @@ public class SelectCategoryFragment extends ListFragment implements LoaderManage
 	public Loader<List<String>> onCreateLoader(int id, Bundle bundle) {
 		switch (id) {
 			case LOAD_CATEGORIES_LOADER_ID:
-				return new LoadCategoriesLoader();
+				return new LoadCategoriesLoader(requireActivity());
 		}
 		return null;
 	}

@@ -20,7 +20,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.proggroup.areasquarecalculator.InterpolationCalculatorApp;
 import com.proggroup.areasquarecalculator.R;
 import com.proggroup.areasquarecalculator.data.AvgPoint;
 import com.proggroup.areasquarecalculator.data.Constants;
@@ -255,7 +254,7 @@ public class CalculatePpmSimpleAdapter extends BaseAdapter {
 		int itemId = (int) getItemId(position);
 
 		if (convertView == null || convertView.getTag() != Integer.valueOf(itemId)) {
-			LayoutInflater inflater = (LayoutInflater) InterpolationCalculatorApp.getInstance()
+			LayoutInflater inflater = (LayoutInflater) fragment.requireActivity()
 					.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 			switch (itemId) {

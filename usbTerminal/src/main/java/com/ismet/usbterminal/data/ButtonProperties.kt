@@ -2,6 +2,7 @@ package com.ismet.usbterminal.data
 
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
+import com.ismet.storage.DirectoryType
 import com.ismet.usbterminal.BUTTON_FILE_FORMAT_DELIMITER
 import com.ismet.usbterminalnew.R
 import kotlinx.parcelize.Parcelize
@@ -97,12 +98,12 @@ class FileSavable(
         return FileSavable(text, command, activatedText, activatedCommand, fileName)
     }
 
-    fun save(ignoreActivated: Boolean) {
+    fun save(file: com.ismet.storage.File, ignoreActivated: Boolean) {
         val listToBeingSave = when(ignoreActivated) {
             true -> listOf(text, command)
             false -> listOf(text, activatedText, command, activatedCommand)
         }
         val content = listToBeingSave.joinToString(separator = BUTTON_FILE_FORMAT_DELIMITER)
-        File(DirectoryType.APPLICATION_SETTINGS.getDirectory(), fileName).writeText(content)
+        file.write(DirectoryType.APPLICATION_SETTINGS.getDirectoryName() + File.separator + fileName, content)
     }
 }
