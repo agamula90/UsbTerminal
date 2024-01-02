@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/top_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/layout_margin_default">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <Button
+                        android:id="@+id/power"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="43dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="power on"
+                        android:textColor="@drawable/color_state_drawable" />
+
+                    <FrameLayout
+                        android:id="@+id/temperature_background"
+                        android:layout_width="0dp"
+                        android:layout_height="43dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/temperature_button_drawable_unpressed">
+
+                        <TextView
+                            android:id="@+id/temperature"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text=""
+                            android:textColor="@android:color/black"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:id="@+id/temperature_c"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
+                            android:layout_marginEnd="5dp"
+                            android:layout_marginRight="5dp"
+                            android:text="C"
+                            android:textColor="@android:color/black"
+                            android:textSize="16sp" />
+                    </FrameLayout>
+
+                    <Space
+                        android:layout_width="@dimen/text_margin_default"
+                        android:layout_height="@dimen/text_margin_default" />
+
+                    <FrameLayout
+                        android:id="@+id/co2_background"
+                        android:layout_width="0dp"
+                        android:layout_height="43dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/temperature_button_drawable_unpressed">
+
+                        <TextView
+                            android:id="@+id/co2"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text=""
+                            android:textColor="@android:color/black"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:id="@+id/co2_ppm"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
+                            android:layout_marginEnd="5dp"
+                            android:layout_marginBottom="3dp"
+                            android:gravity="center_horizontal"
+                            android:lineSpacingMultiplier="0.75"
+                            android:text="p\np\nm"
+                            android:textColor="@android:color/black"
+                            android:textSize="13sp" />
+                    </FrameLayout>
+
+                    <Space
+                        android:layout_width="@dimen/text_margin_default"
+                        android:layout_height="@dimen/text_margin_default" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <Button
+                        android:id="@+id/buttonOn1"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="On" />
+
+                    <Button
+                        android:id="@+id/buttonOn2"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="On" />
+
+                    <Button
+                        android:id="@+id/buttonPpm"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="PPM" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <Button
+                        android:id="@+id/buttonOn3"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="On" />
+
+                    <Button
+                        android:id="@+id/buttonOn4"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="On" />
+
+                    <Button
+                        android:id="@+id/buttonOn5"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="PPM" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <Button
+                        android:id="@+id/buttonClear"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:text="Next" />
+
+                    <Button
+                        android:id="@+id/buttonSend"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="Send" />
+
+                    <Button
+                        android:id="@+id/buttonMeasure"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="2dp"
+                        android:layout_weight="1"
+                        android:text="Measure"
+                        android:textColor="@drawable/color_state_drawable" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="@dimen/text_margin_default"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:weightSum="4">
+
+                    <fr.xgouchet.texteditor.ui.view.AdvancedEditText
+                        android:id="@+id/editor"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="@dimen/text_margin_default"
+                        android:layout_weight="2.2"
+                        android:gravity="top|start"
+                        android:imeOptions="actionSend"
+                        android:inputType="textMultiLine"
+                        android:scrollbarAlwaysDrawHorizontalTrack="false"
+                        android:scrollbarAlwaysDrawVerticalTrack="true"
+                        android:scrollbarSize="5dp"
+                        android:scrollbars="vertical"
+                        android:textCursorDrawable="@null"
+                        android:textSize="@dimen/edit_text_size_default"
+                        android:typeface="monospace" />
+
+                    <ScrollView
+                        android:id="@+id/scrollView"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="@dimen/text_margin_default"
+                        android:layout_marginBottom="@dimen/text_margin_default"
+                        android:layout_weight="1.8"
+                        android:background="@android:color/black"
+                        android:scrollbars="vertical">
+
+                        <TextView
+                            android:id="@+id/output"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/black"
+                            android:paddingTop="0dp"
+                            android:text=""
+                            android:textColor="#ffffff"
+                            android:textIsSelectable="true"
+                            android:textSize="@dimen/edit_text_size_default" />
+                    </ScrollView>
+                </LinearLayout>
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/all_charts_layout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:clipChildren="false"
+                android:gravity="end"
+                android:paddingStart="4dp"
+                android:paddingEnd="@dimen/layout_margin_default">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/white" />
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false" />
+
+                <LinearLayout
+                    android:id="@+id/margin_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:id="@+id/exported_chart_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="30dp"
+                        android:layout_marginBottom="15dp"
+                        android:orientation="horizontal" />
+
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/scroll_below_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/black"
+            android:paddingTop="0dp"
+            android:text=""
+            android:textColor="#ffffff"
+            android:textSize="@dimen/edit_text_size_default"
+            android:typeface="monospace" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:orientation="vertical">
+
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/layout_margin_default">
+
+                <LinearLayout
+                    android:id="@+id/avg_points"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/layout_margin_default"
+                android:layout_marginBottom="0dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/load_ppm_curve"
+                    style="@style/ButtonDefaultStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/load_avgs_from_file" />
+
+                <Button
+                    android:id="@+id/graph"
+                    style="@style/ButtonDefaultStyle"
+                    android:layout_width="wrap_content"
+                    android:text="Graph"
+                    android:visibility="visible" />
+
+                <LinearLayout
+                    android:id="@+id/calculate_ppm_layout_loaded"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="invisible">
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="10dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        style="@style/TextViewDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:singleLine="true"
+                        android:text="@string/enter_avg_square" />
+
+                    <Button
+                        android:id="@+id/mes_select_folder"
+
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:text="SELECT" />
+
+                    <EditText
+                        android:id="@+id/avg_value_loaded"
+                        style="@style/EditTextDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/button_height_default"
+                        android:layout_gravity="center_vertical"
+                        android:layout_margin="@dimen/text_margin_default"
+                        android:background="@drawable/edit_background"
+                        android:digits="0123456789."
+                        android:ems="7"
+                        android:gravity="center"
+                        android:imeOptions="actionDone"
+                        android:inputType="number"
+                        android:maxEms="7"
+                        android:padding="6dp"
+                        android:singleLine="true" />
+
+                    <LinearLayout
+                        android:layout_width="@dimen/long_button_width"
+                        android:layout_height="wrap_content">
+
+                        <Button
+                            android:id="@+id/calculate_ppm_loaded"
+                            style="@style/ButtonDefaultStyle"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:singleLine="true"
+                            android:text="@string/calculate_loaded_ppm_simple" />
+
+                        <Button
+                            android:id="@+id/calculate_ppm_auto"
+                            style="@style/ButtonDefaultStyle"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:singleLine="true"
+                            android:text="@string/calculate_loaded_ppm_auto" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/result_ppm_loaded"
+                        style="@style/TextViewDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/button_height_default"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/edit_background"
+                        android:ems="6"
+                        android:gravity="center"
+                        android:maxEms="6"
+                        android:textColor="@android:color/black" />
+
+                    <Button
+                        android:id="@+id/report"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:text="REPORT" />
+
+                    <Button
+                        android:id="@+id/clear_row"
+                        style="@style/ButtonDefaultStyle"
+                        android:layout_width="wrap_content"
+                        android:text="CLEAR" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

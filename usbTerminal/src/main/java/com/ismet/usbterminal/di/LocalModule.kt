@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import com.ismet.storage.DirectoryType
-import com.ismet.usb.UsbEmitter
+import com.ismet.usbterminal.UsbEmitter
 import com.ismet.usbterminalnew.BuildConfig
 import com.squareup.moshi.Moshi
 import dagger.Module

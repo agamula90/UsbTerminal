@@ -37,14 +37,14 @@
                     android:layout_width="0dip"
                     android:layout_height="wrap_content"
                     android:layout_weight=".3"
-                    android:text="@string/nnew"></Button>
+                    android:text="@string/nnew" />
 
                 <Button
                     android:id="@+id/fdButtonSelect"
                     android:layout_width="0dip"
                     android:layout_height="wrap_content"
                     android:layout_weight=".7"
-                    android:text="@string/select"></Button>
+                    android:text="@string/select" />
             </LinearLayout>
         </LinearLayout>
 
@@ -70,7 +70,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/white"
-                android:text=""></EditText>
+                android:text="" />
 
             <LinearLayout
                 android:layout_width="fill_parent"
@@ -82,14 +82,14 @@
                     android:layout_width="0dip"
                     android:layout_height="wrap_content"
                     android:layout_weight=".3"
-                    android:text="@string/cancel"></Button>
+                    android:text="@string/cancel" />
 
                 <Button
                     android:id="@+id/fdButtonCreate"
                     android:layout_width="0dip"
                     android:layout_height="wrap_content"
                     android:layout_weight=".7"
-                    android:text="@string/create"></Button>
+                    android:text="@string/create" />
             </LinearLayout>
         </LinearLayout>
 

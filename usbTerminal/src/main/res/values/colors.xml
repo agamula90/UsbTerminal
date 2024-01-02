@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="control_normal">#bdbdbd</color>
+    <color name="color_text">#ffffff</color>
+    <color name="app_background">#000000</color>
+    <color name="edit_disabled">#cacaca</color>
+    <color name="grid_item_bkg_color">#dddddd</color>
+    <color name="header_color">#bababa</color>
 </resources>

@@ -1,16 +1,20 @@
 package com.ismet.usbterminal
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.get
@@ -27,9 +31,9 @@ import com.ismet.usbterminal.data.PeriodicResponse
 import com.ismet.usbterminal.data.PrefConstants
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
-import com.ismet.usbterminalnew.databinding.*
-import com.proggroup.areasquarecalculator.utils.AutoExpandKeyboardUtils
-import java.io.File
+import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
+import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
+import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
 import kotlin.math.roundToInt
 
 fun LineChart.set(chartHelperPaint: Paint, charts: Charts) {
@@ -51,44 +55,44 @@ fun LineChart.set(chartHelperPaint: Paint, charts: Charts) {
     }
 }
 
-fun Context.showOnOffDialog(init: (LayoutDialogOnOffBinding) -> Unit, okClick: (LayoutDialogOnOffBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
-    val inflater = LayoutInflater.from(this)
+fun Context.showOnOffDialog(
+    init: (LayoutDialogOnOffBinding) -> Unit,
+    okClick: (LayoutDialogOnOffBinding, DialogInterface) -> Unit
+): AlertDialog = with(AlertDialog.Builder(this)) {
+    val inflater = LayoutInflater.from(context)
     val binding = LayoutDialogOnOffBinding.inflate(inflater)
     init(binding)
-    val dialog = it.apply {
-        setTitle("Set On/Off commands")
-        setView(binding.root)
-        setPositiveButton(R.string.ui_save) { dialog, _ ->
-            dialog.hideSoftInput()
-            okClick(binding, dialog)
-        }
-        setNegativeButton(R.string.ui_cancel) { dialog, _ ->
-            dialog.hideSoftInput()
-            dialog.cancel()
-        }
-    }.create()
-    dialog.show()
-    dialog
+    setTitle("Set On/Off commands")
+    setView(binding.root)
+    setPositiveButton(R.string.ui_save) { dialog, _ ->
+        dialog.hideSoftInput()
+        okClick(binding, dialog)
+    }
+    setNegativeButton(R.string.ui_cancel) { dialog, _ ->
+        dialog.hideSoftInput()
+        dialog.cancel()
+    }
+    create().also { it.show() }
 }
 
-fun Context.showCommandDialog(init: (LayoutDialogOneCommandBinding) -> Unit, okClick: (LayoutDialogOneCommandBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(this).let {
-    val inflater = LayoutInflater.from(this)
+fun Context.showCommandDialog(
+    init: (LayoutDialogOneCommandBinding) -> Unit,
+    okClick: (LayoutDialogOneCommandBinding, DialogInterface) -> Unit
+): AlertDialog = with(AlertDialog.Builder(this)) {
+    val inflater = LayoutInflater.from(context)
     val binding = LayoutDialogOneCommandBinding.inflate(inflater)
     init(binding)
-    val dialog = it.apply {
-        setTitle("Set command")
-        setView(binding.root)
-        setPositiveButton(R.string.ui_save) { dialog, _ ->
-            dialog.hideSoftInput()
-            okClick(binding, dialog)
-        }
-        setNegativeButton(R.string.ui_cancel) { dialog, _ ->
-            dialog.hideSoftInput()
-            dialog.cancel()
-        }
-    }.create()
-    dialog.show()
-    dialog
+    setTitle("Set command")
+    setView(binding.root)
+    setPositiveButton(R.string.ui_save) { dialog, _ ->
+        dialog.hideSoftInput()
+        okClick(binding, dialog)
+    }
+    setNegativeButton(R.string.ui_cancel) { dialog, _ ->
+        dialog.hideSoftInput()
+        dialog.cancel()
+    }
+    create().also { it.show() }
 }
 
 private fun DialogInterface.hideSoftInput() {
@@ -266,17 +270,44 @@ private fun createDataSet(lineColor: Int) = LineDataSet(ArrayList(), null).apply
     lineWidth = 1.5f
 }
 
-fun LayoutMainBinding.showBottomViews() {
-    val minHeight = topContainer.minimumHeight
+fun Activity.showToast(message: String) {
+    val customToast = Toast.makeText(this, message, Toast.LENGTH_LONG)
+    val view = customToast.view
 
-    if (minHeight == 0) {
-        AutoExpandKeyboardUtils.expand(
-            root.context,
-            topContainer,
-            toolbar,
-            bottomFragment,
-            scrollBelowText
-        )
-        allChartsLayout.layoutParams.height = topContainer.minimumHeight
+    if (view != null) {
+        val textView = view.findViewById<TextView>(android.R.id.message)
+        textView.setTextColor(Color.BLACK)
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        view.setBackgroundResource(R.drawable.toast_drawable)
     }
+    customToast.setGravity(Gravity.CENTER, 0, 0)
+    customToast.show()
+}
+
+fun composePpmCurveText(ppmPoints: List<Float>, avgSquarePoints: List<Float>): String {
+    val builder = java.lang.StringBuilder()
+    for (i in ppmPoints.indices) {
+        builder.append(ppmPoints[i].toInt().toString() + " " + avgSquarePoints[i].format() + "    ")
+    }
+    return builder.toString()
+}
+
+fun Float.format(countDigits: Int = 4): String {
+    return String.format(java.util.Locale.US, "%.${countDigits}f", this)
+}
+
+fun findPpmBySquare(square: Float, ppmPoints: List<Float>, avgSquarePoints: List<Float>): Float {
+    for (i in 0 until avgSquarePoints.size - 1) {
+        //check whether the point belongs to the line
+        if (square >= avgSquarePoints[i] && square <= avgSquarePoints[i + 1]) {
+            //getting x value
+            val x1 = ppmPoints[i]
+            val x2 = ppmPoints[i + 1]
+            val y1 = avgSquarePoints[i]
+            val y2 = avgSquarePoints[i + 1]
+            return (square - y1) * (x2 - x1) / (y2 - y1) + x1
+        }
+    }
+
+    return -1f
 }

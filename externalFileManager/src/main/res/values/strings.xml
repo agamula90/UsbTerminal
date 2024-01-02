@@ -108,4 +108,11 @@
     <string name="select_file_for_calculations" translatable="false">Select csv file</string>
     <string name="select_option_to_continue" translatable="false">Select option to continue</string>
     <string name="cant_read_folder" translatable="false">folder can\'t be read!</string>
+
+    <string name="nnew" translatable="false">New</string>
+    <string name="select" translatable="false">Select</string>
+    <string name="file_name" translatable="false">File name:</string>
+    <string name="cancel" translatable="false">Cancel</string>
+    <string name="create" translatable="false">Save</string>
+    <string name="no_data" translatable="false">No Data</string>
 </resources>

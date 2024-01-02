@@ -3,7 +3,7 @@ package com.ismet.usbterminal.data
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import com.ismet.storage.DirectoryType
-import com.ismet.usbterminal.BUTTON_FILE_FORMAT_DELIMITER
+import com.ismet.usbterminal.main.BUTTON_FILE_FORMAT_DELIMITER
 import com.ismet.usbterminalnew.R
 import kotlinx.parcelize.Parcelize
 import java.io.File

@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">EToC v1.1</string>
-    <string name="app_name_with_version" formatted="false">EToC v%s</string>
+    <string name="app_name" translatable="false">EToC v1.1</string>
+    <string name="app_name_with_version" formatted="false" translatable="false">EToC v%s</string>
     
     <!--  
     <string name="permission_internal">Usb Terminal Internal Permission</string>
 	-->
+    <string name="do_you_want_to_create_curve" translatable="false">Do you want to create curve from files
+        inside?</string>
+    <string name="yes" translatable="false">Yes</string>
+    <string name="no" translatable="false">No</string>
+
+
+    <string name="enter_avg_square" translatable="false">Enter SAV:</string>
+    <string name="calculate_loaded_ppm_simple" translatable="false">CALC MANUAL</string>
+    <string name="calculate_loaded_ppm_auto" translatable="false">CALC AUTO</string>
+    <string name="input_avg_value" translatable="false">Input avg value</string>
+    <string name="wrong_data" translatable="false">Wrong data!!</string>
+    <string name="load_avgs_from_file" translatable="false">Load curve</string>
+    <string name="curve_is_creating" translatable="false">Creating Calibrating Curve, please wait... </string>
 </resources>

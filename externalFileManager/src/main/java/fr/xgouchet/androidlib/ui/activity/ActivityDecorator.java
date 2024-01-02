@@ -26,9 +26,6 @@ public final class ActivityDecorator {
 		MenuItem item;
 
 		item = menu.add(0, itemId, Menu.NONE, title);
-		if ((icon != -1) && (VERSION.SDK_INT < VERSION_CODES.HONEYCOMB)) {
-			item.setIcon(icon);
-		}
 		return item;
 	}
 
@@ -38,13 +35,10 @@ public final class ActivityDecorator {
 	 * @param item the item to show
 	 * @param icon the item icon resource
 	 */
-	@TargetApi(11)
 	public static void showMenuItemAsAction(final MenuItem item, final int icon, int action) {
-		if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-			if (icon != -1) {
-				item.setIcon(icon);
-			}
-			item.setShowAsAction(action);
+		if (icon != -1) {
+			item.setIcon(icon);
 		}
+		item.setShowAsAction(action);
 	}
 }

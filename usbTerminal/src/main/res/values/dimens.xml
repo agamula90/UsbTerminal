@@ -4,5 +4,14 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="default_margin">10dp</dimen>
+    <dimen name="grid_view_curve_height">60dp</dimen>
+    <dimen name="progress_margin">7dp</dimen>
+    <dimen name="long_button_width">210dp</dimen>
+    <dimen name="button_height_extra_small">25dp</dimen>
+    <dimen name="layout_margin_default">6dp</dimen>
+    <dimen name="edit_text_size_default">13sp</dimen>
+    <dimen name="text_margin_default">2dp</dimen>
+    <dimen name="button_height_default">40dp</dimen>
+    <dimen name="grid_view_item_height">60dp</dimen>
 
 </resources>

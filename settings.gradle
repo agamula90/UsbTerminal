@@ -1,4 +1,3 @@
 include ':externalFileManager'
-include ':app'
 include ':storage'
 include ':usbTerminal'
