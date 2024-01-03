@@ -140,12 +140,7 @@ class MainViewModel @Inject constructor(
                 exceptionHandler.handleException(EmptyCoroutineContext, e)
             }
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-        ) {
-            initRequiredDirectories()
-            observeAppSettingsDirectoryUpdates()
-        }
+
         readCombinedXyChart()
     }
 
@@ -157,7 +152,6 @@ class MainViewModel @Inject constructor(
     }
 
     fun observeAppSettingsDirectoryUpdates() {
-        //TODO remove for local tests
         fileObserver = object: FileObserver(baseDirectory + File.separator + applicationSettingsDirectoryPath) {
             override fun onEvent(event: Int, path: String?) {
                 if (event in fileObservationEvents) {

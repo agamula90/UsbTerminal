@@ -1,10 +1,12 @@
 package com.ismet.usbterminal.main
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
@@ -15,6 +17,7 @@ import android.print.PrintManager
 import android.text.Editable
 import android.text.Html
 import android.text.TextWatcher
+import android.util.Log
 import android.util.SparseArray
 import android.util.TypedValue
 import android.view.Gravity
@@ -32,6 +35,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.children
@@ -45,6 +49,7 @@ import com.github.mikephil.charting.charts.LineChart
 import com.ismet.storage.BaseDirectory
 import com.ismet.storage.DirectoryType
 import com.ismet.usbterminal.append
+import com.ismet.usbterminal.calculateSquare
 import com.ismet.usbterminal.composePpmCurveText
 import com.ismet.usbterminal.data.FileSavable
 import com.ismet.usbterminal.data.PeriodicResponse
@@ -60,6 +65,8 @@ import com.ismet.usbterminal.main.bottom.countReports
 import com.ismet.usbterminal.main.bottom.createReport
 import com.ismet.usbterminal.main.bottom.defaultReport
 import com.ismet.usbterminal.main.chart.configure
+import com.ismet.usbterminal.main.data.AvgPoint
+import com.ismet.usbterminal.main.data.ReportData
 import com.ismet.usbterminal.set
 import com.ismet.usbterminal.showCommandDialog
 import com.ismet.usbterminal.showMeasureDialog
@@ -72,9 +79,6 @@ import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
 import com.ismet.usbterminalnew.databinding.NewFragmentMainBinding
 import com.itextpdf.text.DocumentException
-import com.ismet.usbterminal.main.data.AvgPoint
-import com.ismet.usbterminal.main.data.ReportData
-import com.ismet.usbterminal.calculateSquare
 import dagger.hilt.android.AndroidEntryPoint
 import de.keyboardsurfer.android.widget.crouton.Crouton
 import de.keyboardsurfer.android.widget.crouton.Style
@@ -91,6 +95,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
@@ -147,6 +152,30 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
             showToast("Wrong files for calculating")
         }
         fillAvgPointsLayout()
+    }
+
+    private var storagePermissionLauncher : ActivityResultLauncher<Intent>? = null
+    private val storagePermissionResult = ActivityResultCallback<ActivityResult> {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+            Log.e("Oops", "is storage manager = ${Environment.isExternalStorageManager()}, result code: ${it.resultCode}")
+            if(!Environment.isExternalStorageManager()) {
+                showToast("Please grant storage permission in order to use app")
+                return@ActivityResultCallback
+            }
+        }
+        viewModel.initRequiredDirectories()
+        viewModel.observeAppSettingsDirectoryUpdates()
+    }
+
+    private var storagePermissionsLauncher: ActivityResultLauncher<Array<String>> ?= null
+    private val storagePermissionsResult = ActivityResultCallback<Map<String, Boolean>> {
+        if (it[Manifest.permission.READ_EXTERNAL_STORAGE] != true || it[Manifest.permission.WRITE_EXTERNAL_STORAGE] != true) {
+            showToast("Please grant storage permission in order to use app")
+            requireActivity().finish()
+            return@ActivityResultCallback
+        }
+        viewModel.initRequiredDirectories()
+        viewModel.observeAppSettingsDirectoryUpdates()
     }
 
     private val realCalculationsCalculateAutoListener = {
@@ -524,7 +553,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
 
         binding.editor.addTextChangedListener(this)
         binding.editor.updateFromSettings()
-        sharedUiViewModel.watcher = TextChangeWatcher()
+        sharedUiViewModel.undoWatcher = TextChangeWatcher()
 
         binding.power.setOnClickListener { viewModel.onPowerClick() }
         binding.buttonSend.setOnClickListener { viewModel.onSendClick() }
@@ -550,6 +579,53 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
         )
 
         fillAvgPointsLayout()
+        createPermissionLaunchers()
+        if (!checkStoragePermissions()) {
+            requestStoragePermissions()
+        } else {
+            viewModel.initRequiredDirectories()
+            viewModel.observeAppSettingsDirectoryUpdates()
+        }
+    }
+
+    private fun checkStoragePermissions(): Boolean = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> Environment.isExternalStorageManager()
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+            val context = requireContext()
+            val readPermissionGrant = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+            val writePermissionGrant = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            readPermissionGrant == PackageManager.PERMISSION_GRANTED && writePermissionGrant == PackageManager.PERMISSION_GRANTED
+        }
+        else -> true
+    }
+
+    private fun createPermissionLaunchers() {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                storagePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult(), storagePermissionResult)
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                storagePermissionsLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(), storagePermissionsResult)
+            }
+        }
+    }
+
+    private fun requestStoragePermissions() {
+        storagePermissionLauncher?.also { launcher ->
+            try {
+                val intent = Intent().apply {
+                    action = android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                    //data = Uri.fromParts("package", requireContext().packageName, null)
+                }
+                launcher.launch(intent)
+            } catch (e: java.lang.Exception) {
+                val intent = Intent().apply {
+                    action = android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+                }
+                launcher.launch(intent)
+            }
+        }
+        storagePermissionsLauncher?.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     private fun NewFragmentMainBinding.observeEvents() {
@@ -693,11 +769,11 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                 when (event) {
                     is UiEvent.ViewModelInitialized -> {}
                     is UiEvent.ClearContent -> {
-                        sharedUiViewModel.watcher = null
+                        sharedUiViewModel.undoWatcher = null
                         sharedUiViewModel.isInUndo = true
                         editor.setText("")
                         sharedUiViewModel.isDirty = false
-                        sharedUiViewModel.watcher = TextChangeWatcher()
+                        sharedUiViewModel.undoWatcher = TextChangeWatcher()
                         sharedUiViewModel.isInUndo = false
                     }
                     is UiEvent.OpenFile -> {
@@ -710,7 +786,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                     is UiEvent.OpenBackup -> {
                         sharedUiViewModel.isInUndo = true
                         binding.editor.setText(event.text)
-                        sharedUiViewModel.watcher = TextChangeWatcher()
+                        sharedUiViewModel.undoWatcher = TextChangeWatcher()
                         sharedUiViewModel.currentFilePath = null
                         sharedUiViewModel.currentFileName = null
                         sharedUiViewModel.isDirty = false
@@ -821,7 +897,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                             """.trimIndent()
                     )
                 }
-                sharedUiViewModel.watcher = TextChangeWatcher()
+                sharedUiViewModel.undoWatcher = TextChangeWatcher()
                 sharedUiViewModel.currentFilePath = FileUtils.getCanonizePath(file)
                 sharedUiViewModel.currentFileName = file.name
                 RecentFiles.updateRecentList(sharedUiViewModel.currentFilePath)
@@ -1470,7 +1546,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
         newLength: Int
     ) {
         if (Settings.UNDO && !sharedUiViewModel.isInUndo) {
-            sharedUiViewModel.watcher?.beforeChange(oldText, start, length, newLength)
+            sharedUiViewModel.undoWatcher?.beforeChange(oldText, start, length, newLength)
         }
     }
 
@@ -1481,7 +1557,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
         newLength: Int
     ) {
         if (Settings.UNDO && !sharedUiViewModel.isInUndo) {
-            sharedUiViewModel.watcher?.afterChange(newText, start, oldLength, newLength)
+            sharedUiViewModel.undoWatcher?.afterChange(newText, start, oldLength, newLength)
         }
         sharedUiViewModel.editorText = binding.editor.text
     }

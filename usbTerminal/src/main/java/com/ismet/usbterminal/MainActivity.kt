@@ -4,11 +4,9 @@ import com.ismet.usbterminal.main.DATE_TIME_FORMATTER
 import com.ismet.usbterminal.main.MainEvent
 import com.ismet.usbterminal.main.MainViewModel
 
-import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.*
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PointF
 import android.hardware.usb.UsbManager
@@ -19,7 +17,6 @@ import android.view.*
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.main.SharedUiViewModel
 import com.ismet.storage.BaseDirectory
@@ -303,33 +300,6 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
             readIntent()
         }
         isReadIntent = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-            && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE)
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when(requestCode) {
-            STORAGE_PERMISSION_CODE -> {
-                val indexOfWritePermission = permissions.indexOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                if (indexOfWritePermission == -1 || grantResults[indexOfWritePermission] != PackageManager.PERMISSION_GRANTED) {
-                    showToast("Please grant storage permission in order to use app")
-                    finish()
-                    return
-                }
-                viewModel.initRequiredDirectories()
-                viewModel.observeAppSettingsDirectoryUpdates()
-            }
-            else -> {
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-            }
-        }
     }
 
     override fun onPause() {
@@ -691,7 +661,7 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
     private fun undo(): Boolean {
         var didUndo = false
         sharedUiViewModel.isInUndo = true
-        val caret = sharedUiViewModel.watcher!!.undo(sharedUiViewModel.editorText!!)
+        val caret = sharedUiViewModel.undoWatcher!!.undo(sharedUiViewModel.editorText!!)
         if (caret >= 0) {
             sharedUiViewModel.setEditorSelection(caret, caret)
             didUndo = true
@@ -841,6 +811,5 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
 
     companion object {
         private const val TAG = "MainActivity"
-        private const val STORAGE_PERMISSION_CODE = 1
     }
 }

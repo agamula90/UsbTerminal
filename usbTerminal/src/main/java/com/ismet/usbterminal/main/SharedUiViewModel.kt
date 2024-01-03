@@ -23,10 +23,7 @@ class SharedUiViewModel @Inject constructor(
     )
     var isDirty = false
 
-    /**
-     * TODO: rename to Undo watcher
-     */
-    var watcher: TextChangeWatcher? = null
+    var undoWatcher: TextChangeWatcher? = null
     var isInUndo = false
 
     var readingCount = 0

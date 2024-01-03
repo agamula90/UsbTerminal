@@ -7,6 +7,5 @@ interface Directory {
     fun listSubDirectoryPaths(relativePath: String): List<String>
     fun listFilesByNameTemplate(relativePath: String, name: (String) -> Boolean): List<String>
 
-    //TODO maybe can be random long
     fun lastModified(relativePath: String): Long
 }

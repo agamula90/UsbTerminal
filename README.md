@@ -7,5 +7,4 @@ To test app without usb device, accessory app can be used to simulate usb device
 - When bytes from device are not raw bytes, then command will contain redundant space at end
 
 ### TODO's:
-- refactor "app" library to provide better sdk 
-- refactor "androidLib" library to provide better sdk
+- remove "storage" module
