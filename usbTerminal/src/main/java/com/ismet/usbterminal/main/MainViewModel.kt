@@ -29,7 +29,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import java.io.*
 import java.text.DateFormat
@@ -90,7 +90,7 @@ class MainViewModel @Inject constructor(
     private set
 
     private val events = Channel<MainEvent>(Channel.UNLIMITED)
-    val eventsFlow = events.consumeAsFlow().shareIn(
+    val eventsFlow = events.receiveAsFlow().shareIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         replay = 1

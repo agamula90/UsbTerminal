@@ -8,7 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.xgouchet.texteditor.undo.TextChangeWatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import java.net.URI
 import javax.inject.Inject
@@ -18,7 +18,7 @@ class SharedUiViewModel @Inject constructor(
 
 ): ViewModel() {
     private val events = Channel<UiEvent>()
-    val eventsFlow = events.consumeAsFlow().shareIn(
+    val eventsFlow = events.receiveAsFlow().shareIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         replay = 1
