@@ -17,6 +17,7 @@ import android.view.*
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.main.SharedUiViewModel
 import com.ismet.storage.BaseDirectory
@@ -219,36 +220,38 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
 
     private fun observeEvents() {
         lifecycleScope.launch {
-
-            viewModel.eventsFlow.collect { event ->
-                when(event) {
-                    is MainEvent.ShowToast -> showToast(event.message)
-                    is MainEvent.WriteToUsb -> sendCommand(event.command)
-                    is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
-                    is MainEvent.ShowWaitForCoolingDialog -> {
-                        sharedUiViewModel.hideProgress()
-                        coolingDialog = Dialog(this@MainActivity).apply {
-                            requestWindowFeature(Window.FEATURE_NO_TITLE)
-                            setContentView(R.layout.layout_cooling)
-                            window!!.setBackgroundDrawableResource(android.R.color.transparent)
-                            (findViewById<View>(R.id.text) as TextView).text = event.message
-                            setCancelable(false)
-                            show()
+            viewModel
+                .eventsFlow
+                .flowWithLifecycle(lifecycle)
+                .collect { event ->
+                    when (event) {
+                        is MainEvent.ShowToast -> showToast(event.message)
+                        is MainEvent.WriteToUsb -> sendCommand(event.command)
+                        is MainEvent.DismissCoolingDialog -> coolingDialog?.dismiss()
+                        is MainEvent.ShowWaitForCoolingDialog -> {
+                            sharedUiViewModel.hideProgress()
+                            coolingDialog = Dialog(this@MainActivity).apply {
+                                requestWindowFeature(Window.FEATURE_NO_TITLE)
+                                setContentView(R.layout.layout_cooling)
+                                window!!.setBackgroundDrawableResource(android.R.color.transparent)
+                                (findViewById<View>(R.id.text) as TextView).text = event.message
+                                setCancelable(false)
+                                show()
+                            }
                         }
-                    }
 
-                    is MainEvent.ShowCorruptionDialog -> {
-                        showCorruptionDialog(event.message)
-                    }
+                        is MainEvent.ShowCorruptionDialog -> {
+                            showCorruptionDialog(event.message)
+                        }
 
-                    is MainEvent.DismissCorruptionDialog -> {
-                        corruptionDialog?.dismiss()
-                        corruptionDialog = null
-                    }
+                        is MainEvent.DismissCorruptionDialog -> {
+                            corruptionDialog?.dismiss()
+                            corruptionDialog = null
+                        }
 
-                    else -> {}
+                        else -> {}
+                    }
                 }
-            }
         }
     }
 

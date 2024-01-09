@@ -4,7 +4,6 @@ import com.ismet.usbterminal.data.PeriodicResponse
 import java.net.URI
 
 sealed class UiEvent {
-    object ViewModelInitialized: UiEvent()
     object ClearContent: UiEvent()
 
     //one of path/uriPath should be specified

@@ -44,7 +44,10 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.github.mikephil.charting.charts.LineChart
 import com.ismet.storage.BaseDirectory
 import com.ismet.storage.DirectoryType
@@ -726,21 +729,22 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
 
     private fun NewFragmentMainBinding.observeMainEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
-
-            viewModel.eventsFlow.collect { event ->
-                when (event) {
-                    is MainEvent.ClearEditor -> editor.setText("")
-                    is MainEvent.ClearOutput -> output.text = ""
-                    is MainEvent.WriteToUsb -> sendCommand(event.command)
-                    is MainEvent.SendCommandsFromEditor -> sendCommandsFromEditor()
-                    is MainEvent.ClearData -> clearData()
-                    is MainEvent.IncReadingCount -> sharedUiViewModel.readingCount++
-                    is MainEvent.SetReadingCount -> sharedUiViewModel.readingCount = event.value
-                    is MainEvent.IncCountMeasure -> sharedUiViewModel.incCountMeasure()
-                    is MainEvent.InvokeAutoCalculations -> calculatePpmAuto.performClick()
-                    else -> {}
+            viewModel.eventsFlow
+                .flowWithLifecycle(lifecycle)
+                .collect { event ->
+                    when (event) {
+                        is MainEvent.ClearEditor -> editor.setText("")
+                        is MainEvent.ClearOutput -> output.text = ""
+                        is MainEvent.WriteToUsb -> sendCommand(event.command)
+                        is MainEvent.SendCommandsFromEditor -> sendCommandsFromEditor()
+                        is MainEvent.ClearData -> clearData()
+                        is MainEvent.IncReadingCount -> sharedUiViewModel.readingCount++
+                        is MainEvent.SetReadingCount -> sharedUiViewModel.readingCount = event.value
+                        is MainEvent.IncCountMeasure -> sharedUiViewModel.incCountMeasure()
+                        is MainEvent.InvokeAutoCalculations -> calculatePpmAuto.performClick()
+                        else -> {}
+                    }
                 }
-            }
         }
     }
 
@@ -765,48 +769,56 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
 
     private fun NewFragmentMainBinding.observeUiEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
-            sharedUiViewModel.eventsFlow.collect { event ->
-                when (event) {
-                    is UiEvent.ViewModelInitialized -> {}
-                    is UiEvent.ClearContent -> {
-                        sharedUiViewModel.undoWatcher = null
-                        sharedUiViewModel.isInUndo = true
-                        editor.setText("")
-                        sharedUiViewModel.isDirty = false
-                        sharedUiViewModel.undoWatcher = TextChangeWatcher()
-                        sharedUiViewModel.isInUndo = false
-                    }
-                    is UiEvent.OpenFile -> {
-                        if (event.uriPath != null) {
-                            doOpenFile(File(event.uriPath), event.forceReadOnly)
-                        } else {
-                            doOpenFile(File(event.path), event.forceReadOnly)
+            sharedUiViewModel
+                .eventsFlow
+                .flowWithLifecycle(lifecycle)
+                .collect { event ->
+                    when (event) {
+                        is UiEvent.ClearContent -> {
+                            sharedUiViewModel.undoWatcher = null
+                            sharedUiViewModel.isInUndo = true
+                            editor.setText("")
+                            sharedUiViewModel.isDirty = false
+                            sharedUiViewModel.undoWatcher = TextChangeWatcher()
+                            sharedUiViewModel.isInUndo = false
                         }
+
+                        is UiEvent.OpenFile -> {
+                            if (event.uriPath != null) {
+                                doOpenFile(File(event.uriPath), event.forceReadOnly)
+                            } else {
+                                doOpenFile(File(event.path), event.forceReadOnly)
+                            }
+                        }
+
+                        is UiEvent.OpenBackup -> {
+                            sharedUiViewModel.isInUndo = true
+                            binding.editor.setText(event.text)
+                            sharedUiViewModel.undoWatcher = TextChangeWatcher()
+                            sharedUiViewModel.currentFilePath = null
+                            sharedUiViewModel.currentFileName = null
+                            sharedUiViewModel.isDirty = false
+                            sharedUiViewModel.isInUndo = false
+                            sharedUiViewModel.isReadOnly = false
+                            binding.editor.isEnabled = true
+                        }
+
+                        is UiEvent.SetPeriodicResponse -> {
+                            refreshTextAccordToSensor(event.response)
+                        }
+
+                        is UiEvent.SetDataReceived -> {
+                            output.append(isRead = true, event.data)
+                            scrollView.smoothScrollTo(0, 0)
+                        }
+
+                        is UiEvent.SetEditorSelection -> {
+                            binding.editor.setSelection(event.from, event.to)
+                        }
+
+                        is UiEvent.HideProgress -> hideBottomProgress()
                     }
-                    is UiEvent.OpenBackup -> {
-                        sharedUiViewModel.isInUndo = true
-                        binding.editor.setText(event.text)
-                        sharedUiViewModel.undoWatcher = TextChangeWatcher()
-                        sharedUiViewModel.currentFilePath = null
-                        sharedUiViewModel.currentFileName = null
-                        sharedUiViewModel.isDirty = false
-                        sharedUiViewModel.isInUndo = false
-                        sharedUiViewModel.isReadOnly = false
-                        binding.editor.isEnabled = true
-                    }
-                    is UiEvent.SetPeriodicResponse -> {
-                        refreshTextAccordToSensor(event.response)
-                    }
-                    is UiEvent.SetDataReceived -> {
-                        output.append(isRead = true, event.data)
-                        scrollView.smoothScrollTo(0, 0)
-                    }
-                    is UiEvent.SetEditorSelection -> {
-                        binding.editor.setSelection(event.from, event.to)
-                    }
-                    is UiEvent.HideProgress -> hideBottomProgress()
                 }
-            }
         }
     }
 
@@ -826,7 +838,8 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
 
     private fun NewFragmentMainBinding.observeBottomEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
-            for (event in bottomViewModel.events) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                for (event in bottomViewModel.events) {
                     when (event) {
                         is BottomEvent.ShowProgress -> {
                             if (root.children.all { it.id != R.id.creation_curve_container }) {
@@ -839,6 +852,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                                 )
                             }
                         }
+
                         is BottomEvent.HideProgress -> hideBottomProgress()
                         is BottomEvent.ShowToast -> showToast(event.message)
                         is BottomEvent.LoadPpmAverageValues -> {
@@ -848,15 +862,22 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                             }
                             bottomViewModel.loadGraphData(File(event.filePath))
                         }
+
                         is BottomEvent.ChangeProgress -> {
                             val binding =
                                 LayoutCreateCurveProgressBinding.bind(root.children.first { it.id == R.id.creation_curve_container })
                             binding.creationProgress.progress = event.progress
                         }
+
                         is BottomEvent.GraphDataLoaded -> {
-                            onGraphDataLoaded(event.ppmValues, event.avgSquareValues, event.filePath)
+                            onGraphDataLoaded(
+                                event.ppmValues,
+                                event.avgSquareValues,
+                                event.filePath
+                            )
                         }
                     }
+                }
             }
         }
     }

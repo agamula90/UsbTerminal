@@ -1,7 +1,6 @@
 package com.ismet.usbterminal.main
 
 sealed class MainEvent {
-    object ViewModelInitialized: MainEvent()
     class ShowToast(val message: String): MainEvent()
     class WriteToUsb(val command: String): MainEvent()
     object InvokeAutoCalculations: MainEvent()

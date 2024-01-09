@@ -29,8 +29,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.shareIn
 import java.io.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -89,10 +89,11 @@ class MainViewModel @Inject constructor(
     var measureFileNames: List<String> = emptyList()
     private set
 
-    //TODO set private modifier, use eventsFlow instead
-    val events = Channel<MainEvent>(Channel.UNLIMITED)
-    val eventsFlow = events.receiveAsFlow().stateIn(viewModelScope, SharingStarted.Lazily,
-        MainEvent.ViewModelInitialized
+    private val events = Channel<MainEvent>(Channel.UNLIMITED)
+    val eventsFlow = events.consumeAsFlow().shareIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        replay = 1
     )
     val charts = MutableLiveData(
         Charts(
