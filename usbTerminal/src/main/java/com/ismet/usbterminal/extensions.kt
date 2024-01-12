@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.edit
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.get
@@ -156,7 +157,7 @@ fun String.encodeToByteArrayEnhanced(): ByteArray {
     return bytesEncoded.map { it.toInt(radix = 16).toByte() }.toByteArray()
 }
 
-private val temperaturePattern = "^@\\d+,\\d+\\(\\d+,\\d+,\\d+,\\d+\\),\\d+,\\d+,\\d+,\\d+,\\d+$".toRegex()
+private val temperaturePattern = "^@\\d+,\\d+(\\(\\d+,\\d+,\\d+,\\d+\\))*,\\d+,(\\d+),\\d+,\\d+,\\d+$".toRegex()
 
 fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
     this.size == 7 && this[0] == 0xFE.toByte() && this[1] == 0x44.toByte() -> {
@@ -176,13 +177,13 @@ fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
     else -> copyOfRange(0, size - 1).getNotRawPeriodicResponse()
 }
 
-private fun ByteArray.getNotRawPeriodicResponse(): PeriodicResponse? = when {
-    decodeToString().matches(temperaturePattern) -> {
-        val response = decodeToString()
-        val temperatureParts = response.split(",")
-        PeriodicResponse.Temperature(response, temperatureParts[6].toInt())
+private fun ByteArray.getNotRawPeriodicResponse(): PeriodicResponse? {
+    val decoded = decodeToString()
+
+    return when(val temperature = temperaturePattern.matchEntire(decoded)?.groupValues?.get(2)) {
+        null -> null
+        else -> PeriodicResponse.Temperature(decoded, temperature.toInt())
     }
-    else -> null
 }
 
 /*
@@ -310,4 +311,16 @@ fun findPpmBySquare(square: Float, ppmPoints: List<Float>, avgSquarePoints: List
     }
 
     return -1f
+}
+
+fun SharedPreferences.getDelayInSeconds(): Float {
+    val isMeasuredInMillis = getBoolean(PrefConstants.DELAY_MEASUREMENT_TIME_UNIT_IS_MILLISECONDS, PrefConstants.DELAY_MEASUREMENT_TIME_UNIT_IS_MILLISECONDS_DEFAULT)
+    if (!isMeasuredInMillis) {
+        val delayInSeconds = getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+        edit(commit = true) {
+            putInt(PrefConstants.DELAY, delayInSeconds * 1000)
+            putBoolean(PrefConstants.DELAY_MEASUREMENT_TIME_UNIT_IS_MILLISECONDS, true)
+        }
+    }
+    return getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT) / 1000f
 }

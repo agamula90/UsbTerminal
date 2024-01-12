@@ -1,3 +1,24 @@
+pluginManagement {
+    repositories {
+        jcenter()
+        google()
+        mavenCentral()
+        maven { url 'https://maven.testfairy.com' }
+        maven { url "https://jitpack.io" }
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        jcenter()
+        google()
+        mavenCentral()
+        maven { url 'https://maven.testfairy.com' }
+        maven { url "https://jitpack.io" }
+    }
+}
+
 include ':externalFileManager'
 include ':storage'
 include ':usbTerminal'

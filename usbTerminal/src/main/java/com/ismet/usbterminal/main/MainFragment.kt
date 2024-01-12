@@ -59,6 +59,7 @@ import com.ismet.usbterminal.data.PeriodicResponse
 import com.ismet.usbterminal.data.PrefConstants
 import com.ismet.usbterminal.findPpmBySquare
 import com.ismet.usbterminal.format
+import com.ismet.usbterminal.getDelayInSeconds
 import com.ismet.usbterminal.init
 import com.ismet.usbterminal.main.bottom.BottomEvent
 import com.ismet.usbterminal.main.bottom.BottomViewModel
@@ -1196,7 +1197,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
             }
             measure.showMeasureDialog(
                 init = {
-                    val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
+                    val delay = (prefs.getDelayInSeconds() * 1000).toInt()
                     val duration =
                         prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
                     val volume =

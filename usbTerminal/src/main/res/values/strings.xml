@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name" translatable="false">EToC v1.1</string>
+    <string name="app_name" translatable="false">EToC v1.3</string>
     <string name="app_name_with_version" formatted="false" translatable="false">EToC v%s</string>
     
     <!--  

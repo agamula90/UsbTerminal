@@ -50,7 +50,7 @@ class UsbDeviceConnection(val context: Context, val permissionCallback: Permissi
         when (usbDevice) {
             null -> throw FindDeviceException()
             else -> {
-                val mPendingIntent = PendingIntent.getBroadcast(context, 0, Intent(USB_PERMISSION), 0)
+                val mPendingIntent = PendingIntent.getBroadcast(context, 0, Intent(USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE)
                 usbManager.requestPermission(usbDevice, mPendingIntent)
             }
         }
