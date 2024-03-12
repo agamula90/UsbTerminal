@@ -1,9 +1,9 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
     id 'kotlin-parcelize'
-    id "com.google.devtools.ksp"
 }
 
 android {
@@ -11,9 +11,9 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.ismet.usbterminalnew2"
-        versionName "3.0"
-        versionCode 3
+        applicationId "com.ismet.usbterminalnew"
+        versionName "2.0"
+        versionCode 2
         minSdkVersion 17
         targetSdk 34
     }
@@ -33,7 +33,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField "int", "WRITE_TO_USB_DELAY", "0"
+            buildConfigField "int", "WRITE_TO_USB_DELAY", "200"
             minifyEnabled false
         }
         release {
@@ -52,18 +52,21 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes true
+}
+
 dependencies {
     implementation 'com.github.felHR85:UsbSerial:6.1.0'
     implementation (project(":storage"))
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
 
-    def hilt_version = "2.48"
-    ksp "com.google.dagger:hilt-compiler:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:$hilt_version"
     implementation "com.google.dagger:hilt-android:$hilt_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.2"
     implementation "com.squareup.moshi:moshi:1.14.0"
-    ksp "com.squareup.moshi:moshi-kotlin-codegen:1.14.0"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:1.14.0"
 
     def nav_version = "2.7.6"
     // Kotlin
@@ -73,8 +76,6 @@ dependencies {
     implementation 'com.itextpdf:itextpdf:5.5.8'
     implementation "androidx.activity:activity-ktx:1.8.2"
     implementation project(':externalFileManager')
-
-    def kotlin_version = "1.9.20"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
 }

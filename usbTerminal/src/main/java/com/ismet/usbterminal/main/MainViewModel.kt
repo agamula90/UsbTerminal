@@ -1,9 +1,13 @@
 package com.ismet.usbterminal.main
 
+import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.PointF
+import android.os.Build
 import android.os.FileObserver
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -16,7 +20,6 @@ import com.ismet.usbterminal.decodeToPeriodicResponse
 import com.ismet.usbterminal.decodeToStringEnhanced
 import com.ismet.usbterminal.di.UsbWriteDispatcher
 import com.ismet.usbterminal.di.CacheCo2ValuesDispatcher
-import com.ismet.usbterminal.getDelayInSeconds
 import com.ismet.usbterminal.readTextEnhanced
 import com.ismet.usbterminalnew.BuildConfig
 import com.ismet.usbterminalnew.R
@@ -431,7 +434,6 @@ class MainViewModel @Inject constructor(
         val intDelay = delay.toInt()
         events.trySend(MainEvent.IncCountMeasure)
         edit.putInt(PrefConstants.DELAY, intDelay)
-        edit.putBoolean(PrefConstants.DELAY_MEASUREMENT_TIME_UNIT_IS_MILLISECONDS, true)
         edit.putInt(PrefConstants.DURATION, intDuration)
         edit.apply()
         val future = intDuration * 60 * 1000
@@ -878,14 +880,13 @@ class MainViewModel @Inject constructor(
     }
 
     private fun readCombinedXyChart() {
-        val delay = prefs.getDelayInSeconds()
+        val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
         val duration = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
         if (!prefs.contains(PrefConstants.DELAY)) {
             val editor = prefs.edit()
-            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT * 1000)
+            editor.putInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
             editor.putInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
             editor.putInt(PrefConstants.VOLUME, PrefConstants.VOLUME_DEFAULT)
-            editor.putBoolean(PrefConstants.DELAY_MEASUREMENT_TIME_UNIT_IS_MILLISECONDS, true)
             editor.apply()
         }
         charts.value = charts.value!!.copy(maxX = 3f * (duration * 60 / delay))

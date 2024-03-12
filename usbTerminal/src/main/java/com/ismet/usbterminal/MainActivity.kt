@@ -756,11 +756,11 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
             }
             is PeriodicResponse.Co2 -> {
                 // auto
-                val delay = prefs.getDelayInSeconds()
-                val duration = prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
+                val delay = prefs.getInt(PrefConstants.DELAY, 2)
+                val duration = prefs.getInt(PrefConstants.DURATION, 3)
                 val isAuto = prefs.getBoolean(PrefConstants.IS_AUTO, false)
                 if (isAuto) {
-                    if (sharedUiViewModel.readingCount == (duration * 60 / delay).toInt()) {
+                    if (sharedUiViewModel.readingCount == (duration * 60 / delay)) {
                         sharedUiViewModel.incCountMeasure()
                         viewModel.setCurrentChartIndex(1)
                     } else if (sharedUiViewModel.readingCount == (duration * 60)) {
