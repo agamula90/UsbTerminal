@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbManager
+import androidx.core.content.ContextCompat
 import com.felhr.usbserial.UsbSerialDevice
 import java.io.Closeable
 
@@ -41,7 +42,9 @@ class UsbDeviceConnection(val context: Context, val permissionCallback: Permissi
     }
 
     init {
-        context.registerReceiver(usbDeviceReceiver, IntentFilter(USB_PERMISSION))
+        ContextCompat.registerReceiver(context, usbDeviceReceiver, IntentFilter(USB_PERMISSION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun findDevice(deviceId: UsbDeviceId) {
@@ -50,7 +53,8 @@ class UsbDeviceConnection(val context: Context, val permissionCallback: Permissi
         when (usbDevice) {
             null -> throw FindDeviceException()
             else -> {
-                val mPendingIntent = PendingIntent.getBroadcast(context, 0, Intent(USB_PERMISSION), 0)
+                val mPendingIntent = PendingIntent.getBroadcast(context, 0, Intent(USB_PERMISSION),
+                    PendingIntent.FLAG_IMMUTABLE)
                 usbManager.requestPermission(usbDevice, mPendingIntent)
             }
         }

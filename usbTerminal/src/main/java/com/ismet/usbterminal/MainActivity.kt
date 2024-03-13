@@ -7,6 +7,7 @@ import com.ismet.usbterminal.main.MainViewModel
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PointF
 import android.hardware.usb.UsbManager
@@ -17,6 +18,7 @@ import android.view.*
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.ismet.usbterminal.main.SharedUiViewModel
@@ -160,7 +162,12 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
             }
         }
         findDevice()
-        establishMockedConnections()
+
+        if (Build.VERSION.SDK_INT < 23 || ContextCompat.checkSelfPermission(this, "com.ismet.usbaccessory.ISMET_USB_ACCESSORY") == PackageManager.PERMISSION_GRANTED) {
+            establishMockedConnections()
+        } else {
+            requestPermissions(arrayOf("com.ismet.usbaccessory.ISMET_USB_ACCESSORY"), REQUEST_SERVICE_PERMISSION_CODE)
+        }
     }
 
     private fun setupDrawer() {
@@ -796,6 +803,19 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
         invalidateOptionsMenu()
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_SERVICE_PERMISSION_CODE && permissions.size == 1 && grantResults.size == 1) {
+            val isServicePermissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (isServicePermissionGranted) establishMockedConnections()
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
     override fun reportDate(): Date = reportDate!!
 
     override fun initReport() {
@@ -814,5 +834,6 @@ class MainActivity : AppCompatActivity(), ReportDataProvider {
 
     companion object {
         private const val TAG = "MainActivity"
+        private const val REQUEST_SERVICE_PERMISSION_CODE = 1
     }
 }
