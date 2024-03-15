@@ -6,5 +6,8 @@ To test app without usb device, accessory app can be used to simulate usb device
 - When bytes from app don't contain (), then redundant \r byte should be send at end
 - When bytes from device are not raw bytes, then command will contain redundant space at end
 
+### Signing
+To sign with ismet.jks use password / alias as telesuper default password
+
 ### TODO's:
 - remove "storage" module
