@@ -515,7 +515,7 @@ class MainViewModel @Inject constructor(
         oneLoopTime: Int,
         newMeasureFiles: List<String>
     ) {
-        if (text != null && text.isNotEmpty()) {
+        if (!text.isNullOrEmpty()) {
             val commands = text.split("\n").toTypedArray()
             val simpleCommands: MutableList<String> = ArrayList()
             val loopCommands: MutableList<String> = ArrayList()

@@ -39,7 +39,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.children
-import androidx.core.view.forEachIndexed
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -1139,10 +1138,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
 
     private fun NewFragmentMainBinding.setClearListener() {
         buttonClear.setOnClickListener {
-            if (viewModel.isCo2Measuring) {
-                showToast("Timer is running. Please wait")
-                return@setOnClickListener
-            }
+            viewModel.isCo2Measuring = false
             val items = viewModel.allClearOptions.toTypedArray()
             val checkedItems = viewModel.checkedClearOptions.toBooleanArray()
 
@@ -1173,10 +1169,6 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
             if (!viewModel.powerProperties.value!!.isActivated) {
                 return@setOnClickListener
             }
-            if (viewModel.isCo2Measuring) {
-                showToast("Timer is running. Please wait")
-                return@setOnClickListener
-            }
             var isChart1Clear = true
             var isChart2Clear = true
             var isChart3Clear = true
@@ -1196,6 +1188,7 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
             }
             measure.showMeasureDialog(
                 init = {
+                    viewModel.isCo2Measuring = false
                     val delay = prefs.getInt(PrefConstants.DELAY, PrefConstants.DELAY_DEFAULT)
                     val duration =
                         prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)
@@ -1232,11 +1225,9 @@ class MainFragment : Fragment(R.layout.new_fragment_main), TextWatcher {
                     val editText2Text = editorBinding.commandsEditText2.text.toString()
                     val editText3Text = editorBinding.commandsEditText3.text.toString()
                     val isUseRecentDirectory = editorBinding.chkUseRecentDirectory.isChecked
-                    val checkedId = editorBinding.radioGroup.checkedRadioButtonId
-                    var checkedRadioButtonIndex = -1
-                    editorBinding.radioGroup.forEachIndexed { index, view ->
-                        if (view.id == checkedId) checkedRadioButtonIndex = index
-                    }
+                    val radioButtonIndices = mapOf(R.id.radio1 to 0, R.id.radio2 to 1, R.id.radio3 to 2)
+                    val checkedRadioButtonId = editorBinding.radioGroup.checkedRadioButtonId
+                    val checkedRadioButtonIndex = radioButtonIndices[checkedRadioButtonId] ?: -1
                     if (viewModel.measureCo2Values(
                             delay = delay,
                             duration = duration,

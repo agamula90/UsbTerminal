@@ -254,6 +254,7 @@
             android:layout_marginTop="10dip"
             android:checked="false"
             android:text="Save to recent directory"
+            android:visibility="gone"
             android:textSize="12sp"/>
 
         <LinearLayout

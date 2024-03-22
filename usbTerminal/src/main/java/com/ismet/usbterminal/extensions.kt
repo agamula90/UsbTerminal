@@ -34,10 +34,23 @@ import com.ismet.usbterminalnew.R
 import com.ismet.usbterminalnew.databinding.LayoutDialogMeasureBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOnOffBinding
 import com.ismet.usbterminalnew.databinding.LayoutDialogOneCommandBinding
+import kotlin.math.log10
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 fun LineChart.set(chartHelperPaint: Paint, charts: Charts) {
-    axisLeft.axisMaximum = charts.maxY
+    val maxY = charts.maxY
+
+    val powerOfTenToRound = log10(maxY).toInt() - 1
+    axisLeft.axisMaximum = maxY
+
+    axisLeft.valueFormatter = object: ValueFormatter() {
+        override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+            val axisValue = value / 10f.pow(powerOfTenToRound)
+            val axisLabel = axisValue.roundToInt() * 10f.pow(powerOfTenToRound).roundToInt()
+            return axisLabel.toString()
+        }
+    }
     xAxis.axisMaximum = charts.maxX
     for (chart in charts.charts) {
         (data.dataSets[chart.id] as LineDataSet).values = chart.points.map { Entry(it.x, it.y) }
@@ -124,7 +137,10 @@ private fun String.withMaxLines(maxLines: Int): String {
     return lines.joinToString(separator = "\n")
 }
 
-fun View.showMeasureDialog(init: (LayoutDialogMeasureBinding) -> Unit, okClick: (LayoutDialogMeasureBinding, DialogInterface) -> Unit): AlertDialog = AlertDialog.Builder(context).let {
+fun View.showMeasureDialog(
+    init: (LayoutDialogMeasureBinding) -> Unit,
+    okClick: (LayoutDialogMeasureBinding, DialogInterface) -> Unit
+): AlertDialog = AlertDialog.Builder(context).let {
     isEnabled = false
     val inflater = LayoutInflater.from(context)
     val binding = LayoutDialogMeasureBinding.inflate(inflater)
@@ -140,7 +156,7 @@ fun View.showMeasureDialog(init: (LayoutDialogMeasureBinding) -> Unit, okClick: 
             dialog.hideSoftInput()
         }
     }.create()
-    dialog.setOnCancelListener { isEnabled = true }
+    dialog.setOnDismissListener { isEnabled = true }
     dialog.show()
     dialog
 }
@@ -156,7 +172,8 @@ fun String.encodeToByteArrayEnhanced(): ByteArray {
     return bytesEncoded.map { it.toInt(radix = 16).toByte() }.toByteArray()
 }
 
-private val temperaturePattern = "^@\\d+,\\d+\\(\\d+,\\d+,\\d+,\\d+\\),\\d+,\\d+,\\d+,\\d+,\\d+$".toRegex()
+private val temperaturePattern =
+    "^@\\d+,\\d+\\(\\d+,\\d+,\\d+,\\d+\\),\\d+,\\d+,\\d+,\\d+,\\d+$".toRegex()
 
 fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
     this.size == 7 && this[0] == 0xFE.toByte() && this[1] == 0x44.toByte() -> {
@@ -172,6 +189,7 @@ fun ByteArray.decodeToPeriodicResponse(): PeriodicResponse? = when {
             value = String.format("%02X%02X", this[3], this[4]).toInt(radix = 16)
         )
     }
+
     BuildConfig.DEBUG -> getNotRawPeriodicResponse()
     else -> copyOfRange(0, size - 1).getNotRawPeriodicResponse()
 }
@@ -182,13 +200,15 @@ private fun ByteArray.getNotRawPeriodicResponse(): PeriodicResponse? = when {
         val temperatureParts = response.split(",")
         PeriodicResponse.Temperature(response, temperatureParts[6].toInt())
     }
+
     else -> null
 }
 
 /*
  * read text from sub path, specified by string
  */
-fun String.readTextEnhanced(file: com.ismet.storage.File): String = file.read(this).replace("\r", "")
+fun String.readTextEnhanced(file: com.ismet.storage.File): String =
+    file.read(this).replace("\r", "")
 
 fun ByteArray.decodeToStringEnhanced(): String {
     val periodicResponse = decodeToPeriodicResponse()
@@ -211,10 +231,13 @@ fun LineChart.init(prefs: SharedPreferences) {
     xAxis.apply {
         gridColor = color
         setLabelCount(4, true)
-        valueFormatter = object: ValueFormatter() {
-            override fun getAxisLabel(value: Float, axis: AxisBase?): String = when(value){
+        valueFormatter = object : ValueFormatter() {
+            override fun getAxisLabel(value: Float, axis: AxisBase?): String = when (value) {
                 0f -> ""
-                else -> (value * ((labelCount - 1) / axisMaximum) * prefs.getInt(PrefConstants.DURATION, PrefConstants.DURATION_DEFAULT)).roundToInt().toString()
+                else -> (value * ((labelCount - 1) / axisMaximum) * prefs.getInt(
+                    PrefConstants.DURATION,
+                    PrefConstants.DURATION_DEFAULT
+                )).roundToInt().toString()
             }
         }
         position = XAxis.XAxisPosition.BOTTOM
